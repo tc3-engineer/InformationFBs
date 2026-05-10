@@ -38,8 +38,19 @@ VAR_REGION_RE = re.compile(
     r"VAR_(?:INPUT|OUTPUT|IN_OUT|GLOBAL)(?:\s+CONSTANT)?\s*\n([\s\S]*?)END_VA[R]?",
     re.IGNORECASE,
 )
-# Per-declaration regex (after the region has been comment-stripped and split on ";").
-VAR_DECL_RE = re.compile(r"^\s*([A-Za-z_][A-Za-z0-9_]*)\s*:\s*(.+?)\s*$", re.DOTALL)
+# Per-declaration regex: find `name : type;` anywhere in the (already comment-
+# stripped) region. Anchors:
+#   - Search anywhere (not just chunk start) so an orphan token like "ed)"
+#     left over from a wrapped (= ...) parenthetical comment doesn't hide
+#     the next real declaration.
+#   - Negative lookahead (?!=) skips ST assignments like `Var1 := LEN(...)`
+#     where `:` is part of `:=`.
+#   - Terminator is either `;` or end-of-line (some PDFs render the LAST
+#     declaration before END_VAR without the trailing semicolon).
+VAR_DECL_RE = re.compile(
+    r"\b([A-Za-z_][A-Za-z0-9_]*)\s*:\s*(?!=)([^;\n]+?)\s*(?:;|$)",
+    re.MULTILINE,
+)
 
 
 def _vars_from_text(text: str) -> list[tuple[str, str]]:
@@ -65,20 +76,14 @@ def _vars_from_text(text: str) -> list[tuple[str, str]]:
             last = km
         if last:
             region = region[last.end():]
-        # Strip (* multi-line comments *) and // line comments.
+        # Strip (* multi-line comments *) and // line comments. Done BEFORE
+        # decl extraction so the `;` we hunt for is the real terminator, not
+        # one buried inside a comment.
         region = re.sub(r"\(\*.*?\*\)", "", region, flags=re.DOTALL)
         region = re.sub(r"//.*$", "", region, flags=re.MULTILINE)
-        for decl in region.split(";"):
-            decl = decl.strip()
-            if not decl:
-                continue
-            vm = VAR_DECL_RE.match(decl)
-            if not vm:
-                continue
+        for vm in VAR_DECL_RE.finditer(region):
             typ = vm.group(2)
-            # Drop ":= default" if present.
             typ = re.sub(r":=.*$", "", typ, flags=re.DOTALL).strip()
-            # Collapse internal whitespace (incl. newlines) into single spaces.
             typ = re.sub(r"\s+", " ", typ).strip()
             if not typ:
                 continue

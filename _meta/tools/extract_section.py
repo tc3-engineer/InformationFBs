@@ -49,8 +49,11 @@ def extract(lib: str, section: str) -> str:
     for d in range(1, depth + 1):
         depth_alts.append(r"\d+" + (r"\.\d+" * (d - 1)))
     # Also any chapter at depth 1 (e.g. moving from 3.1.1 to 4)
+    # Allow any identifier-like first character (uppercase or lowercase letter,
+    # digit, underscore) — Beckhoff uses some lowercase-first POU names like
+    # "sLiteral_TO_UTF8" and "wsLiteral_TO_UTF8".
     next_heading = re.compile(
-        r"(?m)^\s*(?:" + "|".join(depth_alts) + r")\s+[A-Z][^\.\n]{0,80}$"
+        r"(?m)^\s*(?:" + "|".join(depth_alts) + r")\s+[A-Za-z_][^\.\n]{0,80}$"
     )
     after = full[start + 1 :]
     nm = next_heading.search(after)

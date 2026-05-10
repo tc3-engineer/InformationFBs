@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project xmlns="http://www.plcopen.org/xml/tc6_0200">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-10T16:00:00"/>
+  <contentHeader name="Tc2_Utilities.UTF8_TO_STRING Demo" modificationDateTime="2026-05-10T16:00:00">
+    <coordinateInfo>
+      <fbd><scaling x="1" y="1"/></fbd>
+      <ld><scaling x="1" y="1"/></ld>
+      <sfc><scaling x="1" y="1"/></sfc>
+    </coordinateInfo>
+  </contentHeader>
+  <types>
+    <dataTypes/>
+    <pous>
+      <pou name="P_Demo_UTF8_TO_STRING" pouType="program">
+        <interface>
+          <localVars>
+            <variable name="rResult">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">UTF8_TO_STRING 返回值</xhtml></documentation>
+            </variable>
+            <variable name="bRun">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">触发一次调用</xhtml></documentation>
+            </variable>
+            <variable name="sUtf8">
+              <type><string><stringLength><value>511</value></stringLength></string></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">测试用本地变量</xhtml></documentation>
+            </variable>
+            <variable name="sOut">
+              <type><derived name="STRING(255)"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">测试用本地变量</xhtml></documentation>
+            </variable>
+            <variable name="nDstLen">
+              <type><UDINT/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">测试用本地变量</xhtml></documentation>
+            </variable>
+          </localVars>
+        </interface>
+        <body>
+          <ST>
+            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
+// Tc2_Utilities.UTF8_TO_STRING 演示程序（FUNCTION）
+// ============================================================
+// 验证步骤：
+//   1. 引用 Tc2_Utilities
+//   2. 编译 + 登录
+//   3. 强制 bRun := TRUE 一个周期
+//   4. 在线监视 rResult / 各 demo 变量
+// ============================================================
+
+sUtf8 := sLiteral_TO_UTF8('café');
+IF bRun THEN
+    rResult := UTF8_TO_STRING(pDstSTRING := ADR(sOut), pSrcUTF8 := ADR(sUtf8), nDstSize := SIZEOF(sOut), nDstLen =&gt; nDstLen);
+    bRun := FALSE;
+END_IF;
+</xhtml>
+          </ST>
+        </body>
+      </pou>
+    </pous>
+  </types>
+  <instances>
+    <configurations/>
+  </instances>
+</project>
