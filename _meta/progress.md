@@ -167,3 +167,31 @@
 2026-05-10T14:00:00Z | Tc2_Utilities | T_Arg help functions | F_WORD      | verified | typed wrapper
 2026-05-10T14:00:00Z | Tc2_Utilities | T_Arg help functions | F_PVOID     | verified | typed wrapper (PVOID)
 2026-05-10T14:00:00Z | Tc2_Utilities | T_Arg help functions | IsFinite    | verified | LREAL/REAL IEEE finite check; needs F_LREAL/F_REAL wrapper
+
+# 2026-05-10 batch · Tc2_Utilities Round 5 (P[TYPE]_TO_[TYPE], 26 entries)
+2026-05-10T15:00:00Z | Tc2_Utilities | P[TYPE]_TO_[TYPE] | PBOOL_TO_BOOL           | verified | uniform pointer-deref pattern
+2026-05-10T15:00:00Z | Tc2_Utilities | P[TYPE]_TO_[TYPE] | PBYTE_TO_BYTE           | verified | uniform pointer-deref pattern
+2026-05-10T15:00:00Z | Tc2_Utilities | P[TYPE]_TO_[TYPE] | PDATE_TO_DATE           | verified | uniform pointer-deref pattern
+2026-05-10T15:00:00Z | Tc2_Utilities | P[TYPE]_TO_[TYPE] | PDINT_TO_DINT           | verified | uniform pointer-deref pattern
+2026-05-10T15:00:00Z | Tc2_Utilities | P[TYPE]_TO_[TYPE] | PDT_TO_DT               | verified | uniform pointer-deref pattern
+2026-05-10T15:00:00Z | Tc2_Utilities | P[TYPE]_TO_[TYPE] | PDWORD_TO_DWORD         | verified | uniform pointer-deref pattern
+2026-05-10T15:00:00Z | Tc2_Utilities | P[TYPE]_TO_[TYPE] | PHUGE_TO_HUGE           | verified | T_HUGE_INTEGER 128-bit legacy
+2026-05-10T15:00:00Z | Tc2_Utilities | P[TYPE]_TO_[TYPE] | PINT_TO_INT             | verified | uniform pointer-deref pattern
+2026-05-10T15:00:00Z | Tc2_Utilities | P[TYPE]_TO_[TYPE] | PLARGE_TO_LARGE         | verified | T_LARGE_INTEGER 64-bit legacy
+2026-05-10T15:00:00Z | Tc2_Utilities | P[TYPE]_TO_[TYPE] | PLINT_TO_LINT           | verified | uniform pointer-deref pattern
+2026-05-10T15:00:00Z | Tc2_Utilities | P[TYPE]_TO_[TYPE] | PLREAL_TO_LREAL         | verified | uniform pointer-deref pattern
+2026-05-10T15:00:00Z | Tc2_Utilities | P[TYPE]_TO_[TYPE] | PLWORD_TO_LWORD         | verified | uniform pointer-deref pattern
+2026-05-10T15:00:00Z | Tc2_Utilities | P[TYPE]_TO_[TYPE] | PMAXSTRING_TO_MAXSTRING | verified | T_MaxString
+2026-05-10T15:00:00Z | Tc2_Utilities | P[TYPE]_TO_[TYPE] | PREAL_TO_REAL           | verified | uniform pointer-deref pattern
+2026-05-10T15:00:00Z | Tc2_Utilities | P[TYPE]_TO_[TYPE] | PSINT_TO_SINT           | verified | uniform pointer-deref pattern
+2026-05-10T15:00:00Z | Tc2_Utilities | P[TYPE]_TO_[TYPE] | PSTRING_TO_STRING       | verified | PDF table 'String' typo, VAR_INPUT 'STRING' authoritative
+2026-05-10T15:00:00Z | Tc2_Utilities | P[TYPE]_TO_[TYPE] | PTIME_TO_TIME           | verified | uniform pointer-deref pattern
+2026-05-10T15:00:00Z | Tc2_Utilities | P[TYPE]_TO_[TYPE] | PTOD_TO_TOD             | verified | uniform pointer-deref pattern
+2026-05-10T15:00:00Z | Tc2_Utilities | P[TYPE]_TO_[TYPE] | PUDINT_TO_UDINT         | verified | uniform pointer-deref pattern
+2026-05-10T15:00:00Z | Tc2_Utilities | P[TYPE]_TO_[TYPE] | PUHUGE_TO_UHUGE         | verified | T_UHUGE_INTEGER 128-bit legacy
+2026-05-10T15:00:00Z | Tc2_Utilities | P[TYPE]_TO_[TYPE] | PUINT_TO_UINT           | verified | uniform pointer-deref pattern
+2026-05-10T15:00:00Z | Tc2_Utilities | P[TYPE]_TO_[TYPE] | PULARGE_TO_ULARGE       | verified | T_ULARGE_INTEGER 64-bit legacy
+2026-05-10T15:00:00Z | Tc2_Utilities | P[TYPE]_TO_[TYPE] | PULINT_TO_ULINT         | verified | uniform pointer-deref pattern
+2026-05-10T15:00:00Z | Tc2_Utilities | P[TYPE]_TO_[TYPE] | PUSINT_TO_USINT         | verified | uniform pointer-deref pattern
+2026-05-10T15:00:00Z | Tc2_Utilities | P[TYPE]_TO_[TYPE] | PWORD_TO_WORD           | verified | uniform pointer-deref pattern
+2026-05-10T15:00:00Z | Tc2_Utilities | P[TYPE]_TO_[TYPE] | PUINT64_TO_UINT64       | verified | name has UINT64 but returns T_ULARGE_INTEGER

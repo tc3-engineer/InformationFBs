@@ -16,13 +16,13 @@
 | 2 | Time functions | 23 | ✅ done |
 | 3 | TC_CoreBoostMonitor (parent FB + 5 methods) + [obsolete] FB (4) | 10 | ✅ done |
 | 4 | T_Arg help functions | 27 | ✅ done |
-| - | P[TYPE]_TO_[TYPE] | 26 | ⏳ pending |
+| 5 | P[TYPE]_TO_[TYPE] converting functions | 26 | ✅ done |
 | - | Extended STRING | 30 | ⏳ pending |
 | - | 64-bit functions (signed) | 15 | ⏳ pending |
 | - | 64-bit integer (unsigned) | 31 | ⏳ pending |
 | - | Functions（散） | 66 | ⏳ pending |
 | - | Function blocks (剩余) | ~83 | ⏳ pending |
-| - | **当前累计** | **88 / 344** | 25.6% |
+| - | **当前累计** | **114 / 344** | 33.1% |
 
 ## Round 1 索引（28 条 · 全部 ✅ verified）
 
@@ -157,6 +157,39 @@
 | F_WORD | [✅](t_arg/F_WORD.md) | [P_Demo_F_WORD.xml](examples/P_Demo_F_WORD.xml) |
 | F_PVOID | [✅](t_arg/F_PVOID.md) | [P_Demo_F_PVOID.xml](examples/P_Demo_F_PVOID.xml) |
 | IsFinite | [✅](t_arg/IsFinite.md) | [P_Demo_IsFinite.xml](examples/P_Demo_IsFinite.xml) |
+
+### P[TYPE]_TO_[TYPE] converting functions（26）
+
+> 全部为指针解引用函数，模式统一：`POINTER TO X` → `X`
+
+| Name | 文档 | 例程 |
+|---|---|---|
+| PBOOL_TO_BOOL | [✅](p_to_value/PBOOL_TO_BOOL.md) | [P_Demo_PBOOL_TO_BOOL.xml](examples/P_Demo_PBOOL_TO_BOOL.xml) |
+| PBYTE_TO_BYTE | [✅](p_to_value/PBYTE_TO_BYTE.md) | [P_Demo_PBYTE_TO_BYTE.xml](examples/P_Demo_PBYTE_TO_BYTE.xml) |
+| PDATE_TO_DATE | [✅](p_to_value/PDATE_TO_DATE.md) | [P_Demo_PDATE_TO_DATE.xml](examples/P_Demo_PDATE_TO_DATE.xml) |
+| PDINT_TO_DINT | [✅](p_to_value/PDINT_TO_DINT.md) | [P_Demo_PDINT_TO_DINT.xml](examples/P_Demo_PDINT_TO_DINT.xml) |
+| PDT_TO_DT | [✅](p_to_value/PDT_TO_DT.md) | [P_Demo_PDT_TO_DT.xml](examples/P_Demo_PDT_TO_DT.xml) |
+| PDWORD_TO_DWORD | [✅](p_to_value/PDWORD_TO_DWORD.md) | [P_Demo_PDWORD_TO_DWORD.xml](examples/P_Demo_PDWORD_TO_DWORD.xml) |
+| PHUGE_TO_HUGE | [✅](p_to_value/PHUGE_TO_HUGE.md) | [P_Demo_PHUGE_TO_HUGE.xml](examples/P_Demo_PHUGE_TO_HUGE.xml) |
+| PINT_TO_INT | [✅](p_to_value/PINT_TO_INT.md) | [P_Demo_PINT_TO_INT.xml](examples/P_Demo_PINT_TO_INT.xml) |
+| PLARGE_TO_LARGE | [✅](p_to_value/PLARGE_TO_LARGE.md) | [P_Demo_PLARGE_TO_LARGE.xml](examples/P_Demo_PLARGE_TO_LARGE.xml) |
+| PLINT_TO_LINT | [✅](p_to_value/PLINT_TO_LINT.md) | [P_Demo_PLINT_TO_LINT.xml](examples/P_Demo_PLINT_TO_LINT.xml) |
+| PLREAL_TO_LREAL | [✅](p_to_value/PLREAL_TO_LREAL.md) | [P_Demo_PLREAL_TO_LREAL.xml](examples/P_Demo_PLREAL_TO_LREAL.xml) |
+| PLWORD_TO_LWORD | [✅](p_to_value/PLWORD_TO_LWORD.md) | [P_Demo_PLWORD_TO_LWORD.xml](examples/P_Demo_PLWORD_TO_LWORD.xml) |
+| PMAXSTRING_TO_MAXSTRING | [✅](p_to_value/PMAXSTRING_TO_MAXSTRING.md) | [P_Demo_PMAXSTRING_TO_MAXSTRING.xml](examples/P_Demo_PMAXSTRING_TO_MAXSTRING.xml) |
+| PREAL_TO_REAL | [✅](p_to_value/PREAL_TO_REAL.md) | [P_Demo_PREAL_TO_REAL.xml](examples/P_Demo_PREAL_TO_REAL.xml) |
+| PSINT_TO_SINT | [✅](p_to_value/PSINT_TO_SINT.md) | [P_Demo_PSINT_TO_SINT.xml](examples/P_Demo_PSINT_TO_SINT.xml) |
+| PSTRING_TO_STRING | [✅](p_to_value/PSTRING_TO_STRING.md) | [P_Demo_PSTRING_TO_STRING.xml](examples/P_Demo_PSTRING_TO_STRING.xml) |
+| PTIME_TO_TIME | [✅](p_to_value/PTIME_TO_TIME.md) | [P_Demo_PTIME_TO_TIME.xml](examples/P_Demo_PTIME_TO_TIME.xml) |
+| PTOD_TO_TOD | [✅](p_to_value/PTOD_TO_TOD.md) | [P_Demo_PTOD_TO_TOD.xml](examples/P_Demo_PTOD_TO_TOD.xml) |
+| PUDINT_TO_UDINT | [✅](p_to_value/PUDINT_TO_UDINT.md) | [P_Demo_PUDINT_TO_UDINT.xml](examples/P_Demo_PUDINT_TO_UDINT.xml) |
+| PUHUGE_TO_UHUGE | [✅](p_to_value/PUHUGE_TO_UHUGE.md) | [P_Demo_PUHUGE_TO_UHUGE.xml](examples/P_Demo_PUHUGE_TO_UHUGE.xml) |
+| PUINT_TO_UINT | [✅](p_to_value/PUINT_TO_UINT.md) | [P_Demo_PUINT_TO_UINT.xml](examples/P_Demo_PUINT_TO_UINT.xml) |
+| PULARGE_TO_ULARGE | [✅](p_to_value/PULARGE_TO_ULARGE.md) | [P_Demo_PULARGE_TO_ULARGE.xml](examples/P_Demo_PULARGE_TO_ULARGE.xml) |
+| PULINT_TO_ULINT | [✅](p_to_value/PULINT_TO_ULINT.md) | [P_Demo_PULINT_TO_ULINT.xml](examples/P_Demo_PULINT_TO_ULINT.xml) |
+| PUSINT_TO_USINT | [✅](p_to_value/PUSINT_TO_USINT.md) | [P_Demo_PUSINT_TO_USINT.xml](examples/P_Demo_PUSINT_TO_USINT.xml) |
+| PWORD_TO_WORD | [✅](p_to_value/PWORD_TO_WORD.md) | [P_Demo_PWORD_TO_WORD.xml](examples/P_Demo_PWORD_TO_WORD.xml) |
+| PUINT64_TO_UINT64 | [✅](p_to_value/PUINT64_TO_UINT64.md) | [P_Demo_PUINT64_TO_UINT64.xml](examples/P_Demo_PUINT64_TO_UINT64.xml) |
 
 ### Library version（1）
 
