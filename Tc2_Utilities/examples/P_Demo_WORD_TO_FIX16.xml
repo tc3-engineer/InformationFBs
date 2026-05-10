@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project xmlns="http://www.plcopen.org/xml/tc6_0200">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-10T11:00:00"/>
+  <contentHeader name="Tc2_Utilities.WORD_TO_FIX16 Demo" modificationDateTime="2026-05-10T11:00:00">
+    <coordinateInfo>
+      <fbd><scaling x="1" y="1"/></fbd>
+      <ld><scaling x="1" y="1"/></ld>
+      <sfc><scaling x="1" y="1"/></sfc>
+    </coordinateInfo>
+  </contentHeader>
+  <types>
+    <dataTypes/>
+    <pous>
+      <pou name="P_Demo_WORD_TO_FIX16" pouType="program">
+        <interface>
+          <localVars>
+            <variable name="bResult">
+              <type><derived name="T_FIX16"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">WORD_TO_FIX16 的返回值</xhtml></documentation>
+            </variable>
+            <variable name="bRun">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">触发一次调用</xhtml></documentation>
+            </variable>
+          </localVars>
+        </interface>
+        <body>
+          <ST>
+            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
+// Tc2_Utilities.WORD_TO_FIX16 演示程序（FUNCTION）
+// ============================================================
+// 验证步骤：
+//   1. 引用 Tc2_Utilities（及依赖类型所在的库）
+//   2. 编译 + 登录
+//   3. 强制 bRun := TRUE 一个周期
+//   4. 观察 bResult 应为 12.5（after FIX16_TO_LREAL）
+// ============================================================
+
+IF bRun THEN
+    bResult := WORD_TO_FIX16(2#0000110010000000, 8);
+    bRun := FALSE;
+END_IF;
+</xhtml>
+          </ST>
+        </body>
+      </pou>
+    </pous>
+  </types>
+  <instances>
+    <configurations/>
+  </instances>
+</project>
