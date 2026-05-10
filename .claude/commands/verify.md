@@ -22,16 +22,20 @@ argument-hint: <path/to/doc.md>
 - 提取 VAR_INPUT / VAR_OUTPUT / VAR_IN_OUT 的全部字段（名 + 类型 + 注释）
 - 提取功能简述和行为说明中的关键事实
 
-### 2. 抓 PDF
-按文档头里的 Source PDF URL 重新 web_fetch。
-失败 → 报错并退出（注明可能 PDF URL 失效或网络问题）。
+### 2. 抓 PDF + 跑脚本
+```bash
+python3 _meta/tools/fetch_pdf.py --force <Library>   # 强制重新抓
+python3 _meta/tools/verify_doc.py $ARGUMENTS
+python3 _meta/tools/lint_plcopen.py <library>/examples/P_Demo_<name>.xml
+```
+脚本失败 → 报错并退出（PDF URL 失效或网络问题）。
 
-### 3. 逐字段对照
+### 3. 人工审视（脚本未覆盖的）
 
-按 `/doc-shard` 中"自验证"章节的同样检查表执行，但更严格：
-- 不止检查 VAR 名/类型，还要检查**注释文字是否一致**
-- 检查描述句中的数值（如 "15 字节"、"49.7 天"）是否与 PDF 一致
-- 检查例程中引用的引脚名是否拼写正确
+脚本只保证 VAR 名+类型一致。下列项目仍需 LLM 对照 `_meta/.pdf-cache/<library>.txt` 检查：
+- VAR 注释文字是否一致
+- 描述句中的数值（"15 字节"、"49.7 天"）是否与 PDF 一致
+- 例程 ST 中引用的引脚名是否拼写正确
 
 ### 4. 输出报告
 
