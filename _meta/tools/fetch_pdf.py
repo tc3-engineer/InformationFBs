@@ -183,13 +183,15 @@ def _libs_from_catalog() -> list[str]:
 
 
 def preflight(head_only: bool = True) -> int:
+    CACHE.mkdir(parents=True, exist_ok=True)
     libs = _libs_from_catalog()
     out = []
     for lib in libs:
         url = URL_TMPL.format(lib=lib)
         if head_only:
             status = _http_head(url)
-            out.append({"library": lib, "http_status": status, "ok": status == 200})
+            # 200 = full GET fallback, 206 = Range GET partial content; both reachable.
+            out.append({"library": lib, "http_status": status, "ok": status in (200, 206)})
         else:
             meta = fetch(lib)
             out.append(meta)
