@@ -155,6 +155,33 @@ def parse(lib: str) -> list[dict]:
         )
         return m.group(1) if m else None
 
+    # OO parent FB detection: a depth-2 entry whose own body (before the first
+    # depth-3 child heading) contains a recognizable FB declaration. Two
+    # signals work in practice:
+    #   1. "FUNCTION_BLOCK <Name>"      (explicit declaration; with or without EXTENDS)
+    #   2. " Methods\n" + a methods table (parent FB with method children)
+    # Plain category sections like "3.1 Bistable" in Tc2_Standard match neither.
+    def section_is_oo_parent(section: str, title: str) -> bool:
+        sys.path.insert(0, str(Path(__file__).resolve().parent))
+        try:
+            from extract_section import extract as _extract
+        except Exception:
+            return False
+        body = _extract(lib, section)
+        if not body:
+            return False
+        # Cut at first depth-3 child heading.
+        child_pat = re.compile(rf"^\s*{re.escape(section)}\.\d+\s+\w+", re.MULTILINE)
+        cm = child_pat.search(body)
+        own_body = body[: cm.start()] if cm else body
+        # Signal 1: explicit FUNCTION_BLOCK declaration with the section title.
+        if re.search(rf"\bFUNCTION_BLOCK\s+{re.escape(title)}\b", own_body):
+            return True
+        # Signal 2: parent has a "Methods" table heading.
+        if re.search(r"^\s*Methods\s*$", own_body, re.MULTILINE):
+            return True
+        return False
+
     for sec, title, page in matches:
         depth = sec.count(".") + 1
 
@@ -197,6 +224,26 @@ def parse(lib: str) -> list[dict]:
                     )
                 else:
                     current_category = title
+            elif (
+                sec in has_children
+                and looks_like_leaf_name(title)
+                and current_group_kind == "FB"
+                and section_is_oo_parent(sec, title)
+            ):
+                # OO parent FB: emit it as its own entry and use its title as
+                # the category for child methods.
+                entries.append(
+                    {
+                        "section": sec,
+                        "name": title,
+                        "type": "FB",
+                        "category": current_group,
+                        "page": page,
+                        "depth": depth,
+                        "is_parent": True,
+                    }
+                )
+                current_category = title
             else:
                 current_category = title
             continue
@@ -204,11 +251,13 @@ def parse(lib: str) -> list[dict]:
         if depth >= 3:
             if not looks_like_leaf_name(title):
                 continue
+            # If under an OO parent, mark child as method.
+            entry_type = current_group_kind
             entries.append(
                 {
                     "section": sec,
                     "name": title,
-                    "type": current_group_kind,
+                    "type": entry_type,
                     "category": current_category or current_group,
                     "page": page,
                     "depth": depth,

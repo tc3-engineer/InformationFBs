@@ -132,6 +132,16 @@ def verify(doc_path: str) -> tuple[int, list[str]]:
     if not section_text:
         return 2, [f"could not extract section {entry['section']} for {name}"]
 
+    # For OO parent FBs (e.g. TC_CoreBoostMonitor with method children at
+    # depth-3), the extracted section text includes the children's bodies and
+    # therefore their VAR_INPUTs. The parent doc only describes its own
+    # interface, so restrict the comparison to the parent's own body.
+    if entry.get("is_parent"):
+        child_pat = re.compile(rf"^\s*{re.escape(entry['section'])}\.\d+\s+\w+", re.MULTILINE)
+        cm = child_pat.search(section_text)
+        if cm:
+            section_text = section_text[: cm.start()]
+
     pdf_vars = _vars_from_text(section_text)
     # Restrict doc VAR scan to the Interface section (above "最小例程" / "Minimum Example")
     interface_doc = re.split(r"##\s*\d*\.?\s*(?:最小例程|Minimum Example)", doc, maxsplit=1)[0]
