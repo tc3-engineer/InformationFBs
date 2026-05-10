@@ -13,9 +13,9 @@
 | Round | Categories | 条目 | 状态 |
 |---|---|---|---|
 | 1 | LCOMPLEX / FLOAT / [Obsolete] / 16-bit fixed-point / Byte order / Library version | 28 | ✅ done |
+| 2 | Time functions | 23 | ✅ done |
 | - | TC_CoreBoostMonitor | 5 | ⏳ pending（OO 结构，需父子模板） |
 | - | [obsolete] FB | 4 | ⏳ pending |
-| - | Time functions | 23 | ⏳ pending |
 | - | T_Arg help functions | 27 | ⏳ pending |
 | - | P[TYPE]_TO_[TYPE] | 26 | ⏳ pending |
 | - | Extended STRING | 30 | ⏳ pending |
@@ -23,6 +23,7 @@
 | - | 64-bit integer (unsigned) | 31 | ⏳ pending |
 | - | Functions（散） | 66 | ⏳ pending |
 | - | Function blocks | 88 | ⏳ pending |
+| - | **当前累计** | **51 / 343** | 14.9% |
 
 ## Round 1 索引（28 条 · 全部 ✅ verified）
 
@@ -77,6 +78,34 @@
 | BE64_TO_HOST | [✅](byte_order/BE64_TO_HOST.md) | [P_Demo_BE64_TO_HOST.xml](examples/P_Demo_BE64_TO_HOST.xml) |
 | BE64_TO_HOSTEX | [✅](byte_order/BE64_TO_HOSTEX.md) | [P_Demo_BE64_TO_HOSTEX.xml](examples/P_Demo_BE64_TO_HOSTEX.xml) |
 | BE128_TO_HOST | [✅](byte_order/BE128_TO_HOST.md) | [P_Demo_BE128_TO_HOST.xml](examples/P_Demo_BE128_TO_HOST.xml) |
+
+### Time functions（23）
+
+| Name | 文档 | 例程 |
+|---|---|---|
+| DT_TO_FILETIME64 | [✅](time_functions/DT_TO_FILETIME64.md) | [P_Demo_DT_TO_FILETIME64.xml](examples/P_Demo_DT_TO_FILETIME64.xml) |
+| DT_TO_SYSTEMTIME | [✅](time_functions/DT_TO_SYSTEMTIME.md) | [P_Demo_DT_TO_SYSTEMTIME.xml](examples/P_Demo_DT_TO_SYSTEMTIME.xml) |
+| F_EuropeanLocalTime | [✅](time_functions/F_EuropeanLocalTime.md) | [P_Demo_F_EuropeanLocalTime.xml](examples/P_Demo_F_EuropeanLocalTime.xml) |
+| F_GetDayOfMonthEx | [✅](time_functions/F_GetDayOfMonthEx.md) | [P_Demo_F_GetDayOfMonthEx.xml](examples/P_Demo_F_GetDayOfMonthEx.xml) |
+| F_GetDayOfWeek | [✅](time_functions/F_GetDayOfWeek.md) | [P_Demo_F_GetDayOfWeek.xml](examples/P_Demo_F_GetDayOfWeek.xml) |
+| F_GetDOYOfYearMonthDay | [✅](time_functions/F_GetDOYOfYearMonthDay.md) | [P_Demo_F_GetDOYOfYearMonthDay.xml](examples/P_Demo_F_GetDOYOfYearMonthDay.xml) |
+| F_GetMaxMonthDays | [✅](time_functions/F_GetMaxMonthDays.md) | [P_Demo_F_GetMaxMonthDays.xml](examples/P_Demo_F_GetMaxMonthDays.xml) |
+| F_GetMonthOfDOY | [✅](time_functions/F_GetMonthOfDOY.md) | [P_Demo_F_GetMonthOfDOY.xml](examples/P_Demo_F_GetMonthOfDOY.xml) |
+| F_GetWeekOfTheYear | [✅](time_functions/F_GetWeekOfTheYear.md) | [P_Demo_F_GetWeekOfTheYear.xml](examples/P_Demo_F_GetWeekOfTheYear.xml) |
+| F_TranslateFileTime64Bias | [✅](time_functions/F_TranslateFileTime64Bias.md) | [P_Demo_F_TranslateFileTime64Bias.xml](examples/P_Demo_F_TranslateFileTime64Bias.xml) |
+| F_YearIsLeapYear | [✅](time_functions/F_YearIsLeapYear.md) | [P_Demo_F_YearIsLeapYear.xml](examples/P_Demo_F_YearIsLeapYear.xml) |
+| FILETIME64_TO_DT | [✅](time_functions/FILETIME64_TO_DT.md) | [P_Demo_FILETIME64_TO_DT.xml](examples/P_Demo_FILETIME64_TO_DT.xml) |
+| FILETIME64_TO_ISO8601 | [✅](time_functions/FILETIME64_TO_ISO8601.md) | [P_Demo_FILETIME64_TO_ISO8601.xml](examples/P_Demo_FILETIME64_TO_ISO8601.xml) |
+| FILETIME64_TO_SYSTEMTIME | [✅](time_functions/FILETIME64_TO_SYSTEMTIME.md) | [P_Demo_FILETIME64_TO_SYSTEMTIME.xml](examples/P_Demo_FILETIME64_TO_SYSTEMTIME.xml) |
+| FILETIME64_TO_TOD | [✅](time_functions/FILETIME64_TO_TOD.md) | [P_Demo_FILETIME64_TO_TOD.xml](examples/P_Demo_FILETIME64_TO_TOD.xml) |
+| OTSTRUCT_TO_TIME | [✅](time_functions/OTSTRUCT_TO_TIME.md) | [P_Demo_OTSTRUCT_TO_TIME.xml](examples/P_Demo_OTSTRUCT_TO_TIME.xml) |
+| STRING_TO_SYSTEMTIME | [✅](time_functions/STRING_TO_SYSTEMTIME.md) | [P_Demo_STRING_TO_SYSTEMTIME.xml](examples/P_Demo_STRING_TO_SYSTEMTIME.xml) |
+| SYSTEMTIME_TO_DT | [✅](time_functions/SYSTEMTIME_TO_DT.md) | [P_Demo_SYSTEMTIME_TO_DT.xml](examples/P_Demo_SYSTEMTIME_TO_DT.xml) |
+| SYSTEMTIME_TO_FILETIME64 | [✅](time_functions/SYSTEMTIME_TO_FILETIME64.md) | [P_Demo_SYSTEMTIME_TO_FILETIME64.xml](examples/P_Demo_SYSTEMTIME_TO_FILETIME64.xml) |
+| SYSTEMTIME_TO_ISO8601 | [✅](time_functions/SYSTEMTIME_TO_ISO8601.md) | [P_Demo_SYSTEMTIME_TO_ISO8601.xml](examples/P_Demo_SYSTEMTIME_TO_ISO8601.xml) |
+| SYSTEMTIME_TO_STRING | [✅](time_functions/SYSTEMTIME_TO_STRING.md) | [P_Demo_SYSTEMTIME_TO_STRING.xml](examples/P_Demo_SYSTEMTIME_TO_STRING.xml) |
+| SYSTEMTIME_TO_TOD | [✅](time_functions/SYSTEMTIME_TO_TOD.md) | [P_Demo_SYSTEMTIME_TO_TOD.xml](examples/P_Demo_SYSTEMTIME_TO_TOD.xml) |
+| TIME_TO_OTSTRUCT | [✅](time_functions/TIME_TO_OTSTRUCT.md) | [P_Demo_TIME_TO_OTSTRUCT.xml](examples/P_Demo_TIME_TO_OTSTRUCT.xml) |
 
 ### Library version（1）
 
