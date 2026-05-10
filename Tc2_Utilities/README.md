@@ -15,14 +15,14 @@
 | 1 | LCOMPLEX / FLOAT / [Obsolete] / 16-bit fixed-point / Byte order / Library version | 28 | ✅ done |
 | 2 | Time functions | 23 | ✅ done |
 | 3 | TC_CoreBoostMonitor (parent FB + 5 methods) + [obsolete] FB (4) | 10 | ✅ done |
-| - | T_Arg help functions | 27 | ⏳ pending |
+| 4 | T_Arg help functions | 27 | ✅ done |
 | - | P[TYPE]_TO_[TYPE] | 26 | ⏳ pending |
 | - | Extended STRING | 30 | ⏳ pending |
 | - | 64-bit functions (signed) | 15 | ⏳ pending |
 | - | 64-bit integer (unsigned) | 31 | ⏳ pending |
 | - | Functions（散） | 66 | ⏳ pending |
 | - | Function blocks (剩余) | ~83 | ⏳ pending |
-| - | **当前累计** | **61 / 344** | 17.7% |
+| - | **当前累计** | **88 / 344** | 25.6% |
 
 ## Round 1 索引（28 条 · 全部 ✅ verified）
 
@@ -125,6 +125,38 @@
 | FB_GetDeviceIdentification | [⚠️ deprecated](obsolete_fb/FB_GetDeviceIdentification.md) | [P_Demo_FB_GetDeviceIdentification.xml](examples/P_Demo_FB_GetDeviceIdentification.xml) |
 | FB_FileTimeToTzSpecificLocalTime | [⚠️ deprecated](obsolete_fb/FB_FileTimeToTzSpecificLocalTime.md) | [P_Demo_FB_FileTimeToTzSpecificLocalTime.xml](examples/P_Demo_FB_FileTimeToTzSpecificLocalTime.xml) |
 | FB_TzSpecificLocalTimeToFileTime | [⚠️ deprecated](obsolete_fb/FB_TzSpecificLocalTimeToFileTime.md) | [P_Demo_FB_TzSpecificLocalTimeToFileTime.xml](examples/P_Demo_FB_TzSpecificLocalTimeToFileTime.xml) |
+
+### T_Arg help functions（27）
+
+| Name | 文档 | 例程 |
+|---|---|---|
+| F_ARGCMP | [✅](t_arg/F_ARGCMP.md) | [P_Demo_F_ARGCMP.xml](examples/P_Demo_F_ARGCMP.xml) |
+| F_ARGCPY | [✅](t_arg/F_ARGCPY.md) | [P_Demo_F_ARGCPY.xml](examples/P_Demo_F_ARGCPY.xml) |
+| F_ARGISZERO | [✅](t_arg/F_ARGISZERO.md) | [P_Demo_F_ARGISZERO.xml](examples/P_Demo_F_ARGISZERO.xml) |
+| F_BIGTYPE | [✅](t_arg/F_BIGTYPE.md) | [P_Demo_F_BIGTYPE.xml](examples/P_Demo_F_BIGTYPE.xml) |
+| F_BOOL | [✅](t_arg/F_BOOL.md) | [P_Demo_F_BOOL.xml](examples/P_Demo_F_BOOL.xml) |
+| F_BYTE | [✅](t_arg/F_BYTE.md) | [P_Demo_F_BYTE.xml](examples/P_Demo_F_BYTE.xml) |
+| F_DINT | [✅](t_arg/F_DINT.md) | [P_Demo_F_DINT.xml](examples/P_Demo_F_DINT.xml) |
+| F_DWORD | [✅](t_arg/F_DWORD.md) | [P_Demo_F_DWORD.xml](examples/P_Demo_F_DWORD.xml) |
+| F_HUGE | [✅](t_arg/F_HUGE.md) | [P_Demo_F_HUGE.xml](examples/P_Demo_F_HUGE.xml) |
+| F_INT | [✅](t_arg/F_INT.md) | [P_Demo_F_INT.xml](examples/P_Demo_F_INT.xml) |
+| F_LARGE | [✅](t_arg/F_LARGE.md) | [P_Demo_F_LARGE.xml](examples/P_Demo_F_LARGE.xml) |
+| F_LINT | [✅](t_arg/F_LINT.md) | [P_Demo_F_LINT.xml](examples/P_Demo_F_LINT.xml) |
+| F_LREAL | [✅](t_arg/F_LREAL.md) | [P_Demo_F_LREAL.xml](examples/P_Demo_F_LREAL.xml) |
+| F_LWORD | [✅](t_arg/F_LWORD.md) | [P_Demo_F_LWORD.xml](examples/P_Demo_F_LWORD.xml) |
+| F_REAL | [✅](t_arg/F_REAL.md) | [P_Demo_F_REAL.xml](examples/P_Demo_F_REAL.xml) |
+| F_SINT | [✅](t_arg/F_SINT.md) | [P_Demo_F_SINT.xml](examples/P_Demo_F_SINT.xml) |
+| F_STRING | [✅](t_arg/F_STRING.md) | [P_Demo_F_STRING.xml](examples/P_Demo_F_STRING.xml) |
+| F_STRINGEx | [✅](t_arg/F_STRINGEx.md) | [P_Demo_F_STRINGEx.xml](examples/P_Demo_F_STRINGEx.xml) |
+| F_UDINT | [✅](t_arg/F_UDINT.md) | [P_Demo_F_UDINT.xml](examples/P_Demo_F_UDINT.xml) |
+| F_UHUGE | [✅](t_arg/F_UHUGE.md) | [P_Demo_F_UHUGE.xml](examples/P_Demo_F_UHUGE.xml) |
+| F_UINT | [✅](t_arg/F_UINT.md) | [P_Demo_F_UINT.xml](examples/P_Demo_F_UINT.xml) |
+| F_ULARGE | [✅](t_arg/F_ULARGE.md) | [P_Demo_F_ULARGE.xml](examples/P_Demo_F_ULARGE.xml) |
+| F_ULINT | [✅](t_arg/F_ULINT.md) | [P_Demo_F_ULINT.xml](examples/P_Demo_F_ULINT.xml) |
+| F_USINT | [✅](t_arg/F_USINT.md) | [P_Demo_F_USINT.xml](examples/P_Demo_F_USINT.xml) |
+| F_WORD | [✅](t_arg/F_WORD.md) | [P_Demo_F_WORD.xml](examples/P_Demo_F_WORD.xml) |
+| F_PVOID | [✅](t_arg/F_PVOID.md) | [P_Demo_F_PVOID.xml](examples/P_Demo_F_PVOID.xml) |
+| IsFinite | [✅](t_arg/IsFinite.md) | [P_Demo_IsFinite.xml](examples/P_Demo_IsFinite.xml) |
 
 ### Library version（1）
 

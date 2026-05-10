@@ -25,7 +25,7 @@
 |---|---|---|---|---|
 | Tc2_Standard | 1.3.4 | 32 | ✅ done (32/32) | IEC 61131-3 标准 POU + 库版本常量 |
 | Tc2_System | 1.17.1 | ~150 | ⏳ pending | ADS、文件、任务、时间、字符串、EventLogger 接入 |
-| Tc2_Utilities | 2.18.2 | 344 | 🚧 in_progress (61/344, Round 1+2+3) | 通用工具（97 FB + 1 OO parent + 245 FC + 1 GVL）·分批进行 |
+| Tc2_Utilities | 2.18.2 | 344 | 🚧 in_progress (88/344, Round 1-4) | 通用工具（97 FB + 1 OO parent + 245 FC + 1 GVL）·分批进行 |
 | Tc2_Math | 1.3.3 | 9 | ✅ done (9/9) | 取整 / 模运算（无矩阵/统计/滤波；那些在 Tc3_Controller） |
 | Tc3_EventLogger | 1.6.2 | ~20 | ⏳ pending | 事件/报警分发 |
 
