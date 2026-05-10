@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project xmlns="http://www.plcopen.org/xml/tc6_0200">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-10T08:00:00"/>
+  <contentHeader name="Tc2_Standard.LTON Demo" modificationDateTime="2026-05-10T08:00:00">
+    <coordinateInfo>
+      <fbd><scaling x="1" y="1"/></fbd>
+      <ld><scaling x="1" y="1"/></ld>
+      <sfc><scaling x="1" y="1"/></sfc>
+    </coordinateInfo>
+  </contentHeader>
+  <types>
+    <dataTypes/>
+    <pous>
+      <pou name="P_Demo_LTON" pouType="program">
+        <interface>
+          <localVars>
+            <variable name="fbLTON">
+              <type><derived name="LTON"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">Timer (LTIME) 实例</xhtml></documentation>
+            </variable>
+            <variable name="bRawIn">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">原始输入（可能抖动）</xhtml></documentation>
+            </variable>
+            <variable name="bStable">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">稳定后输出</xhtml></documentation>
+            </variable>
+            <variable name="ltElapsed">
+              <type><LTIME/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">已稳定时间</xhtml></documentation>
+            </variable>
+          </localVars>
+        </interface>
+        <body>
+          <ST>
+            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
+// Tc2_Standard.LTON 演示程序
+// ============================================================
+// 场景：高频脉冲计数器消抖：信号稳定 50 μs 后才认为有效
+// 验证步骤：
+//   1. 把本 PROGRAM 加到 PlcTask 调用列表
+//   2. 编译并登录目标
+//   1. bRawIn 持续 TRUE 满 50 μs → bStable = TRUE
+//   2. bRawIn 中途变 FALSE → ltElapsed 立刻归零，bStable 保持 FALSE
+// ============================================================
+
+fbLTON(
+    IN := bRawIn,
+    PT := LTIME#50US,
+    Q  =&gt; bStable,
+    ET =&gt; ltElapsed
+);
+</xhtml>
+          </ST>
+        </body>
+      </pou>
+    </pous>
+  </types>
+  <instances>
+    <configurations/>
+  </instances>
+</project>

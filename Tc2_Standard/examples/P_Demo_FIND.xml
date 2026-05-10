@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project xmlns="http://www.plcopen.org/xml/tc6_0200">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-10T08:00:00"/>
+  <contentHeader name="Tc2_Standard.FIND Demo" modificationDateTime="2026-05-10T08:00:00">
+    <coordinateInfo>
+      <fbd><scaling x="1" y="1"/></fbd>
+      <ld><scaling x="1" y="1"/></ld>
+      <sfc><scaling x="1" y="1"/></sfc>
+    </coordinateInfo>
+  </contentHeader>
+  <types>
+    <dataTypes/>
+    <pous>
+      <pou name="P_Demo_FIND" pouType="program">
+        <interface>
+          <localVars>
+            <variable name="sResult">
+              <type><INT/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">FIND 的返回值（监视）</xhtml></documentation>
+            </variable>
+            <variable name="bRun">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">触发一次 FIND 调用</xhtml></documentation>
+            </variable>
+          </localVars>
+        </interface>
+        <body>
+          <ST>
+            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
+// Tc2_Standard.FIND 演示程序（FUNCTION）
+// ============================================================
+// 场景：判断字符串中是否含某串
+// 验证步骤：
+//   1. 编译并登录目标
+//   2. 强制 bRun := TRUE 一个周期
+//   3. 观察 sResult = 3
+//   4. bRun 自动复位
+// ============================================================
+
+IF bRun THEN
+    sResult := FIND('SUXYSI','XY');
+    bRun := FALSE;
+END_IF;
+</xhtml>
+          </ST>
+        </body>
+      </pou>
+    </pous>
+  </types>
+  <instances>
+    <configurations/>
+  </instances>
+</project>

@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project xmlns="http://www.plcopen.org/xml/tc6_0200">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-10T08:00:00"/>
+  <contentHeader name="Tc2_Standard.CTU Demo" modificationDateTime="2026-05-10T08:00:00">
+    <coordinateInfo>
+      <fbd><scaling x="1" y="1"/></fbd>
+      <ld><scaling x="1" y="1"/></ld>
+      <sfc><scaling x="1" y="1"/></sfc>
+    </coordinateInfo>
+  </contentHeader>
+  <types>
+    <dataTypes/>
+    <pous>
+      <pou name="P_Demo_CTU" pouType="program">
+        <interface>
+          <localVars>
+            <variable name="fbCTU">
+              <type><derived name="CTU"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">Counter 实例</xhtml></documentation>
+            </variable>
+            <variable name="bReset">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">复位计数到 0</xhtml></documentation>
+            </variable>
+            <variable name="bCountUp">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">每个产品到位给一次上升沿</xhtml></documentation>
+            </variable>
+            <variable name="bFull">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">达到 10 件时 TRUE</xhtml></documentation>
+            </variable>
+            <variable name="nCV">
+              <type><WORD/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">已累计件数（监视）</xhtml></documentation>
+            </variable>
+          </localVars>
+        </interface>
+        <body>
+          <ST>
+            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
+// Tc2_Standard.CTU 演示程序
+// ============================================================
+// 场景：累计 10 个产品后发出'换托盘'信号
+// 验证步骤：
+//   1. 把本 PROGRAM 加到 PlcTask 调用列表
+//   2. 编译并登录目标
+//   1. 强制 bReset := TRUE 一个周期 → nCV 归 0、bFull = FALSE
+//   2. 重复给 bCountUp 上升沿 10 次 → nCV 增到 10、bFull = TRUE
+//   3. 再继续给 bCountUp 上升沿 → CV 继续增加（不会自动停止）
+// ============================================================
+
+fbCTU(
+    CU    := bCountUp,
+    RESET := bReset,
+    PV    := WORD#10,
+    Q     =&gt; bFull,
+    CV    =&gt; nCV
+);
+</xhtml>
+          </ST>
+        </body>
+      </pou>
+    </pous>
+  </types>
+  <instances>
+    <configurations/>
+  </instances>
+</project>

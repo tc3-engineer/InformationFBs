@@ -4,51 +4,46 @@
 - **PDF 发布日期**: `2026-04-08`
 - **Source PDF**: https://download.beckhoff.com/download/document/automation/twincat3/TwinCAT_3_PLC_Lib_Tc2_Standard_EN.pdf
 - **InfoSys**: https://infosys.beckhoff.com/content/1033/tcplclib_tc2_standard/
-- **Discover 日期**: 2026-05-09
+- **Discover 日期**: 2026-05-09（重新解析 2026-05-10）
 - **总条目数**: 31（FB 13 + FC 18）
+- **状态**: ✅ done（31/31 verified）
 
-| # | Name | Type | Category | Output Path | Status |
-|---|---|---|---|---|---|
-| 1 | RS | FB | Bistable | `Tc2_Standard/bistable/RS.md` | verified ✅ |
-| 2 | SR | FB | Bistable | `Tc2_Standard/bistable/SR.md` | verified ✅ |
-| 3 | CTD | FB | Counter | `Tc2_Standard/counter/CTD.md` | pending |
-| 4 | CTU | FB | Counter | `Tc2_Standard/counter/CTU.md` | pending |
-| 5 | CTUD | FB | Counter | `Tc2_Standard/counter/CTUD.md` | pending |
-| 6 | TOF | FB | Timer | `Tc2_Standard/timer/TOF.md` | pending |
-| 7 | TON | FB | Timer | `Tc2_Standard/timer/TON.md` | verified ✅ |
-| 8 | TP | FB | Timer | `Tc2_Standard/timer/TP.md` | pending |
-| 9 | LTOF | FB | Timer (LTIME) | `Tc2_Standard/timer_ltime/LTOF.md` | pending |
-| 10 | LTON | FB | Timer (LTIME) | `Tc2_Standard/timer_ltime/LTON.md` | pending |
-| 11 | LTP | FB | Timer (LTIME) | `Tc2_Standard/timer_ltime/LTP.md` | pending |
-| 12 | F_TRIG | FB | Trigger | `Tc2_Standard/trigger/F_TRIG.md` | pending |
-| 13 | R_TRIG | FB | Trigger | `Tc2_Standard/trigger/R_TRIG.md` | pending |
-| 14 | CONCAT | FC | String functions | `Tc2_Standard/string/CONCAT.md` | pending |
-| 15 | DELETE | FC | String functions | `Tc2_Standard/string/DELETE.md` | pending |
-| 16 | FIND | FC | String functions | `Tc2_Standard/string/FIND.md` | pending |
-| 17 | INSERT | FC | String functions | `Tc2_Standard/string/INSERT.md` | pending |
-| 18 | LEFT | FC | String functions | `Tc2_Standard/string/LEFT.md` | pending |
-| 19 | LEN | FC | String functions | `Tc2_Standard/string/LEN.md` | pending |
-| 20 | MID | FC | String functions | `Tc2_Standard/string/MID.md` | pending |
-| 21 | REPLACE | FC | String functions | `Tc2_Standard/string/REPLACE.md` | pending |
-| 22 | RIGHT | FC | String functions | `Tc2_Standard/string/RIGHT.md` | pending |
-| 23 | WCONCAT | FC | String functions (WSTRING) | `Tc2_Standard/wstring/WCONCAT.md` | pending |
-| 24 | WDELETE | FC | String functions (WSTRING) | `Tc2_Standard/wstring/WDELETE.md` | pending |
-| 25 | WFIND | FC | String functions (WSTRING) | `Tc2_Standard/wstring/WFIND.md` | pending |
-| 26 | WINSERT | FC | String functions (WSTRING) | `Tc2_Standard/wstring/WINSERT.md` | pending |
-| 27 | WLEFT | FC | String functions (WSTRING) | `Tc2_Standard/wstring/WLEFT.md` | pending |
-| 28 | WLEN | FC | String functions (WSTRING) | `Tc2_Standard/wstring/WLEN.md` | pending |
-| 29 | WMID | FC | String functions (WSTRING) | `Tc2_Standard/wstring/WMID.md` | pending |
-| 30 | WREPLACE | FC | String functions (WSTRING) | `Tc2_Standard/wstring/WREPLACE.md` | pending |
-| 31 | WRIGHT | FC | String functions (WSTRING) | `Tc2_Standard/wstring/WRIGHT.md` | pending |
+| # | Section | Name | Type | Category | Output Path | Status |
+|---|---|---|---|---|---|---|
+| 1 | 3.1.1 | RS | FB | Bistable | `Tc2_Standard/bistable/RS.md` | verified ✅ |
+| 2 | 3.1.2 | SR | FB | Bistable | `Tc2_Standard/bistable/SR.md` | verified ✅ |
+| 3 | 3.2.1 | CTD | FB | Counter | `Tc2_Standard/counter/CTD.md` | verified ✅ |
+| 4 | 3.2.2 | CTU | FB | Counter | `Tc2_Standard/counter/CTU.md` | verified ✅ |
+| 5 | 3.2.3 | CTUD | FB | Counter | `Tc2_Standard/counter/CTUD.md` | verified ✅ |
+| 6 | 3.3.1 | TOF | FB | Timer | `Tc2_Standard/timer/TOF.md` | verified ✅ |
+| 7 | 3.3.2 | TON | FB | Timer | `Tc2_Standard/timer/TON.md` | verified ✅ |
+| 8 | 3.3.3 | TP | FB | Timer | `Tc2_Standard/timer/TP.md` | verified ✅ |
+| 9 | 3.4.1 | LTOF | FB | Timer (LTIME) | `Tc2_Standard/timer_ltime/LTOF.md` | verified ✅ |
+| 10 | 3.4.2 | LTON | FB | Timer (LTIME) | `Tc2_Standard/timer_ltime/LTON.md` | verified ✅ |
+| 11 | 3.4.3 | LTP | FB | Timer (LTIME) | `Tc2_Standard/timer_ltime/LTP.md` | verified ✅ |
+| 12 | 3.5.1 | F_TRIG | FB | Trigger | `Tc2_Standard/trigger/F_TRIG.md` | verified ✅ |
+| 13 | 3.5.2 | R_TRIG | FB | Trigger | `Tc2_Standard/trigger/R_TRIG.md` | verified ✅ |
+| 14 | 4.1 | CONCAT | FC | String functions | `Tc2_Standard/string/CONCAT.md` | verified ✅ |
+| 15 | 4.2 | DELETE | FC | String functions | `Tc2_Standard/string/DELETE.md` | verified ✅ |
+| 16 | 4.3 | FIND | FC | String functions | `Tc2_Standard/string/FIND.md` | verified ✅ |
+| 17 | 4.4 | INSERT | FC | String functions | `Tc2_Standard/string/INSERT.md` | verified ✅ |
+| 18 | 4.5 | LEFT | FC | String functions | `Tc2_Standard/string/LEFT.md` | verified ✅ |
+| 19 | 4.6 | LEN | FC | String functions | `Tc2_Standard/string/LEN.md` | verified ✅ |
+| 20 | 4.7 | MID | FC | String functions | `Tc2_Standard/string/MID.md` | verified ✅ |
+| 21 | 4.8 | REPLACE | FC | String functions | `Tc2_Standard/string/REPLACE.md` | verified ✅ |
+| 22 | 4.9 | RIGHT | FC | String functions | `Tc2_Standard/string/RIGHT.md` | verified ✅ |
+| 23 | 5.1 | WCONCAT | FC | String functions (WSTRING) | `Tc2_Standard/wstring/WCONCAT.md` | verified ✅ |
+| 24 | 5.2 | WDELETE | FC | String functions (WSTRING) | `Tc2_Standard/wstring/WDELETE.md` | verified ✅ |
+| 25 | 5.3 | WFIND | FC | String functions (WSTRING) | `Tc2_Standard/wstring/WFIND.md` | verified ✅ |
+| 26 | 5.4 | WINSERT | FC | String functions (WSTRING) | `Tc2_Standard/wstring/WINSERT.md` | verified ✅ |
+| 27 | 5.5 | WLEFT | FC | String functions (WSTRING) | `Tc2_Standard/wstring/WLEFT.md` | verified ✅ |
+| 28 | 5.6 | WLEN | FC | String functions (WSTRING) | `Tc2_Standard/wstring/WLEN.md` | verified ✅ |
+| 29 | 5.7 | WMID | FC | String functions (WSTRING) | `Tc2_Standard/wstring/WMID.md` | verified ✅ |
+| 30 | 5.8 | WREPLACE | FC | String functions (WSTRING) | `Tc2_Standard/wstring/WREPLACE.md` | verified ✅ |
+| 31 | 5.9 | WRIGHT | FC | String functions (WSTRING) | `Tc2_Standard/wstring/WRIGHT.md` | verified ✅ |
 
-## 推荐执行顺序
+## 完成证据
 
-```
-/doc-shard Tc2_Standard Bistable           # 2 条（RS、SR 已 verified，跳过）
-/doc-shard Tc2_Standard Counter            # 3 条
-/doc-shard Tc2_Standard Timer              # 3 条（TON 已 verified，跳过）
-/doc-shard Tc2_Standard Timer (LTIME)      # 3 条
-/doc-shard Tc2_Standard Trigger            # 2 条
-/doc-shard Tc2_Standard String functions   # 9 条 → 拆 1 批（≤12）
-/doc-shard Tc2_Standard String functions (WSTRING)  # 9 条
-```
+- 全部 31 条由 `python3 _meta/tools/verify_doc.py` 退出码 0
+- 全部 31 个例程由 `python3 _meta/tools/lint_plcopen.py` 退出码 0
+- verify 报告：`_meta/verify/Tc2_Standard/<name>.md`

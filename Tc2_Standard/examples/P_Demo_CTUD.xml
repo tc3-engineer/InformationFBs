@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project xmlns="http://www.plcopen.org/xml/tc6_0200">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-10T08:00:00"/>
+  <contentHeader name="Tc2_Standard.CTUD Demo" modificationDateTime="2026-05-10T08:00:00">
+    <coordinateInfo>
+      <fbd><scaling x="1" y="1"/></fbd>
+      <ld><scaling x="1" y="1"/></ld>
+      <sfc><scaling x="1" y="1"/></sfc>
+    </coordinateInfo>
+  </contentHeader>
+  <types>
+    <dataTypes/>
+    <pous>
+      <pou name="P_Demo_CTUD" pouType="program">
+        <interface>
+          <localVars>
+            <variable name="fbCTUD">
+              <type><derived name="CTUD"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">Counter 实例</xhtml></documentation>
+            </variable>
+            <variable name="bIn">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">进料：CV+1</xhtml></documentation>
+            </variable>
+            <variable name="bOut">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">出料：CV-1</xhtml></documentation>
+            </variable>
+            <variable name="bReset">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">清零</xhtml></documentation>
+            </variable>
+            <variable name="bLoad">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">装入满库 8 件</xhtml></documentation>
+            </variable>
+            <variable name="bFull">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">已满 (CV &gt;= 8)</xhtml></documentation>
+            </variable>
+            <variable name="bEmpty">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">已空 (CV = 0)</xhtml></documentation>
+            </variable>
+            <variable name="nCV">
+              <type><WORD/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">当前库存</xhtml></documentation>
+            </variable>
+          </localVars>
+        </interface>
+        <body>
+          <ST>
+            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
+// Tc2_Standard.CTUD 演示程序
+// ============================================================
+// 场景：进料增计数、出料减计数，限位 8 件库存
+// 验证步骤：
+//   1. 把本 PROGRAM 加到 PlcTask 调用列表
+//   2. 编译并登录目标
+//   1. bReset 一次 → nCV = 0、bEmpty = TRUE
+//   2. bIn 上升沿 8 次 → nCV = 8、bFull = TRUE
+//   3. bOut 上升沿 8 次 → nCV = 0、bEmpty = TRUE
+//   4. bLoad 一次 → nCV = 8、bFull = TRUE（一键装满）
+// ============================================================
+
+fbCTUD(
+    CU    := bIn,
+    CD    := bOut,
+    RESET := bReset,
+    LOAD  := bLoad,
+    PV    := WORD#8,
+    QU    =&gt; bFull,
+    QD    =&gt; bEmpty,
+    CV    =&gt; nCV
+);
+</xhtml>
+          </ST>
+        </body>
+      </pou>
+    </pous>
+  </types>
+  <instances>
+    <configurations/>
+  </instances>
+</project>

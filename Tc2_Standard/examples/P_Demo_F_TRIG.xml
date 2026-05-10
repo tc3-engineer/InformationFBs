@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project xmlns="http://www.plcopen.org/xml/tc6_0200">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-10T08:00:00"/>
+  <contentHeader name="Tc2_Standard.F_TRIG Demo" modificationDateTime="2026-05-10T08:00:00">
+    <coordinateInfo>
+      <fbd><scaling x="1" y="1"/></fbd>
+      <ld><scaling x="1" y="1"/></ld>
+      <sfc><scaling x="1" y="1"/></sfc>
+    </coordinateInfo>
+  </contentHeader>
+  <types>
+    <dataTypes/>
+    <pous>
+      <pou name="P_Demo_F_TRIG" pouType="program">
+        <interface>
+          <localVars>
+            <variable name="fbF_TRIG">
+              <type><derived name="F_TRIG"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">Trigger 实例</xhtml></documentation>
+            </variable>
+            <variable name="bButton">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">按钮输入（按下时 TRUE）</xhtml></documentation>
+            </variable>
+            <variable name="bRelease">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">按钮释放沿（单周期脉冲）</xhtml></documentation>
+            </variable>
+          </localVars>
+        </interface>
+        <body>
+          <ST>
+            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
+// Tc2_Standard.F_TRIG 演示程序
+// ============================================================
+// 场景：按钮释放（下降沿）时触发一次动作
+// 验证步骤：
+//   1. 把本 PROGRAM 加到 PlcTask 调用列表
+//   2. 编译并登录目标
+//   1. bButton := TRUE 保持任意时长 → bRelease 始终 FALSE
+//   2. bButton := FALSE → bRelease 在该周期变 TRUE，下一周期回 FALSE
+// ============================================================
+
+fbF_TRIG(
+    CLK := bButton,
+    Q   =&gt; bRelease
+);
+</xhtml>
+          </ST>
+        </body>
+      </pou>
+    </pous>
+  </types>
+  <instances>
+    <configurations/>
+  </instances>
+</project>
