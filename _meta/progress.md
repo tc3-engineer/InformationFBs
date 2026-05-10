@@ -126,3 +126,15 @@
 2026-05-10T12:00:00Z | Tc2_Utilities | Time functions | SYSTEMTIME_TO_STRING       | verified | doc-shard auto-gen
 2026-05-10T12:00:00Z | Tc2_Utilities | Time functions | SYSTEMTIME_TO_TOD          | verified | doc-shard auto-gen
 2026-05-10T12:00:00Z | Tc2_Utilities | Time functions | TIME_TO_OTSTRUCT           | verified | doc-shard auto-gen
+
+# 2026-05-10 batch · Tc2_Utilities Round 3 (TC_CoreBoostMonitor + obsolete FBs, 10 entries)
+2026-05-10T13:00:00Z | Tc2_Utilities | Function blocks      | TC_CoreBoostMonitor               | verified | parent FB (OO)
+2026-05-10T13:00:00Z | Tc2_Utilities | TC_CoreBoostMonitor  | GetAllRtCoreThrottling            | verified | METHOD on TC_CoreBoostMonitor
+2026-05-10T13:00:00Z | Tc2_Utilities | TC_CoreBoostMonitor  | GetCoreFrequency                  | verified | METHOD on TC_CoreBoostMonitor
+2026-05-10T13:00:00Z | Tc2_Utilities | TC_CoreBoostMonitor  | GetCoreTemperature                | verified | METHOD on TC_CoreBoostMonitor
+2026-05-10T13:00:00Z | Tc2_Utilities | TC_CoreBoostMonitor  | GetCoreThrottling                 | verified | METHOD on TC_CoreBoostMonitor
+2026-05-10T13:00:00Z | Tc2_Utilities | TC_CoreBoostMonitor  | GetPowerConsumption               | verified | METHOD on TC_CoreBoostMonitor
+2026-05-10T13:00:00Z | Tc2_Utilities | [obsolete]           | FB_AdsReadEvents                  | verified | deprecated; replaced by Tc3_EventLogger
+2026-05-10T13:00:00Z | Tc2_Utilities | [obsolete]           | FB_GetDeviceIdentification        | verified | deprecated; use *Ex variant
+2026-05-10T13:00:00Z | Tc2_Utilities | [obsolete]           | FB_FileTimeToTzSpecificLocalTime  | verified | deprecated; use FB_FileTime64ToTz...
+2026-05-10T13:00:00Z | Tc2_Utilities | [obsolete]           | FB_TzSpecificLocalTimeToFileTime  | verified | deprecated; use FB_TzSpecificLocalTimeToFileTime64

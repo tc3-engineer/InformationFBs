@@ -14,16 +14,15 @@
 |---|---|---|---|
 | 1 | LCOMPLEX / FLOAT / [Obsolete] / 16-bit fixed-point / Byte order / Library version | 28 | ✅ done |
 | 2 | Time functions | 23 | ✅ done |
-| - | TC_CoreBoostMonitor | 5 | ⏳ pending（OO 结构，需父子模板） |
-| - | [obsolete] FB | 4 | ⏳ pending |
+| 3 | TC_CoreBoostMonitor (parent FB + 5 methods) + [obsolete] FB (4) | 10 | ✅ done |
 | - | T_Arg help functions | 27 | ⏳ pending |
 | - | P[TYPE]_TO_[TYPE] | 26 | ⏳ pending |
 | - | Extended STRING | 30 | ⏳ pending |
 | - | 64-bit functions (signed) | 15 | ⏳ pending |
 | - | 64-bit integer (unsigned) | 31 | ⏳ pending |
 | - | Functions（散） | 66 | ⏳ pending |
-| - | Function blocks | 88 | ⏳ pending |
-| - | **当前累计** | **51 / 343** | 14.9% |
+| - | Function blocks (剩余) | ~83 | ⏳ pending |
+| - | **当前累计** | **61 / 344** | 17.7% |
 
 ## Round 1 索引（28 条 · 全部 ✅ verified）
 
@@ -106,6 +105,26 @@
 | SYSTEMTIME_TO_STRING | [✅](time_functions/SYSTEMTIME_TO_STRING.md) | [P_Demo_SYSTEMTIME_TO_STRING.xml](examples/P_Demo_SYSTEMTIME_TO_STRING.xml) |
 | SYSTEMTIME_TO_TOD | [✅](time_functions/SYSTEMTIME_TO_TOD.md) | [P_Demo_SYSTEMTIME_TO_TOD.xml](examples/P_Demo_SYSTEMTIME_TO_TOD.xml) |
 | TIME_TO_OTSTRUCT | [✅](time_functions/TIME_TO_OTSTRUCT.md) | [P_Demo_TIME_TO_OTSTRUCT.xml](examples/P_Demo_TIME_TO_OTSTRUCT.xml) |
+
+### TC_CoreBoostMonitor（父 FB + 5 methods）
+
+| Name | 文档 | 例程 |
+|---|---|---|
+| **TC_CoreBoostMonitor** (父 FB) | [✅](tc_coreboostmonitor/TC_CoreBoostMonitor.md) | [P_Demo_TC_CoreBoostMonitor.xml](examples/P_Demo_TC_CoreBoostMonitor.xml) |
+| GetAllRtCoreThrottling | [✅](tc_coreboostmonitor/GetAllRtCoreThrottling.md) | [P_Demo_GetAllRtCoreThrottling.xml](examples/P_Demo_GetAllRtCoreThrottling.xml) |
+| GetCoreFrequency | [✅](tc_coreboostmonitor/GetCoreFrequency.md) | [P_Demo_GetCoreFrequency.xml](examples/P_Demo_GetCoreFrequency.xml) |
+| GetCoreTemperature | [✅](tc_coreboostmonitor/GetCoreTemperature.md) | [P_Demo_GetCoreTemperature.xml](examples/P_Demo_GetCoreTemperature.xml) |
+| GetCoreThrottling | [✅](tc_coreboostmonitor/GetCoreThrottling.md) | [P_Demo_GetCoreThrottling.xml](examples/P_Demo_GetCoreThrottling.xml) |
+| GetPowerConsumption | [✅](tc_coreboostmonitor/GetPowerConsumption.md) | [P_Demo_GetPowerConsumption.xml](examples/P_Demo_GetPowerConsumption.xml) |
+
+### [obsolete] Function blocks（4，已废弃）
+
+| Name | 文档 | 例程 |
+|---|---|---|
+| FB_AdsReadEvents | [⚠️ deprecated](obsolete_fb/FB_AdsReadEvents.md) | [P_Demo_FB_AdsReadEvents.xml](examples/P_Demo_FB_AdsReadEvents.xml) |
+| FB_GetDeviceIdentification | [⚠️ deprecated](obsolete_fb/FB_GetDeviceIdentification.md) | [P_Demo_FB_GetDeviceIdentification.xml](examples/P_Demo_FB_GetDeviceIdentification.xml) |
+| FB_FileTimeToTzSpecificLocalTime | [⚠️ deprecated](obsolete_fb/FB_FileTimeToTzSpecificLocalTime.md) | [P_Demo_FB_FileTimeToTzSpecificLocalTime.xml](examples/P_Demo_FB_FileTimeToTzSpecificLocalTime.xml) |
+| FB_TzSpecificLocalTimeToFileTime | [⚠️ deprecated](obsolete_fb/FB_TzSpecificLocalTimeToFileTime.md) | [P_Demo_FB_TzSpecificLocalTimeToFileTime.xml](examples/P_Demo_FB_TzSpecificLocalTimeToFileTime.xml) |
 
 ### Library version（1）
 
