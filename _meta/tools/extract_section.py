@@ -76,9 +76,37 @@ def main() -> int:
 _orig_extract = extract
 
 
+# Beckhoff PDF footers come in two layouts that pypdf preserves verbatim:
+#   "TE1000 11Version: 1.3.4"   (page number is a separate token)
+#   "TE100010 Version: 1.1.1"   (page number is concatenated into TE<n><pg>)
+# Either pattern is the discriminator we trust to identify a real page-break
+# artifact. We only consume an optional preceding short chapter-title line
+# when this Version line is actually present — otherwise we'd risk eating
+# real body content (e.g. the first declaration of a VAR_INPUT block).
+_VERSION_LINE = r"TE\d+\s+(?:\d+\s*)?Version:\s*[\d.]+\n"
+# Form A: "=== PAGE N ===" marker + optional chapter title + Version line.
+_PAGE_HEADER_WITH_MARKER_RE = re.compile(
+    r"\n?=== PAGE \d+ ===\n"
+    r"(?:[^\n]{1,80}\n)?"
+    + _VERSION_LINE,
+)
+# Form B: bare "<chapter title>\nTE...Version:..." with no marker (pypdf
+# sometimes drops the marker but keeps the header text in mid-section).
+_PAGE_HEADER_BARE_RE = re.compile(
+    r"\n([A-Za-z][^\n]{0,80})\n" + _VERSION_LINE,
+)
+# Fallback: a stray "=== PAGE N ===" marker on its own — drop just the
+# marker so surrounding text stays intact.
+_PAGE_MARKER_RE = re.compile(r"\n?=== PAGE \d+ ===\n")
+
+
 def extract(lib: str, section: str) -> str:  # type: ignore[no-redef]
     out = _orig_extract(lib, section)
-    return out.replace("\xa0", " ")
+    out = out.replace("\xa0", " ")
+    out = _PAGE_HEADER_WITH_MARKER_RE.sub("\n", out)
+    out = _PAGE_HEADER_BARE_RE.sub("\n", out)
+    out = _PAGE_MARKER_RE.sub("\n", out)
+    return out
 
 
 if __name__ == "__main__":

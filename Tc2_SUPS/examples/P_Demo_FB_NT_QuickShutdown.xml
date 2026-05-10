@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project xmlns="http://www.plcopen.org/xml/tc6_0200">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-10T09:00:00"/>
+  <contentHeader name="Tc2_SUPS.FB_NT_QuickShutdown Demo" modificationDateTime="2026-05-10T09:00:00">
+    <coordinateInfo>
+      <fbd><scaling x="1" y="1"/></fbd>
+      <ld><scaling x="1" y="1"/></ld>
+      <sfc><scaling x="1" y="1"/></sfc>
+    </coordinateInfo>
+  </contentHeader>
+  <types>
+    <dataTypes/>
+    <pous>
+      <pou name="P_Demo_FB_NT_QuickShutdown" pouType="program">
+        <interface>
+          <localVars>
+            <variable name="fbFB_NT_QuickShutdown">
+              <type><derived name="FB_NT_QuickShutdown"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">Function blocks 实例</xhtml></documentation>
+            </variable>
+            <variable name="arg_NETID">
+              <type><derived name="T_AmsNetId"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT NETID: 控制器 AmsNetId</xhtml></documentation>
+            </variable>
+            <variable name="arg_START">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT START: 上升沿触发立即重启</xhtml></documentation>
+            </variable>
+            <variable name="arg_TMOUT">
+              <type><TIME/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT TMOUT: ADS 超时（默认 DEFAULT_ADS_TIMEOUT）</xhtml></documentation>
+            </variable>
+            <variable name="out_BUSY">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT BUSY: 正在执行 quick shutdown</xhtml></documentation>
+            </variable>
+            <variable name="out_ERR">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT ERR: 出错时为 TRUE</xhtml></documentation>
+            </variable>
+            <variable name="out_ERRID">
+              <type><UDINT/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT ERRID: ERR 为 TRUE 时返回错误号</xhtml></documentation>
+            </variable>
+          </localVars>
+        </interface>
+        <body>
+          <ST>
+            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
+// Tc2_SUPS.FB_NT_QuickShutdown 演示程序
+// ============================================================
+// 场景：演示用：仅展示调用方式（实际项目中应通过 FB_S_UPS_* 间接使用）
+// 验证步骤：
+//   1. 引用 Tc2_SUPS（及其依赖：Tc2_System 等）
+//   2. 编译 + 登录
+//   3. 在线监视各 out_* 输出
+//   4. 必要时按场景给 arg_* 输入赋值（详见 doc.md 的'使用注意'）
+// ============================================================
+
+fbFB_NT_QuickShutdown(
+    NETID := arg_NETID,
+    START := arg_START,
+    TMOUT := arg_TMOUT,
+    BUSY => out_BUSY,
+    ERR => out_ERR,
+    ERRID => out_ERRID
+);
+</xhtml>
+          </ST>
+        </body>
+      </pou>
+    </pous>
+  </types>
+  <instances>
+    <configurations/>
+  </instances>
+</project>

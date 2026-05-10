@@ -57,11 +57,11 @@
 | 库 | InfoSys 版本 | 估算 FB+FC | 状态 | 备注 |
 |---|---|---|---|---|
 | Tc3_JsonXml | 1.14.2 | ~50 | ⏳ pending | JSON/XML SAX+DOM |
-| Tc2_DataExchange | 现行 | ~20 | ⏳ pending | 跨 PLC 数据交换 |
+| Tc2_DataExchange | 1.2.2 | 3 | ✅ done (3/3) | 跨 PLC watchdog 数据交换 |
 | Tc3_Database | 现行 | ~30 | ⏳ pending | 数据库访问（走 TF6420 别名） |
 | Tc2_Database | 现行 | ~30 | ⏳ pending | 旧版数据库（走 TS6420 TwinCAT 2 路径别名） |
 | Tc2_Filter | 现行 | ~15 | ⏳ pending | 信号滤波（走 TF3680 别名） |
-| Tc2_SUPS | 1.5.2 | ~10 | ⏳ pending | 1 秒 UPS 控制 |
+| Tc2_SUPS | 1.5.2 | 7 | ✅ done (7/7) | 1-second UPS 控制（多硬件平台） |
 
 ## Tier 5 · 领域专用（按需选）
 
@@ -85,7 +85,7 @@
 | Tc3_BA2 | ~200 | ⏳ pending | Building Automation 2.0（走 Tc3_BA2_Common 别名） |
 | Tc2_HVAC | ~50 | ⏳ pending | 暖通（走 TF8000 别名） |
 | Tc2_Lighting | ~30 | ⏳ pending | 照明控制（走 TF8050 别名） |
-| Tc2_Coupler | ~10 | ⏳ pending | 老式 BK 耦合器 |
+| Tc2_Coupler | 7 | ✅ done (7/7) | 老式 BK 耦合器（含 1 个 obsolete FC） |
 
 ---
 

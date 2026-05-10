@@ -35,22 +35,54 @@ from extract_section import extract as extract_section  # noqa: E402
 
 VAR_REGION_RE = re.compile(
     # Tolerate "END_VA" (PDF typo) by treating either END_VAR or END_VA + EOL as terminator
-    r"VAR(?:_(?:INPUT|OUTPUT|IN_OUT|GLOBAL))?(?:\s+CONSTANT)?\s*\n([\s\S]*?)END_VA[R]?",
+    r"VAR_(?:INPUT|OUTPUT|IN_OUT|GLOBAL)(?:\s+CONSTANT)?\s*\n([\s\S]*?)END_VA[R]?",
     re.IGNORECASE,
 )
-# Trailing ";" optional — some Beckhoff PDFs render the last VAR line without it.
-VAR_LINE_RE = re.compile(r"^\s*([A-Za-z_][A-Za-z0-9_]*)\s*:\s*([A-Za-z][A-Za-z0-9_()\s]*?)\s*(?:;|\(\*|$)")
+# Per-declaration regex (after the region has been comment-stripped and split on ";").
+VAR_DECL_RE = re.compile(r"^\s*([A-Za-z_][A-Za-z0-9_]*)\s*:\s*(.+?)\s*$", re.DOTALL)
 
 
 def _vars_from_text(text: str) -> list[tuple[str, str]]:
-    out = []
+    # Strip markdown code-fence markers ("```iecst", "```") so they don't get
+    # captured into the VAR region when scanning a generated doc that places
+    # the IEC ST snippet inside a fenced code block.
+    text = re.sub(r"^[ \t]*```[A-Za-z]*[ \t]*$", "", text, flags=re.MULTILINE)
+    out: list[tuple[str, str]] = []
     for m in VAR_REGION_RE.finditer(text):
-        for line in m.group(1).splitlines():
-            # strip inline comment (* ... *)
-            line = re.sub(r"\(\*.*?\*\)", "", line).strip()
-            vm = VAR_LINE_RE.match(line)
-            if vm:
-                out.append((vm.group(1), re.sub(r"\s+", " ", vm.group(2)).strip()))
+        region = m.group(1)
+        # If the doc duplicated the VAR_INPUT keyword (e.g. once as a markdown
+        # heading "### VAR_INPUT" then again inside the code block, possibly
+        # preceded by a FUNCTION declaration), the first finditer match
+        # consumed the heading and the captured region contains a real
+        # VAR_INPUT line further in. Restart parsing from the last such
+        # keyword inside the region.
+        keyword = re.compile(
+            r"VAR_(?:INPUT|OUTPUT|IN_OUT|GLOBAL)(?:\s+CONSTANT)?\s*\n",
+            re.IGNORECASE,
+        )
+        last = None
+        for km in keyword.finditer(region):
+            last = km
+        if last:
+            region = region[last.end():]
+        # Strip (* multi-line comments *) and // line comments.
+        region = re.sub(r"\(\*.*?\*\)", "", region, flags=re.DOTALL)
+        region = re.sub(r"//.*$", "", region, flags=re.MULTILINE)
+        for decl in region.split(";"):
+            decl = decl.strip()
+            if not decl:
+                continue
+            vm = VAR_DECL_RE.match(decl)
+            if not vm:
+                continue
+            typ = vm.group(2)
+            # Drop ":= default" if present.
+            typ = re.sub(r":=.*$", "", typ, flags=re.DOTALL).strip()
+            # Collapse internal whitespace (incl. newlines) into single spaces.
+            typ = re.sub(r"\s+", " ", typ).strip()
+            if not typ:
+                continue
+            out.append((vm.group(1), typ))
     return out
 
 
