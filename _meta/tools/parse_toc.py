@@ -57,12 +57,16 @@ def _toc_text(full: str) -> str:
         return full
     rest = full[start:]
 
-    # A TOC line either matches the dot-leader pattern, or is a page-break
-    # artifact ("=== PAGE N ===", "Table of contents", "TE...Version:..."),
-    # or is blank.
+    # A TOC line either matches one of the entry shapes also accepted by
+    # parse() below (LINE_RE / LINE_RE_FALLBACK — both with and without a dot
+    # leader), or is a page-break artifact ("=== PAGE N ===", "Table of
+    # contents", "TE...Version:..."), or is blank. Any TOC entry shape we
+    # accept here MUST be accepted there, otherwise parse() can't see it
+    # anyway.
     toc_line = re.compile(
         r"^(?:"
         r"\s*\d+(?:\.\d+){0,3}\s+.+?\s+\.{2,}\s*\d+\s*"  # "3.1 Name ......  9"
+        r"|\s*\d+(?:\.\d+){0,3}\s+.+?\s{2,}\d+\s*"        # "3.1 Name      9" (no dot leader)
         r"|=== PAGE \d+ ==="
         r"|Table of contents"
         r"|TE\d+\s+\d+(?:\s*Version:.*)?"
