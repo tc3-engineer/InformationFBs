@@ -1,73 +1,56 @@
-# Pre-flight 报告 · 2026-05-10
+# Pre-flight 报告 · 2026-05-10（含 URL 别名）
 
-> 由 `python3 _meta/tools/fetch_pdf.py --head-only` 生成。
-> 对 `library-catalog.md` 中所有 41 个库的标准 PDF URL 做 Range GET 探测。
+> 由 `python3 _meta/tools/fetch_pdf.py --head-only` 生成。对 `library-catalog.md`
+> 中所有 41 个库做 Range GET 探测。`fetch_pdf.py` 内置 `URL_ALIASES` 对应
+> TwinCAT Functions（TF）系列产品的非标准 URL 命名。
 
 - **总数**：41
-- **可达（200）**：22
-- **不可达（404）**：19
+- **可达（200/206）**：40
+- **不可达（404）**：1（Tc2_KNXLib）
 
-## ✅ 可达（22）— 标准 URL 模式有效
+## ✅ 可达（40）
 
-| 库 | 状态 |
+### 走标准 URL 模式 `TwinCAT_3_PLC_Lib_<NAME>_EN.pdf`（22）
+
+Tc2_Standard、Tc2_System、Tc2_Utilities、Tc2_Math、Tc3_EventLogger、
+Tc2_MC2、Tc2_MC2_Drive、Tc2_NcDrive、Tc2_Drive、Tc2_EtherCAT、
+Tc2_IoFunctions、Tc2_ProfinetDiag、Tc3_JsonXml、Tc2_DataExchange、Tc2_SUPS、
+Tc3_DriveMotionControl、Tc3_MC2_AdvancedHoming、Tc2_DALI、Tc2_DMX、
+Tc2_EIB、Tc2_EnOcean、Tc2_Coupler
+
+### 走 URL 别名（TF 系列产品手册，18）
+
+| 库 | 实际 PDF |
 |---|---|
-| Tc2_Standard | 200 |
-| Tc2_System | 200 |
-| Tc2_Utilities | 200 |
-| Tc2_Math | 200 |
-| Tc3_EventLogger | 200 |
-| Tc2_MC2 | 200 |
-| Tc2_MC2_Drive | 200 |
-| Tc2_NcDrive | 200 |
-| Tc2_Drive | 200 |
-| Tc2_EtherCAT | 200 |
-| Tc2_IoFunctions | 200 |
-| Tc2_ProfinetDiag | 200 |
-| Tc3_JsonXml | 200 |
-| Tc2_DataExchange | 200 |
-| Tc2_SUPS | 200 |
-| Tc3_DriveMotionControl | 200 |
-| Tc3_MC2_AdvancedHoming | 200 |
-| Tc2_DALI | 200 |
-| Tc2_DMX | 200 |
-| Tc2_EIB | 200 |
-| Tc2_EnOcean | 200 |
-| Tc2_Coupler | 200 |
+| Tc2_NC | `TF50x0_TC3_NC_PTP_EN.pdf` |
+| Tc2_TcpIp | `TF6310_TC3_TCP_IP_EN.pdf` |
+| Tc2_SerialCom | `TF6340_TC3_Serial_Communication_EN.pdf` |
+| Tc2_ModbusSrv | `TF6250_TC3_Modbus_TCP_EN.pdf` |
+| Tc2_ModbusRTU | `TF6255_TC3_Modbus_RTU_EN.pdf` |
+| Tc2_EthernetIP | `TF6280_EtherNet_IP_Adapter_EN.pdf` |
+| Tc3_Database | `tf6420_tc3_database_server_en.pdf` |
+| Tc2_Database | `twincat2/TS6420_tcdbserver_en.pdf`（TwinCAT 2 路径） |
+| Tc2_Filter | `TF3680_TC3_Filter_EN.pdf` |
+| Tc2_MC2_Camming | `TF5050_TC3_NC_Camming_EN.pdf` |
+| Tc2_MC2_FlyingSaw | `TF5055_TC3_NC_Flying_Saw_EN.pdf` |
+| Tc2_NCI | `TF5100_TC3_NC_I_EN.pdf` |
+| Tc3_Vision | `TF7000-TF7810_TC3_Vision_EN.pdf` |
+| Tc2_Hydraulic | `TF5810_TC3_Hydraulic_Positioning_EN.pdf` |
+| Tc2_BACnet | `TF8020_TC3_BACnet_EN.pdf` |
+| Tc3_BA2 | `TwinCAT_3_PLC_Lib_Tc3_BA2_Common_EN.pdf`（注：实际 lib 名 `Tc3_BA2_Common`） |
+| Tc2_HVAC | `TF8000_TC3_HVAC_EN.pdf` |
+| Tc2_Lighting | `TF8050_LS_EN.pdf` |
 
-## ❌ 不可达（19）— 标记 unavailable，跳过
+> ⚠️ **TF 系列文档结构与 PLC Library 文档不同**：TF 文档是产品手册（含许可、安装、配置），FB API 在 "PLC API" 章节下嵌套。
+> `parse_toc.py` 当前的启发式（顶级章节"Function blocks"/"Functions"）在 TF 文档上**可能解析不到条目**——/discover 跑这些库时需要先验证 TOC 结构再继续。
 
-URL 模式 `TwinCAT_3_PLC_Lib_<NAME>_EN.pdf` 返回 404。
-按 CLAUDE.md 规则不尝试 InfoSys / 其他 URL 模式。如有人工提供的 PDF 可手工放入 `_meta/.pdf-cache/<lib>.pdf` 后跑 fetch_pdf 解析。
+## ❌ 不可达（1）
 
-| 库 | HTTP | 备注 |
-|---|---|---|
-| Tc2_NC | 404 | NC PTP 底层 |
-| Tc2_TcpIp | 404 | Socket TCP/UDP（可能在不同 URL，待人工确认） |
-| Tc2_SerialCom | 404 | 串口通信 |
-| Tc2_ModbusSrv | 404 | Modbus TCP/RTU 服务端 |
-| Tc2_ModbusRTU | 404 | Modbus RTU 主站 |
-| Tc2_EthernetIP | 404 | EtherNet/IP |
-| Tc3_Database | 404 | 数据库访问 |
-| Tc2_Database | 404 | 旧版数据库 |
-| Tc2_Filter | 404 | 信号滤波 |
-| Tc2_MC2_Camming | 404 | 凸轮 |
-| Tc2_MC2_FlyingSaw | 404 | 飞剪 |
-| Tc2_NCI | 404 | 插补 / CNC |
-| Tc3_Vision | 404 | TF7xxx 机器视觉 |
-| Tc2_Hydraulic | 404 | 液压闭环 |
-| Tc2_BACnet | 404 | 楼宇自动化 |
-| Tc2_KNXLib | 404 | KNX/EIB |
-| Tc3_BA2 | 404 | Building Automation 2.0 |
-| Tc2_HVAC | 404 | 暖通 |
-| Tc2_Lighting | 404 | 照明（曾在 catalog 出现） |
+| 库 | 原因 |
+|---|---|
+| Tc2_KNXLib | 公开下载站无对应 PDF（试过 `TF8030_TC3_KNX_EN.pdf`、`TF8030_TC3_KNX_TPUART_EN.pdf` 等均 404）。InfoSys 在线手册存在但 SPA 抓不到。需要用户提供 PDF。 |
 
 ## 后续
 
-- catalog 中上述 19 个库的 Status 字段统一改为 ❌ unavailable
-- `_meta/blocked.md` 记录每条 404
-- 若用户能提供 PDF（手工下载、内部分发），放入 `_meta/.pdf-cache/<lib>.pdf` 后跑：
-  ```bash
-  python3 -c "import _meta.tools.fetch_pdf as f; f.fetch('<lib>')"
-  # 或直接 cp 后用 pypdf 抽文本
-  ```
-- 标准 URL 模式以外可能存在别名（如 Tc2_TcpIp ↔ TwinCAT_PLC_TcpIp 等），未来 batch 时可考虑加 URL 候选列表。当前阶段不做。
+- catalog 中标 ❌ 的 18 个库可改回 ⏳ pending（PDF 已可达），但需在 doc-shard 前抽样验证 TOC 解析
+- Tc2_KNXLib 保持 ❌ unavailable

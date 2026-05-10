@@ -35,6 +35,39 @@ URL_TMPL = (
     "https://download.beckhoff.com/download/document/automation/twincat3/"
     "TwinCAT_3_PLC_Lib_{lib}_EN.pdf"
 )
+
+# Libraries that don't follow the standard `TwinCAT_3_PLC_Lib_<NAME>_EN.pdf`
+# convention. Most are TwinCAT Functions (TF-numbered products) where the FBs
+# we want are documented inside the product manual instead of a separate PLC
+# library doc. Verified reachable on 2026-05-10.
+URL_ALIASES: dict[str, str] = {
+    "Tc2_NC": "https://download.beckhoff.com/download/document/automation/twincat3/TF50x0_TC3_NC_PTP_EN.pdf",
+    "Tc2_TcpIp": "https://download.beckhoff.com/download/document/automation/twincat3/TF6310_TC3_TCP_IP_EN.pdf",
+    "Tc2_SerialCom": "https://download.beckhoff.com/download/document/automation/twincat3/TF6340_TC3_Serial_Communication_EN.pdf",
+    "Tc2_ModbusSrv": "https://download.beckhoff.com/download/document/automation/twincat3/TF6250_TC3_Modbus_TCP_EN.pdf",
+    "Tc2_ModbusRTU": "https://download.beckhoff.com/download/document/automation/twincat3/TF6255_TC3_Modbus_RTU_EN.pdf",
+    "Tc2_EthernetIP": "https://download.beckhoff.com/download/document/automation/twincat3/TF6280_EtherNet_IP_Adapter_EN.pdf",
+    "Tc3_Database": "https://download.beckhoff.com/download/document/automation/twincat3/tf6420_tc3_database_server_en.pdf",
+    "Tc2_Database": "https://download.beckhoff.com/download/document/automation/twincat2/TS6420_tcdbserver_en.pdf",
+    "Tc2_Filter": "https://download.beckhoff.com/download/document/automation/twincat3/TF3680_TC3_Filter_EN.pdf",
+    "Tc2_MC2_Camming": "https://download.beckhoff.com/download/document/automation/twincat3/TF5050_TC3_NC_Camming_EN.pdf",
+    "Tc2_MC2_FlyingSaw": "https://download.beckhoff.com/download/document/automation/twincat3/TF5055_TC3_NC_Flying_Saw_EN.pdf",
+    "Tc2_NCI": "https://download.beckhoff.com/download/document/automation/twincat3/TF5100_TC3_NC_I_EN.pdf",
+    "Tc3_Vision": "https://download.beckhoff.com/download/document/automation/twincat3/TF7000-TF7810_TC3_Vision_EN.pdf",
+    "Tc2_Hydraulic": "https://download.beckhoff.com/download/document/automation/twincat3/TF5810_TC3_Hydraulic_Positioning_EN.pdf",
+    "Tc2_BACnet": "https://download.beckhoff.com/download/document/automation/twincat3/TF8020_TC3_BACnet_EN.pdf",
+    "Tc3_BA2": "https://download.beckhoff.com/download/document/automation/twincat3/TwinCAT_3_PLC_Lib_Tc3_BA2_Common_EN.pdf",
+    "Tc2_HVAC": "https://download.beckhoff.com/download/document/automation/twincat3/TF8000_TC3_HVAC_EN.pdf",
+    "Tc2_Lighting": "https://download.beckhoff.com/download/document/automation/twincat3/TF8050_LS_EN.pdf",
+    # Tc2_KNXLib — no public PDF found (TF8030 returns 404). Leave unaliased.
+}
+
+
+def _resolve_url(lib: str) -> str:
+    """Return the canonical PDF URL for `lib`, honoring aliases."""
+    return URL_ALIASES.get(lib, URL_TMPL.format(lib=lib))
+
+
 TTL_SECONDS = 24 * 3600
 USER_AGENT = "tc3-libraries-kb/1.0 (+https://github.com/tc3-engineer/informationfbs)"
 
@@ -111,7 +144,7 @@ def fetch(lib: str, force: bool = False) -> dict:
         meta["from_cache"] = True
         return meta
 
-    url = URL_TMPL.format(lib=lib)
+    url = _resolve_url(lib)
     status, body = _http_get(url)
     if status != 200 or not body.startswith(b"%PDF"):
         meta = {
@@ -187,7 +220,7 @@ def preflight(head_only: bool = True) -> int:
     libs = _libs_from_catalog()
     out = []
     for lib in libs:
-        url = URL_TMPL.format(lib=lib)
+        url = _resolve_url(lib)
         if head_only:
             status = _http_head(url)
             # 200 = full GET fallback, 206 = Range GET partial content; both reachable.
