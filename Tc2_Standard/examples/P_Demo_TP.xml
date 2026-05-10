@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project xmlns="http://www.plcopen.org/xml/tc6_0200">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-10T08:00:00"/>
+  <contentHeader name="Tc2_Standard.TP Demo" modificationDateTime="2026-05-10T08:00:00">
+    <coordinateInfo>
+      <fbd><scaling x="1" y="1"/></fbd>
+      <ld><scaling x="1" y="1"/></ld>
+      <sfc><scaling x="1" y="1"/></sfc>
+    </coordinateInfo>
+  </contentHeader>
+  <types>
+    <dataTypes/>
+    <pous>
+      <pou name="P_Demo_TP" pouType="program">
+        <interface>
+          <localVars>
+            <variable name="fbTP">
+              <type><derived name="TP"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">Timer 实例</xhtml></documentation>
+            </variable>
+            <variable name="bSensor">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">传感器到位（一瞬间 TRUE）</xhtml></documentation>
+            </variable>
+            <variable name="bPulse">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">200ms 输出脉冲</xhtml></documentation>
+            </variable>
+            <variable name="tInPulse">
+              <type><TIME/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">脉冲已经过时间</xhtml></documentation>
+            </variable>
+          </localVars>
+        </interface>
+        <body>
+          <ST>
+            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
+// Tc2_Standard.TP 演示程序
+// ============================================================
+// 场景：传感器到位时输出 200ms 标定脉冲（用于打标/喷码）
+// 验证步骤：
+//   1. 把本 PROGRAM 加到 PlcTask 调用列表
+//   2. 编译并登录目标
+//   1. bSensor 给一次上升沿 → bPulse 立即 TRUE 持续 200ms 后自动 FALSE
+//   2. 脉冲期内 bSensor 再给上升沿 → **被忽略**（PDF 行为：脉冲完成前不再触发）
+//   3. 脉冲期内 bSensor := FALSE 也不会缩短 bPulse
+// ============================================================
+
+fbTP(
+    IN := bSensor,
+    PT := T#200MS,
+    Q  =&gt; bPulse,
+    ET =&gt; tInPulse
+);
+</xhtml>
+          </ST>
+        </body>
+      </pou>
+    </pous>
+  </types>
+  <instances>
+    <configurations/>
+  </instances>
+</project>

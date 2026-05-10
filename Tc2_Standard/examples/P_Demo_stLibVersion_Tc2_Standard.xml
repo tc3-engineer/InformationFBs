@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project xmlns="http://www.plcopen.org/xml/tc6_0200">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-10T08:30:00"/>
+  <contentHeader name="Tc2_Standard.LibVersion Demo" modificationDateTime="2026-05-10T08:30:00">
+    <coordinateInfo>
+      <fbd><scaling x="1" y="1"/></fbd>
+      <ld><scaling x="1" y="1"/></ld>
+      <sfc><scaling x="1" y="1"/></sfc>
+    </coordinateInfo>
+  </contentHeader>
+  <types>
+    <dataTypes/>
+    <pous>
+      <pou name="P_Demo_stLibVersion_Tc2_Standard" pouType="program">
+        <interface>
+          <localVars>
+            <variable name="stMyVer">
+              <type><derived name="ST_LibVersion"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">本地副本，用于在线监视</xhtml></documentation>
+            </variable>
+            <variable name="bOk">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">版本检查结果（TRUE = 库版本 &gt;= 1.3.4）</xhtml></documentation>
+            </variable>
+          </localVars>
+        </interface>
+        <body>
+          <ST>
+            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
+// Tc2_Standard.stLibVersion_Tc2_Standard 演示程序
+// ============================================================
+// 注意：本程序需要项目同时引用 Tc2_System（提供 ST_LibVersion 类型与 F_CmpLibVersion）
+// 验证步骤：
+//   1. 在 References 中确认引用了 Tc2_Standard 与 Tc2_System
+//   2. 编译并登录目标
+//   3. 在线监视 stMyVer 应显示 1.3.4 或更高
+//   4. 在线监视 bOk 应为 TRUE
+//   5. 把 iMinor := 99 临时改大，重新登录 → bOk 应变 FALSE
+// ============================================================
+
+stMyVer := stLibVersion_Tc2_Standard;
+
+bOk := F_CmpLibVersion(
+    stLibVersion := stLibVersion_Tc2_Standard,
+    iMajor       := 1,
+    iMinor       := 3,
+    iBuild       := 4,
+    iRevision    := 0,
+    nCmpType     := E_CmpLibVersion.GreaterOrEqual
+);
+</xhtml>
+          </ST>
+        </body>
+      </pou>
+    </pous>
+  </types>
+  <instances>
+    <configurations/>
+  </instances>
+</project>

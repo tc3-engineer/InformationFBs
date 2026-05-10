@@ -8,12 +8,28 @@
 
 ## 唯一可信源
 
-- **首选**：Beckhoff 官方 PDF
+- **唯一可信源**：Beckhoff 官方 PDF
   `https://download.beckhoff.com/download/document/automation/twincat3/TwinCAT_3_PLC_Lib_<NAME>_EN.pdf`
-- **次选**（PDF 不可用时）：InfoSys 在线文档
-  `https://infosys.beckhoff.com/content/1033/tcplclib_<lowercase_name>/`
+- PDF 不可用 → 写入 `_meta/blocked.md` 并标 ❌ unavailable，**不要尝试用 InfoSys / 训练数据补全**
+  （InfoSys 是 SPA，WebFetch 取不到结构化 FB 列表；实测过）
 
 不允许用任何第三方资料、博客、StackOverflow 答案、训练数据记忆作为依据。
+
+## 联网取数管线（确定性）
+
+WebFetch 对 PDF 只能拿到二进制十六进制，不可用。所有抓取/解析必须走脚本：
+
+```bash
+python3 _meta/tools/fetch_pdf.py <Library>            # 下载 + 抽文 + 24h 缓存
+python3 _meta/tools/parse_toc.py <Library>            # JSON 输出 section/name/type/category
+python3 _meta/tools/extract_section.py <Lib> <sec>    # 抽指定章节正文（VAR 区原文）
+python3 _meta/tools/verify_doc.py <doc.md>            # 自验证：VAR 名/类型 + 版本 + example
+python3 _meta/tools/lint_plcopen.py <P_Demo_X.xml>    # 例程结构 lint
+python3 _meta/tools/fetch_pdf.py --head-only          # 全 catalog HEAD pre-flight
+```
+
+缓存：`_meta/.pdf-cache/<Library>.{pdf,txt,meta.json}`（gitignore）。
+SessionStart hook 会确保 pypdf 已装、缓存目录存在。
 
 ## 硬规则（违反即视为 bug）
 
@@ -25,13 +41,10 @@
 5. **元信息表 9 行全填**：库名、版本、类型、类别、Source、Source PDF、Verified、Status、Example。无信息填 `-`，禁止留空。
 
 ### 自验证（每篇文档必做）
-生成完一篇文档后，**重新 web_fetch 该库 PDF 中对应章节**，逐字段对照：
-- VAR 区每个变量的名/类型 → ✅ 一致 / ❌ 不一致 → 必须重写
-- 类别归类 → ✅ / ❌
-- 描述句中的关键事实（"上升沿启动"、"15 字节数据"等）→ ✅ / ❌
-
-把验证结果写到 `_meta/verify/<library>/<name>.md`，包括 PASS/FAIL 与具体差异。
-连续两次自验证失败 → 把文档头部 Status 改为 `⚠️ verify-failed`，把问题列到 `_meta/blocked.md`，跳过。
+生成完一篇文档后，跑 `python3 _meta/tools/verify_doc.py <path>`：
+- 退出码 0 = PASS：把 verify 报告写到 `_meta/verify/<library>/<name>.md`，标 ✅
+- 退出码 1 = MINOR：检查 diagnostics，能修立即修；修后再跑直到 PASS
+- 退出码 2 = FAIL：重写一次；二次仍 FAIL → 头部 Status 改 `⚠️ verify-failed`，列入 `_meta/blocked.md`，跳过
 
 ### 例程文件（每篇文档必产）
 **每个 FB/FC 必产配套 PLCopenXML 文件**，输出到 `<library>/examples/P_Demo_<Name>.xml`。
@@ -51,6 +64,7 @@
 8. **不加 TwinCAT 私有特性**：不要 `attribute` pragma、不要 access modifier、不要 namespace 前缀（保最小可导入集）
 
 例程文件也要做自验证：
+- 跑 `python3 _meta/tools/lint_plcopen.py <path>`，退出码 0 才算通过
 - ST 代码必须能在空白 PROGRAM POU 编译通过（语法正确，引用的 FB 名/参数名与文档一致）
 - 文档头部 Example 字段必须链接到该 .xml
 
@@ -84,9 +98,10 @@
 
 ## 失败处理
 
-- PDF 抓取 HTTP 非 200 → 写 `_meta/blocked.md`，列原因，**不要试图用 InfoSys 替代**（除非 catalog 里明确标记 PDF 不可用）
-- TOC 解析疑似不全 → PR body 里列可疑章节，标 `⚠️ 待 review TOC`
-- 例程 ST 代码自我编译验证失败（关键字拼错等）→ 重写一次；二次失败标 `⚠️ example-build-failed` 并跳过
+- `fetch_pdf.py` 返回非 200 → 写 `_meta/blocked.md`，列原因，停止该库的所有处理（不尝试 InfoSys）
+- `parse_toc.py` 输出条目数与人工估算偏差大 → PR body 里列出 JSON + 标 `⚠️ 待 review TOC`
+- `verify_doc.py` 退出 2 → 重写一次；二次仍 FAIL 标 `⚠️ verify-failed`，列入 `_meta/blocked.md`，跳过
+- `lint_plcopen.py` 退出 2 → 重写例程；二次失败标 `⚠️ example-build-failed` 并跳过
 - 任何不确定 → 标 `⚠️` 而非编造
 
 ## 反例（这些是过去出现过的真实错误，绝不再犯）

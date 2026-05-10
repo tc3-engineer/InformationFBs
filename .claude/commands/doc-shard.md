@@ -24,7 +24,16 @@ argument-hint: <Library_Name> <Category>
 ## 流程
 
 ### 1. 抓 PDF
-URL 模式同 discover。一次性抓全 PDF，本批所有条目都从这一次抓取的内容里读。
+```bash
+python3 _meta/tools/fetch_pdf.py <library>
+```
+脚本 24h 内复用缓存。失败 → 写 blocked.md，停止。
+
+### 1.5 对每条目抽章节正文
+```bash
+python3 _meta/tools/extract_section.py <library> <section_number>
+```
+章节号从 `_meta/roadmap-<library>.md` 取。这是**生成文档时唯一允许的事实来源**，禁止凭训练数据补全。
 
 ### 2. 对每个条目（双产物）
 
@@ -60,31 +69,19 @@ URL 模式同 discover。一次性抓全 PDF，本批所有条目都从这一次
 
 ### 3. 自验证（核心步骤）
 
-对**文档与例程同时**做：
-
 #### 3a. 文档验证
-**重新 web_fetch** 该库 PDF（独立的第二次抓取——能 catch 第一次抓取时的截断/解析错误），逐字段对照刚生成的文档：
-
-| 检查项 | 通过条件 |
-|---|---|
-| VAR_INPUT 名称列表 | 与 PDF 一致 |
-| VAR_INPUT 类型列表 | 与 PDF 一致 |
-| VAR_OUTPUT 名称列表 | 与 PDF 一致 |
-| VAR_OUTPUT 类型列表 | 与 PDF 一致 |
-| 元信息表 Library Version | 与 PDF 头部一致 |
-| 描述句关键事实（数据字节数、上升沿/下降沿等） | 与 PDF 一致 |
+```bash
+python3 _meta/tools/verify_doc.py <library>/<category_dir>/<name>.md
+```
+退出 0 PASS / 1 MINOR（看 diagnostics 修） / 2 FAIL。脚本检查：VAR 名+类型与 PDF 一致、版本一致、example 文件存在。
 
 #### 3b. 例程验证
-对生成的 .xml 做 4 项检查：
+```bash
+python3 _meta/tools/lint_plcopen.py <library>/examples/P_Demo_<name>.xml
+```
+退出 0 PASS / 2 FAIL。检查：XML 良构、pouType=program、fb<Name> + derived 引用正确、ST body XML 实体化。
 
-| 检查项 | 通过条件 |
-|---|---|
-| XML 良构 | 解析无错误，根节点 `<project xmlns="http://www.plcopen.org/xml/tc6_0200">` |
-| ST 中的 FB 实例化 | `fb<Name>` 已声明，类型 `<derived name="<Name>"/>` |
-| ST 中的赋值参数名 | 必须**全部**出现在文档 VAR_INPUT 表中（防拼错） |
-| 输出引用参数名 | 必须出现在 VAR_OUTPUT 表中 |
-
-例程任一项不通过 → 重写例程；二次失败 → 文档 Status 标 `⚠️ example-build-failed`，但**仍保留**例程文件供人工查看。
+任一脚本退出 2 → 重写对应文件；二次仍 FAIL → 文档 Status 标 `⚠️ verify-failed` 或 `⚠️ example-build-failed`，文件保留供人工。
 
 #### 3c. 写验证报告
 合并到 `_meta/verify/<library>/<name>.md`：

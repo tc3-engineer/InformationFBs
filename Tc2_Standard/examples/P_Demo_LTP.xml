@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project xmlns="http://www.plcopen.org/xml/tc6_0200">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-10T08:00:00"/>
+  <contentHeader name="Tc2_Standard.LTP Demo" modificationDateTime="2026-05-10T08:00:00">
+    <coordinateInfo>
+      <fbd><scaling x="1" y="1"/></fbd>
+      <ld><scaling x="1" y="1"/></ld>
+      <sfc><scaling x="1" y="1"/></sfc>
+    </coordinateInfo>
+  </contentHeader>
+  <types>
+    <dataTypes/>
+    <pous>
+      <pou name="P_Demo_LTP" pouType="program">
+        <interface>
+          <localVars>
+            <variable name="fbLTP">
+              <type><derived name="LTP"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">Timer (LTIME) 实例</xhtml></documentation>
+            </variable>
+            <variable name="bTrigger">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">触发输入</xhtml></documentation>
+            </variable>
+            <variable name="bPulse">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">100 μs 脉冲输出</xhtml></documentation>
+            </variable>
+            <variable name="ltInPulse">
+              <type><LTIME/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">脉冲已经过时间</xhtml></documentation>
+            </variable>
+          </localVars>
+        </interface>
+        <body>
+          <ST>
+            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
+// Tc2_Standard.LTP 演示程序
+// ============================================================
+// 场景：产生 100 μs 标定脉冲（如压电执行器触发）
+// 验证步骤：
+//   1. 把本 PROGRAM 加到 PlcTask 调用列表
+//   2. 编译并登录目标
+//   1. bTrigger 上升沿 → bPulse TRUE 持续 100 μs 后自动 FALSE
+//   2. 脉冲期内再触发会被忽略
+// ============================================================
+
+fbLTP(
+    IN := bTrigger,
+    PT := LTIME#100US,
+    Q  =&gt; bPulse,
+    ET =&gt; ltInPulse
+);
+</xhtml>
+          </ST>
+        </body>
+      </pou>
+    </pous>
+  </types>
+  <instances>
+    <configurations/>
+  </instances>
+</project>

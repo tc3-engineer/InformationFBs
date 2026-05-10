@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project xmlns="http://www.plcopen.org/xml/tc6_0200">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-10T08:00:00"/>
+  <contentHeader name="Tc2_Standard.LTOF Demo" modificationDateTime="2026-05-10T08:00:00">
+    <coordinateInfo>
+      <fbd><scaling x="1" y="1"/></fbd>
+      <ld><scaling x="1" y="1"/></ld>
+      <sfc><scaling x="1" y="1"/></sfc>
+    </coordinateInfo>
+  </contentHeader>
+  <types>
+    <dataTypes/>
+    <pous>
+      <pou name="P_Demo_LTOF" pouType="program">
+        <interface>
+          <localVars>
+            <variable name="fbLTOF">
+              <type><derived name="LTOF"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">Timer (LTIME) 实例</xhtml></documentation>
+            </variable>
+            <variable name="bEnable">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">使能输入</xhtml></documentation>
+            </variable>
+            <variable name="bRunning">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">断电延时输出</xhtml></documentation>
+            </variable>
+            <variable name="ltElapsed">
+              <type><LTIME/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">已经过时间（纳秒）</xhtml></documentation>
+            </variable>
+          </localVars>
+        </interface>
+        <body>
+          <ST>
+            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
+// Tc2_Standard.LTOF 演示程序
+// ============================================================
+// 场景：高精度断电延时（μs 级），如热电偶冷却 3 ms 后切电源
+// 验证步骤：
+//   1. 把本 PROGRAM 加到 PlcTask 调用列表
+//   2. 编译并登录目标
+//   1. bEnable := TRUE → bRunning 立即 TRUE
+//   2. bEnable := FALSE → ltElapsed 累加
+//   3. 3 ms（LTIME#3MS）后 bRunning 变 FALSE
+// ============================================================
+
+fbLTOF(
+    IN := bEnable,
+    PT := LTIME#3MS,
+    Q  =&gt; bRunning,
+    ET =&gt; ltElapsed
+);
+</xhtml>
+          </ST>
+        </body>
+      </pou>
+    </pous>
+  </types>
+  <instances>
+    <configurations/>
+  </instances>
+</project>
