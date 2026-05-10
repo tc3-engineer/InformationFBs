@@ -35,7 +35,7 @@ from extract_section import extract as extract_section  # noqa: E402
 
 VAR_REGION_RE = re.compile(
     # Tolerate "END_VA" (PDF typo) by treating either END_VAR or END_VA + EOL as terminator
-    r"VAR_(?:INPUT|OUTPUT|IN_OUT)\s*\n([\s\S]*?)END_VA[R]?",
+    r"VAR(?:_(?:INPUT|OUTPUT|IN_OUT|GLOBAL))?(?:\s+CONSTANT)?\s*\n([\s\S]*?)END_VA[R]?",
     re.IGNORECASE,
 )
 # Trailing ";" optional — some Beckhoff PDFs render the last VAR line without it.

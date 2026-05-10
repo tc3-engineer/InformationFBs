@@ -64,9 +64,12 @@ def lint(path: str) -> tuple[int, list[str]]:
         st_node = pou.find(f"{{{NS}}}body/{{{NS}}}ST/{{http://www.w3.org/1999/xhtml}}xhtml")
         st_text_for_check = "".join(st_node.itertext()) if st_node is not None else ""
         called_as_function = bool(re.search(rf"\b{re.escape(demoed)}\s*\(", st_text_for_check))
-        if not has_derived and not called_as_function:
+        # Global constants / globals are referenced as bare identifiers (no parens).
+        bare_reference = bool(re.search(rf"\b{re.escape(demoed)}\b", st_text_for_check))
+        if not has_derived and not called_as_function and not bare_reference:
             diags.append(
-                f"<derived name=\"{demoed}\"/> not in localVars and {demoed}(...) not called in ST body"
+                f"<derived name=\"{demoed}\"/> not in localVars; {demoed}(...) not called; "
+                f"and {demoed} not referenced in ST body"
             )
         XHTML = "http://www.w3.org/1999/xhtml"
         body_xhtml = None

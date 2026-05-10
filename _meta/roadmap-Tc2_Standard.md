@@ -5,8 +5,8 @@
 - **Source PDF**: https://download.beckhoff.com/download/document/automation/twincat3/TwinCAT_3_PLC_Lib_Tc2_Standard_EN.pdf
 - **InfoSys**: https://infosys.beckhoff.com/content/1033/tcplclib_tc2_standard/
 - **Discover 日期**: 2026-05-09（重新解析 2026-05-10）
-- **总条目数**: 31（FB 13 + FC 18）
-- **状态**: ✅ done（31/31 verified）
+- **总条目数**: 32（FB 13 + FC 18 + GVL 1）
+- **状态**: ✅ done（32/32 verified）
 
 | # | Section | Name | Type | Category | Output Path | Status |
 |---|---|---|---|---|---|---|
@@ -41,6 +41,7 @@
 | 29 | 5.7 | WMID | FC | String functions (WSTRING) | `Tc2_Standard/wstring/WMID.md` | verified ✅ |
 | 30 | 5.8 | WREPLACE | FC | String functions (WSTRING) | `Tc2_Standard/wstring/WREPLACE.md` | verified ✅ |
 | 31 | 5.9 | WRIGHT | FC | String functions (WSTRING) | `Tc2_Standard/wstring/WRIGHT.md` | verified ✅ |
+| 32 | 6.1 | stLibVersion_Tc2_Standard | GVL | Library version | `Tc2_Standard/global_constants/stLibVersion_Tc2_Standard.md` | verified ✅ |
 
 ## 完成证据
 

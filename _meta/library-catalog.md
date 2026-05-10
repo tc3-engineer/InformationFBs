@@ -23,7 +23,7 @@
 
 | 库 | InfoSys 版本 | 估算 FB+FC | 状态 | 备注 |
 |---|---|---|---|---|
-| Tc2_Standard | 1.3.4 | 31 | ✅ done (31/31) | IEC 61131-3 标准 POU |
+| Tc2_Standard | 1.3.4 | 32 | ✅ done (32/32) | IEC 61131-3 标准 POU + 库版本常量 |
 | Tc2_System | 1.17.1 | ~150 | ⏳ pending | ADS、文件、任务、时间、字符串、EventLogger 接入 |
 | Tc2_Utilities | 现行 | ~50 | ⏳ pending | 通用工具（CRC、转换、调度等） |
 | Tc2_Math | 现行 | ~30 | ⏳ pending | 矩阵、统计、滤波数学 |

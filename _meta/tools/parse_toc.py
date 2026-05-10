@@ -75,6 +75,8 @@ def parse(lib: str) -> list[dict]:
             return "FB"
         if "function" in t:
             return "FC"
+        if "global constant" in t or "constants" in t:
+            return "GVL"
         return None
 
     # First pass: detect whether a depth-2 entry under the current chapter is
@@ -98,8 +100,27 @@ def parse(lib: str) -> list[dict]:
             has_children.add(".".join(parts[:k]))
 
     def looks_like_leaf_name(title: str) -> bool:
-        # leaf POU names: single token of [A-Za-z_][A-Za-z0-9_]*
+        # leaf POU / global constant names: single token of [A-Za-z_][A-Za-z0-9_]*
         return bool(re.fullmatch(r"[A-Za-z][A-Za-z0-9_]*", title))
+
+    # Some PDFs render the global constant section title as a category label
+    # ("Library version") with the actual constant name inside the section body.
+    # Detect: depth-2 leaf under a GVL group whose title isn't a valid identifier
+    # — fall back to scanning the section body for the first VAR_GLOBAL line.
+    def gvl_constant_in_section(section: str) -> str | None:
+        sys.path.insert(0, str(Path(__file__).resolve().parent))
+        try:
+            from extract_section import extract as _extract
+        except Exception:
+            return None
+        body = _extract(lib, section)
+        if not body:
+            return None
+        m = re.search(
+            r"VAR_GLOBAL\s+(?:CONSTANT\s+)?([A-Za-z_][A-Za-z0-9_]*)\s*:",
+            body,
+        )
+        return m.group(1) if m else None
 
     for sec, title, page in matches:
         depth = sec.count(".") + 1
@@ -126,6 +147,23 @@ def parse(lib: str) -> list[dict]:
                         "depth": depth,
                     }
                 )
+            elif sec not in has_children and current_group_kind == "GVL":
+                # Title is a category label (e.g. "Library version"); the actual
+                # constant identifier lives in the section body.
+                name = gvl_constant_in_section(sec)
+                if name:
+                    entries.append(
+                        {
+                            "section": sec,
+                            "name": name,
+                            "type": "GVL",
+                            "category": title,
+                            "page": page,
+                            "depth": depth,
+                        }
+                    )
+                else:
+                    current_category = title
             else:
                 current_category = title
             continue

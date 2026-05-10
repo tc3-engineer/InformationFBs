@@ -6,7 +6,7 @@
 - [官方 PDF](https://download.beckhoff.com/download/document/automation/twincat3/TwinCAT_3_PLC_Lib_Tc2_Standard_EN.pdf)
 - [Roadmap](../_meta/roadmap-Tc2_Standard.md)
 
-## 索引（31 条 · 全部 ✅ verified）
+## 索引（32 条 · 全部 ✅ verified）
 
 > 每条 verify 完成的条目都配套一个 PLCopenXML 例程文件（`examples/` 目录）。
 > 导入方式：右键 PLC 项目 → Import PLCopenXML → 选 `.xml` 文件。详见 [`examples/README.md`](examples/README.md)。
@@ -52,6 +52,8 @@
 | WString | WREPLACE | [✅ verified](wstring/WREPLACE.md) | [P_Demo_WREPLACE.xml](examples/P_Demo_WREPLACE.xml) |
 | WString | WRIGHT | [✅ verified](wstring/WRIGHT.md) | [P_Demo_WRIGHT.xml](examples/P_Demo_WRIGHT.xml) |
 
-### Global Constants
+### Global Constants（1）
 
-- `stLibVersion_Tc2_Standard : ST_LibVersion`
+| Category | Name | 文档 | 例程 |
+|---|---|---|---|
+| Library version | stLibVersion_Tc2_Standard | [✅ verified](global_constants/stLibVersion_Tc2_Standard.md) | [P_Demo_stLibVersion_Tc2_Standard.xml](examples/P_Demo_stLibVersion_Tc2_Standard.xml) |

@@ -71,5 +71,15 @@ def main() -> int:
     return 0
 
 
+# Re-export with NBSP normalization so callers don't need to handle pypdf's
+# \xa0 quirk.
+_orig_extract = extract
+
+
+def extract(lib: str, section: str) -> str:  # type: ignore[no-redef]
+    out = _orig_extract(lib, section)
+    return out.replace("\xa0", " ")
+
+
 if __name__ == "__main__":
     sys.exit(main())
