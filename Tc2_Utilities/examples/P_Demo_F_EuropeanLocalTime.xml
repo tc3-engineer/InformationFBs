@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project xmlns="http://www.plcopen.org/xml/tc6_0200">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-10T12:00:00"/>
+  <contentHeader name="Tc2_Utilities.F_EuropeanLocalTime Demo" modificationDateTime="2026-05-10T12:00:00">
+    <coordinateInfo>
+      <fbd><scaling x="1" y="1"/></fbd>
+      <ld><scaling x="1" y="1"/></ld>
+      <sfc><scaling x="1" y="1"/></sfc>
+    </coordinateInfo>
+  </contentHeader>
+  <types>
+    <dataTypes/>
+    <pous>
+      <pou name="P_Demo_F_EuropeanLocalTime" pouType="program">
+        <interface>
+          <localVars>
+            <variable name="rResult">
+              <type><derived name="TIMESTRUCT"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">F_EuropeanLocalTime 的返回值</xhtml></documentation>
+            </variable>
+            <variable name="bRun">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">触发一次调用</xhtml></documentation>
+            </variable>
+            <variable name="stUtc">
+              <type><derived name="TIMESTRUCT"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">测试用本地变量</xhtml></documentation>
+            </variable>
+            <variable name="bDST">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">测试用本地变量</xhtml></documentation>
+            </variable>
+            <variable name="out_bDaylightSavingTime">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT bDaylightSavingTime</xhtml></documentation>
+            </variable>
+          </localVars>
+        </interface>
+        <body>
+          <ST>
+            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
+// Tc2_Utilities.F_EuropeanLocalTime 演示程序（FUNCTION）
+// ============================================================
+// 验证步骤：
+//   1. 引用 Tc2_Utilities（及类型所在依赖库 Tc2_System / Tc2_Standard）
+//   2. 编译 + 登录
+//   3. 强制 bRun := TRUE 一个周期
+//   4. 观察 rResult 应为 本地时（DST 期 +120 分钟）
+// ============================================================
+
+stUtc.wYear := 2024; stUtc.wMonth := 7; stUtc.wDay := 15; stUtc.wHour := 10;
+IF bRun THEN
+    rResult := F_EuropeanLocalTime(stUtc, 60);
+    bRun := FALSE;
+END_IF;
+</xhtml>
+          </ST>
+        </body>
+      </pou>
+    </pous>
+  </types>
+  <instances>
+    <configurations/>
+  </instances>
+</project>

@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project xmlns="http://www.plcopen.org/xml/tc6_0200">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-10T12:00:00"/>
+  <contentHeader name="Tc2_Utilities.DT_TO_FILETIME64 Demo" modificationDateTime="2026-05-10T12:00:00">
+    <coordinateInfo>
+      <fbd><scaling x="1" y="1"/></fbd>
+      <ld><scaling x="1" y="1"/></ld>
+      <sfc><scaling x="1" y="1"/></sfc>
+    </coordinateInfo>
+  </contentHeader>
+  <types>
+    <dataTypes/>
+    <pous>
+      <pou name="P_Demo_DT_TO_FILETIME64" pouType="program">
+        <interface>
+          <localVars>
+            <variable name="rResult">
+              <type><derived name="T_FILETIME64"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">DT_TO_FILETIME64 的返回值</xhtml></documentation>
+            </variable>
+            <variable name="bRun">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">触发一次调用</xhtml></documentation>
+            </variable>
+            <variable name="dtIn">
+              <type><DATE_AND_TIME/></type>
+              <initialValue><simpleValue value="DT#2024-01-01-12:00:00"/></initialValue>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">测试用本地变量</xhtml></documentation>
+            </variable>
+          </localVars>
+        </interface>
+        <body>
+          <ST>
+            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
+// Tc2_Utilities.DT_TO_FILETIME64 演示程序（FUNCTION）
+// ============================================================
+// 验证步骤：
+//   1. 引用 Tc2_Utilities（及类型所在依赖库 Tc2_System / Tc2_Standard）
+//   2. 编译 + 登录
+//   3. 强制 bRun := TRUE 一个周期
+//   4. 观察 rResult 应为 对应 FILETIME64（约 17 位十进制数）
+// ============================================================
+
+IF bRun THEN
+    rResult := DT_TO_FILETIME64(dtIn);
+    bRun := FALSE;
+END_IF;
+</xhtml>
+          </ST>
+        </body>
+      </pou>
+    </pous>
+  </types>
+  <instances>
+    <configurations/>
+  </instances>
+</project>

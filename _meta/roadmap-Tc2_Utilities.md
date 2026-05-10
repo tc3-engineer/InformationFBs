@@ -5,15 +5,15 @@
 - **InfoSys**: https://infosys.beckhoff.com/content/1033/tcplclib_tc2_utilities/
 - **Discover 日期**: 2026-05-10
 - **总条目数**: 343（FB 97 + FC 245 + GVL 1）
-- **状态**: 🚧 in_progress（28/343 verified · Round 1 done）
+- **状态**: 🚧 in_progress（51/343 verified · Round 1+2 done）
 
 ## 分批策略
 
 | Round | Categories | 条目 | 状态 |
 |---|---|---|---|
 | 1 | LCOMPLEX / FLOAT / [Obsolete] / 16-bit fixed-point / Byte order / Library version | 28 | ✅ done |
-| 2 (pending) | TC_CoreBoostMonitor (5 OO methods) + [obsolete] FB (4) | 9 | ⏳ |
-| 3 (pending) | Time functions | 23 | ⏳ |
+| 2 | Time functions | 23 | ✅ done |
+| 3 (pending) | TC_CoreBoostMonitor (5 OO methods) + [obsolete] FB (4) | 9 | ⏳ |
 | 4 (pending) | T_Arg help functions | 27 | ⏳ |
 | 5 (pending) | P[TYPE]_TO_[TYPE] converting functions | 26 | ⏳ |
 | 6 (pending) | Extended STRING functions | 30 | ⏳ |
