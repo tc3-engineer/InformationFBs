@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+PLCopenXML PROGRAM 模板（IEC 61131-10）
+================================================================
+用途：为某 FB/FC 生成最小可导入的 TwinCAT 3 演示程序
+
+替换占位符：
+  {{NAME}}        FB/FC 名（如 RS、TON、ADSREAD）
+  {{LIBRARY}}     库名（如 Tc2_Standard）
+  {{TIMESTAMP}}   ISO8601，如 2026-05-09T00:00:00
+  {{POU_BODY}}    interface 段（localVars 区）
+  {{ST_CODE}}     ST 代码主体（XML 实体已转义；newline 保持字面）
+
+硬规则：
+1. 顶层 xmlns 固定 http://www.plcopen.org/xml/tc6_0200
+2. PROGRAM 名以 P_Demo_ 前缀，后接 FB 名
+3. 局部变量必须包含被演示 FB 的实例 fb{{NAME}}（type 用 <derived name="..."/>)
+4. 凡用到的输入信号/输出监视量都列为局部变量（BOOL/REAL/TIME 等基础类型）
+5. ST 代码顶部必须有"验证步骤"注释块（中文，列出测试操作流）
+6. 类型用 PLCopenXML 标准元素：<BOOL/> <INT/> <DINT/> <REAL/> <TIME/> <STRING/> <derived name=".."/>
+7. 导入会成功的最小标记集已包含；不要加 TwinCAT 私有 attribute
+
+注意：ST 代码内 < > & 必须 XML 实体化为 &lt; &gt; &amp;。
+-->
+<project xmlns="http://www.plcopen.org/xml/tc6_0200">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="{{TIMESTAMP}}"/>
+  <contentHeader name="{{LIBRARY}}.{{NAME}} Demo" modificationDateTime="{{TIMESTAMP}}">
+    <coordinateInfo>
+      <fbd><scaling x="1" y="1"/></fbd>
+      <ld><scaling x="1" y="1"/></ld>
+      <sfc><scaling x="1" y="1"/></sfc>
+    </coordinateInfo>
+  </contentHeader>
+  <types>
+    <dataTypes/>
+    <pous>
+      <pou name="P_Demo_{{NAME}}" pouType="program">
+        <interface>
+          <localVars>
+            <!-- 实例： -->
+            <variable name="fb{{NAME}}">
+              <type><derived name="{{NAME}}"/></type>
+            </variable>
+            <!-- 信号变量在这里（每个一段）：
+            <variable name="bSomeIn">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">中文描述</xhtml></documentation>
+            </variable>
+            -->
+          </localVars>
+        </interface>
+        <body>
+          <ST>
+            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
+// {{LIBRARY}}.{{NAME}} 演示程序
+// ============================================================
+// 验证步骤：
+//   1. 把本 PROGRAM 加到 PlcTask 调用列表
+//   2. 编译并登录目标
+//   3. 在线监视 ...（输出变量）
+//   4. ...（具体测试操作）
+// ============================================================
+
+{{ST_CODE}}
+</xhtml>
+          </ST>
+        </body>
+      </pou>
+    </pous>
+  </types>
+  <instances>
+    <configurations/>
+  </instances>
+</project>

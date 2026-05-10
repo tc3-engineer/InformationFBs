@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project xmlns="http://www.plcopen.org/xml/tc6_0200">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-09T00:00:00"/>
+  <contentHeader name="Tc2_Standard.SR Demo" modificationDateTime="2026-05-09T00:00:00">
+    <coordinateInfo>
+      <fbd><scaling x="1" y="1"/></fbd>
+      <ld><scaling x="1" y="1"/></ld>
+      <sfc><scaling x="1" y="1"/></sfc>
+    </coordinateInfo>
+  </contentHeader>
+  <types>
+    <dataTypes/>
+    <pous>
+      <pou name="P_Demo_SR" pouType="program">
+        <interface>
+          <localVars>
+            <variable name="fbSR">
+              <type><derived name="SR"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">SET 优先双稳态实例</xhtml></documentation>
+            </variable>
+            <variable name="bAlarm">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">即时报警条件（如超温）</xhtml></documentation>
+            </variable>
+            <variable name="bAck">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">操作员复位按钮</xhtml></documentation>
+            </variable>
+            <variable name="bAlarmL">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">闩锁后的报警位（输出，监视此值）</xhtml></documentation>
+            </variable>
+          </localVars>
+        </interface>
+        <body>
+          <ST>
+            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
+// Tc2_Standard.SR 演示程序
+// ============================================================
+// 验证步骤：
+//   1. 把本 PROGRAM 加到 PlcTask
+//   2. 在线监视 bAlarmL
+//   3. 强制 bAlarm := TRUE 一瞬间再清零 → bAlarmL 闩锁为 TRUE
+//   4. 强制 bAck := TRUE → bAlarmL 变 FALSE
+//   5. 同时 bAlarm = bAck = TRUE → bAlarmL 仍为 TRUE（验证 SET 优先）
+// ============================================================
+
+fbSR(
+    SET1  := bAlarm,
+    RESET := bAck,
+    Q1    => bAlarmL
+);
+</xhtml>
+          </ST>
+        </body>
+      </pou>
+    </pous>
+  </types>
+  <instances>
+    <configurations/>
+  </instances>
+</project>

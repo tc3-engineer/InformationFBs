@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project xmlns="http://www.plcopen.org/xml/tc6_0200">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-09T00:00:00"/>
+  <contentHeader name="Tc2_Standard.TON Demo" modificationDateTime="2026-05-09T00:00:00">
+    <coordinateInfo>
+      <fbd><scaling x="1" y="1"/></fbd>
+      <ld><scaling x="1" y="1"/></ld>
+      <sfc><scaling x="1" y="1"/></sfc>
+    </coordinateInfo>
+  </contentHeader>
+  <types>
+    <dataTypes/>
+    <pous>
+      <pou name="P_Demo_TON" pouType="program">
+        <interface>
+          <localVars>
+            <variable name="fbTON">
+              <type><derived name="TON"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">接通延时定时器</xhtml></documentation>
+            </variable>
+            <variable name="bMotorReq">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">启动请求</xhtml></documentation>
+            </variable>
+            <variable name="bRunOk">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">启动延时完成（输出）</xhtml></documentation>
+            </variable>
+            <variable name="tElapsed">
+              <type><TIME/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">已经过时间（监视用）</xhtml></documentation>
+            </variable>
+          </localVars>
+        </interface>
+        <body>
+          <ST>
+            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
+// Tc2_Standard.TON 演示程序
+// ============================================================
+// 验证步骤：
+//   1. 把本 PROGRAM 加到 PlcTask
+//   2. 在线监视 bRunOk 与 tElapsed
+//   3. 强制 bMotorReq := TRUE → tElapsed 从 0 累加，到 3s 时 bRunOk 变 TRUE
+//   4. 强制 bMotorReq := FALSE → bRunOk 立刻变 FALSE，tElapsed 清零
+//   5. 中途打断（不到 3s 就 FALSE）→ 计时被复位，重启计时
+// ============================================================
+
+fbTON(
+    IN := bMotorReq,
+    PT := T#3S,
+    Q  => bRunOk,
+    ET => tElapsed
+);
+</xhtml>
+          </ST>
+        </body>
+      </pou>
+    </pous>
+  </types>
+  <instances>
+    <configurations/>
+  </instances>
+</project>
