@@ -21,8 +21,6 @@
 | 6 | Extended STRING functions | 30 | ✅ done |
 | 7 | 64-bit functions (signed) | 15 | ✅ done |
 | 8 (pending) | 64-bit integer functions (unsigned) | 31 | ⏳ |
-| 7 (pending) | 64-bit functions (signed) | 15 | ⏳ |
-| 8 (pending) | 64-bit integer functions (unsigned) | 31 | ⏳ |
 | 9 (pending) | Functions（散） | 66 | ⏳ |
 | 10 (pending) | Function blocks | 88 | ⏳ |
 
