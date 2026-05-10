@@ -18,11 +18,11 @@
 | 4 | T_Arg help functions | 27 | ✅ done |
 | 5 | P[TYPE]_TO_[TYPE] converting functions | 26 | ✅ done |
 | 6 | Extended STRING functions | 30 | ✅ done |
-| - | 64-bit functions (signed) | 15 | ⏳ pending |
+| 7 | 64-bit functions (signed) | 15 | ✅ done |
 | - | 64-bit integer (unsigned) | 31 | ⏳ pending |
 | - | Functions（散） | 66 | ⏳ pending |
 | - | Function blocks (剩余) | ~83 | ⏳ pending |
-| - | **当前累计** | **144 / 344** | 41.9% |
+| - | **当前累计** | **159 / 344** | 46.2% |
 
 ## Round 1 索引（28 条 · 全部 ✅ verified）
 
@@ -205,6 +205,26 @@
 | HEX ↔ binary | `DATA_TO_HEXSTR2` `HEXSTR_TO_DATA2` |
 
 各条文档与例程：`Tc2_Utilities/extended_string/<Name>.md` + `Tc2_Utilities/examples/P_Demo_<Name>.xml`。
+
+### 64-bit functions (signed)（15）
+
+| Name | 文档 | 例程 |
+|---|---|---|
+| INT64_TO_LREAL | [✅](int64_signed/INT64_TO_LREAL.md) | [P_Demo_INT64_TO_LREAL.xml](examples/P_Demo_INT64_TO_LREAL.xml) |
+| Int64Add64 | [✅](int64_signed/Int64Add64.md) | [P_Demo_Int64Add64.xml](examples/P_Demo_Int64Add64.xml) |
+| Int64Add64Ex | [✅](int64_signed/Int64Add64Ex.md) | [P_Demo_Int64Add64Ex.xml](examples/P_Demo_Int64Add64Ex.xml) |
+| Int64Cmp64 | [✅](int64_signed/Int64Cmp64.md) | [P_Demo_Int64Cmp64.xml](examples/P_Demo_Int64Cmp64.xml) |
+| Int64Div64Ex | [✅](int64_signed/Int64Div64Ex.md) | [P_Demo_Int64Div64Ex.xml](examples/P_Demo_Int64Div64Ex.xml) |
+| Int64IsZero | [✅](int64_signed/Int64IsZero.md) | [P_Demo_Int64IsZero.xml](examples/P_Demo_Int64IsZero.xml) |
+| Int64Negate | [✅](int64_signed/Int64Negate.md) | [P_Demo_Int64Negate.xml](examples/P_Demo_Int64Negate.xml) |
+| Int64Not | [✅](int64_signed/Int64Not.md) | [P_Demo_Int64Not.xml](examples/P_Demo_Int64Not.xml) |
+| Int64Sub64 | [✅](int64_signed/Int64Sub64.md) | [P_Demo_Int64Sub64.xml](examples/P_Demo_Int64Sub64.xml) |
+| LARGE_INTEGER | [✅](int64_signed/LARGE_INTEGER.md) | [P_Demo_LARGE_INTEGER.xml](examples/P_Demo_LARGE_INTEGER.xml) |
+| LARGE_TO_LINT | [✅](int64_signed/LARGE_TO_LINT.md) | [P_Demo_LARGE_TO_LINT.xml](examples/P_Demo_LARGE_TO_LINT.xml) |
+| LARGE_TO_ULARGE | [✅](int64_signed/LARGE_TO_ULARGE.md) | [P_Demo_LARGE_TO_ULARGE.xml](examples/P_Demo_LARGE_TO_ULARGE.xml) |
+| LINT_TO_LARGE | [✅](int64_signed/LINT_TO_LARGE.md) | [P_Demo_LINT_TO_LARGE.xml](examples/P_Demo_LINT_TO_LARGE.xml) |
+| LREAL_TO_INT64 | [✅](int64_signed/LREAL_TO_INT64.md) | [P_Demo_LREAL_TO_INT64.xml](examples/P_Demo_LREAL_TO_INT64.xml) |
+| ULARGE_TO_LARGE | [✅](int64_signed/ULARGE_TO_LARGE.md) | [P_Demo_ULARGE_TO_LARGE.xml](examples/P_Demo_ULARGE_TO_LARGE.xml) |
 
 ### Library version（1）
 
