@@ -63,7 +63,11 @@ END_VAR
 
 ## 4. 错误码 / 返回值
 
-出错时 `bError = TRUE`，错误码在 `nErrorId`/`hrErrorCode`（具体码表见 InfoSys 在线文档，⚠️ 待人工补充）。
+本 FB **没有显式错误输出**（VAR_OUTPUT 只有 `out` / `eTzID` / `bB`）。异常情况：
+- 本地时间出现非 DST 跳变（手动改时间等）→ 内部状态机失效，`out`（UTC）与 `eTzID` 可能错乱（PDF 警告）
+- DST 切换的 B 时段（local 回拨重复时段第二次）→ `bB = TRUE` 标识，需调用方区分
+- 解决办法：调用关联动作 `A_Reset()` 重置内部状态后重新喂连续 local 输入
+- **工程惯例**：内部时间戳应直接用 UTC，避免本地→UTC 转换的脆弱性
 
 ## 5. 使用注意 / 常见坑
 
