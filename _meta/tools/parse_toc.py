@@ -45,16 +45,49 @@ LINE_RE_FALLBACK = re.compile(
 
 
 def _toc_text(full: str) -> str:
-    # take everything between first "Table of contents" and the first chapter "1 Foreword"
-    # (chapters typically come right after TOC ends)
+    """Return the table-of-contents region of the cached PDF text.
+
+    TOC entries end with a dot leader and a page number. The body of the
+    document does NOT have that pattern, so we walk forward from "Table of
+    contents" line by line and stop at the first non-blank line that doesn't
+    look like a TOC entry (or a page-break artifact).
+    """
     start = full.find("Table of contents")
     if start < 0:
         return full
     rest = full[start:]
-    # End TOC when we hit "=== PAGE N ===" containing chapter "1 " heading body, but
-    # easier: stop at first occurrence of "1.1 " on its own followed by paragraph text;
-    # in practice TOC spans 1-3 pages, so cut after 8000 chars max.
-    return rest[:8000]
+
+    # A TOC line either matches one of the entry shapes also accepted by
+    # parse() below (LINE_RE / LINE_RE_FALLBACK — both with and without a dot
+    # leader), or is a page-break artifact ("=== PAGE N ===", "Table of
+    # contents", "TE...Version:..."), or is blank. Any TOC entry shape we
+    # accept here MUST be accepted there, otherwise parse() can't see it
+    # anyway.
+    toc_line = re.compile(
+        r"^(?:"
+        r"\s*\d+(?:\.\d+){0,3}\s+.+?\s+\.{2,}\s*\d+\s*"  # "3.1 Name ......  9"
+        r"|\s*\d+(?:\.\d+){0,3}\s+.+?\s{2,}\d+\s*"        # "3.1 Name      9" (no dot leader)
+        r"|=== PAGE \d+ ==="
+        r"|Table of contents"
+        r"|TE\d+\s+\d+(?:\s*Version:.*)?"
+        r"|TE\d+\s*Version:.*"
+        r"|\s*"  # blank
+        r")$"
+    )
+    end_offset = len(rest)
+    consec_non_toc = 0
+    pos = 0
+    for line in rest.splitlines(keepends=True):
+        if toc_line.match(line.rstrip("\n")):
+            consec_non_toc = 0
+        else:
+            consec_non_toc += 1
+            if consec_non_toc >= 2:
+                # Two consecutive non-TOC lines → we've left the TOC.
+                end_offset = pos
+                break
+        pos += len(line)
+    return rest[:end_offset]
 
 
 def parse(lib: str) -> list[dict]:
