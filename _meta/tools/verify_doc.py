@@ -53,6 +53,38 @@ VAR_DECL_RE = re.compile(
 )
 
 
+_NEW_DECL_LINE_RE = re.compile(r"^\s*[A-Za-z_][A-Za-z0-9_]*\s*:(?!=)")
+
+
+def _join_wrapped_decls(region: str) -> str:
+    """Reflow declarations whose type wraps onto the next line.
+
+    A "continuation" line:
+      - the previous accumulated line contains `:` but not `;`
+      - this line does not itself start with `<name>:` (i.e. it isn't the
+        next declaration)
+      - this line is non-blank
+    On match, the continuation is appended (space-joined) to the previous
+    line. Blank lines are passed through unchanged.
+    """
+    lines = region.split("\n")
+    out: list[str] = []
+    for raw in lines:
+        if (
+            out
+            and out[-1].strip()
+            and ":" in out[-1]
+            and ";" not in out[-1]
+            and raw.strip()
+            and not _NEW_DECL_LINE_RE.match(raw)
+            and not raw.lstrip().upper().startswith(("END_VAR", "VAR_"))
+        ):
+            out[-1] = out[-1].rstrip() + " " + raw.strip()
+        else:
+            out.append(raw)
+    return "\n".join(out)
+
+
 def _vars_from_text(text: str) -> list[tuple[str, str]]:
     # Strip markdown code-fence markers ("```iecst", "```") so they don't get
     # captured into the VAR region when scanning a generated doc that places
@@ -81,6 +113,13 @@ def _vars_from_text(text: str) -> list[tuple[str, str]]:
         # one buried inside a comment.
         region = re.sub(r"\(\*.*?\*\)", "", region, flags=re.DOTALL)
         region = re.sub(r"//.*$", "", region, flags=re.MULTILINE)
+        # Join wrapped-type lines: if pypdf split a type across two lines
+        # (e.g. "in : POINTER TO\nT_HUGE_INTEGER;"), the type token would
+        # otherwise be truncated by the `\n` exclusion in VAR_DECL_RE. A line
+        # is a continuation when (a) it does not start with a new "name :"
+        # declaration AND (b) the previous accumulated line still has an
+        # unterminated `:` (no `;`).
+        region = _join_wrapped_decls(region)
         for vm in VAR_DECL_RE.finditer(region):
             typ = vm.group(2)
             typ = re.sub(r":=.*$", "", typ, flags=re.DOTALL).strip()
