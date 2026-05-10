@@ -19,8 +19,6 @@
 | 4 | T_Arg help functions | 27 | ✅ done |
 | 5 | P[TYPE]_TO_[TYPE] converting functions | 26 | ✅ done |
 | 6 (pending) | Extended STRING functions | 30 | ⏳ |
-| 5 (pending) | P[TYPE]_TO_[TYPE] converting functions | 26 | ⏳ |
-| 6 (pending) | Extended STRING functions | 30 | ⏳ |
 | 7 (pending) | 64-bit functions (signed) | 15 | ⏳ |
 | 8 (pending) | 64-bit integer functions (unsigned) | 31 | ⏳ |
 | 9 (pending) | Functions（散） | 66 | ⏳ |
