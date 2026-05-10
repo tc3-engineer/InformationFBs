@@ -227,3 +227,20 @@
 2026-05-10T16:00:00Z | Tc2_Utilities | Extended STRING functions | WSTRING_TO_STRING2   | verified | doc-shard auto-gen
 2026-05-10T16:00:00Z | Tc2_Utilities | Extended STRING functions | WSTRING_TO_UTF8      | verified | doc-shard auto-gen
 2026-05-10T16:00:00Z | Tc2_Utilities | Extended STRING functions | WSTRNCPY             | verified | with VAR_OUTPUT nSrcLen/nDstLen
+
+# 2026-05-10 batch · Tc2_Utilities Round 7 (64-bit signed, 15 entries)
+2026-05-10T17:00:00Z | Tc2_Utilities | 64 bit functions (signed) | INT64_TO_LREAL    | verified | doc-shard auto-gen
+2026-05-10T17:00:00Z | Tc2_Utilities | 64 bit functions (signed) | Int64Add64        | verified | doc-shard auto-gen
+2026-05-10T17:00:00Z | Tc2_Utilities | 64 bit functions (signed) | Int64Add64Ex      | verified | with bOV overflow flag (VAR_IN_OUT)
+2026-05-10T17:00:00Z | Tc2_Utilities | 64 bit functions (signed) | Int64Cmp64        | verified | -1/0/1 tri-state
+2026-05-10T17:00:00Z | Tc2_Utilities | 64 bit functions (signed) | Int64Div64Ex      | verified | with remainder (VAR_IN_OUT)
+2026-05-10T17:00:00Z | Tc2_Utilities | 64 bit functions (signed) | Int64IsZero       | verified | PDF return-table typo "Int64isZero" lowercase i, real name uppercase
+2026-05-10T17:00:00Z | Tc2_Utilities | 64 bit functions (signed) | Int64Negate       | verified | doc-shard auto-gen
+2026-05-10T17:00:00Z | Tc2_Utilities | 64 bit functions (signed) | Int64Not          | verified | doc-shard auto-gen
+2026-05-10T17:00:00Z | Tc2_Utilities | 64 bit functions (signed) | Int64Sub64        | verified | no overflow check
+2026-05-10T17:00:00Z | Tc2_Utilities | 64 bit functions (signed) | LARGE_INTEGER     | verified | constructor (high/low DWORD)
+2026-05-10T17:00:00Z | Tc2_Utilities | 64 bit functions (signed) | LARGE_TO_LINT     | verified | legacy -> native 64-bit
+2026-05-10T17:00:00Z | Tc2_Utilities | 64 bit functions (signed) | LARGE_TO_ULARGE   | verified | signed -> unsigned bit-cast
+2026-05-10T17:00:00Z | Tc2_Utilities | 64 bit functions (signed) | LINT_TO_LARGE     | verified | native -> legacy 64-bit
+2026-05-10T17:00:00Z | Tc2_Utilities | 64 bit functions (signed) | LREAL_TO_INT64    | verified | LREAL -> legacy 64-bit
+2026-05-10T17:00:00Z | Tc2_Utilities | 64 bit functions (signed) | ULARGE_TO_LARGE   | verified | unsigned -> signed bit-cast

@@ -5,7 +5,7 @@
 - **InfoSys**: https://infosys.beckhoff.com/content/1033/tcplclib_tc2_utilities/
 - **Discover 日期**: 2026-05-10
 - **总条目数**: 343（FB 97 + FC 245 + GVL 1）
-- **状态**: 🚧 in_progress（144/344 verified · Round 1-6 done）
+- **状态**: 🚧 in_progress（159/344 verified · Round 1-7 done）
 
 > **注**：parse_toc 升级后识别 OO parent FB（`TC_CoreBoostMonitor`），总条目 343→344。
 
@@ -19,8 +19,7 @@
 | 4 | T_Arg help functions | 27 | ✅ done |
 | 5 | P[TYPE]_TO_[TYPE] converting functions | 26 | ✅ done |
 | 6 | Extended STRING functions | 30 | ✅ done |
-| 7 (pending) | 64-bit functions (signed) | 15 | ⏳ |
-| 7 (pending) | 64-bit functions (signed) | 15 | ⏳ |
+| 7 | 64-bit functions (signed) | 15 | ✅ done |
 | 8 (pending) | 64-bit integer functions (unsigned) | 31 | ⏳ |
 | 9 (pending) | Functions（散） | 66 | ⏳ |
 | 10 (pending) | Function blocks | 88 | ⏳ |
