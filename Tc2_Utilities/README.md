@@ -19,10 +19,10 @@
 | 5 | P[TYPE]_TO_[TYPE] converting functions | 26 | ✅ done |
 | 6 | Extended STRING functions | 30 | ✅ done |
 | 7 | 64-bit functions (signed) | 15 | ✅ done |
-| - | 64-bit integer (unsigned) | 31 | ⏳ pending |
+| 8 | 64-bit integer functions (unsigned) | 31 | ✅ done |
 | - | Functions（散） | 66 | ⏳ pending |
 | - | Function blocks (剩余) | ~83 | ⏳ pending |
-| - | **当前累计** | **159 / 344** | 46.2% |
+| - | **当前累计** | **190 / 344** | 55.2% |
 
 ## Round 1 索引（28 条 · 全部 ✅ verified）
 
@@ -225,6 +225,21 @@
 | LINT_TO_LARGE | [✅](int64_signed/LINT_TO_LARGE.md) | [P_Demo_LINT_TO_LARGE.xml](examples/P_Demo_LINT_TO_LARGE.xml) |
 | LREAL_TO_INT64 | [✅](int64_signed/LREAL_TO_INT64.md) | [P_Demo_LREAL_TO_INT64.xml](examples/P_Demo_LREAL_TO_INT64.xml) |
 | ULARGE_TO_LARGE | [✅](int64_signed/ULARGE_TO_LARGE.md) | [P_Demo_ULARGE_TO_LARGE.xml](examples/P_Demo_ULARGE_TO_LARGE.xml) |
+
+### 64-bit integer functions (unsigned)（31）
+
+> 围绕 `T_ULARGE_INTEGER`（TwinCAT 2 legacy 64-bit 无符号结构）。Round 7 是同结构的有符号版。
+
+| 子类 | 条目 |
+|---|---|
+| 算术 | `UInt64Add64` `UInt64Add64Ex`(bOV) `UInt64Sub64` `UInt64Mul64` `UInt64Mul64Ex`(bOV) `UInt64Div64` `UInt64Div64Ex`(remainder) `UInt64Div16Ex`(WORD divisor) `UInt64Mod64` `UInt32x32To64`(32×32→64) |
+| 位运算 | `UInt64And` `UInt64Or` `UInt64Xor` `UInt64Not` `UInt64Shl` `UInt64Shr` `UInt64Rol` `UInt64Ror` |
+| 比较/谓词 | `UInt64Cmp64` `UInt64isZero` |
+| 限幅 | `UInt64Limit`(min,in,max) `UInt64Max` `UInt64Min` |
+| 转换 | `LREAL_TO_UINT64` `UINT64_TO_LREAL` `STRING_TO_UINT64` `UINT64_TO_STRING` `LWORD_TO_ULARGE` `ULARGE_TO_LWORD` `ULARGE_TO_ULINT` |
+| 构造器 | `ULARGE_INTEGER`(high, low) |
+
+各条文档 / 例程：`Tc2_Utilities/uint64/<Name>.md` + `Tc2_Utilities/examples/P_Demo_<Name>.xml`。
 
 ### Library version（1）
 

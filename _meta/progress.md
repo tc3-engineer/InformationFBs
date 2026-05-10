@@ -244,3 +244,36 @@
 2026-05-10T17:00:00Z | Tc2_Utilities | 64 bit functions (signed) | LINT_TO_LARGE     | verified | native -> legacy 64-bit
 2026-05-10T17:00:00Z | Tc2_Utilities | 64 bit functions (signed) | LREAL_TO_INT64    | verified | LREAL -> legacy 64-bit
 2026-05-10T17:00:00Z | Tc2_Utilities | 64 bit functions (signed) | ULARGE_TO_LARGE   | verified | unsigned -> signed bit-cast
+
+# 2026-05-10 batch · Tc2_Utilities Round 8 (64-bit unsigned, 31 entries)
+2026-05-10T18:00:00Z | Tc2_Utilities | 64 bit integer functions (unsigned) | LREAL_TO_UINT64    | verified
+2026-05-10T18:00:00Z | Tc2_Utilities | 64 bit integer functions (unsigned) | LWORD_TO_ULARGE    | verified
+2026-05-10T18:00:00Z | Tc2_Utilities | 64 bit integer functions (unsigned) | STRING_TO_UINT64   | verified | STRING(21)
+2026-05-10T18:00:00Z | Tc2_Utilities | 64 bit integer functions (unsigned) | UInt32x32To64      | verified | 32×32 -> 64
+2026-05-10T18:00:00Z | Tc2_Utilities | 64 bit integer functions (unsigned) | UINT64_TO_LREAL    | verified
+2026-05-10T18:00:00Z | Tc2_Utilities | 64 bit integer functions (unsigned) | UINT64_TO_STRING   | verified | STRING(21)
+2026-05-10T18:00:00Z | Tc2_Utilities | 64 bit integer functions (unsigned) | UInt64Add64        | verified
+2026-05-10T18:00:00Z | Tc2_Utilities | 64 bit integer functions (unsigned) | UInt64Add64Ex      | verified | with bOV (VAR_IN_OUT)
+2026-05-10T18:00:00Z | Tc2_Utilities | 64 bit integer functions (unsigned) | UInt64And          | verified
+2026-05-10T18:00:00Z | Tc2_Utilities | 64 bit integer functions (unsigned) | UInt64Cmp64        | verified | -1/0/1
+2026-05-10T18:00:00Z | Tc2_Utilities | 64 bit integer functions (unsigned) | UInt64Div16Ex      | verified | with remainder
+2026-05-10T18:00:00Z | Tc2_Utilities | 64 bit integer functions (unsigned) | UInt64Div64        | verified | quotient only
+2026-05-10T18:00:00Z | Tc2_Utilities | 64 bit integer functions (unsigned) | UInt64Div64Ex      | verified | with remainder
+2026-05-10T18:00:00Z | Tc2_Utilities | 64 bit integer functions (unsigned) | UInt64isZero       | verified | lowercase 'is' (cf Round 7 IsZero)
+2026-05-10T18:00:00Z | Tc2_Utilities | 64 bit integer functions (unsigned) | UInt64Limit        | verified | min/in/max clamp
+2026-05-10T18:00:00Z | Tc2_Utilities | 64 bit integer functions (unsigned) | UInt64Max          | verified
+2026-05-10T18:00:00Z | Tc2_Utilities | 64 bit integer functions (unsigned) | UInt64Min          | verified
+2026-05-10T18:00:00Z | Tc2_Utilities | 64 bit integer functions (unsigned) | UInt64Mod64        | verified
+2026-05-10T18:00:00Z | Tc2_Utilities | 64 bit integer functions (unsigned) | UInt64Mul64        | verified
+2026-05-10T18:00:00Z | Tc2_Utilities | 64 bit integer functions (unsigned) | UInt64Mul64Ex      | verified | with bOV
+2026-05-10T18:00:00Z | Tc2_Utilities | 64 bit integer functions (unsigned) | UInt64Not          | verified
+2026-05-10T18:00:00Z | Tc2_Utilities | 64 bit integer functions (unsigned) | UInt64Or           | verified
+2026-05-10T18:00:00Z | Tc2_Utilities | 64 bit integer functions (unsigned) | UInt64Rol          | verified | rotate left
+2026-05-10T18:00:00Z | Tc2_Utilities | 64 bit integer functions (unsigned) | UInt64Ror          | verified | rotate right
+2026-05-10T18:00:00Z | Tc2_Utilities | 64 bit integer functions (unsigned) | UInt64Shl          | verified | shift left
+2026-05-10T18:00:00Z | Tc2_Utilities | 64 bit integer functions (unsigned) | UInt64Shr          | verified | shift right (logical)
+2026-05-10T18:00:00Z | Tc2_Utilities | 64 bit integer functions (unsigned) | UInt64Sub64        | verified | unsigned, may underflow
+2026-05-10T18:00:00Z | Tc2_Utilities | 64 bit integer functions (unsigned) | UInt64Xor          | verified
+2026-05-10T18:00:00Z | Tc2_Utilities | 64 bit integer functions (unsigned) | ULARGE_INTEGER     | verified | constructor
+2026-05-10T18:00:00Z | Tc2_Utilities | 64 bit integer functions (unsigned) | ULARGE_TO_ULINT    | verified | legacy -> native ULINT
+2026-05-10T18:00:00Z | Tc2_Utilities | 64 bit integer functions (unsigned) | ULARGE_TO_LWORD    | verified | legacy -> native LWORD
