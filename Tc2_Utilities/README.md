@@ -17,12 +17,12 @@
 | 3 | TC_CoreBoostMonitor (parent FB + 5 methods) + [obsolete] FB (4) | 10 | ✅ done |
 | 4 | T_Arg help functions | 27 | ✅ done |
 | 5 | P[TYPE]_TO_[TYPE] converting functions | 26 | ✅ done |
-| - | Extended STRING | 30 | ⏳ pending |
+| 6 | Extended STRING functions | 30 | ✅ done |
 | - | 64-bit functions (signed) | 15 | ⏳ pending |
 | - | 64-bit integer (unsigned) | 31 | ⏳ pending |
 | - | Functions（散） | 66 | ⏳ pending |
 | - | Function blocks (剩余) | ~83 | ⏳ pending |
-| - | **当前累计** | **114 / 344** | 33.1% |
+| - | **当前累计** | **144 / 344** | 41.9% |
 
 ## Round 1 索引（28 条 · 全部 ✅ verified）
 
@@ -190,6 +190,21 @@
 | PUSINT_TO_USINT | [✅](p_to_value/PUSINT_TO_USINT.md) | [P_Demo_PUSINT_TO_USINT.xml](examples/P_Demo_PUSINT_TO_USINT.xml) |
 | PWORD_TO_WORD | [✅](p_to_value/PWORD_TO_WORD.md) | [P_Demo_PWORD_TO_WORD.xml](examples/P_Demo_PWORD_TO_WORD.xml) |
 | PUINT64_TO_UINT64 | [✅](p_to_value/PUINT64_TO_UINT64.md) | [P_Demo_PUINT64_TO_UINT64.xml](examples/P_Demo_PUINT64_TO_UINT64.xml) |
+
+### Extended STRING functions（30）
+
+| 子类 | 条目 |
+|---|---|
+| 任意长 STRING/WSTRING ops | `CONCAT2` `DELETE2` `FIND2` `INSERT2` `REPLACE2` `LEN2` `WCONCAT2` `WLEN2` `STRNCPY` `WSTRNCPY` |
+| Find-and-* 模式 | `FindAndDelete` `FindAndDeleteChar` `FindAndReplace` `FindAndReplaceChar` `FindAndSplit` `FindAndSplitChar` |
+| 单字符转换 | `CHAR_TO_WCHAR` `WCHAR_TO_CHAR` |
+| STRING ↔ WSTRING（任意长） | `STRING_TO_WSTRING2` `WSTRING_TO_STRING2` |
+| UTF-8 转换 | `STRING_TO_UTF8` `UTF8_TO_STRING` `WSTRING_TO_UTF8` `UTF8_TO_WSTRING` `UTF8Len` |
+| UTF-8 字面量 | `sLiteral_TO_UTF8` `wsLiteral_TO_UTF8` |
+| 检查 | `F_StringIsASCII` |
+| HEX ↔ binary | `DATA_TO_HEXSTR2` `HEXSTR_TO_DATA2` |
+
+各条文档与例程：`Tc2_Utilities/extended_string/<Name>.md` + `Tc2_Utilities/examples/P_Demo_<Name>.xml`。
 
 ### Library version（1）
 

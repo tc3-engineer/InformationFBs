@@ -195,3 +195,35 @@
 2026-05-10T15:00:00Z | Tc2_Utilities | P[TYPE]_TO_[TYPE] | PUSINT_TO_USINT         | verified | uniform pointer-deref pattern
 2026-05-10T15:00:00Z | Tc2_Utilities | P[TYPE]_TO_[TYPE] | PWORD_TO_WORD           | verified | uniform pointer-deref pattern
 2026-05-10T15:00:00Z | Tc2_Utilities | P[TYPE]_TO_[TYPE] | PUINT64_TO_UINT64       | verified | name has UINT64 but returns T_ULARGE_INTEGER
+
+# 2026-05-10 batch · Tc2_Utilities Round 6 (Extended STRING functions, 30 entries)
+2026-05-10T16:00:00Z | Tc2_Utilities | Extended STRING functions | CHAR_TO_WCHAR        | verified | doc-shard auto-gen
+2026-05-10T16:00:00Z | Tc2_Utilities | Extended STRING functions | CONCAT2              | verified | doc-shard auto-gen
+2026-05-10T16:00:00Z | Tc2_Utilities | Extended STRING functions | DATA_TO_HEXSTR2      | verified | doc-shard auto-gen
+2026-05-10T16:00:00Z | Tc2_Utilities | Extended STRING functions | DELETE2              | verified | doc-shard auto-gen
+2026-05-10T16:00:00Z | Tc2_Utilities | Extended STRING functions | F_StringIsASCII      | verified | PDF doc-table 'pString' typo, VAR_INPUT 'pSTRING' authoritative
+2026-05-10T16:00:00Z | Tc2_Utilities | Extended STRING functions | FIND2                | verified | doc-shard auto-gen
+2026-05-10T16:00:00Z | Tc2_Utilities | Extended STRING functions | FindAndDelete        | verified | doc-shard auto-gen
+2026-05-10T16:00:00Z | Tc2_Utilities | Extended STRING functions | FindAndDeleteChar    | verified | doc-shard auto-gen
+2026-05-10T16:00:00Z | Tc2_Utilities | Extended STRING functions | FindAndReplace       | verified | doc-shard auto-gen
+2026-05-10T16:00:00Z | Tc2_Utilities | Extended STRING functions | FindAndReplaceChar   | verified | doc-shard auto-gen
+2026-05-10T16:00:00Z | Tc2_Utilities | Extended STRING functions | FindAndSplit         | verified | doc-shard auto-gen
+2026-05-10T16:00:00Z | Tc2_Utilities | Extended STRING functions | FindAndSplitChar     | verified | doc-shard auto-gen
+2026-05-10T16:00:00Z | Tc2_Utilities | Extended STRING functions | HEXSTR_TO_DATA2      | verified | doc-shard auto-gen
+2026-05-10T16:00:00Z | Tc2_Utilities | Extended STRING functions | INSERT2              | verified | doc-shard auto-gen
+2026-05-10T16:00:00Z | Tc2_Utilities | Extended STRING functions | LEN2                 | verified | doc-shard auto-gen
+2026-05-10T16:00:00Z | Tc2_Utilities | Extended STRING functions | REPLACE2             | verified | doc-shard auto-gen
+2026-05-10T16:00:00Z | Tc2_Utilities | Extended STRING functions | sLiteral_TO_UTF8     | verified | VAR_IN_OUT CONSTANT
+2026-05-10T16:00:00Z | Tc2_Utilities | Extended STRING functions | STRING_TO_UTF8       | verified | doc-shard auto-gen
+2026-05-10T16:00:00Z | Tc2_Utilities | Extended STRING functions | STRING_TO_WSTRING2   | verified | doc-shard auto-gen
+2026-05-10T16:00:00Z | Tc2_Utilities | Extended STRING functions | STRNCPY              | verified | with VAR_OUTPUT nSrcLen/nDstLen
+2026-05-10T16:00:00Z | Tc2_Utilities | Extended STRING functions | UTF8_TO_STRING       | verified | doc-shard auto-gen
+2026-05-10T16:00:00Z | Tc2_Utilities | Extended STRING functions | UTF8_TO_WSTRING      | verified | doc-shard auto-gen
+2026-05-10T16:00:00Z | Tc2_Utilities | Extended STRING functions | UTF8Len              | verified | doc-shard auto-gen
+2026-05-10T16:00:00Z | Tc2_Utilities | Extended STRING functions | WCHAR_TO_CHAR        | verified | doc-shard auto-gen
+2026-05-10T16:00:00Z | Tc2_Utilities | Extended STRING functions | WCONCAT2             | verified | doc-shard auto-gen
+2026-05-10T16:00:00Z | Tc2_Utilities | Extended STRING functions | WLEN2                | verified | doc-shard auto-gen
+2026-05-10T16:00:00Z | Tc2_Utilities | Extended STRING functions | wsLiteral_TO_UTF8    | verified | VAR_IN_OUT CONSTANT
+2026-05-10T16:00:00Z | Tc2_Utilities | Extended STRING functions | WSTRING_TO_STRING2   | verified | doc-shard auto-gen
+2026-05-10T16:00:00Z | Tc2_Utilities | Extended STRING functions | WSTRING_TO_UTF8      | verified | doc-shard auto-gen
+2026-05-10T16:00:00Z | Tc2_Utilities | Extended STRING functions | WSTRNCPY             | verified | with VAR_OUTPUT nSrcLen/nDstLen
