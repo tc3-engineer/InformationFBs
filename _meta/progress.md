@@ -138,3 +138,32 @@
 2026-05-10T13:00:00Z | Tc2_Utilities | [obsolete]           | FB_GetDeviceIdentification        | verified | deprecated; use *Ex variant
 2026-05-10T13:00:00Z | Tc2_Utilities | [obsolete]           | FB_FileTimeToTzSpecificLocalTime  | verified | deprecated; use FB_FileTime64ToTz...
 2026-05-10T13:00:00Z | Tc2_Utilities | [obsolete]           | FB_TzSpecificLocalTimeToFileTime  | verified | deprecated; use FB_TzSpecificLocalTimeToFileTime64
+
+# 2026-05-10 batch · Tc2_Utilities Round 4 (T_Arg help functions, 27 entries)
+2026-05-10T14:00:00Z | Tc2_Utilities | T_Arg help functions | F_ARGCMP    | verified | doc-shard auto-gen
+2026-05-10T14:00:00Z | Tc2_Utilities | T_Arg help functions | F_ARGCPY    | verified | doc-shard auto-gen; uses VAR_IN_OUT for dest/src
+2026-05-10T14:00:00Z | Tc2_Utilities | T_Arg help functions | F_ARGISZERO | verified | doc-shard auto-gen
+2026-05-10T14:00:00Z | Tc2_Utilities | T_Arg help functions | F_BIGTYPE   | verified | doc-shard auto-gen; pointer + length pattern for struct/array
+2026-05-10T14:00:00Z | Tc2_Utilities | T_Arg help functions | F_BOOL      | verified | typed wrapper
+2026-05-10T14:00:00Z | Tc2_Utilities | T_Arg help functions | F_BYTE      | verified | typed wrapper
+2026-05-10T14:00:00Z | Tc2_Utilities | T_Arg help functions | F_DINT      | verified | typed wrapper
+2026-05-10T14:00:00Z | Tc2_Utilities | T_Arg help functions | F_DWORD     | verified | typed wrapper
+2026-05-10T14:00:00Z | Tc2_Utilities | T_Arg help functions | F_HUGE      | verified | typed wrapper (T_HUGE_INTEGER)
+2026-05-10T14:00:00Z | Tc2_Utilities | T_Arg help functions | F_INT       | verified | typed wrapper
+2026-05-10T14:00:00Z | Tc2_Utilities | T_Arg help functions | F_LARGE     | verified | typed wrapper (T_LARGE_INTEGER)
+2026-05-10T14:00:00Z | Tc2_Utilities | T_Arg help functions | F_LINT      | verified | typed wrapper
+2026-05-10T14:00:00Z | Tc2_Utilities | T_Arg help functions | F_LREAL     | verified | typed wrapper
+2026-05-10T14:00:00Z | Tc2_Utilities | T_Arg help functions | F_LWORD     | verified | typed wrapper
+2026-05-10T14:00:00Z | Tc2_Utilities | T_Arg help functions | F_REAL      | verified | typed wrapper
+2026-05-10T14:00:00Z | Tc2_Utilities | T_Arg help functions | F_SINT      | verified | typed wrapper
+2026-05-10T14:00:00Z | Tc2_Utilities | T_Arg help functions | F_STRING    | verified | typed wrapper (T_MaxString fixed-len)
+2026-05-10T14:00:00Z | Tc2_Utilities | T_Arg help functions | F_STRINGEx  | verified | typed wrapper (arbitrary-len STRING via VAR_IN_OUT CONSTANT)
+2026-05-10T14:00:00Z | Tc2_Utilities | T_Arg help functions | F_UDINT     | verified | typed wrapper
+2026-05-10T14:00:00Z | Tc2_Utilities | T_Arg help functions | F_UHUGE     | verified | typed wrapper (T_UHUGE_INTEGER)
+2026-05-10T14:00:00Z | Tc2_Utilities | T_Arg help functions | F_UINT      | verified | typed wrapper
+2026-05-10T14:00:00Z | Tc2_Utilities | T_Arg help functions | F_ULARGE    | verified | typed wrapper (T_ULARGE_INTEGER)
+2026-05-10T14:00:00Z | Tc2_Utilities | T_Arg help functions | F_ULINT     | verified | typed wrapper
+2026-05-10T14:00:00Z | Tc2_Utilities | T_Arg help functions | F_USINT     | verified | typed wrapper
+2026-05-10T14:00:00Z | Tc2_Utilities | T_Arg help functions | F_WORD      | verified | typed wrapper
+2026-05-10T14:00:00Z | Tc2_Utilities | T_Arg help functions | F_PVOID     | verified | typed wrapper (PVOID)
+2026-05-10T14:00:00Z | Tc2_Utilities | T_Arg help functions | IsFinite    | verified | LREAL/REAL IEEE finite check; needs F_LREAL/F_REAL wrapper

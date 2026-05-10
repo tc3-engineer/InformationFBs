@@ -5,7 +5,7 @@
 - **InfoSys**: https://infosys.beckhoff.com/content/1033/tcplclib_tc2_utilities/
 - **Discover 日期**: 2026-05-10
 - **总条目数**: 343（FB 97 + FC 245 + GVL 1）
-- **状态**: 🚧 in_progress（61/344 verified · Round 1+2+3 done）
+- **状态**: 🚧 in_progress（88/344 verified · Round 1+2+3+4 done）
 
 > **注**：parse_toc 升级后识别 OO parent FB（`TC_CoreBoostMonitor`），总条目 343→344。
 
@@ -16,7 +16,8 @@
 | 1 | LCOMPLEX / FLOAT / [Obsolete] / 16-bit fixed-point / Byte order / Library version | 28 | ✅ done |
 | 2 | Time functions | 23 | ✅ done |
 | 3 | TC_CoreBoostMonitor (parent + 5 methods) + [obsolete] FB (4) | 10 | ✅ done |
-| 4 (pending) | T_Arg help functions | 27 | ⏳ |
+| 4 | T_Arg help functions | 27 | ✅ done |
+| 5 (pending) | P[TYPE]_TO_[TYPE] converting functions | 26 | ⏳ |
 | 5 (pending) | P[TYPE]_TO_[TYPE] converting functions | 26 | ⏳ |
 | 6 (pending) | Extended STRING functions | 30 | ⏳ |
 | 7 (pending) | 64-bit functions (signed) | 15 | ⏳ |
