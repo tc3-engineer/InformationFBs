@@ -46,8 +46,9 @@ END_VAR
 
 ## 3. 行为说明
 
-- 调用 `F_TranslateFileTime64Bias(ftIn, 60, FALSE)`，返回 `T_FILETIME64`。
-- 期望：`对应本地时 11:00 的 FILETIME`
+- 调用 `F_TranslateFileTime64Bias(ftIn, -60, FALSE)`（输入 UTC 10:00，bias=-60 代表 UTC+1 时区），返回 `T_FILETIME64`。
+- 按 PDF 公式 `local := UTC - bias` → `10:00 - (-60min) = 11:00`，即对应本地时 11:00 的 FILETIME。
+- ⚠️ **bias 的符号约定**：Beckhoff/Windows 用 `UTC = local + bias`，所以 UTC+1（西欧）= bias `-60`，UTC-5（美东）= bias `+300`。直觉上易错。
 
 ## 4. 错误码 / 返回值
 
@@ -56,6 +57,7 @@ END_VAR
 ## 5. 使用注意 / 常见坑
 
 - **计算公式**（PDF 原表）：toUTC=FALSE → `local := UTC - bias`；toUTC=TRUE → `UTC := local + bias`。
+- **bias 符号约定**：与 Beckhoff/Windows API 一致 `UTC = local + bias`：UTC+1（西欧）→ bias=-60；UTC-5（美东）→ bias=+300。**正负号易踩坑**：常见错误是把 UTC+1 写成 bias=+60，结果时间反向偏移。
 - PDF 警告：转换函数计算量大；除非要在线监视才用 DT 类型。
 - DST（夏令时）需自行加到 bias 中。
 

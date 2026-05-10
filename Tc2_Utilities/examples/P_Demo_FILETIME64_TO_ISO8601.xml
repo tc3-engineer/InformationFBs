@@ -37,12 +37,15 @@
 //   1. 引用 Tc2_Utilities（及类型所在依赖库 Tc2_System / Tc2_Standard）
 //   2. 编译 + 登录
 //   3. 强制 bRun := TRUE 一个周期
-//   4. 观察 rResult 应为 '2024-01-01T13:00:00.000+01:00'（本地时间 +60 min）
+//   4. 观察 rResult 形如 '2024-01-01T12:00:00.000+01:00'
+//      （输入时间不变，TZD 由 nBias 推出）
+// 注意：Beckhoff/Windows 约定 UTC = local + bias，UTC+1 用 -60；
+//       常见错误是把 UTC+1 写成 +60，结果 TZD 反向。
 // ============================================================
 
 ftIn := DT_TO_FILETIME64(DT#2024-01-01-12:00:00);
 IF bRun THEN
-    rResult := FILETIME64_TO_ISO8601(ftIn, 60, FALSE, 3);
+    rResult := FILETIME64_TO_ISO8601(ftIn, -60, FALSE, 3);
     bRun := FALSE;
 END_IF;
 </xhtml>

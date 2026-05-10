@@ -48,8 +48,9 @@ END_VAR
 
 ## 3. 行为说明
 
-- 调用 `FILETIME64_TO_ISO8601(ftIn, 60, FALSE, 3)`，返回 `STRING(39)`。
-- 期望：`'2024-01-01T13:00:00.000+01:00'（本地时间 +60 min）`
+- 调用 `FILETIME64_TO_ISO8601(ftIn, -60, FALSE, 3)`（输入是本地时，本地是 UTC+1 → bias=-60），返回 `STRING(39)`。
+- 期望：形如 `'2024-01-01T12:00:00.000+01:00'`（输入时间不变，TZD 由 nBias 推出）。
+- ⚠️ **bias 符号约定**：Beckhoff/Windows `UTC = local + bias`——UTC+1 用 -60，UTC-5 用 +300。**易踩坑**：写 `60` 而不是 `-60` 会得到完全不同的 TZD。
 
 ## 4. 错误码 / 返回值
 

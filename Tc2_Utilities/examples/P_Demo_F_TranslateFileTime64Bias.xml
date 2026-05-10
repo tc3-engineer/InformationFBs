@@ -38,11 +38,14 @@
 //   2. 编译 + 登录
 //   3. 强制 bRun := TRUE 一个周期
 //   4. 观察 rResult 应为 对应本地时 11:00 的 FILETIME
+//      （按 PDF 公式 local := UTC - bias，10:00 - (-60min) = 11:00）
+// 注意：Beckhoff/Windows 约定 UTC = local + bias，故 UTC+1（西欧）= bias -60；
+//       常见错误是把 UTC+1 写成 +60，结果会得到 09:00。
 // ============================================================
 
 ftIn := DT_TO_FILETIME64(DT#2024-07-15-10:00:00);
 IF bRun THEN
-    rResult := F_TranslateFileTime64Bias(ftIn, 60, FALSE);
+    rResult := F_TranslateFileTime64Bias(ftIn, -60, FALSE);
     bRun := FALSE;
 END_IF;
 </xhtml>

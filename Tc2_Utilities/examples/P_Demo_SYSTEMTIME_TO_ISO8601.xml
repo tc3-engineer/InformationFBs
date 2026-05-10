@@ -37,12 +37,14 @@
 //   1. 引用 Tc2_Utilities（及类型所在依赖库 Tc2_System / Tc2_Standard）
 //   2. 编译 + 登录
 //   3. 强制 bRun := TRUE 一个周期
-//   4. 观察 rResult 应为 '2024-01-01T13:00:00.000+01:00'
+//   4. 观察 rResult 形如 '2024-01-01T12:00:00.000+01:00'
+//      （输入时间不变，TZD 由 nBias 推出）
+// 注意：Beckhoff/Windows 约定 UTC = local + bias，UTC+1 用 -60。
 // ============================================================
 
 stIn.wYear := 2024; stIn.wMonth := 1; stIn.wDay := 1; stIn.wHour := 12;
 IF bRun THEN
-    rResult := SYSTEMTIME_TO_ISO8601(stIn, 60, FALSE, 3);
+    rResult := SYSTEMTIME_TO_ISO8601(stIn, -60, FALSE, 3);
     bRun := FALSE;
 END_IF;
 </xhtml>
