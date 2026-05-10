@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project xmlns="http://www.plcopen.org/xml/tc6_0200">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-10T10:00:00"/>
+  <contentHeader name="Tc2_Math.stLibVersion_Tc2_Math Demo" modificationDateTime="2026-05-10T10:00:00">
+    <coordinateInfo>
+      <fbd><scaling x="1" y="1"/></fbd>
+      <ld><scaling x="1" y="1"/></ld>
+      <sfc><scaling x="1" y="1"/></sfc>
+    </coordinateInfo>
+  </contentHeader>
+  <types>
+    <dataTypes/>
+    <pous>
+      <pou name="P_Demo_stLibVersion_Tc2_Math" pouType="program">
+        <interface>
+          <localVars>
+            <variable name="stMyVer">
+              <type><derived name="ST_LibVersion"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">本地副本（监视用）</xhtml></documentation>
+            </variable>
+            <variable name="bOk">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">版本检查结果</xhtml></documentation>
+            </variable>
+          </localVars>
+        </interface>
+        <body>
+          <ST>
+            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
+// Tc2_Math.stLibVersion_Tc2_Math 演示程序
+// ============================================================
+// 注意：项目须引用 Tc2_Math 与 Tc2_System（提供 ST_LibVersion / F_CmpLibVersion）
+// 验证步骤：
+//   1. 编译 + 登录
+//   2. 在线监视 stMyVer 应显示 1.3.3
+//   3. 在线监视 bOk 应为 TRUE
+// ============================================================
+
+stMyVer := stLibVersion_Tc2_Math;
+
+bOk := F_CmpLibVersion(
+    stLibVersion := stLibVersion_Tc2_Math,
+    iMajor := 1, iMinor := 3, iBuild := 3, iRevision := 0,
+    nCmpType := E_CmpLibVersion.GreaterOrEqual
+);
+</xhtml>
+          </ST>
+        </body>
+      </pou>
+    </pous>
+  </types>
+  <instances>
+    <configurations/>
+  </instances>
+</project>
