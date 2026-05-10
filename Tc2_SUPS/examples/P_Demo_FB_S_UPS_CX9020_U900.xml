@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project xmlns="http://www.plcopen.org/xml/tc6_0200">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-10T09:00:00"/>
+  <contentHeader name="Tc2_SUPS.FB_S_UPS_CX9020_U900 Demo" modificationDateTime="2026-05-10T09:00:00">
+    <coordinateInfo>
+      <fbd><scaling x="1" y="1"/></fbd>
+      <ld><scaling x="1" y="1"/></ld>
+      <sfc><scaling x="1" y="1"/></sfc>
+    </coordinateInfo>
+  </contentHeader>
+  <types>
+    <dataTypes/>
+    <pous>
+      <pou name="P_Demo_FB_S_UPS_CX9020_U900" pouType="program">
+        <interface>
+          <localVars>
+            <variable name="fbFB_S_UPS_CX9020_U900">
+              <type><derived name="FB_S_UPS_CX9020_U900"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">CX9020-U900 实例</xhtml></documentation>
+            </variable>
+            <variable name="arg_sNetID">
+              <type><derived name="T_AmsNetId"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT sNetID: 控制器 AmsNetId（空字符串表本地）</xhtml></documentation>
+            </variable>
+            <variable name="arg_iPLCPort">
+              <type><UINT/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT iPLCPort: 写持久化数据的 PLC runtime 端口（851/852/...，0 = 自动）</xhtml></documentation>
+            </variable>
+            <variable name="arg_tTimeout">
+              <type><TIME/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT tTimeout: ADS 超时（默认 DEFAULT_ADS_TIMEOUT）</xhtml></documentation>
+            </variable>
+            <variable name="arg_eUpsMode">
+              <type><derived name="E_S_UPS_Mode"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT eUpsMode: UPS 工作模式（默认 eSUPS_WrPersistData_Shutdown）</xhtml></documentation>
+            </variable>
+            <variable name="arg_ePersistentMode">
+              <type><derived name="E_PersistentMode"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT ePersistentMode: 持久化数据写入模式（默认 SPDM_2PASS）</xhtml></documentation>
+            </variable>
+            <variable name="arg_tRecoverTime">
+              <type><TIME/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT tRecoverTime: 短时断电恢复时间（默认 T#10s）</xhtml></documentation>
+            </variable>
+            <variable name="out_bPowerFailDetect">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT bPowerFailDetect: 断电期间为 TRUE</xhtml></documentation>
+            </variable>
+            <variable name="out_eState">
+              <type><derived name="E_S_UPS_State"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT eState: FB 内部状态</xhtml></documentation>
+            </variable>
+          </localVars>
+        </interface>
+        <body>
+          <ST>
+            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
+// Tc2_SUPS.FB_S_UPS_CX9020_U900 演示程序
+// ============================================================
+// 场景：在 CX9020-U900 平台上接管 1-second UPS：检测断电时保存持久数据并执行 quick shutdown
+// 验证步骤：
+//   1. 引用 Tc2_SUPS（及其依赖：Tc2_System 等）
+//   2. 编译 + 登录
+//   3. 在线监视各 out_* 输出
+//   4. 必要时按场景给 arg_* 输入赋值（详见 doc.md 的'使用注意'）
+// ============================================================
+
+fbFB_S_UPS_CX9020_U900(
+    sNetID := arg_sNetID,
+    iPLCPort := arg_iPLCPort,
+    tTimeout := arg_tTimeout,
+    eUpsMode := arg_eUpsMode,
+    ePersistentMode := arg_ePersistentMode,
+    tRecoverTime := arg_tRecoverTime,
+    bPowerFailDetect => out_bPowerFailDetect,
+    eState => out_eState
+);
+</xhtml>
+          </ST>
+        </body>
+      </pou>
+    </pous>
+  </types>
+  <instances>
+    <configurations/>
+  </instances>
+</project>

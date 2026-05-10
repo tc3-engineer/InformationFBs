@@ -76,9 +76,20 @@ def main() -> int:
 _orig_extract = extract
 
 
+_PAGE_HEADER_RE = re.compile(
+    # "=== PAGE N ===" plus up to 2 following lines that are typical page
+    # headers (chapter title + library version), squashed to a single newline.
+    r"\n?=== PAGE \d+ ===\n(?:[^\n]*\n){0,2}",
+    re.MULTILINE,
+)
+
+
 def extract(lib: str, section: str) -> str:  # type: ignore[no-redef]
     out = _orig_extract(lib, section)
-    return out.replace("\xa0", " ")
+    out = out.replace("\xa0", " ")
+    # Strip pypdf-inserted page-break artifacts that split VAR_INPUT regions.
+    out = _PAGE_HEADER_RE.sub("\n", out)
+    return out
 
 
 if __name__ == "__main__":

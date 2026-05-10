@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project xmlns="http://www.plcopen.org/xml/tc6_0200">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-10T09:00:00"/>
+  <contentHeader name="Tc2_Coupler.FB_ReadCouplerRegs Demo" modificationDateTime="2026-05-10T09:00:00">
+    <coordinateInfo>
+      <fbd><scaling x="1" y="1"/></fbd>
+      <ld><scaling x="1" y="1"/></ld>
+      <sfc><scaling x="1" y="1"/></sfc>
+    </coordinateInfo>
+  </contentHeader>
+  <types>
+    <dataTypes/>
+    <pous>
+      <pou name="P_Demo_FB_ReadCouplerRegs" pouType="program">
+        <interface>
+          <localVars>
+            <variable name="fbFB_ReadCouplerRegs">
+              <type><derived name="FB_ReadCouplerRegs"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">Function blocks 实例</xhtml></documentation>
+            </variable>
+            <variable name="arg_stState">
+              <type><derived name="PLCINTFSTRUCT"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT stState: 2-byte PLC interface 状态字</xhtml></documentation>
+            </variable>
+            <variable name="arg_nTerminal">
+              <type><BYTE/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT nTerminal: 目标端子号（0=耦合器；不计无源端子）</xhtml></documentation>
+            </variable>
+            <variable name="arg_nTable">
+              <type><BYTE/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT nTable: 表号（智能端子每通道 1 表）</xhtml></documentation>
+            </variable>
+            <variable name="arg_nStartReg">
+              <type><BYTE/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT nStartReg: 起始寄存器号</xhtml></documentation>
+            </variable>
+            <variable name="arg_nEndReg">
+              <type><BYTE/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT nEndReg: 结束寄存器号</xhtml></documentation>
+            </variable>
+            <variable name="arg_bExecute">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT bExecute: 上升沿触发</xhtml></documentation>
+            </variable>
+            <variable name="arg_tTimeout">
+              <type><TIME/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT tTimeout: 执行超时</xhtml></documentation>
+            </variable>
+            <variable name="out_stCtrl">
+              <type><derived name="PLCINTFSTRUCT"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT stCtrl: 2-byte PLC interface 控制字</xhtml></documentation>
+            </variable>
+            <variable name="out_bBusy">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT bBusy: 执行中</xhtml></documentation>
+            </variable>
+            <variable name="out_bError">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT bError: 执行出错</xhtml></documentation>
+            </variable>
+            <variable name="out_nErrId">
+              <type><UDINT/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT nErrId: 错误号</xhtml></documentation>
+            </variable>
+            <variable name="out_stCouplerTable">
+              <type><derived name="ST_CouplerTable"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT stCouplerTable: 读取的寄存器值数组</xhtml></documentation>
+            </variable>
+          </localVars>
+        </interface>
+        <body>
+          <ST>
+            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
+// Tc2_Coupler.FB_ReadCouplerRegs 演示程序
+// ============================================================
+// 场景：诊断时读取智能端子的 register table 值
+// 验证步骤：
+//   1. 引用 Tc2_Coupler（及其依赖：Tc2_System 等）
+//   2. 编译 + 登录
+//   3. 在线监视各 out_* 输出
+//   4. 必要时按场景给 arg_* 输入赋值（详见 doc.md 的'使用注意'）
+// ============================================================
+
+fbFB_ReadCouplerRegs(
+    stState := arg_stState,
+    nTerminal := arg_nTerminal,
+    nTable := arg_nTable,
+    nStartReg := arg_nStartReg,
+    nEndReg := arg_nEndReg,
+    bExecute := arg_bExecute,
+    tTimeout := arg_tTimeout,
+    stCtrl => out_stCtrl,
+    bBusy => out_bBusy,
+    bError => out_bError,
+    nErrId => out_nErrId,
+    stCouplerTable => out_stCouplerTable
+);
+</xhtml>
+          </ST>
+        </body>
+      </pou>
+    </pous>
+  </types>
+  <instances>
+    <configurations/>
+  </instances>
+</project>
