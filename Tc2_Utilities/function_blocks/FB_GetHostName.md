@@ -26,7 +26,7 @@ This function block can be used to read the host name of a TwinCAT PC.
 VAR_INPUT
     sNetID : T_AmsNetId;
     bExecute : BOOL;
-    tTimeout : TIME;
+    tTimeout : TIME := DEFAULT_ADS_TIMEOUT;
 END_VAR
 ```
 

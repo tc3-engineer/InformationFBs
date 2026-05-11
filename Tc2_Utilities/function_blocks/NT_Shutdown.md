@@ -27,7 +27,7 @@ VAR_INPUT
     NETID : T_AmsNetId;
     DELAY : DWORD;
     START : BOOL;
-    TMOUT : TIME;
+    TMOUT : TIME := DEFAULT_ADS_TIMEOUT;
 END_VAR
 ```
 

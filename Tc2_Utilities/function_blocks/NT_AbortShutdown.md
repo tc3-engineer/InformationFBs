@@ -26,7 +26,7 @@ The function block NT_AbortShutdown can be used to abort a shutdown command that
 VAR_INPUT
     NETID : T_AmsNetId;
     START : BOOL;
-    TMOUT : TIME;
+    TMOUT : TIME := DEFAULT_ADS_TIMEOUT;
 END_VAR
 ```
 

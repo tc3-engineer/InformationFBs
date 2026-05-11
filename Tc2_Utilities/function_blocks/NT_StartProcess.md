@@ -29,7 +29,7 @@ VAR_INPUT
     DIRNAME : T_MaxString;
     COMNDLINE : T_MaxString;
     START : BOOL;
-    TMOUT : TIME;
+    TMOUT : TIME := DEFAULT_ADS_TIMEOUT;
 END_VAR
 ```
 

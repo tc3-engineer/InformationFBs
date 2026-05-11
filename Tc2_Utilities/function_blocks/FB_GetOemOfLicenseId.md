@@ -25,7 +25,7 @@ The function block FB_GetOemLicenseId returns the OEM ID of a given license ID.
 ```iecst
 VAR_INPUT
     bExecute : BOOL;
-    tTimeout : TIME;
+    tTimeout : TIME := DEFAULT_ADS_TIMEOUT;
     sNetId : T_AmsNetId;
     stLicenseId : GUID;
 END_VAR

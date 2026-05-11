@@ -26,7 +26,7 @@ This functionality is not available in the PLC runtime system under Windows CE! 
 VAR_INPUT
     NETID : T_AmsNetId;
     SET : BOOL;
-    TMOUT : TIME;
+    TMOUT : TIME := DEFAULT_ADS_TIMEOUT;
 END_VAR
 ```
 

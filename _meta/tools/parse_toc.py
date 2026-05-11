@@ -264,6 +264,62 @@ def parse(lib: str) -> list[dict]:
                 }
             )
 
+    # Inline-method discovery: some Beckhoff PDFs render an FB parent's methods
+    # inline in the same TOC section instead of giving each method its own
+    # depth-3 entry (e.g. Tc2_Utilities FB_CalcHashValue §3.10 has start/
+    # update/finish as inline " Methods <name>()" headers + "METHOD <name> :
+    # <ret>" declarations). Promote such depth-2 FB entries to is_parent and
+    # synthesise virtual depth-3 child entries so verify_doc can match them.
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    try:
+        from extract_section import extract as _extract
+    except Exception:
+        _extract = None
+    if _extract is not None:
+        synthetic: list[dict] = []
+        for e in entries:
+            if e.get("depth") != 2 or e.get("type") != "FB":
+                continue
+            if e.get("is_parent"):
+                continue
+            body = _extract(lib, e["section"])
+            if not body:
+                continue
+            # Look for inline " Methods <name>()" headers — the leading space
+            # disambiguates from "Inputs / Outputs" tables and from a plain
+            # "Methods" table heading (already handled in section_is_oo_parent).
+            method_names: list[str] = []
+            seen: set[str] = set()
+            for mm in re.finditer(
+                r"(?m)^[ \t]+Methods\s+([A-Za-z_]\w*)\s*\(\s*\)", body
+            ):
+                nm = mm.group(1)
+                if nm in seen:
+                    continue
+                seen.add(nm)
+                method_names.append(nm)
+            if not method_names:
+                continue
+            # Promote parent
+            e["is_parent"] = True
+            e["inline_methods"] = True
+            # Build virtual section ids: parent.section + ".m1", ".m2"... so
+            # parse_toc consumers know these are synthetic.
+            for idx, mn in enumerate(method_names, start=1):
+                synthetic.append(
+                    {
+                        "section": f"{e['section']}#m{idx}",
+                        "name": mn,
+                        "type": "FB",
+                        "category": e["name"],
+                        "page": e["page"],
+                        "depth": 3,
+                        "parent_section": e["section"],
+                        "inline_method": True,
+                    }
+                )
+        entries.extend(synthetic)
+
     return entries
 
 

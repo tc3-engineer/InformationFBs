@@ -25,7 +25,7 @@
 FUNCTION LREAL_TO_FIX16 : T_FIX16
 VAR_INPUT
     in : LREAL;
-    n : WORD(0..15); (* := 15 *)
+    n : WORD(0..15) := 15;
 END_VAR
 ```
 

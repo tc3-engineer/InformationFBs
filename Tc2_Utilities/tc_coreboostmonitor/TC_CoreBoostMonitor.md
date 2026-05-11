@@ -23,7 +23,7 @@
 
 ```iecst
 VAR_INPUT
-    nCoreId : DINT;
+    nCoreId : DINT := -1;
 END_VAR
 ```
 

@@ -26,7 +26,7 @@ The function block "DCF77_TIME_EX" can be used to decode the DCF-77 radio clock 
 VAR_INPUT
     DCF_PULSE : BOOL;
     RUN : BOOL;
-    TLP : TIME;
+    TLP : TIME := T#140ms;
 END_VAR
 ```
 

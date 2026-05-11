@@ -28,7 +28,7 @@ VAR_INPUT
     nPort : UINT;
     bExecute : BOOL;
     dwPassCode : DWORD;
-    tTimeout : TIME;
+    tTimeout : TIME := DEFAULT_ADS_TIMEOUT;
 END_VAR
 ```
 

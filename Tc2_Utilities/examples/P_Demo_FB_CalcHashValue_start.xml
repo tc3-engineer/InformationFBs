@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project xmlns="http://www.plcopen.org/xml/tc6_0200">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-11T00:00:00"/>
+  <contentHeader name="Tc2_Utilities.FB_CalcHashValue.start Demo" modificationDateTime="2026-05-11T00:00:00">
+    <coordinateInfo>
+      <fbd><scaling x="1" y="1"/></fbd>
+      <ld><scaling x="1" y="1"/></ld>
+      <sfc><scaling x="1" y="1"/></sfc>
+    </coordinateInfo>
+  </contentHeader>
+  <types>
+    <dataTypes/>
+    <pous>
+      <pou name="P_Demo_FB_CalcHashValue_start" pouType="program">
+        <interface>
+          <localVars>
+            <variable name="fbCalc">
+              <type><derived name="FB_CalcHashValue"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">Tc2_Utilities.FB_CalcHashValue 实例</xhtml></documentation>
+            </variable>
+            <variable name="eMode">
+              <type><derived name="E_HashMode"/></type>
+              <initialValue><simpleValue value="E_HashMode.HashMode_Sha512"/></initialValue>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">Hash 模式（SHA-512 示例）</xhtml></documentation>
+            </variable>
+            <variable name="bStartOk">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">start() 返回值监视</xhtml></documentation>
+            </variable>
+          </localVars>
+        </interface>
+        <body>
+          <ST>
+            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
+// Tc2_Utilities.FB_CalcHashValue.start() 演示程序（METHOD）
+// ============================================================
+// 验证步骤：
+//   1. 引用 Tc2_Utilities
+//   2. 编译 + 登录
+//   3. 在线写值 eMode（如 HashMode_Sha512），观察 bStartOk = TRUE
+//   4. 完整流程需要紧接调用 update() 与 finish()，见 FB_CalcHashValue.md
+// ============================================================
+
+bStartOk := fbCalc.start(hashMode := eMode);
+</xhtml>
+          </ST>
+        </body>
+      </pou>
+    </pous>
+  </types>
+  <instances>
+    <configurations/>
+  </instances>
+</project>

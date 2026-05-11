@@ -26,7 +26,7 @@ The Windows NT operating system can be restarted with the aid of the function bl
 VAR_INPUT
     NETID : T_AmsNetId;
     START : BOOL;
-    TMOUT : TIME;
+    TMOUT : TIME := DEFAULT_ADS_TIMEOUT;
 END_VAR
 ```
 

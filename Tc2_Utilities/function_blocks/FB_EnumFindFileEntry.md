@@ -26,9 +26,9 @@ This function block searches a directory for a file or a subdirectory whose name
 VAR_INPUT
     sNetID : T_AmsNetID;
     sPathName : T_MaxString;
-    eCmd : E_EnumCmdType;
+    eCmd : E_EnumCmdType := eEnumCmd_First;
     bExecute : BOOL;
-    tTimeout : TIME;
+    tTimeout : TIME := DEFAULT_ADS_TIMEOUT;
 END_VAR
 ```
 

@@ -30,7 +30,7 @@ VAR_INPUT
     cbData : UDINT;
     pData : POINTER TO BYTE;
     bExecute : BOOL;
-    tTimeOut : TIME;
+    tTimeOut : TIME := DEFAULT_ADS_TIMEOUT;
 END_VAR
 ```
 
