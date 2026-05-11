@@ -39,7 +39,7 @@ This method subscribes notifications. Syntax METHOD Subscribe2 : HRESULT Input N
 
 ## 4. 错误码 / 返回值
 
-本方法/FB 返回 `HRESULT`（`S_OK` = 成功；其他码表请见对应 InfoSys 页面，⚠️ 待人工补全）。
+本方法返回 `HRESULT`（`S_OK` = 成功；其他错误码请见对应 InfoSys 页面，⚠️ 待人工补全）。
 
 ## 5. 使用注意 / 常见坑
 
