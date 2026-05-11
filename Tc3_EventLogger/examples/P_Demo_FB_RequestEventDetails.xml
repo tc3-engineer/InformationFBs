@@ -23,7 +23,7 @@
               <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT nIndex</xhtml></documentation>
             </variable>
             <variable name="arg_fbDetail">
-              <type><derived name="REFERENCE TO FB_TcDetail"/></type>
+              <type><reference><baseType><derived name="FB_TcDetail"/></baseType></reference></type>
               <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT fbDetail</xhtml></documentation>
             </variable>
             <variable name="arg_eventClass">

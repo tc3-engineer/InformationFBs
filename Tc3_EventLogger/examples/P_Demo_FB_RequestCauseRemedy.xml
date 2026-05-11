@@ -23,7 +23,7 @@
               <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT nIndex</xhtml></documentation>
             </variable>
             <variable name="arg_fbCauseRemedy">
-              <type><derived name="REFERENCE TO FB_TcCauseRemedy"/></type>
+              <type><reference><baseType><derived name="FB_TcCauseRemedy"/></baseType></reference></type>
               <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT fbCauseRemedy</xhtml></documentation>
             </variable>
             <variable name="arg_eventClass">

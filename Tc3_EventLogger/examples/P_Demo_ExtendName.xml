@@ -19,7 +19,7 @@
               <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">Tc3_EventLogger.ExtendName 实例</xhtml></documentation>
             </variable>
             <variable name="arg_sExtension">
-              <type><derived name="STRING(255)"/></type>
+              <type><string><length>255</length></string></type>
               <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT sExtension</xhtml></documentation>
             </variable>
           </localVars>

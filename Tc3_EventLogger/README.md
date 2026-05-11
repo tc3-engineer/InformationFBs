@@ -5,7 +5,7 @@
 - **Library Version**: `1.6.2`
 - **Source PDF**: <https://download.beckhoff.com/download/document/automation/twincat3/TwinCAT_3_PLC_Lib_Tc3_EventLogger_EN.pdf>
 - **InfoSys**: <https://infosys.beckhoff.com/content/1033/tcplclib_tc3_eventlogger/>
-- **总条目**: 74（7 个 OO parent FB + 66 个 method + 11 个 async-text 标准 FB + 4 个 EventEntry 转换 FC/FB + 3 个 Filter + 2 个 RemoteEventLogger + 8 个 Functions/function blocks 散件 = 全部 74）
+- **总条目**: 74（7 个 OO parent FB + 46 个 OO method + 1 个 misc FB（FB_TcEvent）+ 11 个 async-text FB + 4 个 EventEntry 转换 FC/FB + 3 个 Filter + 2 个 RemoteEventLogger = 全部 74）
 - **状态**: ✅ done (74/74 verified) · Roadmap 单 Round
 
 ## 子目录索引
@@ -23,7 +23,7 @@
 | [`eventry_conversion/`](eventry_conversion/) | 4 个 `TcEventEntry` ↔ 派生类型转换工具 |
 | [`filter/`](filter/) | 3 个事件过滤辅助 FB |
 | [`remote/`](remote/) | 2 个 RemoteEventLogger 接入 FB |
-| [`misc/`](misc/) | 8 个散件 Function / Function Block（不属于上述 OO 树） |
+| [`misc/`](misc/) | 1 个散件 Function Block（FB_TcEvent，不属于上述 OO 树） |
 | [`examples/`](examples/) | 74 个 `P_Demo_*.xml` PLCopenXML 例程（OO method 同名时按 `FB_<Parent>_<Method>` 前缀消歧义） |
 
 ## 验收口径

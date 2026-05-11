@@ -19,11 +19,11 @@
               <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">Tc3_EventLogger.Subscribe 实例</xhtml></documentation>
             </variable>
             <variable name="arg_ipMessageFilterConfig">
-              <type><derived name="POINTER TO ITcEventFilterConfig"/></type>
+              <type><pointer><baseType><derived name="ITcEventFilterConfig"/></baseType></pointer></type>
               <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT ipMessageFilterConfig</xhtml></documentation>
             </variable>
             <variable name="arg_ipAlarmFilterConfig">
-              <type><derived name="POINTER TO ITcEventFilterConfig"/></type>
+              <type><pointer><baseType><derived name="ITcEventFilterConfig"/></baseType></pointer></type>
               <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT ipAlarmFilterConfig</xhtml></documentation>
             </variable>
           </localVars>

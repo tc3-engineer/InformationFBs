@@ -16,13 +16,29 @@
 ---
 ## 1. 功能简述
 
-This method creates an alarm instance in the EventLogger. Syntax METHOD Create : HRESULT eventClass        : GUID; nEventId          : UDINT; eSeverity         : TcEventSeverity; bWithConfirmation : BOOL; ipSourceInfo      : I_TcSourceInfo; END_VAR
+This method creates an alarm instance in the EventLogger. Syntax METHOD Create : HRESULT
 
 ## 2. 接口定义
 
 ### VAR_INPUT
 
-无 VAR_INPUT。
+```iecst
+VAR_INPUT
+    eventClass : GUID;
+    nEventId : UDINT;
+    eSeverity : TcEventSeverity;
+    bWithConfirmation : BOOL;
+    ipSourceInfo : I_TcSourceInfo;
+END_VAR
+```
+
+| 名称 | 类型 | 说明 |
+|---|---|---|
+| `eventClass` | `GUID` | GUID of the event class. |
+| `nEventId` | `UDINT` | ID of the event. |
+| `eSeverity` | `TcEventSeverity` | Severity of the event. |
+| `bWithConfirmation` | `BOOL` | Defines whether the alarm requires mandatory confirmation. |
+| `ipSourceInfo` | `I_TcSourceInfo` | Interface pointer to the source information. 可选。传入 NULL 时使用默认源信息。 |
 
 ### VAR_OUTPUT
 
@@ -39,7 +55,7 @@ This method creates an alarm instance in the EventLogger. Syntax METHOD Create :
 
 ## 4. 错误码 / 返回值
 
-出错时通常 `bError`/`ERR` = TRUE，`nErrorId`/`nErrId`/`ERRID` 给出错误号（具体码表见 InfoSys 在线文档，⚠️ 待人工补全）。
+本方法返回 `HRESULT`（`S_OK` = 成功；其他错误码请见对应 InfoSys 页面，⚠️ 待人工补全）。
 
 ## 5. 使用注意 / 常见坑
 
@@ -55,11 +71,21 @@ This method creates an alarm instance in the EventLogger. Syntax METHOD Create :
 ```iecst
 PROGRAM P_Demo_FB_TcAlarm_Create
 VAR
-    fbCreate : Create;
+    fbTcAlarm : FB_TcAlarm;
+    arg_eventClass : GUID;
+    arg_nEventId : UDINT;
+    arg_eSeverity : TcEventSeverity;
+    arg_bWithConfirmation : BOOL;
+    arg_ipSourceInfo : I_TcSourceInfo;
+    hr : HRESULT;
 END_VAR
 
-fbCreate(
-
+hr := fbTcAlarm.Create(
+    eventClass := arg_eventClass,
+    nEventId := arg_nEventId,
+    eSeverity := arg_eSeverity,
+    bWithConfirmation := arg_bWithConfirmation,
+    ipSourceInfo := arg_ipSourceInfo
 );
 ```
 

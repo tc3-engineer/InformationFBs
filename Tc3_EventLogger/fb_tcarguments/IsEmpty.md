@@ -39,7 +39,7 @@ This method checks whether arguments have been added. Syntax METHOD IsEmpty : BO
 
 ## 4. 错误码 / 返回值
 
-出错时通常 `bError`/`ERR` = TRUE，`nErrorId`/`nErrId`/`ERRID` 给出错误号（具体码表见 InfoSys 在线文档，⚠️ 待人工补全）。
+本方法返回 `BOOL`（`TRUE` = 成功；`FALSE` = 失败。具体失败语义 PDF 未列出，请见 InfoSys，⚠️ 待人工确认）。
 
 ## 5. 使用注意 / 常见坑
 

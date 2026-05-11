@@ -23,7 +23,7 @@
               <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT nLangId</xhtml></documentation>
             </variable>
             <variable name="arg_fbEventBase">
-              <type><derived name="REFERENCE TO FB_TcEventBase"/></type>
+              <type><reference><baseType><derived name="FB_TcEventBase"/></baseType></reference></type>
               <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT fbEventBase</xhtml></documentation>
             </variable>
             <variable name="io_fbResult">

@@ -19,7 +19,7 @@
               <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">Tc3_EventLogger.OnAlarmConfirmed 实例</xhtml></documentation>
             </variable>
             <variable name="arg_fbEvent">
-              <type><derived name="REFERENCE TO FB_TcEvent"/></type>
+              <type><reference><baseType><derived name="FB_TcEvent"/></baseType></reference></type>
               <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT fbEvent</xhtml></documentation>
             </variable>
           </localVars>

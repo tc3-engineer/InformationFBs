@@ -39,7 +39,7 @@ Arguments of an event can be defined with this function block. The ITcArguments 
 
 ## 4. 错误码 / 返回值
 
-出错时通常 `bError`/`ERR` = TRUE，`nErrorId`/`nErrId`/`ERRID` 给出错误号（具体码表见 InfoSys 在线文档，⚠️ 待人工补全）。
+本 FB 自身无返回值；运行状态/错误反馈通过其方法返回的 `HRESULT` 或对应输出参数获取，具体见 PDF / InfoSys（⚠️ 待人工确认）。
 
 ## 5. 使用注意 / 常见坑
 

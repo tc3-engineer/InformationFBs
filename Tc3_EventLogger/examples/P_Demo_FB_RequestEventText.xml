@@ -19,7 +19,7 @@
               <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">Tc3_EventLogger.FB_RequestEventText 实例</xhtml></documentation>
             </variable>
             <variable name="arg_sResult">
-              <type><derived name="REFERENCE TO STRING"/></type>
+              <type><reference><baseType><derived name="STRING"/></baseType></reference></type>
               <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT sResult</xhtml></documentation>
             </variable>
             <variable name="arg_nResult">

@@ -31,7 +31,7 @@
               <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT ipSourceInfo</xhtml></documentation>
             </variable>
             <variable name="arg_fbAlarm">
-              <type><derived name="REFERENCE TO FB_TcAlarm"/></type>
+              <type><reference><baseType><derived name="FB_TcAlarm"/></baseType></reference></type>
               <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT fbAlarm</xhtml></documentation>
             </variable>
           </localVars>

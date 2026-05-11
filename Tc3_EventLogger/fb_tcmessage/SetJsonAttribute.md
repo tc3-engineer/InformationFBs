@@ -1,4 +1,7 @@
 # SetJsonAttribute
+
+> 注：本方法在 FB_TcAlarm 下签名一致，例程独立提供以维持命名一致性。
+
 ## 元信息
 
 | 字段 | 值 |
@@ -47,7 +50,7 @@ END_VAR
 
 ## 4. 错误码 / 返回值
 
-出错时通常 `bError`/`ERR` = TRUE，`nErrorId`/`nErrId`/`ERRID` 给出错误号（具体码表见 InfoSys 在线文档，⚠️ 待人工补全）。
+本方法返回 `HRESULT`（`S_OK` = 成功；其他错误码请见对应 InfoSys 页面，⚠️ 待人工补全）。
 
 ## 5. 使用注意 / 常见坑
 
@@ -63,11 +66,12 @@ END_VAR
 ```iecst
 PROGRAM P_Demo_FB_TcMessage_SetJsonAttribute
 VAR
-    fbSetJsonAttribute : SetJsonAttribute;
+    fbTcMessage : FB_TcMessage;
     io_sJsonAttribute : STRING;
+    hr : HRESULT;
 END_VAR
 
-fbSetJsonAttribute(
+hr := fbTcMessage.SetJsonAttribute(
     sJsonAttribute := io_sJsonAttribute
 );
 ```

@@ -509,15 +509,4 @@
 2026-05-11T01:00:00Z | Tc3_EventLogger | FB_TcSourceInfo                          | Clear                                    | verified | auto-extracted VAR from PDF
 2026-05-11T01:00:00Z | Tc3_EventLogger | FB_TcSourceInfo                          | ExtendName                               | verified | auto-extracted VAR from PDF
 2026-05-11T01:00:00Z | Tc3_EventLogger | FB_TcSourceInfo                          | ResetToDefault                           | verified | auto-extracted VAR from PDF
-2026-05-11T04:00:00Z | Tc2_SUPS         | CB3011                                   | FB_S_UPS_CB3011 (fix VAR defaults)        | verified | restored 6 default values per PDF
-2026-05-11T04:00:00Z | Tc2_SUPS         | CX50x0                                   | FB_S_UPS (fix VAR defaults)               | verified | restored 7 default values per PDF
-2026-05-11T04:00:00Z | Tc2_SUPS         | CX51x0                                   | FB_S_UPS_CX51x0 (fix VAR defaults)        | verified | restored 7 default values per PDF
-2026-05-11T04:00:00Z | Tc2_SUPS         | CX9020-U900                              | FB_S_UPS_CX9020_U900 (fix VAR defaults)   | verified | restored 6 default values per PDF
-2026-05-11T04:00:00Z | Tc2_SUPS         | BAPI                                     | FB_S_UPS_BAPI (fix VAR defaults)          | verified | restored 5 default values per PDF
-2026-05-11T04:00:00Z | Tc2_SUPS         | Function blocks                          | FB_NT_QuickShutdown (fix VAR defaults)    | verified | restored 1 default value per PDF
-2026-05-11T04:00:00Z | Tc2_DataExchange | Watchdog function blocks                 | FB_CheckWatchdog (fix VAR defaults)       | verified | restored 3 default values per PDF
-2026-05-11T04:00:00Z | Tc2_DataExchange | Watchdog function blocks                 | FB_WriteWatchdog (fix VAR defaults)       | verified | restored 6 default values per PDF
-2026-05-11T04:00:00Z | Tc2_Coupler      | Function blocks                          | FB_ReadCouplerRegs (fix VAR defaults)     | verified | restored nTerminal default per PDF
-2026-05-11T04:00:00Z | Tc2_Coupler      | Function blocks                          | FB_WriteCouplerRegs (fix VAR defaults)    | verified | restored nTerminal default per PDF
-2026-05-11T04:00:00Z | Tc2_Coupler      | [obsolete functions]                     | F_GetVersionTcPlcCoupler (Status)         | verified | Status -> verified · deprecated
-2026-05-11T04:00:00Z | Tc2_Math         | [obsolete functions]                     | F_GetVersionTcMath (Status)               | verified | Status -> verified · deprecated
+2026-05-11T04:30:00Z | Tc3_EventLogger | (audit-fix)                              | full-library                             | verified | P0-1 HRESULT template ×74 | P0-2 FB_TcAlarm.Create VAR_INPUT restored | P0-3 default-values ×15 | P0-4 PLCopenXML <derived> ×28 (REFERENCE/POINTER/STRING + 7 method-level rewires) | P1 README counts | P2 SetJsonAttribute disambiguation note | verify 74/74 PASS, lint 74/74 PASS | InfoSys cross-verified Create / SendMessage / ClearAllAlarms / FB_RequestEventText / FB_TcAlarm
