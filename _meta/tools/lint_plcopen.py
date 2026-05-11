@@ -104,6 +104,30 @@ def lint(path: str) -> tuple[int, list[str]]:
         if bad in text:
             diags.append(f"forbidden TwinCAT private marker: {bad}")
 
+    # Reject malformed <derived name="..."> values.
+    # Schema allows only a plain IEC identifier. STRING(N), POINTER TO X,
+    # REFERENCE TO X, DWORD(1..86400) etc. must use the proper PLCopenXML
+    # element (<string><length>...</length></string>, <pointer><baseType>...,
+    # <subrange>...) instead.
+    for d in (pou.findall(f".//{{{NS}}}derived") if pou is not None else []):
+        dn = d.get("name", "")
+        if not dn:
+            diags.append("empty <derived name=\"\">")
+            continue
+        upper = dn.upper()
+        if (
+            " " in dn
+            or "(" in dn
+            or "POINTER" in upper
+            or "REFERENCE" in upper
+            or upper.startswith("STRING(")
+            or upper.startswith("WSTRING(")
+        ):
+            diags.append(
+                f"<derived name={dn!r}> is not a plain IEC identifier — "
+                f"use <pointer>/<string>/<subrange> instead"
+            )
+
     if not diags:
         return 0, ["PASS"]
     fail = any("XML parse error" in d or "missing <body>" in d or "<derived" in d for d in diags)

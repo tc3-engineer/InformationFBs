@@ -1,4 +1,5 @@
 _meta/.pdf-cache/
+_meta/.infosys-cache/
 *.pyc
 __pycache__/
 .DS_Store

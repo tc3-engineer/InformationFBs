@@ -130,6 +130,75 @@ def _vars_from_text(text: str) -> list[tuple[str, str]]:
     return out
 
 
+_NAKED_PARAM_RE = re.compile(
+    r"^\s*([A-Za-z_]\w*)\s*:\s*(?!=)([^;\n]+?)\s*(?:;|$)",
+    re.MULTILINE,
+)
+
+
+def _naked_method_params(section_text: str) -> list[tuple[str, str]]:
+    """Recover parameters from a METHOD declaration that lacks VAR_INPUT.
+
+    Beckhoff PDFs occasionally render a method signature as
+        METHOD <Name> : <RetType>
+            param1 : T1;
+            param2 : T2 := def;
+            ...
+    with NO surrounding `VAR_INPUT ... END_VAR`. _vars_from_text misses
+    these. Capture the block between the METHOD header and the next
+    structural marker.
+    """
+    m = re.search(
+        r"METHOD\s+\w+\s*:\s*\w+[^\n]*\n([\s\S]*?)(?=\n\s*(?:METHOD\b|VAR_|END_VAR|FUNCTION_BLOCK\b|FUNCTION\b|Inputs\b|Outputs\b|Return\s+value\b|\Z))",
+        section_text,
+    )
+    if not m:
+        return []
+    body = m.group(1)
+    body = re.sub(r"\(\*.*?\*\)", "", body, flags=re.DOTALL)
+    body = re.sub(r"//.*$", "", body, flags=re.MULTILINE)
+    body = _join_wrapped_decls(body)
+    out: list[tuple[str, str]] = []
+    for vm in _NAKED_PARAM_RE.finditer(body):
+        name = vm.group(1)
+        typ = vm.group(2)
+        typ = re.sub(r":=.*$", "", typ, flags=re.DOTALL).strip()
+        typ = re.sub(r"\s+", " ", typ).strip()
+        if name.upper() in {
+            "METHOD", "END_VAR", "VAR_INPUT", "VAR_OUTPUT",
+            "FUNCTION_BLOCK", "FUNCTION", "INPUTS", "OUTPUTS",
+        }:
+            continue
+        if not typ:
+            continue
+        out.append((name, typ))
+    return out
+
+
+_DEFAULT_PAT = re.compile(
+    r"\b([A-Za-z_]\w*)\s*:\s*[^;\n]+?:=\s*([^;\n]+?)\s*(?:;|$)",
+    re.MULTILINE,
+)
+
+
+def _extract_defaults(section_text: str) -> dict[str, str]:
+    """Return {var_name: default_value} for every `name : type := def` inside
+    any VAR_(INPUT|OUTPUT|IN_OUT|GLOBAL) region. Comments stripped first."""
+    out: dict[str, str] = {}
+    for m in VAR_REGION_RE.finditer(section_text):
+        region = m.group(1)
+        region = re.sub(r"\(\*.*?\*\)", "", region, flags=re.DOTALL)
+        region = re.sub(r"//.*$", "", region, flags=re.MULTILINE)
+        region = _join_wrapped_decls(region)
+        for dm in _DEFAULT_PAT.finditer(region):
+            name = dm.group(1)
+            default = dm.group(2).strip()
+            if not default:
+                continue
+            out.setdefault(name, default)
+    return out
+
+
 def _read_doc_meta(doc: str) -> dict:
     meta: dict[str, str] = {}
     pat = re.compile(r"\|\s*([A-Za-z _]+?)\s*\|\s*(.+?)\s*\|\s*$", re.MULTILINE)
@@ -227,6 +296,13 @@ def verify(doc_path: str) -> tuple[int, list[str]]:
         )
 
     pdf_vars = _vars_from_text(section_text)
+    # Some Beckhoff PDFs print method signatures without VAR_INPUT/END_VAR
+    # wrappers (e.g. Tc3_EventLogger FB_TcAlarm.Create §3.6.3). Recover those
+    # "naked-param" declarations so the diff below actually flags doc-side
+    # omissions instead of silently double-passing.
+    if not pdf_vars:
+        pdf_vars = _naked_method_params(section_text)
+
     # Restrict doc VAR scan to the Interface section (above "最小例程" / "Minimum Example")
     interface_doc = re.split(r"##\s*\d*\.?\s*(?:最小例程|Minimum Example)", doc, maxsplit=1)[0]
     doc_vars = _vars_from_text(interface_doc)
@@ -241,6 +317,16 @@ def verify(doc_path: str) -> tuple[int, list[str]]:
         diags.append(f"VAR not present verbatim in doc: {sorted(missing)}")
     if extra:
         diags.append(f"VAR in doc not in PDF: {sorted(extra)}")
+
+    # Default-value fidelity check (硬规则 #1 — 逐字搬运).
+    # Every `name := default` in the PDF VAR regions must appear verbatim in
+    # the doc Interface section.
+    pdf_defaults = _extract_defaults(section_text)
+    doc_iface_norm = re.sub(r"\s+", " ", interface_doc)
+    for var_name, default in pdf_defaults.items():
+        pat = rf"\b{re.escape(var_name)}\b\s*:[^;\n]*?:=\s*{re.escape(default)}"
+        if not re.search(pat, doc_iface_norm):
+            diags.append(f"default value missing in doc: {var_name} := {default}")
 
     # example link — read the actual link from the doc so parent-prefixed
     # stems for OO method collisions (e.g. P_Demo_FB_TcAlarm_Create.xml) are
@@ -260,7 +346,12 @@ def verify(doc_path: str) -> tuple[int, list[str]]:
             "PDF section had no VAR_INPUT/OUTPUT — manual review needed (FC with no params?)"
         )
 
-    if any(d.startswith("VAR not present") or d.startswith("cache miss") for d in diags):
+    if any(
+        d.startswith("VAR not present")
+        or d.startswith("cache miss")
+        or d.startswith("default value missing")
+        for d in diags
+    ):
         return 2, diags
     if diags:
         return 1, diags
