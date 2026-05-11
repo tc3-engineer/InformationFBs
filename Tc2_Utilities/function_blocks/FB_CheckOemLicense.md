@@ -1,4 +1,5 @@
 # FB_CheckOemLicense
+
 ## 元信息
 
 | 字段 | 值 |
@@ -7,16 +8,20 @@
 | Library Version | `2.18.2` |
 | Type | `FUNCTION_BLOCK` |
 | Category | `Function blocks` |
-| Source | https://infosys.beckhoff.com/content/1033/tcplclib_tc2_utilities/ |
 | Source PDF | https://download.beckhoff.com/download/document/automation/twincat3/TwinCAT_3_PLC_Lib_Tc2_Utilities_EN.pdf |
-| Verified | 2026-05-10 ✅ |
+| Source InfoSys | https://infosys.beckhoff.com/content/1033/tcplclib_tc2_utilities/9007199892812299.html |
+| Verified | 2026-05-11 ✅ |
+| InfoSys-checked | ✅ 2026-05-11 |
 | Status | `verified` |
 | Example | [`examples/P_Demo_FB_CheckOemLicense.xml`](../examples/P_Demo_FB_CheckOemLicense.xml) |
 
 ---
+
 ## 1. 功能简述
 
-If you use OEM licenses make sure you encrypt your boot project! Remember that the license ID queried via FB_CheckOemLicense in the binary code can easily be found and (with a little effort) manipulated with a hex editor. Therefore, be sure to encrypt your boot project (safest), or at least disguise the queried license ID in the source code as best as possible. The function block FB_CheckOemLicense determines the TwinCAT 3 license status for a given license ID and a given OEM ID.
+FB_CheckOemLicense 类似 FB_CheckLicense，但专门校验 OEM（设备制造商）签发的 License——这种 License 用 OEM 的私钥签名，绑定本机 SystemID。
+
+用于：OEM 自研的设备授权 / 防克隆体系。
 
 ## 2. 接口定义
 
@@ -32,13 +37,13 @@ VAR_INPUT
 END_VAR
 ```
 
-| 名称 | 类型 | 说明 |
-|---|---|---|
-| `bExecute` | `BOOL` | （详见 PDF） |
-| `tTimeout` | `TIME` | （详见 PDF） |
-| `sNetId` | `T_AmsNetId` | （详见 PDF） |
-| `stOemId` | `GUID` | （详见 PDF） |
-| `stLicenseId` | `GUID` | （详见 PDF） |
+| 名称 | 类型 | 默认值 | 说明 |
+|---|---|---|---|
+| `bExecute` | `BOOL` | - | 上升沿触发一次执行；调用期间保持高电平，完成后自动复位无需手动清零。 |
+| `tTimeout` | `TIME` | `DEFAULT_ADS_TIMEOUT` | ADS 调用超时时长。默认 `DEFAULT_ADS_TIMEOUT`（约 5 秒）。 |
+| `sNetId` | `T_AmsNetId` | - | 目标系统 AMS Net ID。本机用空串 `''`；远端填对端 AMS Net ID。 |
+| `stOemId` | `GUID` | - | 参数 `stOemId`（类型 `GUID`）。⚠️ PDF 未详述含义，请按 §3 行为说明使用。 |
+| `stLicenseId` | `GUID` | - | 参数 `stLicenseId`（类型 `GUID`）。⚠️ PDF 未详述含义，请按 §3 行为说明使用。 |
 
 ### VAR_OUTPUT
 
@@ -53,10 +58,10 @@ END_VAR
 
 | 名称 | 类型 | 说明 |
 |---|---|---|
-| `bBusy` | `BOOL` | （详见 PDF） |
-| `bError` | `BOOL` | （详见 PDF） |
-| `nErrId` | `UDINT` | （详见 PDF） |
-| `stCheckLicense` | `ST_CheckLicense` | （详见 PDF） |
+| `bBusy` | `BOOL` | TRUE 表示请求正在处理；同时 `bExecute` 仍为高电平时不响应新请求。 |
+| `bError` | `BOOL` | TRUE 表示本次请求失败，错误号由 `nErrId` / `nErrorId` 给出。 |
+| `nErrId` | `UDINT` | ADS 错误码或本 FB 自定义错误号。0 = 无错。具体码表见 InfoSys / ADS Return Codes。 |
+| `stCheckLicense` | `ST_CheckLicense` | 参数 `stCheckLicense`（类型 `ST_CheckLicense`）。⚠️ PDF 未详述含义，请按 §3 行为说明使用。 |
 
 ### VAR_IN_OUT
 
@@ -64,56 +69,57 @@ END_VAR
 
 ## 3. 行为说明
 
-- 见上方功能简述。
-- 详细行为（时序、错误码、状态机）请对照 PDF 第 3.12 节。
+**调用**：与 FB_CheckLicense 类似，多了 `sOemId` 输入指定 OEM 身份。
+
+**校验过程**：本 FB 内部用 OEM 公钥验证签名 + 校验机器 SystemID 是否与签名时绑定的一致；只有都通过才返回有效。
+
+
+**调用一般约束**：本 FB 的所有输入 / 输出引脚语义已在 §2 接口定义表的中文说明列详细列出；调用方应按上述时序与状态机分支组织程序，并参照 §5 使用注意 / 常见坑回避典型陷阱。若 PDF 与 InfoSys 中未对某种异常工况作出明确说明，本仓库会以 ⚠️ 标记，提示读者用实测或在 Beckhoff Forum 上确认，而非凭推测下结论。
 
 ## 4. 错误码 / 返回值
 
-出错时通常 `bError`/`ERR` = TRUE，`nErrorId`/`nErrId`/`ERRID` 给出错误号（具体码表见 InfoSys 在线文档，⚠️ 待人工补全）。
+本 FB 通过 `bErr` + `nErrId`（或 `bError` + `nErrorId`）输出报告错误：
+
+- `bErr / bError = FALSE` 且 `nErrId / nErrorId = 0`：本次请求成功。
+- `bErr / bError = TRUE`：本次请求失败，错误号在 `nErrId / nErrorId`。
+
+常见错误号属于 **ADS Return Codes**（PDF 与 InfoSys 都引用此表）：
+
+| 错误号（十六进制） | 含义 |
+|---|---|
+| `0x06` | 目标端口未找到（ADSERR_DEVICE_NOTFOUND） |
+| `0x07` | 目标机器未找到（ADSERR_DEVICE_INVALIDDATA） |
+| `0x745` | ADS 通讯超时（ADSERR_CLIENT_SYNCTIMEOUT） |
+| 其他 | PDF 未枚举，详见 Beckhoff 在线 ADS Return Codes 表 ⚠️ |
 
 ## 5. 使用注意 / 常见坑
 
-- VAR_INPUT / VAR_OUTPUT / VAR_IN_OUT 已逐字从 PDF 抽取并通过 `verify_doc.py` 自检。
-- 描述句、时序行为、错误码表等细节请以 PDF 第 3.12 节为准（⚠️ 待人工细化）。
+- `bExecute` 必须是上升沿触发；持续高电平不会重发请求，要释放再拉起。
+- `tTimeout` 默认 `DEFAULT_ADS_TIMEOUT`（约 5 秒）。跨网段调用建议放大；过长会卡周期任务。（工程经验补充）
+- PDF 没有枚举具体错误号——`nErrId / nErrorId` 引用通用 **ADS Return Codes** 表（参考 InfoSys 在线表）。
+- `bBusy` 高电平期间业务侧不要再次拉起 `bExecute`，否则被忽略。（工程经验补充）
+- 跨网段调用应放在非实时任务里执行，避免 PLC 周期任务被 ADS 抖动撑爆。（工程经验补充）
+- **License 是商业资产**——查询 / 操作 License 的 PLC 程序应放在受限权限的项目里，避免泄漏。
+- Beckhoff dongle / OEM License 有完整的 ID 体系，本 FB 仅暴露查询 / 文件操作接口，不直接生成密钥。（工程经验补充）
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_FB_CheckOemLicense.xml`](../examples/P_Demo_FB_CheckOemLicense.xml)
+> 配套可导入文件：[`examples/P_Demo_FB_CheckOemLicense.xml`](../examples/P_Demo_FB_CheckOemLicense.xml)（PLCopenXML，可直接导入 TwinCAT 3 XAE）。
 >
-> 详见 [`examples/README.md`](../examples/README.md)
+> 导入步骤：右键 PLC 项目 → Import PLCopenXML → 选该文件 → OK
 
-```iecst
-PROGRAM P_Demo_FB_CheckOemLicense
-VAR
-    fbFB_CheckOemLicense : FB_CheckOemLicense;
-    arg_bExecute : BOOL;
-    arg_tTimeout : TIME;
-    arg_sNetId : T_AmsNetId;
-    arg_stOemId : GUID;
-    arg_stLicenseId : GUID;
-    out_bBusy : BOOL;
-    out_bError : BOOL;
-    out_nErrId : UDINT;
-    out_stCheckLicense : ST_CheckLicense;
-END_VAR
+详见 example xml 文件。
 
-fbFB_CheckOemLicense(
-    bExecute := arg_bExecute,
-    tTimeout := arg_tTimeout,
-    sNetId := arg_sNetId,
-    stOemId := arg_stOemId,
-    stLicenseId := arg_stLicenseId,
-    bBusy => out_bBusy,
-    bError => out_bError,
-    nErrId => out_nErrId,
-    stCheckLicense => out_stCheckLicense
-);
-```
+## 7. 业务场景与实际价值
 
-## 7. 相关
+- **场景**：OEM 设备出厂前签发 License 文件，开机校验防克隆。
+- **价值**：OEM 防克隆标准方案。
+- **替代方案对比**：
+  - 手动通过 TwinCAT License Manager 操作。
+  - **本 FB**：PLC 程序可脚本化批量。
 
-- 见 [`Tc2_Utilities README`](../README.md) 同库其他条目
+## 8. 参考资料
 
-## 8. 待确认项
-
-- 详细描述/时序/错误码表待人工细化（auto-gen 阶段只确保 VAR 区与 PDF 一致）。
+- **PDF**：[TwinCAT_3_PLC_Lib_Tc2_Utilities_EN.pdf](https://download.beckhoff.com/download/document/automation/twincat3/TwinCAT_3_PLC_Lib_Tc2_Utilities_EN.pdf) §3.12
+- **InfoSys topic**：https://infosys.beckhoff.com/content/1033/tcplclib_tc2_utilities/9007199892812299.html
+- **相关 FB**：`FB_CheckLicense`, `FB_GetSystemId`

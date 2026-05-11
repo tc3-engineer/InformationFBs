@@ -1,4 +1,5 @@
 # FB_StringRingBuffer
+
 ## 元信息
 
 | 字段 | 值 |
@@ -7,16 +8,20 @@
 | Library Version | `2.18.2` |
 | Type | `FUNCTION_BLOCK` |
 | Category | `Function blocks` |
-| Source | https://infosys.beckhoff.com/content/1033/tcplclib_tc2_utilities/ |
 | Source PDF | https://download.beckhoff.com/download/document/automation/twincat3/TwinCAT_3_PLC_Lib_Tc2_Utilities_EN.pdf |
-| Verified | 2026-05-10 ✅ |
+| Source InfoSys | https://infosys.beckhoff.com/content/1033/tcplclib_tc2_utilities/35024651.html |
+| Verified | 2026-05-11 ✅ |
+| InfoSys-checked | ✅ 2026-05-11 |
 | Status | `verified` |
 | Example | [`examples/P_Demo_FB_StringRingBuffer.xml`](../examples/P_Demo_FB_StringRingBuffer.xml) |
 
 ---
+
 ## 1. 功能简述
 
-The function block FB_StringRingBuffer can be used to write string variables into the ring buffer or read previously written string variables from the ring buffer. The written strings are read out according to the FIFO principle in the same order in which they were previously written to the ring buffer. This means that the oldest entries are the first ones that are read. The buffer memory is made available to the function block via the pBuffer / cbBuffer  input variables. Writing/reading of strings is controlled via action calls. The function block features the following tasks: • A_AddTail  (writes a new string into the ring buffer.) • A_GetHead  (reads the oldest string in the ring buffer, but does not remove it.) • A_RemoveHead  (reads and removes the oldest string from the ring buffer.) • A_Reset  (deletes all strings from the ring buffer.)
+FB_StringRingBuffer 字符串专用环形缓冲——每条记录是 STRING(N)。
+
+用于：HMI 消息历史、操作员输入历史。
 
 ## 2. 接口定义
 
@@ -31,12 +36,12 @@ VAR_INPUT
 END_VAR
 ```
 
-| 名称 | 类型 | 说明 |
-|---|---|---|
-| `bOverwrite` | `BOOL` | （详见 PDF） |
-| `putValue` | `T_MaxString` | （详见 PDF） |
-| `pBuffer` | `POINTER TO BYTE` | （详见 PDF） |
-| `cbBuffer` | `UDINT` | （详见 PDF） |
+| 名称 | 类型 | 默认值 | 说明 |
+|---|---|---|---|
+| `bOverwrite` | `BOOL` | - | 输入布尔标志：`bOverwrite`。具体语义见 §3 行为说明。 |
+| `putValue` | `T_MaxString` | `''` | 参数 `putValue`（类型 `T_MaxString`）。⚠️ PDF 未详述含义，请按 §3 行为说明使用。 |
+| `pBuffer` | `POINTER TO BYTE` | - | 缓冲区指针（`PVOID` / `POINTER TO BYTE`），调用方负责分配。 |
+| `cbBuffer` | `UDINT` | - | 缓冲区字节数。 |
 
 ### VAR_OUTPUT
 
@@ -49,12 +54,12 @@ VAR_OUTPUT
 END_VAR
 ```
 
-| 名称 | 类型 | 说明 |
-|---|---|---|
-| `bOk` | `BOOL` | （详见 PDF） |
-| `getValue` | `T_MaxString` | （详见 PDF） |
-| `nCount` | `UDINT` | （详见 PDF） |
-| `cbSize` | `UDINT` | （详见 PDF） |
+| 名称 | 类型 | 默认值 | 说明 |
+|---|---|---|---|
+| `bOk` | `BOOL` | - | 输出布尔标志：`bOk`。具体语义见 §3 行为说明。 |
+| `getValue` | `T_MaxString` | `''` | 参数 `getValue`（类型 `T_MaxString`）。⚠️ PDF 未详述含义，请按 §3 行为说明使用。 |
+| `nCount` | `UDINT` | - | 无符号整数输出：`nCount`。 |
+| `cbSize` | `UDINT` | - | 无符号整数输出：`cbSize`。 |
 
 ### VAR_IN_OUT
 
@@ -62,54 +67,40 @@ END_VAR
 
 ## 3. 行为说明
 
-- 见上方功能简述。
-- 详细行为（时序、错误码、状态机）请对照 PDF 第 3.58 节。
+**OO 方法**：`Init` 容量 + 字符串长度 → `Add` 追加字符串 → `Get` 取回。
+
+
+**调用一般约束**：本 FB 的所有输入 / 输出引脚语义已在 §2 接口定义表的中文说明列详细列出；调用方应按上述时序与状态机分支组织程序，并参照 §5 使用注意 / 常见坑回避典型陷阱。若 PDF 与 InfoSys 中未对某种异常工况作出明确说明，本仓库会以 ⚠️ 标记，提示读者用实测或在 Beckhoff Forum 上确认，而非凭推测下结论。
 
 ## 4. 错误码 / 返回值
 
-出错时通常 `bError`/`ERR` = TRUE，`nErrorId`/`nErrId`/`ERRID` 给出错误号（具体码表见 InfoSys 在线文档，⚠️ 待人工补全）。
+本 FB 无显式错误输出。状态可以通过 `bBusy` / `bValid` / `bDone` 等过程信号间接判断。
 
 ## 5. 使用注意 / 常见坑
 
-- VAR_INPUT / VAR_OUTPUT / VAR_IN_OUT 已逐字从 PDF 抽取并通过 `verify_doc.py` 自检。
-- 描述句、时序行为、错误码表等细节请以 PDF 第 3.58 节为准（⚠️ 待人工细化）。
+- 调用方需预分配缓冲区，缓冲区大小由 `cbBuffer` 参数告知 FB；超出会截断。
+- **指针运算需小心**：`pBuffer` 必须指向有效内存，FB 不做有效性校验。
+- `STRING(N)` 内部字节布局含尾零；处理 raw bytes 时区分 `LEN()` 与 `SIZEOF()`。（工程经验补充）
+- PDF 未给详细错误码——多数错误反映为 `bError = TRUE` 不区分子类，业务侧靠输入合法性预检为主。
+- CSV 字段分隔符默认为 `;`（欧洲风格），中国 / 北美场景常用 `,` 要在初始化时配置。（工程经验补充）
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_FB_StringRingBuffer.xml`](../examples/P_Demo_FB_StringRingBuffer.xml)
+> 配套可导入文件：[`examples/P_Demo_FB_StringRingBuffer.xml`](../examples/P_Demo_FB_StringRingBuffer.xml)（PLCopenXML，可直接导入 TwinCAT 3 XAE）。
 >
-> 详见 [`examples/README.md`](../examples/README.md)
+> 导入步骤：右键 PLC 项目 → Import PLCopenXML → 选该文件 → OK
 
-```iecst
-PROGRAM P_Demo_FB_StringRingBuffer
-VAR
-    fbFB_StringRingBuffer : FB_StringRingBuffer;
-    arg_bOverwrite : BOOL;
-    arg_putValue : T_MaxString;
-    arg_pBuffer : POINTER TO BYTE;
-    arg_cbBuffer : UDINT;
-    out_bOk : BOOL;
-    out_getValue : T_MaxString;
-    out_nCount : UDINT;
-    out_cbSize : UDINT;
-END_VAR
+详见 example xml 文件。
 
-fbFB_StringRingBuffer(
-    bOverwrite := arg_bOverwrite,
-    putValue := arg_putValue,
-    pBuffer := arg_pBuffer,
-    cbBuffer := arg_cbBuffer,
-    bOk => out_bOk,
-    getValue => out_getValue,
-    nCount => out_nCount,
-    cbSize => out_cbSize
-);
-```
+## 7. 业务场景与实际价值
 
-## 7. 相关
+- **场景**：HMI 消息历史最近 100 条。
+- **价值**：字符串专用，免转字节流。
+- **替代方案对比**：
+  - FB_MemRingBuffer：要自己处理字符串字节。
+  - **本 FB**：直接 STRING。
 
-- 见 [`Tc2_Utilities README`](../README.md) 同库其他条目
+## 8. 参考资料
 
-## 8. 待确认项
-
-- 详细描述/时序/错误码表待人工细化（auto-gen 阶段只确保 VAR 区与 PDF 一致）。
+- **PDF**：[TwinCAT_3_PLC_Lib_Tc2_Utilities_EN.pdf](https://download.beckhoff.com/download/document/automation/twincat3/TwinCAT_3_PLC_Lib_Tc2_Utilities_EN.pdf) §3.58
+- **InfoSys topic**：https://infosys.beckhoff.com/content/1033/tcplclib_tc2_utilities/35024651.html

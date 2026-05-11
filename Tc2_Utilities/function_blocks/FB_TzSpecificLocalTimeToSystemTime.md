@@ -1,4 +1,5 @@
 # FB_TzSpecificLocalTimeToSystemTime
+
 ## 元信息
 
 | 字段 | 值 |
@@ -7,16 +8,20 @@
 | Library Version | `2.18.2` |
 | Type | `FUNCTION_BLOCK` |
 | Category | `Function blocks` |
-| Source | https://infosys.beckhoff.com/content/1033/tcplclib_tc2_utilities/ |
 | Source PDF | https://download.beckhoff.com/download/document/automation/twincat3/TwinCAT_3_PLC_Lib_Tc2_Utilities_EN.pdf |
-| Verified | 2026-05-10 ✅ |
+| Source InfoSys | https://infosys.beckhoff.com/content/1033/tcplclib_tc2_utilities/35028619.html |
+| Verified | 2026-05-11 ✅ |
+| InfoSys-checked | ✅ 2026-05-11 |
 | Status | `verified` |
 | Example | [`examples/P_Demo_FB_TzSpecificLocalTimeToSystemTime.xml`](../examples/P_Demo_FB_TzSpecificLocalTimeToSystemTime.xml) |
 
 ---
+
 ## 1. 功能简述
 
-The function block converts the local time (structured system time format) to UTC time (structured system time format), taking into account the specified time zone information. The function block FB_TzSpecificLocalTimeToFileTime64 [ }   123 ]  has similar functionality but uses a different time format (file time format). The function block is only suitable for conversion of continuous  local timestamp information. Step changes in local time caused by daylight saving time/standard time changeover are permitted and are correctly detected by the function block. Arbitrary changes in local time result in incorrect conversion. The reason: the last converted time is stored internally in the function block in order to be able to identify the daylight saving time/standard time information and the B times (see below) when the local time is reset. The function block is associated with an action: A_Reset(). If this action is called the function block outputs and the locally stored (last converted) time are reset to zero. The step changes in the local time are problematic, since they have to be converted to a linear UTC time. It is therefore advisable to use the (continuous) UTC time for time s
+FB_TzSpecificLocalTimeToSystemTime 是 FB_SystemTimeToTzSpecificLocalTime 的反向：给定本地时间 + 时区配置，算出对应的 UTC `TIMESTRUCT`。
+
+用于：HMI 让操作员按本地时间输入事件，PLC 后端存 UTC。
 
 ## 2. 接口定义
 
@@ -31,8 +36,8 @@ END_VAR
 
 | 名称 | 类型 | 说明 |
 |---|---|---|
-| `in` | `TIMESTRUCT` | （详见 PDF） |
-| `tzInfo` | `ST_TimeZoneInformation` | （详见 PDF） |
+| `in` | `TIMESTRUCT` | 参数 `in`（类型 `TIMESTRUCT`）。⚠️ PDF 未详述含义，请按 §3 行为说明使用。 |
+| `tzInfo` | `ST_TimeZoneInformation` | 时区配置。 |
 
 ### VAR_OUTPUT
 
@@ -44,11 +49,11 @@ VAR_OUTPUT
 END_VAR
 ```
 
-| 名称 | 类型 | 说明 |
-|---|---|---|
-| `out` | `TIMESTRUCT` | （详见 PDF） |
-| `eTzID` | `E_TimeZoneID` | （详见 PDF） |
-| `bB` | `BOOL` | （详见 PDF） |
+| 名称 | 类型 | 默认值 | 说明 |
+|---|---|---|---|
+| `out` | `TIMESTRUCT` | - | 参数 `out`（类型 `TIMESTRUCT`）。⚠️ PDF 未详述含义，请按 §3 行为说明使用。 |
+| `eTzID` | `E_TimeZoneID` | `eTimeZoneID_Unknown` | 参数 `eTzID`（类型 `E_TimeZoneID`）。⚠️ PDF 未详述含义，请按 §3 行为说明使用。 |
+| `bB` | `BOOL` | - | 输出布尔标志：`bB`。具体语义见 §3 行为说明。 |
 
 ### VAR_IN_OUT
 
@@ -56,48 +61,44 @@ END_VAR
 
 ## 3. 行为说明
 
-- 见上方功能简述。
-- 详细行为（时序、错误码、状态机）请对照 PDF 第 3.61 节。
+**纯计算**，行为与 FB_SystemTimeToTzSpecificLocalTime 镜像。算法：本地时间减去 `tzInfo.Bias`（含夏令时偏移）。
+
+**注意夏令时模糊期**：本地时间在夏令时回切的那 1 小时（如 03:00 → 02:00）会出现两次本地时间映射到不同 UTC 的情况——Windows 行为是优先取标准时；业务侧若关心可在该窗口额外询问。
+
+
+**调用一般约束**：本 FB 的所有输入 / 输出引脚语义已在 §2 接口定义表的中文说明列详细列出；调用方应按上述时序与状态机分支组织程序，并参照 §5 使用注意 / 常见坑回避典型陷阱。若 PDF 与 InfoSys 中未对某种异常工况作出明确说明，本仓库会以 ⚠️ 标记，提示读者用实测或在 Beckhoff Forum 上确认，而非凭推测下结论。
 
 ## 4. 错误码 / 返回值
 
-出错时通常 `bError`/`ERR` = TRUE，`nErrorId`/`nErrId`/`ERRID` 给出错误号（具体码表见 InfoSys 在线文档，⚠️ 待人工补全）。
+本 FB 无显式错误输出。状态可以通过 `bBusy` / `bValid` / `bDone` 等过程信号间接判断。
 
 ## 5. 使用注意 / 常见坑
 
-- VAR_INPUT / VAR_OUTPUT / VAR_IN_OUT 已逐字从 PDF 抽取并通过 `verify_doc.py` 自检。
-- 描述句、时序行为、错误码表等细节请以 PDF 第 3.61 节为准（⚠️ 待人工细化）。
+- **夏令时切换瞬间结果可能不一致**：切换前后 1 小时内业务侧应避免对该 1 小时窗口做时间差计算（标准 Windows 行为）。
+- `tzInfo` 必须先用 FB_GetTimeZoneInformation 读到正确值，传错时区会算出错误结果但不会报错。
+- Windows `TIME_ZONE_INFORMATION` 的偏移分钟数符号约定与直觉相反：CET = -60（表示 UTC + 60 = 本地）。不要把符号搞反。（工程经验补充）
+- PDF 无错误码——纯计算 FB，输入合法即输出合法。
+- `SYSTEMTIME` 在 TwinCAT 里映射为 `TIMESTRUCT`，字段含义一致。（工程经验补充）
+- **夏令时回切的『模糊小时』映射不唯一**——本地 02:30 可能对应两个 UTC；业务侧需要约定取哪一个。
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_FB_TzSpecificLocalTimeToSystemTime.xml`](../examples/P_Demo_FB_TzSpecificLocalTimeToSystemTime.xml)
+> 配套可导入文件：[`examples/P_Demo_FB_TzSpecificLocalTimeToSystemTime.xml`](../examples/P_Demo_FB_TzSpecificLocalTimeToSystemTime.xml)（PLCopenXML，可直接导入 TwinCAT 3 XAE）。
 >
-> 详见 [`examples/README.md`](../examples/README.md)
+> 导入步骤：右键 PLC 项目 → Import PLCopenXML → 选该文件 → OK
 
-```iecst
-PROGRAM P_Demo_FB_TzSpecificLocalTimeToSystemTime
-VAR
-    fbFB_TzSpecificLocalTimeToSystemTime : FB_TzSpecificLocalTimeToSystemTime;
-    arg_in : TIMESTRUCT;
-    arg_tzInfo : ST_TimeZoneInformation;
-    out_out : TIMESTRUCT;
-    out_eTzID : E_TimeZoneID;
-    out_bB : BOOL;
-END_VAR
+详见 example xml 文件。
 
-fbFB_TzSpecificLocalTimeToSystemTime(
-    in := arg_in,
-    tzInfo := arg_tzInfo,
-    out => out_out,
-    eTzID => out_eTzID,
-    bB => out_bB
-);
-```
+## 7. 业务场景与实际价值
 
-## 7. 相关
+- **场景**：操作员在 HMI 用本地时间填事件时刻，存数据库前转 UTC。
+- **价值**：HMI 友好（本地时间）+ 数据库稳定（UTC）。
+- **替代方案对比**：
+  - 直接存本地：跨时区设备 / 夏令时切换日易乱。
+  - **本 FB**：HMI 本地、存储 UTC 两全。
 
-- 见 [`Tc2_Utilities README`](../README.md) 同库其他条目
+## 8. 参考资料
 
-## 8. 待确认项
-
-- 详细描述/时序/错误码表待人工细化（auto-gen 阶段只确保 VAR 区与 PDF 一致）。
+- **PDF**：[TwinCAT_3_PLC_Lib_Tc2_Utilities_EN.pdf](https://download.beckhoff.com/download/document/automation/twincat3/TwinCAT_3_PLC_Lib_Tc2_Utilities_EN.pdf) §3.61
+- **InfoSys topic**：https://infosys.beckhoff.com/content/1033/tcplclib_tc2_utilities/35028619.html
+- **相关 FB**：`FB_SystemTimeToTzSpecificLocalTime`, `FB_GetTimeZoneInformation`

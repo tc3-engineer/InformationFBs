@@ -31,6 +31,10 @@ try:
     import _tc2utilities_registry4  # noqa: F401, E402
 except ImportError:
     pass
+try:
+    import _tc2utilities_registry5  # noqa: F401, E402
+except ImportError:
+    pass
 
 LIB = "Tc2_Utilities"
 PDF_URL = "https://download.beckhoff.com/download/document/automation/twincat3/TwinCAT_3_PLC_Lib_Tc2_Utilities_EN.pdf"

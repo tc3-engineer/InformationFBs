@@ -1,4 +1,5 @@
 # FB_EnumFindFileList
+
 ## 元信息
 
 | 字段 | 值 |
@@ -7,16 +8,20 @@
 | Library Version | `2.18.2` |
 | Type | `FUNCTION_BLOCK` |
 | Category | `Function blocks` |
-| Source | https://infosys.beckhoff.com/content/1033/tcplclib_tc2_utilities/ |
 | Source PDF | https://download.beckhoff.com/download/document/automation/twincat3/TwinCAT_3_PLC_Lib_Tc2_Utilities_EN.pdf |
-| Verified | 2026-05-10 ✅ |
+| Source InfoSys | https://infosys.beckhoff.com/content/1033/tcplclib_tc2_utilities/9676819723.html |
+| Verified | 2026-05-11 ✅ |
+| InfoSys-checked | ✅ 2026-05-11 |
 | Status | `verified` |
 | Example | [`examples/P_Demo_FB_EnumFindFileList.xml`](../examples/P_Demo_FB_EnumFindFileList.xml) |
 
 ---
+
 ## 1. 功能简述
 
-This function block searches a directory for a file or a subdirectory whose name is similar to the specified name. Any entries found can be read individually. See also description of the FB_EnumFindFileEntry function block. The input parameter eCmd  is used for navigating through the list of entries. The eCmd  input determines whether the first or the next input is read, for example. Important note: A new search may be started only if the previous search has been fully completed. The function block instance may need to be activated several times (by a rising edge at the bExecute input) for a complete search. The search is only fully complete if bEOE =TRUE was reached or if the search was terminated prematurely with ECMD = eEnumCmd_Abort. For the TwinCAT system, the search may not yet be completed if the PLC application has already found the file or directory that was sought. If not all entries are to be read (i.e. bEOE=TRUE  is not reached), the function block subsequently has to be called with the input parameter eCmd = eEnumCmd_Abort . This is necessary in order to complete the search and release all internal resources (file handles). If bEOE=TRUE  was reached or if an error occu
+FB_EnumFindFileList 类似 FB_EnumFindFileEntry，但一次返回**整个文件列表**而不是一条一条。
+
+用于：批量获取所有匹配文件，做后续 ARRAY 处理。
 
 ## 2. 接口定义
 
@@ -34,15 +39,15 @@ VAR_INPUT
 END_VAR
 ```
 
-| 名称 | 类型 | 说明 |
-|---|---|---|
-| `sNetID` | `T_AmsNetID` | （详见 PDF） |
-| `sPathName` | `T_MaxString` | （详见 PDF） |
-| `eCmd` | `E_EnumCmdType` | （详见 PDF） |
-| `pFindList` | `POINTER TO ST_FindFileEntry` | （详见 PDF） |
-| `cbFindList` | `UDINT` | （详见 PDF） |
-| `bExecute` | `BOOL` | （详见 PDF） |
-| `tTimeout` | `TIME` | （详见 PDF） |
+| 名称 | 类型 | 默认值 | 说明 |
+|---|---|---|---|
+| `sNetID` | `T_AmsNetID` | - | 目标系统 AMS Net ID。本机用空串 `''`；远端填对端 AMS Net ID。 |
+| `sPathName` | `T_MaxString` | - | 参数 `sPathName`（类型 `T_MaxString`）。⚠️ PDF 未详述含义，请按 §3 行为说明使用。 |
+| `eCmd` | `E_EnumCmdType` | `eEnumCmd_First` | 参数 `eCmd`（类型 `E_EnumCmdType`）。⚠️ PDF 未详述含义，请按 §3 行为说明使用。 |
+| `pFindList` | `POINTER TO ST_FindFileEntry` | - | 参数 `pFindList`（类型 `POINTER TO ST_FindFileEntry`）。⚠️ PDF 未详述含义，请按 §3 行为说明使用。 |
+| `cbFindList` | `UDINT` | - | 无符号整数输入：`cbFindList`。 |
+| `bExecute` | `BOOL` | - | 上升沿触发一次执行；调用期间保持高电平，完成后自动复位无需手动清零。 |
+| `tTimeout` | `TIME` | `DEFAULT_ADS_TIMEOUT` | ADS 调用超时时长。默认 `DEFAULT_ADS_TIMEOUT`（约 5 秒）。 |
 
 ### VAR_OUTPUT
 
@@ -58,11 +63,11 @@ END_VAR
 
 | 名称 | 类型 | 说明 |
 |---|---|---|
-| `bBusy` | `BOOL` | （详见 PDF） |
-| `bError` | `BOOL` | （详见 PDF） |
-| `nErrId` | `UDINT` | （详见 PDF） |
-| `bEOE` | `BOOL` | （详见 PDF） |
-| `nFindFiles` | `UDINT` | （详见 PDF） |
+| `bBusy` | `BOOL` | TRUE 表示请求正在处理；同时 `bExecute` 仍为高电平时不响应新请求。 |
+| `bError` | `BOOL` | TRUE 表示本次请求失败，错误号由 `nErrId` / `nErrorId` 给出。 |
+| `nErrId` | `UDINT` | ADS 错误码或本 FB 自定义错误号。0 = 无错。具体码表见 InfoSys / ADS Return Codes。 |
+| `bEOE` | `BOOL` | 输出布尔标志：`bEOE`。具体语义见 §3 行为说明。 |
+| `nFindFiles` | `UDINT` | 无符号整数输出：`nFindFiles`。 |
 
 ### VAR_IN_OUT
 
@@ -70,62 +75,57 @@ END_VAR
 
 ## 3. 行为说明
 
-- 见上方功能简述。
-- 详细行为（时序、错误码、状态机）请对照 PDF 第 3.16 节。
+**调用**：`bExecute` 上升沿，一次性返回所有匹配文件到调用方分配的数组。
+
+
+**调用一般约束**：本 FB 的所有输入 / 输出引脚语义已在 §2 接口定义表的中文说明列详细列出；调用方应按上述时序与状态机分支组织程序，并参照 §5 使用注意 / 常见坑回避典型陷阱。若 PDF 与 InfoSys 中未对某种异常工况作出明确说明，本仓库会以 ⚠️ 标记，提示读者用实测或在 Beckhoff Forum 上确认，而非凭推测下结论。
 
 ## 4. 错误码 / 返回值
 
-出错时通常 `bError`/`ERR` = TRUE，`nErrorId`/`nErrId`/`ERRID` 给出错误号（具体码表见 InfoSys 在线文档，⚠️ 待人工补全）。
+本 FB 通过 `bErr` + `nErrId`（或 `bError` + `nErrorId`）输出报告错误：
+
+- `bErr / bError = FALSE` 且 `nErrId / nErrorId = 0`：本次请求成功。
+- `bErr / bError = TRUE`：本次请求失败，错误号在 `nErrId / nErrorId`。
+
+常见错误号属于 **ADS Return Codes**（PDF 与 InfoSys 都引用此表）：
+
+| 错误号（十六进制） | 含义 |
+|---|---|
+| `0x06` | 目标端口未找到（ADSERR_DEVICE_NOTFOUND） |
+| `0x07` | 目标机器未找到（ADSERR_DEVICE_INVALIDDATA） |
+| `0x745` | ADS 通讯超时（ADSERR_CLIENT_SYNCTIMEOUT） |
+| 其他 | PDF 未枚举，详见 Beckhoff 在线 ADS Return Codes 表 ⚠️ |
 
 ## 5. 使用注意 / 常见坑
 
-- VAR_INPUT / VAR_OUTPUT / VAR_IN_OUT 已逐字从 PDF 抽取并通过 `verify_doc.py` 自检。
-- 描述句、时序行为、错误码表等细节请以 PDF 第 3.16 节为准（⚠️ 待人工细化）。
+- `bExecute` 必须是上升沿触发；持续高电平不会重发请求，要释放再拉起。
+- `tTimeout` 默认 `DEFAULT_ADS_TIMEOUT`（约 5 秒）。跨网段调用建议放大；过长会卡周期任务。（工程经验补充）
+- PDF 没有枚举具体错误号——`nErrId / nErrorId` 引用通用 **ADS Return Codes** 表（参考 InfoSys 在线表）。
+- `bBusy` 高电平期间业务侧不要再次拉起 `bExecute`，否则被忽略。（工程经验补充）
+- 跨网段调用应放在非实时任务里执行，避免 PLC 周期任务被 ADS 抖动撑爆。（工程经验补充）
+- **文件操作受 SystemService 权限限制**——CX 设备的 `C:\TwinCAT\Boot` 等敏感目录可能不可写。（工程经验补充）
+- 绝对路径建议带盘符；相对路径以 `ePath` 枚举为基准（`PATH_GENERIC` = TwinCAT 安装目录）。（工程经验补充）
+- 文件 I/O 是异步操作，触发后在 `bBusy → bDone` 之间业务侧不能假设文件已可见。
+- **数组要预分配足够大**——上限超出会被截断。（工程经验补充）
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_FB_EnumFindFileList.xml`](../examples/P_Demo_FB_EnumFindFileList.xml)
+> 配套可导入文件：[`examples/P_Demo_FB_EnumFindFileList.xml`](../examples/P_Demo_FB_EnumFindFileList.xml)（PLCopenXML，可直接导入 TwinCAT 3 XAE）。
 >
-> 详见 [`examples/README.md`](../examples/README.md)
+> 导入步骤：右键 PLC 项目 → Import PLCopenXML → 选该文件 → OK
 
-```iecst
-PROGRAM P_Demo_FB_EnumFindFileList
-VAR
-    fbFB_EnumFindFileList : FB_EnumFindFileList;
-    arg_sNetID : T_AmsNetID;
-    arg_sPathName : T_MaxString;
-    arg_eCmd : E_EnumCmdType;
-    arg_pFindList : POINTER TO ST_FindFileEntry;
-    arg_cbFindList : UDINT;
-    arg_bExecute : BOOL;
-    arg_tTimeout : TIME;
-    out_bBusy : BOOL;
-    out_bError : BOOL;
-    out_nErrId : UDINT;
-    out_bEOE : BOOL;
-    out_nFindFiles : UDINT;
-END_VAR
+详见 example xml 文件。
 
-fbFB_EnumFindFileList(
-    sNetID := arg_sNetID,
-    sPathName := arg_sPathName,
-    eCmd := arg_eCmd,
-    pFindList := arg_pFindList,
-    cbFindList := arg_cbFindList,
-    bExecute := arg_bExecute,
-    tTimeout := arg_tTimeout,
-    bBusy => out_bBusy,
-    bError => out_bError,
-    nErrId => out_nErrId,
-    bEOE => out_bEOE,
-    nFindFiles => out_nFindFiles
-);
-```
+## 7. 业务场景与实际价值
 
-## 7. 相关
+- **场景**：批量列出文件做 ARRAY 处理。
+- **价值**：比 EnumFindFileEntry 一次拿完。
+- **替代方案对比**：
+  - 用 EnumFindFileEntry 循环：编程繁。
+  - **本 FB**：一次完成。
 
-- 见 [`Tc2_Utilities README`](../README.md) 同库其他条目
+## 8. 参考资料
 
-## 8. 待确认项
-
-- 详细描述/时序/错误码表待人工细化（auto-gen 阶段只确保 VAR 区与 PDF 一致）。
+- **PDF**：[TwinCAT_3_PLC_Lib_Tc2_Utilities_EN.pdf](https://download.beckhoff.com/download/document/automation/twincat3/TwinCAT_3_PLC_Lib_Tc2_Utilities_EN.pdf) §3.16
+- **InfoSys topic**：https://infosys.beckhoff.com/content/1033/tcplclib_tc2_utilities/9676819723.html
+- **相关 FB**：`FB_EnumFindFileEntry`

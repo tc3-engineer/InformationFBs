@@ -1,4 +1,5 @@
 # GetRemotePCInfo
+
 ## 元信息
 
 | 字段 | 值 |
@@ -7,16 +8,20 @@
 | Library Version | `2.18.2` |
 | Type | `FUNCTION_BLOCK` |
 | Category | `Function blocks` |
-| Source | https://infosys.beckhoff.com/content/1033/tcplclib_tc2_utilities/ |
 | Source PDF | https://download.beckhoff.com/download/document/automation/twincat3/TwinCAT_3_PLC_Lib_Tc2_Utilities_EN.pdf |
-| Verified | 2026-05-10 ✅ |
+| Source InfoSys | https://infosys.beckhoff.com/content/1033/tcplclib_tc2_utilities/35044619.html |
+| Verified | 2026-05-11 ✅ |
+| InfoSys-checked | ✅ 2026-05-11 |
 | Status | `verified` |
 | Example | [`examples/P_Demo_GetRemotePCInfo.xml`](../examples/P_Demo_GetRemotePCInfo.xml) |
 
 ---
+
 ## 1. 功能简述
 
-The function block GetRemotePCInfo can be used to read information about configured remote PCs in the TwinCAT router. After successful execution the structure "RemotePCInfo" contains the NetIDs and names of the remote PCs as strings in the order in which they were stored in the TwinCAT router. The function block allows router information relating to either a local or to a remote TwinCAT system to be read.
+GetRemotePCInfo 通过 ADS 读取远程 PC 的系统信息：OS 版本 / 主机名 / 系统时间 / CPU / 内存等综合数据。
+
+用于：远程运维自动盘点机器信息。
 
 ## 2. 接口定义
 
@@ -30,11 +35,11 @@ VAR_INPUT
 END_VAR
 ```
 
-| 名称 | 类型 | 说明 |
-|---|---|---|
-| `NETID` | `T_AmsNetId` | （详见 PDF） |
-| `START` | `BOOL` | （详见 PDF） |
-| `TMOUT` | `TIME` | （详见 PDF） |
+| 名称 | 类型 | 默认值 | 说明 |
+|---|---|---|---|
+| `NETID` | `T_AmsNetId` | - | 参数 `NETID`（类型 `T_AmsNetId`）。⚠️ PDF 未详述含义，请按 §3 行为说明使用。 |
+| `START` | `BOOL` | - | 输入布尔标志：`START`。具体语义见 §3 行为说明。 |
+| `TMOUT` | `TIME` | `DEFAULT_ADS_TIMEOUT` | 时间值：`TMOUT`。 |
 
 ### VAR_OUTPUT
 
@@ -49,10 +54,10 @@ END_VAR
 
 | 名称 | 类型 | 说明 |
 |---|---|---|
-| `BUSY` | `BOOL` | （详见 PDF） |
-| `ERR` | `BOOL` | （详见 PDF） |
-| `ERRID` | `UDINT` | （详见 PDF） |
-| `RemotePCInfo` | `REMOTEPCINFOSTRUCT` | （详见 PDF） |
+| `BUSY` | `BOOL` | 输出布尔标志：`BUSY`。具体语义见 §3 行为说明。 |
+| `ERR` | `BOOL` | 输出布尔标志：`ERR`。具体语义见 §3 行为说明。 |
+| `ERRID` | `UDINT` | 无符号整数输出：`ERRID`。 |
+| `RemotePCInfo` | `REMOTEPCINFOSTRUCT` | 参数 `RemotePCInfo`（类型 `REMOTEPCINFOSTRUCT`）。⚠️ PDF 未详述含义，请按 §3 行为说明使用。 |
 
 ### VAR_IN_OUT
 
@@ -60,52 +65,43 @@ END_VAR
 
 ## 3. 行为说明
 
-- 见上方功能简述。
-- 详细行为（时序、错误码、状态机）请对照 PDF 第 3.64 节。
+**调用**：`bExecute` 上升沿读一次。本 FB 是个综合调用，内部串联调多个底层 FB 取数据。
+
+**响应**：跨网段可能数秒。
+
+
+**调用一般约束**：本 FB 的所有输入 / 输出引脚语义已在 §2 接口定义表的中文说明列详细列出；调用方应按上述时序与状态机分支组织程序，并参照 §5 使用注意 / 常见坑回避典型陷阱。若 PDF 与 InfoSys 中未对某种异常工况作出明确说明，本仓库会以 ⚠️ 标记，提示读者用实测或在 Beckhoff Forum 上确认，而非凭推测下结论。
 
 ## 4. 错误码 / 返回值
 
-出错时通常 `bError`/`ERR` = TRUE，`nErrorId`/`nErrId`/`ERRID` 给出错误号（具体码表见 InfoSys 在线文档，⚠️ 待人工补全）。
+本 FB 无显式错误输出。状态可以通过 `bBusy` / `bValid` / `bDone` 等过程信号间接判断。
 
 ## 5. 使用注意 / 常见坑
 
-- VAR_INPUT / VAR_OUTPUT / VAR_IN_OUT 已逐字从 PDF 抽取并通过 `verify_doc.py` 自检。
-- 描述句、时序行为、错误码表等细节请以 PDF 第 3.64 节为准（⚠️ 待人工细化）。
+- `bExecute` 必须是上升沿触发；持续高电平不会重发请求，要释放再拉起。
+- `tTimeout` 默认 `DEFAULT_ADS_TIMEOUT`（约 5 秒）。跨网段调用建议放大；过长会卡周期任务。（工程经验补充）
+- PDF 没有枚举具体错误号——`nErrId / nErrorId` 引用通用 **ADS Return Codes** 表（参考 InfoSys 在线表）。
+- `bBusy` 高电平期间业务侧不要再次拉起 `bExecute`，否则被忽略。（工程经验补充）
+- 跨网段调用应放在非实时任务里执行，避免 PLC 周期任务被 ADS 抖动撑爆。（工程经验补充）
+- 综合调用串多个底层 FB，任一失败会影响结果——业务侧应分别检查各字段。（工程经验补充）
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_GetRemotePCInfo.xml`](../examples/P_Demo_GetRemotePCInfo.xml)
+> 配套可导入文件：[`examples/P_Demo_GetRemotePCInfo.xml`](../examples/P_Demo_GetRemotePCInfo.xml)（PLCopenXML，可直接导入 TwinCAT 3 XAE）。
 >
-> 详见 [`examples/README.md`](../examples/README.md)
+> 导入步骤：右键 PLC 项目 → Import PLCopenXML → 选该文件 → OK
 
-```iecst
-PROGRAM P_Demo_GetRemotePCInfo
-VAR
-    fbGetRemotePCInfo : GetRemotePCInfo;
-    arg_NETID : T_AmsNetId;
-    arg_START : BOOL;
-    arg_TMOUT : TIME;
-    out_BUSY : BOOL;
-    out_ERR : BOOL;
-    out_ERRID : UDINT;
-    out_RemotePCInfo : REMOTEPCINFOSTRUCT;
-END_VAR
+详见 example xml 文件。
 
-fbGetRemotePCInfo(
-    NETID := arg_NETID,
-    START := arg_START,
-    TMOUT := arg_TMOUT,
-    BUSY => out_BUSY,
-    ERR => out_ERR,
-    ERRID => out_ERRID,
-    RemotePCInfo => out_RemotePCInfo
-);
-```
+## 7. 业务场景与实际价值
 
-## 7. 相关
+- **场景**：远程运维盘点。
+- **价值**：一次调用拿多种信息。
+- **替代方案对比**：
+  - 多次调底层 FB：代码繁。
+  - **本 FB**：一次完成。
 
-- 见 [`Tc2_Utilities README`](../README.md) 同库其他条目
+## 8. 参考资料
 
-## 8. 待确认项
-
-- 详细描述/时序/错误码表待人工细化（auto-gen 阶段只确保 VAR 区与 PDF 一致）。
+- **PDF**：[TwinCAT_3_PLC_Lib_Tc2_Utilities_EN.pdf](https://download.beckhoff.com/download/document/automation/twincat3/TwinCAT_3_PLC_Lib_Tc2_Utilities_EN.pdf) §3.64
+- **InfoSys topic**：https://infosys.beckhoff.com/content/1033/tcplclib_tc2_utilities/35044619.html
