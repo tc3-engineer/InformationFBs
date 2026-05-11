@@ -76,8 +76,8 @@ IF NOT bChecked THEN
     ELSE
         sLibCheckMsg := 'Tc2_Math too old, need 1.3.0+';
         // 真实工程在这里应该把 PLC 切到 SAFE_STOP，而不是继续跑业务
-    END_IF
-END_IF
+    END_IF;
+END_IF;
 </xhtml></ST>
         </body>
       </pou>

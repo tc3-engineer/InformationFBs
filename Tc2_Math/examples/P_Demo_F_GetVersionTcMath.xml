@@ -90,7 +90,7 @@ IF NOT bChecked THEN
     nBuild_NewWay    := stLibVersion_Tc2_Math.iBuild;
     nRevision_NewWay := stLibVersion_Tc2_Math.iRevision;
     sVersion_NewWay  := stLibVersion_Tc2_Math.sVersion;
-END_IF
+END_IF;
 </xhtml></ST>
         </body>
       </pou>
