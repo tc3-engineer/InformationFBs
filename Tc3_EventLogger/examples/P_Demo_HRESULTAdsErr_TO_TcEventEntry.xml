@@ -23,7 +23,7 @@
               <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT hr</xhtml></documentation>
             </variable>
             <variable name="arg_stEventEntry">
-              <type><derived name="REFERENCE TO TcEventEntry"/></type>
+              <type><reference><baseType><derived name="TcEventEntry"/></baseType></reference></type>
               <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT stEventEntry</xhtml></documentation>
             </variable>
           </localVars>

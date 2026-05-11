@@ -24,8 +24,8 @@ This method calls the Clear() method for all alarms in the alarm state Raised. S
 
 ```iecst
 VAR_INPUT
-    nTimeStamp : ULINT;
-    bResetConfirmation : BOOL;
+    nTimeStamp : ULINT := 0;
+    bResetConfirmation : BOOL := FALSE;
 END_VAR
 ```
 
@@ -49,7 +49,7 @@ END_VAR
 
 ## 4. 错误码 / 返回值
 
-出错时通常 `bError`/`ERR` = TRUE，`nErrorId`/`nErrId`/`ERRID` 给出错误号（具体码表见 InfoSys 在线文档，⚠️ 待人工补全）。
+本方法/FB 返回 `HRESULT`（`S_OK` = 成功；其他码表请见对应 InfoSys 页面，⚠️ 待人工补全）。
 
 ## 5. 使用注意 / 常见坑
 

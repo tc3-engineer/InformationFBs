@@ -14,9 +14,9 @@
       <pou name="P_Demo_FB_TcAlarm_SetJsonAttribute" pouType="program">
         <interface>
           <localVars>
-            <variable name="fbSetJsonAttribute">
-              <type><derived name="SetJsonAttribute"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">Tc3_EventLogger.SetJsonAttribute 实例</xhtml></documentation>
+            <variable name="fbTcAlarm">
+              <type><derived name="FB_TcAlarm"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">Tc3_EventLogger.FB_TcAlarm 实例</xhtml></documentation>
             </variable>
             <variable name="io_sJsonAttribute">
               <type><string/></type>
@@ -27,7 +27,7 @@
         <body>
           <ST>
             <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
-// Tc3_EventLogger.SetJsonAttribute 演示程序（FB 实例）
+// Tc3_EventLogger.FB_TcAlarm.SetJsonAttribute 演示程序（OO 方法）
 // ============================================================
 // 验证步骤：
 //   1. 引用 Tc3_EventLogger（及依赖类型所在库 Tc2_System 等）
@@ -36,7 +36,7 @@
 //   4. 在线监视 out_* / io_* 输出
 // ============================================================
 
-fbSetJsonAttribute(
+fbTcAlarm.SetJsonAttribute(
     sJsonAttribute := io_sJsonAttribute
 );
 </xhtml>

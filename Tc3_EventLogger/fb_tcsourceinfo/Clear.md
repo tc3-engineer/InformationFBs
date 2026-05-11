@@ -39,7 +39,7 @@ This method resets the source information. Syntax METHOD Clear
 
 ## 4. 错误码 / 返回值
 
-出错时通常 `bError`/`ERR` = TRUE，`nErrorId`/`nErrId`/`ERRID` 给出错误号（具体码表见 InfoSys 在线文档，⚠️ 待人工补全）。
+本方法/FB 返回 `HRESULT`（`S_OK` = 成功；其他码表请见对应 InfoSys 页面，⚠️ 待人工补全）。
 
 ## 5. 使用注意 / 常见坑
 
@@ -55,10 +55,11 @@ This method resets the source information. Syntax METHOD Clear
 ```iecst
 PROGRAM P_Demo_FB_TcSourceInfo_Clear
 VAR
-    fbClear : Clear;
+    fbTcSourceInfo : FB_TcSourceInfo;
+    hr : HRESULT;
 END_VAR
 
-fbClear(
+hr := fbTcSourceInfo.Clear(
 
 );
 ```

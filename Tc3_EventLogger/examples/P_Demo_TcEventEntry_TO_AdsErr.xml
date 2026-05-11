@@ -23,7 +23,7 @@
               <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT stEventEntry</xhtml></documentation>
             </variable>
             <variable name="arg_eErrorId">
-              <type><derived name="REFERENCE TO E_AdsErr"/></type>
+              <type><reference><baseType><derived name="E_AdsErr"/></baseType></reference></type>
               <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT eErrorId</xhtml></documentation>
             </variable>
           </localVars>

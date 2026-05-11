@@ -24,16 +24,16 @@ This function block represents the TwinCAT 3 EventLogger for a remote system. Sy
 
 ```iecst
 VAR_INPUT
-    nTimeStamp : ULINT;
-    bResetConfirmation : BOOL;
+    nTimeStamp : ULINT := 0;
+    bResetConfirmation : BOOL := FALSE;
     ipFilter : I_TcEventFilter;
     ipClearSettings : I_TcClearLoggedEventsSettings;
     sNetId : T_AmsNetId;
     eventClass : GUID;
     nEventId : UDINT;
     eSeverity : TcEventSeverity;
-    ipSourceInfo : I_TcSourceInfo;
-    ipArguments : I_TcArguments;
+    ipSourceInfo : I_TcSourceInfo := 0;
+    ipArguments : I_TcArguments := 0;
     stEventEntry : TcEventEntry;
 END_VAR
 ```
@@ -67,7 +67,7 @@ END_VAR
 
 ## 4. 错误码 / 返回值
 
-出错时通常 `bError`/`ERR` = TRUE，`nErrorId`/`nErrId`/`ERRID` 给出错误号（具体码表见 InfoSys 在线文档，⚠️ 待人工补全）。
+本方法/FB 返回 `HRESULT`（`S_OK` = 成功；其他码表请见对应 InfoSys 页面，⚠️ 待人工补全）。
 
 ## 5. 使用注意 / 常见坑
 
