@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <project xmlns="http://www.plcopen.org/xml/tc6_0200">
-  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-10T09:00:00"/>
-  <contentHeader name="Tc2_DataExchange.FB_CheckWatchdog Demo" modificationDateTime="2026-05-10T09:00:00">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-11T07:00:00"/>
+  <contentHeader name="Tc2_DataExchange.FB_CheckWatchdog Demo" modificationDateTime="2026-05-11T07:00:00">
     <coordinateInfo>
       <fbd><scaling x="1" y="1"/></fbd>
       <ld><scaling x="1" y="1"/></ld>
@@ -14,59 +14,73 @@
       <pou name="P_Demo_FB_CheckWatchdog" pouType="program">
         <interface>
           <localVars>
-            <variable name="fbFB_CheckWatchdog">
+            <variable name="fbCheckWatchdog">
               <type><derived name="FB_CheckWatchdog"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">Watchdog function blocks 实例</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">接收端 watchdog 监视器实例</xhtml></documentation>
             </variable>
-            <variable name="arg_bEnable">
+            <variable name="nWatchdogCounterFromMaster">
+              <type><UDINT/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">从 Master 控制器 ADS 读到的递增计数；在线写值可模拟"还活着"</xhtml></documentation>
+            </variable>
+            <variable name="bEnableLinkMonitor">
+              <initialValue><simpleValue value="TRUE"/></initialValue>
               <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT bEnable: 使能</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">使能链路监视</xhtml></documentation>
             </variable>
-            <variable name="arg_tWatchdogTime">
+            <variable name="tLinkTimeoutWindow">
+              <initialValue><simpleValue value="T#5S"/></initialValue>
               <type><TIME/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT tWatchdogTime: nCnt 必须在此时长内发生变化</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">超时窗口 = 5 × Master 发送周期 1s</xhtml></documentation>
             </variable>
-            <variable name="arg_nCnt">
-              <type><UDINT/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT nCnt: watchdog 信号当前计数值</xhtml></documentation>
-            </variable>
-            <variable name="out_bWatchdog">
+            <variable name="bWatchdogTripped">
               <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT bWatchdog: FALSE = 监视信号有效；TRUE = 超时未变化</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">FB 原始输出：TRUE = 咬人（链路超时）</xhtml></documentation>
             </variable>
-            <variable name="out_nLastCnt">
+            <variable name="bLinkAlive">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">取反后业务侧观察值：TRUE = 链路活</xhtml></documentation>
+            </variable>
+            <variable name="nLastSeenCounter">
               <type><UDINT/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT nLastCnt: 最近一次成功收到的计数值</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">最近一次观察到变化时的计数值（诊断）</xhtml></documentation>
             </variable>
           </localVars>
         </interface>
         <body>
-          <ST>
-            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
-// Tc2_DataExchange.FB_CheckWatchdog 演示程序
-// ============================================================
-// 场景：在接收侧检查另一控制器是否还活着（5 秒内必须有更新）
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：本机是接收端 Slave PLC，Master PLC（NetID 192.168.1.20.1.1）每 1 秒往本机
+//       某个 UDINT 变量写一次递增计数。本程序用 FB_CheckWatchdog 监视该计数器，
+//       如果 5 秒内没动就报"链路断"。
+//
+// 价值：业务代码只需提供"读到的计数"+"超时门限"两个量，不用自己写超时计时/状态
+//       复位/首次启动初始化。配套 FB_WriteWatchdog 形成完整 PLC↔PLC 保活方案。
+//
 // 验证步骤：
-//   1. 引用 Tc2_DataExchange（及其依赖：Tc2_System 等）
-//   2. 编译 + 登录
-//   3. 在线监视各 out_* 输出
-//   4. 必要时按场景给 arg_* 输入赋值（详见 doc.md 的'使用注意'）
-// ============================================================
+//   1. 引用 Tc2_DataExchange（含依赖 Tc2_System）
+//   2. 在 PLC 项目中右键 → Import PLCopenXML → 选本文件 → OK
+//   3. 编译、登录、运行
+//   4. 在线 monitor 看 bLinkAlive 与 nLastSeenCounter
+//   5. 在线持续递增 nWatchdogCounterFromMaster（模拟 Master 正常）
+//      → bLinkAlive 应保持 TRUE
+//   6. 停止递增超过 5 秒 → bLinkAlive 应翻为 FALSE
+//   7. 恢复递增 → bLinkAlive 下一周期立刻回 TRUE
+// =============================================================================
 
-fbFB_CheckWatchdog(
-    bEnable := arg_bEnable,
-    tWatchdogTime := arg_tWatchdogTime,
-    nCnt := arg_nCnt,
-    bWatchdog => out_bWatchdog,
-    nLastCnt => out_nLastCnt
+// 单次调用形式：所有 VAR_INPUT 显式赋值；输出端用 =&gt; 截获
+fbCheckWatchdog(
+    bEnable       := bEnableLinkMonitor,
+    tWatchdogTime := tLinkTimeoutWindow,
+    nCnt          := nWatchdogCounterFromMaster,
+    bWatchdog     =&gt; bWatchdogTripped,
+    nLastCnt      =&gt; nLastSeenCounter
 );
-</xhtml>
-          </ST>
+
+// 业务侧取反：bWatchdog 语义是"咬人"，取反后 bLinkAlive 才符合直觉
+bLinkAlive := NOT bWatchdogTripped;
+</xhtml></ST>
         </body>
       </pou>
     </pous>
   </types>
-  <instances>
-    <configurations/>
-  </instances>
+  <instances><configurations/></instances>
 </project>
