@@ -509,3 +509,15 @@
 2026-05-11T01:00:00Z | Tc3_EventLogger | FB_TcSourceInfo                          | Clear                                    | verified | auto-extracted VAR from PDF
 2026-05-11T01:00:00Z | Tc3_EventLogger | FB_TcSourceInfo                          | ExtendName                               | verified | auto-extracted VAR from PDF
 2026-05-11T01:00:00Z | Tc3_EventLogger | FB_TcSourceInfo                          | ResetToDefault                           | verified | auto-extracted VAR from PDF
+2026-05-11T04:00:00Z | Tc2_SUPS         | CB3011                                   | FB_S_UPS_CB3011 (fix VAR defaults)        | verified | restored 6 default values per PDF
+2026-05-11T04:00:00Z | Tc2_SUPS         | CX50x0                                   | FB_S_UPS (fix VAR defaults)               | verified | restored 7 default values per PDF
+2026-05-11T04:00:00Z | Tc2_SUPS         | CX51x0                                   | FB_S_UPS_CX51x0 (fix VAR defaults)        | verified | restored 7 default values per PDF
+2026-05-11T04:00:00Z | Tc2_SUPS         | CX9020-U900                              | FB_S_UPS_CX9020_U900 (fix VAR defaults)   | verified | restored 6 default values per PDF
+2026-05-11T04:00:00Z | Tc2_SUPS         | BAPI                                     | FB_S_UPS_BAPI (fix VAR defaults)          | verified | restored 5 default values per PDF
+2026-05-11T04:00:00Z | Tc2_SUPS         | Function blocks                          | FB_NT_QuickShutdown (fix VAR defaults)    | verified | restored 1 default value per PDF
+2026-05-11T04:00:00Z | Tc2_DataExchange | Watchdog function blocks                 | FB_CheckWatchdog (fix VAR defaults)       | verified | restored 3 default values per PDF
+2026-05-11T04:00:00Z | Tc2_DataExchange | Watchdog function blocks                 | FB_WriteWatchdog (fix VAR defaults)       | verified | restored 6 default values per PDF
+2026-05-11T04:00:00Z | Tc2_Coupler      | Function blocks                          | FB_ReadCouplerRegs (fix VAR defaults)     | verified | restored nTerminal default per PDF
+2026-05-11T04:00:00Z | Tc2_Coupler      | Function blocks                          | FB_WriteCouplerRegs (fix VAR defaults)    | verified | restored nTerminal default per PDF
+2026-05-11T04:00:00Z | Tc2_Coupler      | [obsolete functions]                     | F_GetVersionTcPlcCoupler (Status)         | verified | Status -> verified · deprecated
+2026-05-11T04:00:00Z | Tc2_Math         | [obsolete functions]                     | F_GetVersionTcMath (Status)               | verified | Status -> verified · deprecated

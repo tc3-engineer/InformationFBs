@@ -10,7 +10,7 @@
 | Source | https://infosys.beckhoff.com/content/1033/tcplclib_tc2_math/ |
 | Source PDF | https://download.beckhoff.com/download/document/automation/twincat3/TwinCAT_3_PLC_Lib_Tc2_Math_EN.pdf |
 | Verified | 2026-05-10 ✅ |
-| Status | `verified` |
+| Status | `verified · deprecated` |
 | Example | [`examples/P_Demo_F_GetVersionTcMath.xml`](../examples/P_Demo_F_GetVersionTcMath.xml) |
 
 ---
