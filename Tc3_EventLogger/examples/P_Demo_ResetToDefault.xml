@@ -14,34 +14,44 @@
       <pou name="P_Demo_ResetToDefault" pouType="program">
         <interface>
           <localVars>
-            <variable name="fbResetToDefault">
-              <type><derived name="ResetToDefault"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">Tc3_EventLogger.ResetToDefault 实例</xhtml></documentation>
+            <variable name="fbSrc">
+              <type><derived name="FB_TcSourceInfo"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">源信息实例</xhtml></documentation>
+            </variable>
+            <variable name="bDoReset">
+              <initialValue><simpleValue value="FALSE"/></initialValue>
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">上升沿触发</xhtml></documentation>
+            </variable>
+            <variable name="bDoResetPrev">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">边沿检测</xhtml></documentation>
+            </variable>
+            <variable name="hr">
+              <type><derived name="HRESULT"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">返回值监视</xhtml></documentation>
             </variable>
           </localVars>
         </interface>
         <body>
-          <ST>
-            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
-// Tc3_EventLogger.ResetToDefault 演示程序（FB 实例）
-// ============================================================
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：测试结束后还原 SourceInfo 到默认
+// 价值：一次调用还原
+// 验证：登录后调用 ResetToDefault 后 fbSrc 字段回到默认（SourceName = PLC 符号路径）
 // 验证步骤：
-//   1. 引用 Tc3_EventLogger（及依赖类型所在库 Tc2_System 等）
-//   2. 编译 + 登录
-//   3. 按 doc.md 给 arg_* 赋值
-//   4. 在线监视 out_* / io_* 输出
-// ============================================================
+//   1. 右键 PLC 项目 → Import PLCopenXML → 选本文件
+//   2. 引用 Tc3_EventLogger（System → References → Add library）
+//   3. 编译 → 登录 → 运行；按 verify 注释里给出的在线写值操作
+// =============================================================================
 
-fbResetToDefault(
-
-);
-</xhtml>
-          </ST>
+IF bDoReset AND NOT bDoResetPrev THEN
+    hr := fbSrc.ResetToDefault();
+END_IF;
+bDoResetPrev := bDoReset;
+</xhtml></ST>
         </body>
       </pou>
     </pous>
   </types>
-  <instances>
-    <configurations/>
-  </instances>
+  <instances><configurations/></instances>
 </project>

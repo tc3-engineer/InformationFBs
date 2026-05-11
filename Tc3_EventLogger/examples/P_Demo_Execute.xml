@@ -14,34 +14,33 @@
       <pou name="P_Demo_Execute" pouType="program">
         <interface>
           <localVars>
-            <variable name="fbExecute">
-              <type><derived name="Execute"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">Tc3_EventLogger.Execute 实例</xhtml></documentation>
+            <variable name="fbListener">
+              <type><derived name="FB_ListenerBase2"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">listener 实例</xhtml></documentation>
+            </variable>
+            <variable name="hr">
+              <type><derived name="HRESULT"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">返回值监视</xhtml></documentation>
             </variable>
           </localVars>
         </interface>
         <body>
-          <ST>
-            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
-// Tc3_EventLogger.Execute 演示程序（FB 实例）
-// ============================================================
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：主程序里每周期推进事件队列
+// 价值：必须周期调用以保证事件及时到达回调
+// 验证：登录后 monitor hr，每周期应为 S_OK；fbListener 必须已 Subscribe
 // 验证步骤：
-//   1. 引用 Tc3_EventLogger（及依赖类型所在库 Tc2_System 等）
-//   2. 编译 + 登录
-//   3. 按 doc.md 给 arg_* 赋值
-//   4. 在线监视 out_* / io_* 输出
-// ============================================================
+//   1. 右键 PLC 项目 → Import PLCopenXML → 选本文件
+//   2. 引用 Tc3_EventLogger（System → References → Add library）
+//   3. 编译 → 登录 → 运行；按 verify 注释里给出的在线写值操作
+// =============================================================================
 
-fbExecute(
-
-);
-</xhtml>
-          </ST>
+// 每周期调用一次推进事件队列
+hr := fbListener.Execute();
+</xhtml></ST>
         </body>
       </pou>
     </pous>
   </types>
-  <instances>
-    <configurations/>
-  </instances>
+  <instances><configurations/></instances>
 </project>

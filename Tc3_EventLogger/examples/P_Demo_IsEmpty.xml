@@ -14,34 +14,39 @@
       <pou name="P_Demo_IsEmpty" pouType="program">
         <interface>
           <localVars>
-            <variable name="fbIsEmpty">
-              <type><derived name="IsEmpty"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">Tc3_EventLogger.IsEmpty 实例</xhtml></documentation>
+            <variable name="fbAlarm">
+              <type><derived name="FB_TcAlarm"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">alarm 实例（已 Create）</xhtml></documentation>
+            </variable>
+            <variable name="ipArgs">
+              <type><derived name="I_TcArguments"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">参数列表接口</xhtml></documentation>
+            </variable>
+            <variable name="bEmpty">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">参数表状态</xhtml></documentation>
             </variable>
           </localVars>
         </interface>
         <body>
-          <ST>
-            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
-// Tc3_EventLogger.IsEmpty 演示程序（FB 实例）
-// ============================================================
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：Raise 前检查参数表残留
+// 价值：一次调用获取状态
+// 验证：登录后 monitor bEmpty；调用 Add 前应为 TRUE，Add 后为 FALSE
 // 验证步骤：
-//   1. 引用 Tc3_EventLogger（及依赖类型所在库 Tc2_System 等）
-//   2. 编译 + 登录
-//   3. 按 doc.md 给 arg_* 赋值
-//   4. 在线监视 out_* / io_* 输出
-// ============================================================
+//   1. 右键 PLC 项目 → Import PLCopenXML → 选本文件
+//   2. 引用 Tc3_EventLogger（System → References → Add library）
+//   3. 编译 → 登录 → 运行；按 verify 注释里给出的在线写值操作
+// =============================================================================
 
-fbIsEmpty(
-
-);
-</xhtml>
-          </ST>
+ipArgs := fbAlarm.ipArguments;
+IF ipArgs &amp;lt;&amp;gt; 0 THEN
+    bEmpty := ipArgs.IsEmpty();
+END_IF;
+</xhtml></ST>
         </body>
       </pou>
     </pous>
   </types>
-  <instances>
-    <configurations/>
-  </instances>
+  <instances><configurations/></instances>
 </project>

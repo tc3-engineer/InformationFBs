@@ -1,32 +1,37 @@
 # Subscribe2
+
 ## 元信息
 
 | 字段 | 值 |
 |---|---|
 | Library | `Tc3_EventLogger` |
 | Library Version | `1.6.2` |
-| Type | `FUNCTION_BLOCK` |
-| Category | `Function blocks` |
-| Source | https://infosys.beckhoff.com/content/1033/tcplclib_tc3_eventlogger/ |
+| Type | `METHOD` |
+| Category | `FB_ListenerBase2` |
 | Source PDF | https://download.beckhoff.com/download/document/automation/twincat3/TwinCAT_3_PLC_Lib_Tc3_EventLogger_EN.pdf |
-| Verified | 2026-05-10 ✅ |
+| Source InfoSys | https://infosys.beckhoff.com/content/1033/tcplclib_tc3_eventlogger/10361960203.html |
+| Verified | 2026-05-11 ✅ |
+| InfoSys-checked | ✅ 2026-05-11 |
 | Status | `verified` |
 | Example | [`examples/P_Demo_Subscribe2.xml`](../examples/P_Demo_Subscribe2.xml) |
 
 ---
+
 ## 1. 功能简述
 
-This method subscribes notifications. Syntax METHOD Subscribe2 : HRESULT Input Name Type Description ipEventFilter I_TcEventFilterBase Pointer to an instance of FB_TcEventFilter [ }   41 ] , if a filter is to be activated.
+`FB_ListenerBase2.Subscribe2()` 是 `Subscribe()` 的简化版——只接收一个过滤器参数 `ipEventFilter : I_TcEventFilterBase`，同时控制 message 与 alarm 的接收。
+
+新工程推荐用本方法——接口更简洁，过滤器逻辑也更统一。
 
 ## 2. 接口定义
 
 ### VAR_INPUT
 
-无 VAR_INPUT。
+无。
 
 ### VAR_OUTPUT
 
-无 VAR_OUTPUT。
+无。
 
 ### VAR_IN_OUT
 
@@ -34,39 +39,48 @@ This method subscribes notifications. Syntax METHOD Subscribe2 : HRESULT Input N
 
 ## 3. 行为说明
 
-- 见上方功能简述。
-- 详细行为（时序、错误码、状态机）请对照 PDF 第 3.5.8 节。
+一次性订阅：成功返回 `S_OK`，重复订阅返回相应错误码。`ipEventFilter` 传 0 时接收全部事件，传具体过滤器实例时仅接收匹配规则的事件。
+
+**与 Subscribe 的区别**：Subscribe 分别配置 message 与 alarm 两个过滤器，Subscribe2 用一个统一的过滤器实例同时控制两者。新工程推荐用 Subscribe2——过滤器一次配置完毕，方便维护；老工程兼容用 Subscribe。两者不可在同一 listener 实例上混用。订阅成功后必须周期调 `Execute()` 让事件队列推进，否则事件堆积在 EventLogger 内部。
 
 ## 4. 错误码 / 返回值
 
-本方法返回 `HRESULT`（`S_OK` = 成功；其他错误码请见对应 InfoSys 页面，⚠️ 待人工补全）。
+本方法返回 `HRESULT`（32 位有符号整数）。`SUCCEEDED(hr)` 为 TRUE 表示调用成功。
+
+| HRESULT | 含义 | 处理建议 |
+|---|---|---|
+| `S_OK` | 订阅成功 | 继续周期调用 Execute |
+| `其他错误` | ⚠️ PDF 未列详细码 | 查 ADS Return Codes |
 
 ## 5. 使用注意 / 常见坑
 
-- VAR_INPUT / VAR_OUTPUT / VAR_IN_OUT 已逐字从 PDF 抽取并通过 `verify_doc.py` 自检。
-- 描述句、时序行为、错误码表等细节请以 PDF 第 3.5.8 节为准（⚠️ 待人工细化）。
+- Subscribe2 一次性调用——用 latch 包裹。
+- 统一过滤器机制 = 没法分开控制 message / alarm 的接收——需要分开控制用 Subscribe。（工程经验补充）
+- Subscribe 与 Subscribe2 不可混用——选定一个版本就坚持用。（工程经验补充）
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_Subscribe2.xml`](../examples/P_Demo_Subscribe2.xml)
+> 配套可导入文件：[`examples/P_Demo_Subscribe2.xml`](../examples/P_Demo_Subscribe2.xml)（PLCopenXML，可直接导入 TwinCAT 3 XAE）
 >
-> 详见 [`examples/README.md`](../examples/README.md)
+> 导入步骤：右键 PLC 项目 → Import PLCopenXML → 选该文件 → OK
 
 ```iecst
-PROGRAM P_Demo_Subscribe2
-VAR
-    fbSubscribe2 : Subscribe2;
-END_VAR
-
-fbSubscribe2(
-
-);
+// 详见 examples 目录下的 .xml 文件
 ```
 
-## 7. 相关
+## 7. 业务场景与实际价值
 
-- 见 [`Tc3_EventLogger README`](../README.md) 同库其他条目
+新工程 listener 订阅，配一个 FB_TcEventFilter 过滤所有 Severity ≥ Warning 的事件
 
-## 8. 待确认项
 
-- 详细描述/时序/错误码表待人工细化（auto-gen 阶段只确保 VAR 区与 PDF 一致）。
+新工程的标准订阅接口；过滤器统一管理便于维护
+
+
+`Subscribe` 双过滤器 → 老工程兼容；新工程优先 Subscribe2
+
+
+## 8. 参考资料
+
+- **PDF**：[TwinCAT_3_PLC_Lib_Tc3_EventLogger_EN.pdf](https://download.beckhoff.com/download/document/automation/twincat3/TwinCAT_3_PLC_Lib_Tc3_EventLogger_EN.pdf) §3.5.8
+- **InfoSys topic**：https://infosys.beckhoff.com/content/1033/tcplclib_tc3_eventlogger/10361960203.html
+- **相关**：`FB_ListenerBase2.Subscribe`, `FB_ListenerBase2.Unsubscribe`, `FB_TcEventFilter`
