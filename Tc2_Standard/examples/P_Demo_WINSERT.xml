@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <project xmlns="http://www.plcopen.org/xml/tc6_0200">
-  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-10T08:00:00"/>
-  <contentHeader name="Tc2_Standard.WINSERT Demo" modificationDateTime="2026-05-10T08:00:00">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-11T08:00:00"/>
+  <contentHeader name="Tc2_Standard.WINSERT Demo" modificationDateTime="2026-05-11T08:00:00">
     <coordinateInfo>
       <fbd><scaling x="1" y="1"/></fbd>
       <ld><scaling x="1" y="1"/></ld>
@@ -14,40 +14,59 @@
       <pou name="P_Demo_WINSERT" pouType="program">
         <interface>
           <localVars>
-            <variable name="sResult">
-              <type><wstring><stringLength><value>255</value></stringLength></wstring></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">WINSERT 的返回值（监视）</xhtml></documentation>
+            <variable name="sLogLine">
+              <type><wstring><length>255</length></wstring></type>
+              <initialValue><simpleValue value="&quot;信息 电机启动&quot;"/></initialValue>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">中文日志：等级 + 空格 + 消息体</xhtml></documentation>
             </variable>
-            <variable name="bRun">
+            <variable name="sTimestamp">
+              <type><wstring><length>255</length></wstring></type>
+              <initialValue><simpleValue value="&quot; [12:34:56]&quot;"/></initialValue>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">时间戳（前置空格分隔等级与时间）</xhtml></documentation>
+            </variable>
+            <variable name="sResult">
+              <type><wstring><length>255</length></wstring></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">插入时间戳后的完整日志</xhtml></documentation>
+            </variable>
+            <variable name="nInsertPos">
+              <type><INT/></type>
+              <initialValue><simpleValue value="2"/></initialValue>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">插入点 = 第 2 字符后（"信息" 占 2 字符，插到 "息" 后面）</xhtml></documentation>
+            </variable>
+            <variable name="bGenerate">
               <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">触发一次 WINSERT 调用</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">触发一次 WINSERT</xhtml></documentation>
             </variable>
           </localVars>
         </interface>
         <body>
-          <ST>
-            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
-// Tc2_Standard.WINSERT 演示程序（FUNCTION）
-// ============================================================
-// 场景：对 WSTRING 执行 INSERT 操作
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：中文日志 "信息 电机启动" 要在等级标识 "信息" 之后插入时间戳变成
+//       "信息 [12:34:56] 电机启动" 再发往日志服务。等级和消息体都是中文，
+//       必须用 WSTRING + WINSERT 才能正确按字符插入。
+//
+// 价值：WINSERT 按 UCS-2 字符计数。"信息" 是 2 个字符（不是 6 字节），
+//       插入点 nInsertPos = 2 直观对应"在 '息' 后面插入"。STRING + INSERT
+//       要传 nInsertPos = 6 才能在 UTF-8 字节流中找到正确插入点。
+//
 // 验证步骤：
-//   1. 编译并登录目标
-//   2. 强制 bRun := TRUE 一个周期
-//   3. 观察 sResult = "SUXYSI"（PDF 例子写为 "UXYSI"——⚠️ PDF 拼写存疑）
-//   4. bRun 自动复位
-// ============================================================
+//   1. 导入本文件、引用 Tc2_Standard、编译、登录、运行
+//   2. 在线 monitor sResult（监视面板选 Unicode）
+//   3. 在线写 bGenerate := TRUE
+//   4. 下一周期 sResult = &quot;信息 [12:34:56] 电机启动&quot;
+//   5. 把 nInsertPos 改成 0 + 再触发 → 时间戳出现在最前面
+//   6. 把 nInsertPos 改成 100 + 再触发 → 时间戳追加到末尾
+// =============================================================================
 
-IF bRun THEN
-    sResult := WINSERT("SUSI","XY",2);
-    bRun := FALSE;
+// POS=2 表示"在第 2 字符之后插入"（即 &quot;信息&quot; 之后），按字符算不是按字节
+IF bGenerate THEN
+    sResult := WINSERT(sLogLine, sTimestamp, nInsertPos);
+    bGenerate := FALSE;
 END_IF;
-</xhtml>
-          </ST>
+</xhtml></ST>
         </body>
       </pou>
     </pous>
   </types>
-  <instances>
-    <configurations/>
-  </instances>
+  <instances><configurations/></instances>
 </project>

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <project xmlns="http://www.plcopen.org/xml/tc6_0200">
-  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-10T08:00:00"/>
-  <contentHeader name="Tc2_Standard.WLEN Demo" modificationDateTime="2026-05-10T08:00:00">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-11T08:00:00"/>
+  <contentHeader name="Tc2_Standard.WLEN Demo" modificationDateTime="2026-05-11T08:00:00">
     <coordinateInfo>
       <fbd><scaling x="1" y="1"/></fbd>
       <ld><scaling x="1" y="1"/></ld>
@@ -14,40 +14,50 @@
       <pou name="P_Demo_WLEN" pouType="program">
         <interface>
           <localVars>
-            <variable name="sResult">
-              <type><INT/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">WLEN 的返回值（监视）</xhtml></documentation>
+            <variable name="sUserInput">
+              <type><wstring><length>255</length></wstring></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">HMI 中文输入框（在线写值模拟）</xhtml></documentation>
             </variable>
-            <variable name="bRun">
+            <variable name="nCharCount">
+              <type><INT/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">WLEN 测出的字符数（按 UCS-2 字符算）</xhtml></documentation>
+            </variable>
+            <variable name="nMaxChars">
+              <type><INT/></type>
+              <initialValue><simpleValue value="50"/></initialValue>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">业务限定最大字符数 = 50（按视觉字符数）</xhtml></documentation>
+            </variable>
+            <variable name="bAccept">
               <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">触发一次 WLEN 调用</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">校验通过标志（非空且不超长）</xhtml></documentation>
             </variable>
           </localVars>
         </interface>
         <body>
-          <ST>
-            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
-// Tc2_Standard.WLEN 演示程序（FUNCTION）
-// ============================================================
-// 场景：对 WSTRING 执行 LEN 操作
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：HMI 给操作员输入"设备中文名"的输入框，业务规则要求非空且最多 50
+//       字（汉字按 1 字算）。LEN 按字节数算长度，输入 17 个汉字 LEN 会返回
+//       51 直接触发"超长"误报。WLEN 按 UCS-2 字符算，17 个汉字就是 17 字。
+//
+// 价值：WLEN 与 HMI 端"字符数"语义完全一致，避免字节/字符换算的坑。所有
+//       后续 WLEFT/WRIGHT/WMID/WINSERT/WDELETE/WCONCAT 的边界校验都依赖它。
+//
 // 验证步骤：
-//   1. 编译并登录目标
-//   2. 强制 bRun := TRUE 一个周期
-//   3. 观察 sResult = 4
-//   4. bRun 自动复位
-// ============================================================
+//   1. 导入本文件、引用 Tc2_Standard、编译、登录、运行
+//   2. 在线 monitor nCharCount, bAccept
+//   3. 在线写 sUserInput := &quot;1 号车间&quot; → nCharCount = 5, bAccept = TRUE
+//   4. 把 sUserInput 写成 50 个汉字 → nCharCount = 50, bAccept = TRUE
+//   5. 把 sUserInput 写成 51 个汉字 → nCharCount = 51, bAccept = FALSE
+//   6. 把 sUserInput 写成 &quot;&quot; → nCharCount = 0, bAccept = FALSE
+// =============================================================================
 
-IF bRun THEN
-    sResult := WLEN("SUSI");
-    bRun := FALSE;
-END_IF;
-</xhtml>
-          </ST>
+// 每周期跑一次校验：长度合规则放行
+nCharCount := WLEN(sUserInput);
+bAccept    := (nCharCount &gt; 0) AND (nCharCount &lt;= nMaxChars);
+</xhtml></ST>
         </body>
       </pou>
     </pous>
   </types>
-  <instances>
-    <configurations/>
-  </instances>
+  <instances><configurations/></instances>
 </project>

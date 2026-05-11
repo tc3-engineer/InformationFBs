@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <project xmlns="http://www.plcopen.org/xml/tc6_0200">
-  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-10T08:00:00"/>
-  <contentHeader name="Tc2_Standard.DELETE Demo" modificationDateTime="2026-05-10T08:00:00">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-11T08:00:00"/>
+  <contentHeader name="Tc2_Standard.DELETE Demo" modificationDateTime="2026-05-11T08:00:00">
     <coordinateInfo>
       <fbd><scaling x="1" y="1"/></fbd>
       <ld><scaling x="1" y="1"/></ld>
@@ -14,40 +14,54 @@
       <pou name="P_Demo_DELETE" pouType="program">
         <interface>
           <localVars>
-            <variable name="sResult">
-              <type><string><stringLength><value>255</value></stringLength></string></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">DELETE 的返回值（监视）</xhtml></documentation>
+            <variable name="sRawFrame">
+              <type><string><length>255</length></string></type>
+              <initialValue><simpleValue value="'STX|01|DATA|ETX'"/></initialValue>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">来自串口的原始通讯帧，头部含 4 字节 'STX|'</xhtml></documentation>
             </variable>
-            <variable name="bRun">
+            <variable name="sPayload">
+              <type><string><length>255</length></string></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">剔除头部后交给业务层的有效载荷</xhtml></documentation>
+            </variable>
+            <variable name="nHeaderLen">
+              <type><INT/></type>
+              <initialValue><simpleValue value="4"/></initialValue>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">协议头长度 = 4 字节 'STX|'</xhtml></documentation>
+            </variable>
+            <variable name="bStrip">
               <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">触发一次 DELETE 调用</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">在线置 TRUE 触发一次剥离</xhtml></documentation>
             </variable>
           </localVars>
         </interface>
         <body>
-          <ST>
-            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
-// Tc2_Standard.DELETE 演示程序（FUNCTION）
-// ============================================================
-// 场景：去掉中间 2 个字符
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：串口收到自定义协议帧 'STX|01|DATA|ETX'，前 4 字节是固定头 'STX|'，
+//       业务层只想看 '01|DATA|ETX' 部分。DELETE 从第 1 个字符起删 4 字节，
+//       一次调用完成清洗。
+//
+// 价值：DELETE 用"位置+长度"两个参数直接指定要剔除的段，比手写 LEFT+RIGHT
+//       拼接简洁。配合 LEN(STR) 校验可以做到任意位置的子段剥离。
+//
 // 验证步骤：
-//   1. 编译并登录目标
-//   2. 强制 bRun := TRUE 一个周期
-//   3. 观察 sResult = 'SUSI'
-//   4. bRun 自动复位
-// ============================================================
+//   1. PLC 项目 → Import PLCopenXML → 选本文件
+//   2. 引用 Tc2_Standard，编译，登录，运行
+//   3. 在线 monitor sPayload
+//   4. 在线写 bStrip := TRUE
+//   5. 下一周期 sPayload = &apos;01|DATA|ETX&apos;，bStrip 复位回 FALSE
+//   6. 修改 nHeaderLen 为 100（远大于 sRawFrame 长度）+ 再触发，
+//      观察 sPayload 是空串或原串，确认越界行为（PDF 未明确规定）
+// =============================================================================
 
-IF bRun THEN
-    sResult := DELETE('SUXYSI',2,3);
-    bRun := FALSE;
+// POS=1 表示从第 1 个字符开始；IEC 字符串下标从 1 起，不是 0
+IF bStrip THEN
+    sPayload := DELETE(sRawFrame, nHeaderLen, 1);
+    bStrip := FALSE;
 END_IF;
-</xhtml>
-          </ST>
+</xhtml></ST>
         </body>
       </pou>
     </pous>
   </types>
-  <instances>
-    <configurations/>
-  </instances>
+  <instances><configurations/></instances>
 </project>
