@@ -201,12 +201,96 @@ def _extract_defaults(section_text: str) -> dict[str, str]:
 
 def _read_doc_meta(doc: str) -> dict:
     meta: dict[str, str] = {}
-    pat = re.compile(r"\|\s*([A-Za-z _]+?)\s*\|\s*(.+?)\s*\|\s*$", re.MULTILINE)
+    pat = re.compile(r"\|\s*([A-Za-z _\-]+?)\s*\|\s*(.+?)\s*\|\s*$", re.MULTILINE)
     for m in pat.finditer(doc):
         k = m.group(1).strip()
         v = m.group(2).strip().strip("`")
         meta.setdefault(k, v)
     return meta
+
+
+# ----------------------------------------------------------------------------
+# Content quality (CLAUDE.md hard rules B / C / E added 2026-05-11)
+# ----------------------------------------------------------------------------
+_PLACEHOLDER_PHRASES = (
+    "（详见 PDF）",
+    "详见 PDF",
+    "见上方功能简述。",
+    "见上方'功能简述'。",
+    "见上方使用注意中标 ⚠️ 的项",
+    "请见对应 InfoSys 页面，⚠️ 待人工补全",
+    "请对照 PDF 第",
+    "（详细见 PDF）",
+)
+
+_CJK_RE = re.compile(r"[一-鿿]")
+_INFOSYS_TOPIC_RE = re.compile(
+    r"https?://infosys\.beckhoff\.com/content/\d+/tcplclib_[a-z0-9_]+/\d+\.html"
+)
+_INFOSYS_CHECKED_OK_RE = re.compile(
+    r"(?:✅\s*\d{4}-\d{2}-\d{2}|⚠️\s*not-on-infosys)"
+)
+
+
+def _strip_doc_chrome(doc: str) -> str:
+    """Strip code fences and tables so prose-only checks aren't fooled by them."""
+    t = re.sub(r"```[\s\S]*?```", "", doc)
+    t = re.sub(r"^\|.*\|\s*$", "", t, flags=re.MULTILINE)
+    return t
+
+
+def _section_text(doc: str, header_pat: str) -> str:
+    m = re.search(rf"{header_pat}([\s\S]*?)(?=^## |\Z)", doc, re.MULTILINE)
+    return m.group(1) if m else ""
+
+
+def _check_content_quality(doc: str, meta: dict) -> list[str]:
+    diags: list[str] = []
+
+    # C. Placeholder phrases — anywhere in the doc is a fail
+    for phrase in _PLACEHOLDER_PHRASES:
+        if phrase in doc:
+            diags.append(f"placeholder phrase present: {phrase!r}")
+
+    # C. Variable description table cells equal to "（详见 PDF）"
+    bad_cells = re.findall(
+        r"^\|\s*`[^`]+`\s*\|\s*`[^`]+`\s*\|\s*（详见 PDF）\s*\|\s*$",
+        doc,
+        re.MULTILINE,
+    )
+    if bad_cells:
+        diags.append(
+            f"variable description: {len(bad_cells)} table cell(s) are bare '（详见 PDF）'"
+        )
+
+    # B. English-only §1 功能简述 / §3 行为说明 — require CJK characters in prose
+    prose_doc = _strip_doc_chrome(doc)
+    s1 = _section_text(prose_doc, r"^## 1\. 功能简述")
+    s3 = _section_text(prose_doc, r"^## 3\. 行为说明")
+    if s1 and not _CJK_RE.search(s1):
+        diags.append("English-only §1 功能简述 (no CJK characters in prose)")
+    # §3 must have substantive Chinese prose. Remove bullet placeholders first.
+    s3_clean = re.sub(r"^\s*-\s.*$", "", s3, flags=re.MULTILINE)
+    cjk_count = len(_CJK_RE.findall(s3_clean))
+    if s3 and cjk_count < 80:
+        diags.append(
+            f"§3 行为说明 too short or non-Chinese ({cjk_count} CJK chars, need ≥80)"
+        )
+
+    # E. InfoSys topic URL + checked status in metadata
+    src_info = meta.get("Source InfoSys", "").strip()
+    if not src_info or not _INFOSYS_TOPIC_RE.search(src_info):
+        diags.append(
+            "Source InfoSys: missing or not a specific topic URL "
+            "(must match https://infosys.beckhoff.com/content/.../tcplclib_*/<id>.html)"
+        )
+    checked = meta.get("InfoSys-checked", "").strip()
+    if not checked or not _INFOSYS_CHECKED_OK_RE.search(checked):
+        diags.append(
+            "InfoSys-checked: missing or wrong format (need '✅ YYYY-MM-DD' or '⚠️ not-on-infosys')"
+        )
+
+    return diags
 
 
 def verify(doc_path: str) -> tuple[int, list[str]]:
@@ -350,10 +434,19 @@ def verify(doc_path: str) -> tuple[int, list[str]]:
             "PDF section had no VAR_INPUT/OUTPUT — manual review needed (FC with no params?)"
         )
 
+    # ---- Content quality (CLAUDE.md hard rules B / C / E, 2026-05-11) ----
+    diags.extend(_check_content_quality(doc, meta))
+
     if any(
         d.startswith("VAR not present")
         or d.startswith("cache miss")
         or d.startswith("default value missing")
+        or d.startswith("placeholder phrase")
+        or d.startswith("English-only")
+        or d.startswith("§3 行为说明 too short")
+        or d.startswith("Source InfoSys")
+        or d.startswith("InfoSys-checked")
+        or d.startswith("variable description")
         for d in diags
     ):
         return 2, diags
