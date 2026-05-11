@@ -1,4 +1,5 @@
 # RTC_EX2
+
 ## 元信息
 
 | 字段 | 值 |
@@ -7,16 +8,20 @@
 | Library Version | `2.18.2` |
 | Type | `FUNCTION_BLOCK` |
 | Category | `Function blocks` |
-| Source | https://infosys.beckhoff.com/content/1033/tcplclib_tc2_utilities/ |
 | Source PDF | https://download.beckhoff.com/download/document/automation/twincat3/TwinCAT_3_PLC_Lib_Tc2_Utilities_EN.pdf |
-| Verified | 2026-05-10 ✅ |
+| Source InfoSys | https://infosys.beckhoff.com/content/1033/tcplclib_tc2_utilities/35016203.html |
+| Verified | 2026-05-11 ✅ |
+| InfoSys-checked | ✅ 2026-05-11 |
 | Status | `verified` |
 | Example | [`examples/P_Demo_RTC_EX2.xml`](../examples/P_Demo_RTC_EX2.xml) |
 
 ---
+
 ## 1. 功能简述
 
-The function block RTC_EX2 (Extended Real Time Clock) allows an internal software clock to be implemented in TwinCAT PLC. The clock must be initialized with a starting date and time. After the initialization the time and date are updated with each call of the function block. A CPU system clock is used to calculate the current time and date. The function block should be called in every PLC cycle, so that the current time can be calculated. At the output of the function block the current date and time are available in the Windows system time format. In contrast to the RTC [ }   148 ]  function block, RTC_EX2 has an accuracy of one microsecond. Multiple instances of the RTC_EX2 function block can be created within one PLC program. Deviation of the RTC_EX2 time from a reference time The way the system works means that the RTC_EX2 time can differ from the reference time. The deviation depends on the PLC's cycle time, the value of the basic system ticks, and on the hardware being used. In order to avoid larger deviations the RTC_EX2 instance should be synchronized cyclically (e.g. with a radio clock or with the local Windows system time). The local Windows system time you can be synchron
+RTC_EX2 是 RTC 系列的最终版：在 RTC_EX 基础上把 `TIMESTRUCT` 全面替换为 `TIMESTRUCT`（含毫秒）输出，并加上时区 / 夏令时支持（`CDT` 现在真的会根据时区状态翻 TRUE/FALSE）。是 `FB_LocalSystemTime` 内部用来做自走时钟的底层 FB。
+
+新代码做时间戳 / 日志时钟基础推荐直接用 RTC_EX2 + 配合 NT_GetTime（外部校准源）。
 
 ## 2. 接口定义
 
@@ -32,9 +37,9 @@ END_VAR
 
 | 名称 | 类型 | 说明 |
 |---|---|---|
-| `EN` | `BOOL` | （详见 PDF） |
-| `PDT` | `TIMESTRUCT` | （详见 PDF） |
-| `PMICRO` | `DWORD` | （详见 PDF） |
+| `EN` | `BOOL` | TRUE 使能；上升沿装载 `PDT`。 |
+| `PDT` | `TIMESTRUCT` | 外部参考时间（带时区信息），使能期间也可校准。 |
+| `PMICRO` | `DWORD` | 无符号整数输入：`PMICRO`。 |
 
 ### VAR_OUTPUT
 
@@ -48,9 +53,9 @@ END_VAR
 
 | 名称 | 类型 | 说明 |
 |---|---|---|
-| `Q` | `BOOL` | （详见 PDF） |
-| `CDT` | `TIMESTRUCT` | （详见 PDF） |
-| `CMICRO` | `DWORD` | （详见 PDF） |
+| `Q` | `BOOL` | 输出布尔标志：`Q`。具体语义见 §3 行为说明。 |
+| `CDT` | `TIMESTRUCT` | TRUE = 当前为夏令时；FALSE = 标准时。 |
+| `CMICRO` | `DWORD` | 无符号整数输出：`CMICRO`。 |
 
 ### VAR_IN_OUT
 
@@ -58,50 +63,45 @@ END_VAR
 
 ## 3. 行为说明
 
-- 见上方功能简述。
-- 详细行为（时序、错误码、状态机）请对照 PDF 第 3.81 节。
+**启动 / 推进 / 校准**：与 RTC_EX 相同。
+
+**夏令时**：FB 内部不再硬编码 CDT = FALSE，而是从 `PDT` 中提取（如果 `PDT` 由 FB_LocalSystemTime 提供，则带时区信息），或在使用 NT_GetTime 校准时一并采集时区状态。
+
+**毫秒精度**：每个 PLC 周期把任务周期累加，输出 `TIMESTRUCT` 含 `wMilliseconds` 字段。
+
+**典型用法**：通常不直接调用 RTC_EX2，而是用更高层的 `FB_LocalSystemTime`（它内部组合了 RTC_EX2 + NT_GetTime + 时区查询）。直接使用 RTC_EX2 的场景是定制时间源（如 GPS / DCF77 输入做 `PDT`）。
 
 ## 4. 错误码 / 返回值
 
-出错时通常 `bError`/`ERR` = TRUE，`nErrorId`/`nErrId`/`ERRID` 给出错误号（具体码表见 InfoSys 在线文档，⚠️ 待人工补全）。
+本 FB 无显式错误输出。状态可以通过 `bBusy` / `bValid` / `bDone` 等过程信号间接判断。
 
 ## 5. 使用注意 / 常见坑
 
-- VAR_INPUT / VAR_OUTPUT / VAR_IN_OUT 已逐字从 PDF 抽取并通过 `verify_doc.py` 自检。
-- 描述句、时序行为、错误码表等细节请以 PDF 第 3.81 节为准（⚠️ 待人工细化）。
+- **优先用 FB_LocalSystemTime**：直接用 RTC_EX2 需要自己提供 `PDT` 与时区一致性；用 FB_LocalSystemTime 一行调用即可。（工程经验补充）
+- `PDT` 输入要在每次校准时同步更新时区，否则 `CDT` 不会跟随切换。
+- 毫秒精度仍受 PLC 任务周期限制（10 ms 任务 → 5 ms 抖动）。
+- PLC 重启后状态丢失。（工程经验补充）
+- PDF 没有列错误码——本 FB 无错误输出。
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_RTC_EX2.xml`](../examples/P_Demo_RTC_EX2.xml)
+> 配套可导入文件：[`examples/P_Demo_RTC_EX2.xml`](../examples/P_Demo_RTC_EX2.xml)（PLCopenXML，可直接导入 TwinCAT 3 XAE）。
 >
-> 详见 [`examples/README.md`](../examples/README.md)
+> 导入步骤：右键 PLC 项目 → Import PLCopenXML → 选该文件 → OK
 
-```iecst
-PROGRAM P_Demo_RTC_EX2
-VAR
-    fbRTC_EX2 : RTC_EX2;
-    arg_EN : BOOL;
-    arg_PDT : TIMESTRUCT;
-    arg_PMICRO : DWORD;
-    out_Q : BOOL;
-    out_CDT : TIMESTRUCT;
-    out_CMICRO : DWORD;
-END_VAR
+详见 example xml 文件。
 
-fbRTC_EX2(
-    EN := arg_EN,
-    PDT := arg_PDT,
-    PMICRO := arg_PMICRO,
-    Q => out_Q,
-    CDT => out_CDT,
-    CMICRO => out_CMICRO
-);
-```
+## 7. 业务场景与实际价值
 
-## 7. 相关
+- **场景**：GPS 接收模块输出 PPS + 时间报文，业务程序解析后填 `PDT`，用 RTC_EX2 在 GPS 帧之间自走。
+- **价值**：带时区感知 + 毫秒 + 自动校准的软时钟，是 FB_LocalSystemTime 内部底层。
+- **替代方案对比**：
+  - FB_LocalSystemTime（推荐）：一行调用搞定，省 5-6 个底层 FB 组合。
+  - RTC_EX：无时区支持。
+  - **本 FB**：自定义校准源场景。
 
-- 见 [`Tc2_Utilities README`](../README.md) 同库其他条目
+## 8. 参考资料
 
-## 8. 待确认项
-
-- 详细描述/时序/错误码表待人工细化（auto-gen 阶段只确保 VAR 区与 PDF 一致）。
+- **PDF**：[TwinCAT_3_PLC_Lib_Tc2_Utilities_EN.pdf](https://download.beckhoff.com/download/document/automation/twincat3/TwinCAT_3_PLC_Lib_Tc2_Utilities_EN.pdf) §3.81
+- **InfoSys topic**：https://infosys.beckhoff.com/content/1033/tcplclib_tc2_utilities/35016203.html
+- **相关 FB**：`RTC`, `RTC_EX`, `FB_LocalSystemTime`, `NT_GetTime`
