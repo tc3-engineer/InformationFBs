@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <project xmlns="http://www.plcopen.org/xml/tc6_0200">
   <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-11T01:00:00"/>
-  <contentHeader name="Tc3_EventLogger.FB_TcAlarm.Create Demo" modificationDateTime="2026-05-11T01:00:00">
+  <contentHeader name="Tc3_EventLogger.Create Demo" modificationDateTime="2026-05-11T01:00:00">
     <coordinateInfo>
       <fbd><scaling x="1" y="1"/></fbd>
       <ld><scaling x="1" y="1"/></ld>
@@ -14,62 +14,49 @@
       <pou name="P_Demo_FB_TcAlarm_Create" pouType="program">
         <interface>
           <localVars>
-            <variable name="fbTcAlarm">
+            <variable name="fbAlarm">
               <type><derived name="FB_TcAlarm"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">Tc3_EventLogger.FB_TcAlarm 实例</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">FB_TcAlarm 实例（继承自 FB_TcEventBase）</xhtml></documentation>
             </variable>
-            <variable name="arg_eventClass">
-              <type><derived name="GUID"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT eventClass</xhtml></documentation>
-            </variable>
-            <variable name="arg_nEventId">
-              <type><UDINT/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT nEventId</xhtml></documentation>
-            </variable>
-            <variable name="arg_eSeverity">
-              <type><derived name="TcEventSeverity"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT eSeverity</xhtml></documentation>
-            </variable>
-            <variable name="arg_bWithConfirmation">
+            <variable name="bCreated">
               <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT bWithConfirmation</xhtml></documentation>
-            </variable>
-            <variable name="arg_ipSourceInfo">
-              <type><derived name="I_TcSourceInfo"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT ipSourceInfo</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">Create() 是否已成功执行（latch）</xhtml></documentation>
             </variable>
             <variable name="hr">
               <type><derived name="HRESULT"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">返回值 HRESULT</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">Create 返回值监视</xhtml></documentation>
+            </variable>
+            <variable name="guidEventClass">
+              <type><derived name="GUID"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">事件类 GUID（请通过 EventClass 编辑器导出后写入）</xhtml></documentation>
             </variable>
           </localVars>
         </interface>
         <body>
-          <ST>
-            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
-// Tc3_EventLogger.FB_TcAlarm.Create 演示程序（OO 方法）
-// ============================================================
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：包装机封口温度异常报警的一次性注册
+// 价值：把"事件类 + ID + 严重级别 + 确认要求"集中在 Create 里，业务代码后续只管 Raise/Clear
+// 验证：登录后单步：第一个扫描 hr 应该是 0 (S_OK)，bCreated 变 TRUE；之后周期再走 IF 判断被 bCreated 截住不再调用；强行让 bCreated := FALSE 再次进入 Create() 会拿到 ERROR_ALREADY_EXISTS
 // 验证步骤：
-//   1. 引用 Tc3_EventLogger（及依赖类型所在库 Tc2_System 等）
-//   2. 编译 + 登录
-//   3. 在线给 arg_* 赋值（eventClass、nEventId、eSeverity、bWithConfirmation、ipSourceInfo）
-//   4. 触发 Create，监视返回的 hr（S_OK 表示成功）
-// ============================================================
+//   1. 右键 PLC 项目 → Import PLCopenXML → 选本文件
+//   2. 引用 Tc3_EventLogger（System → References → Add library）
+//   3. 编译 → 登录 → 运行；按 verify 注释里给出的在线写值操作
+// =============================================================================
 
-hr := fbTcAlarm.Create(
-    eventClass := arg_eventClass,
-    nEventId := arg_nEventId,
-    eSeverity := arg_eSeverity,
-    bWithConfirmation := arg_bWithConfirmation,
-    ipSourceInfo := arg_ipSourceInfo
-);
-</xhtml>
-          </ST>
+// 第一次扫描注册 alarm 到 EventLogger；之后由 bCreated latch 截住
+IF NOT bCreated THEN
+    hr := fbAlarm.Create(
+        eventClass := guidEventClass,
+        nEventId := 1001,                  // 封口温度异常
+        eSeverity := TcEventSeverity.Error,
+        bWithConfirmation := TRUE,
+        ipSourceInfo := 0);                // 0 = 默认源信息（符号路径）
+    bCreated := SUCCEEDED(hr);
+END_IF;
+</xhtml></ST>
         </body>
       </pou>
     </pous>
   </types>
-  <instances>
-    <configurations/>
-  </instances>
+  <instances><configurations/></instances>
 </project>

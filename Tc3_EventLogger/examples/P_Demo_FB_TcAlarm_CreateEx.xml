@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <project xmlns="http://www.plcopen.org/xml/tc6_0200">
   <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-11T01:00:00"/>
-  <contentHeader name="Tc3_EventLogger.FB_TcAlarm_CreateEx Demo" modificationDateTime="2026-05-11T01:00:00">
+  <contentHeader name="Tc3_EventLogger.CreateEx Demo" modificationDateTime="2026-05-11T01:00:00">
     <coordinateInfo>
       <fbd><scaling x="1" y="1"/></fbd>
       <ld><scaling x="1" y="1"/></ld>
@@ -14,48 +14,47 @@
       <pou name="P_Demo_FB_TcAlarm_CreateEx" pouType="program">
         <interface>
           <localVars>
-            <variable name="fbTcAlarm">
+            <variable name="fbAlarm">
               <type><derived name="FB_TcAlarm"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">Tc3_EventLogger.FB_TcAlarm 实例</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">FB_TcAlarm 实例</xhtml></documentation>
             </variable>
-            <variable name="arg_stEventEntry">
-              <type><derived name="TcEventEntry"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT stEventEntry</xhtml></documentation>
-            </variable>
-            <variable name="arg_bWithConfirmation">
+            <variable name="bCreated">
               <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT bWithConfirmation</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">Create latch</xhtml></documentation>
             </variable>
-            <variable name="arg_ipSourceInfo">
-              <type><derived name="I_TcSourceInfo"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT ipSourceInfo</xhtml></documentation>
+            <variable name="hr">
+              <type><derived name="HRESULT"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">返回值监视</xhtml></documentation>
+            </variable>
+            <variable name="stEventEntry">
+              <type><derived name="TcEventEntry"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">在线写入事件定义（GUID + EventID + Severity）</xhtml></documentation>
             </variable>
           </localVars>
         </interface>
         <body>
-          <ST>
-            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
-// Tc3_EventLogger.FB_TcAlarm.CreateEx 演示程序（OO 方法）
-// ============================================================
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：把已经在结构体里的事件定义批量注册（典型：从远程 EventLogger 同步事件清单）
+// 价值：一次结构体调用替代 5 个分散字段，便于循环批量注册
+// 验证：登录后让 bCreated := FALSE 触发一次 Create；hr 第一次应为 S_OK，再次执行得到 ERROR_ALREADY_EXISTS
 // 验证步骤：
-//   1. 引用 Tc3_EventLogger（及依赖类型所在库 Tc2_System 等）
-//   2. 编译 + 登录
-//   3. 按 doc.md 给 arg_* 赋值
-//   4. 在线监视 out_* / io_* 输出
-// ============================================================
+//   1. 右键 PLC 项目 → Import PLCopenXML → 选本文件
+//   2. 引用 Tc3_EventLogger（System → References → Add library）
+//   3. 编译 → 登录 → 运行；按 verify 注释里给出的在线写值操作
+// =============================================================================
 
-fbTcAlarm.CreateEx(
-    stEventEntry := arg_stEventEntry,
-    bWithConfirmation := arg_bWithConfirmation,
-    ipSourceInfo := arg_ipSourceInfo
-);
-</xhtml>
-          </ST>
+// 用 TcEventEntry 结构体一次性注册（适合事件清单已在数组里的场景）
+IF NOT bCreated THEN
+    hr := fbAlarm.CreateEx(
+        stEventEntry := stEventEntry,
+        bWithConfirmation := TRUE,
+        ipSourceInfo := 0);
+    bCreated := SUCCEEDED(hr);
+END_IF;
+</xhtml></ST>
         </body>
       </pou>
     </pous>
   </types>
-  <instances>
-    <configurations/>
-  </instances>
+  <instances><configurations/></instances>
 </project>

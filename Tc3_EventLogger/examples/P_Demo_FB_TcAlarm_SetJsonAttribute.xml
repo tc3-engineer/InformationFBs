@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <project xmlns="http://www.plcopen.org/xml/tc6_0200">
   <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-11T01:00:00"/>
-  <contentHeader name="Tc3_EventLogger.FB_TcAlarm_SetJsonAttribute Demo" modificationDateTime="2026-05-11T01:00:00">
+  <contentHeader name="Tc3_EventLogger.SetJsonAttribute Demo" modificationDateTime="2026-05-11T01:00:00">
     <coordinateInfo>
       <fbd><scaling x="1" y="1"/></fbd>
       <ld><scaling x="1" y="1"/></ld>
@@ -14,38 +14,52 @@
       <pou name="P_Demo_FB_TcAlarm_SetJsonAttribute" pouType="program">
         <interface>
           <localVars>
-            <variable name="fbTcAlarm">
+            <variable name="fbAlarm">
               <type><derived name="FB_TcAlarm"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">Tc3_EventLogger.FB_TcAlarm 实例</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">alarm 实例（应已 Create 完成）</xhtml></documentation>
             </variable>
-            <variable name="io_sJsonAttribute">
-              <type><string/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_IN_OUT sJsonAttribute</xhtml></documentation>
+            <variable name="bSetAttr">
+              <initialValue><simpleValue value="FALSE"/></initialValue>
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">上升沿触发设置属性</xhtml></documentation>
+            </variable>
+            <variable name="bSetAttrPrev">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">边沿检测</xhtml></documentation>
+            </variable>
+            <variable name="sBatchId">
+              <initialValue><simpleValue value="'B-2026-0511-001'"/></initialValue>
+              <type><string><length>64</length></string></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">批次号</xhtml></documentation>
+            </variable>
+            <variable name="hr">
+              <type><derived name="HRESULT"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">返回值监视</xhtml></documentation>
             </variable>
           </localVars>
         </interface>
         <body>
-          <ST>
-            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
-// Tc3_EventLogger.FB_TcAlarm.SetJsonAttribute 演示程序（OO 方法）
-// ============================================================
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：包装机 alarm 附加批次追溯信息（batch id + 操作员 + 配方版本）
+// 价值：一句 SetJsonAttribute 把工艺上下文绑到 alarm 上，MES 拉取时一并到位
+// 验证：登录后写 bSetAttr := TRUE 触发一次设置；HMI EventLogger 的事件详情面板（或 ADS 工具查事件）应能看到 batchId 字段；改写 sBatchId := 'B-002' 再触发，覆盖原属性
 // 验证步骤：
-//   1. 引用 Tc3_EventLogger（及依赖类型所在库 Tc2_System 等）
-//   2. 编译 + 登录
-//   3. 按 doc.md 给 arg_* 赋值
-//   4. 在线监视 out_* / io_* 输出
-// ============================================================
+//   1. 右键 PLC 项目 → Import PLCopenXML → 选本文件
+//   2. 引用 Tc3_EventLogger（System → References → Add library）
+//   3. 编译 → 登录 → 运行；按 verify 注释里给出的在线写值操作
+// =============================================================================
 
-fbTcAlarm.SetJsonAttribute(
-    sJsonAttribute := io_sJsonAttribute
-);
-</xhtml>
-          </ST>
+// 边沿触发：在 Raise 之前给 alarm 附加 batch id（合法 JSON：字符串要带双引号）
+IF bSetAttr AND NOT bSetAttrPrev THEN
+    hr := fbAlarm.SetJsonAttribute(
+        sName := 'batchId',
+        sValue := CONCAT('"', CONCAT(sBatchId, '"')));   // 输出 "B-2026-0511-001"
+END_IF;
+bSetAttrPrev := bSetAttr;
+</xhtml></ST>
         </body>
       </pou>
     </pous>
   </types>
-  <instances>
-    <configurations/>
-  </instances>
+  <instances><configurations/></instances>
 </project>
