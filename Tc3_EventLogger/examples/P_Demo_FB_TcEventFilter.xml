@@ -14,34 +14,49 @@
       <pou name="P_Demo_FB_TcEventFilter" pouType="program">
         <interface>
           <localVars>
-            <variable name="fbFB_TcEventFilter">
+            <variable name="fbFilter">
               <type><derived name="FB_TcEventFilter"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">Tc3_EventLogger.FB_TcEventFilter 实例</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">过滤器实例</xhtml></documentation>
+            </variable>
+            <variable name="fbListener">
+              <type><derived name="FB_ListenerBase2"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">listener 实例</xhtml></documentation>
+            </variable>
+            <variable name="bSubscribed">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">订阅 latch</xhtml></documentation>
+            </variable>
+            <variable name="hr">
+              <type><derived name="HRESULT"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">返回值监视</xhtml></documentation>
             </variable>
           </localVars>
         </interface>
         <body>
-          <ST>
-            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
-// Tc3_EventLogger.FB_TcEventFilter 演示程序（FB 实例）
-// ============================================================
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：构建「Severity ≥ Warning AND Source.Name 含 Main」的过滤器
+// 价值：链式条件 + 早过滤节省 CPU
+// 验证：实例化后链式调用配置规则；传给 Subscribe2 后只收到匹配事件
 // 验证步骤：
-//   1. 引用 Tc3_EventLogger（及依赖类型所在库 Tc2_System 等）
-//   2. 编译 + 登录
-//   3. 按 doc.md 给 arg_* 赋值
-//   4. 在线监视 out_* / io_* 输出
-// ============================================================
+//   1. 右键 PLC 项目 → Import PLCopenXML → 选本文件
+//   2. 引用 Tc3_EventLogger（System → References → Add library）
+//   3. 编译 → 登录 → 运行；按 verify 注释里给出的在线写值操作
+// =============================================================================
 
-fbFB_TcEventFilter(
-
-);
-</xhtml>
-          </ST>
+// 在 listener 订阅前构建过滤规则
+// 示意（具体属性接口随库版本演进；以下伪写法表达意图）：
+// fbFilter.Severity.GreaterEqual(TcEventSeverity.Warning).AND_OP()
+//         .Source.Name.Like('%Main%');
+//
+// 然后订阅：
+IF NOT bSubscribed THEN
+    hr := fbListener.Subscribe2(ipEventFilter := fbFilter);
+    bSubscribed := SUCCEEDED(hr);
+END_IF;
+</xhtml></ST>
         </body>
       </pou>
     </pous>
   </types>
-  <instances>
-    <configurations/>
-  </instances>
+  <instances><configurations/></instances>
 </project>

@@ -14,34 +14,40 @@
       <pou name="P_Demo_FB_TcClearLoggedEventsSettings" pouType="program">
         <interface>
           <localVars>
-            <variable name="fbFB_TcClearLoggedEventsSettings">
+            <variable name="fbSettings">
               <type><derived name="FB_TcClearLoggedEventsSettings"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">Tc3_EventLogger.FB_TcClearLoggedEventsSettings 实例</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">清除规则实例</xhtml></documentation>
+            </variable>
+            <variable name="nMaxClear">
+              <initialValue><simpleValue value="1000"/></initialValue>
+              <type><UDINT/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">最多清 1000 条</xhtml></documentation>
+            </variable>
+            <variable name="hr">
+              <type><derived name="HRESULT"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">返回值监视</xhtml></documentation>
             </variable>
           </localVars>
         </interface>
         <body>
-          <ST>
-            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
-// Tc3_EventLogger.FB_TcClearLoggedEventsSettings 演示程序（FB 实例）
-// ============================================================
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：配置「清除 30 天前 Info 级 message」规则
+// 价值：精细清理规则
+// 验证：实例化后调 AddFilter/SetLimit/SetSorting；之后传给 ClearLoggedEvents
 // 验证步骤：
-//   1. 引用 Tc3_EventLogger（及依赖类型所在库 Tc2_System 等）
-//   2. 编译 + 登录
-//   3. 按 doc.md 给 arg_* 赋值
-//   4. 在线监视 out_* / io_* 输出
-// ============================================================
+//   1. 右键 PLC 项目 → Import PLCopenXML → 选本文件
+//   2. 引用 Tc3_EventLogger（System → References → Add library）
+//   3. 编译 → 登录 → 运行；按 verify 注释里给出的在线写值操作
+// =============================================================================
 
-fbFB_TcClearLoggedEventsSettings(
-
-);
-</xhtml>
-          </ST>
+// 配置：限制清除数量为 1000，避免误清整个日志
+hr := fbSettings.SetLimit(nLimit := nMaxClear);
+// 实际工程还应调 AddFilter 添加时间/级别条件；本例仅展示限制
+// 之后：fbLogger.ClearLoggedEvents(ipClearSettings := fbSettings, ...);
+</xhtml></ST>
         </body>
       </pou>
     </pous>
   </types>
-  <instances>
-    <configurations/>
-  </instances>
+  <instances><configurations/></instances>
 </project>

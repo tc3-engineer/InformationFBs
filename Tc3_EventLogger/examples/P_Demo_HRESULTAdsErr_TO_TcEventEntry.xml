@@ -14,43 +14,39 @@
       <pou name="P_Demo_HRESULTAdsErr_TO_TcEventEntry" pouType="program">
         <interface>
           <localVars>
-            <variable name="fbHRESULTAdsErr_TO_TcEventEntry">
-              <type><derived name="HRESULTAdsErr_TO_TcEventEntry"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">Tc3_EventLogger.HRESULTAdsErr_TO_TcEventEntry 实例</xhtml></documentation>
-            </variable>
-            <variable name="arg_hr">
+            <variable name="hr">
+              <initialValue><simpleValue value="E_HRESULTAdsErr.HRESULTADSERR_DEVICE_INVALIDPARM"/></initialValue>
               <type><derived name="E_HRESULTAdsErr"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT hr</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">在线写入要转换的 HRESULT 错误码</xhtml></documentation>
             </variable>
-            <variable name="arg_stEventEntry">
-              <type><reference><baseType><derived name="TcEventEntry"/></baseType></reference></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT stEventEntry</xhtml></documentation>
+            <variable name="stEventEntry">
+              <type><derived name="TcEventEntry"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">转换输出</xhtml></documentation>
+            </variable>
+            <variable name="bOk">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">成功标志</xhtml></documentation>
             </variable>
           </localVars>
         </interface>
         <body>
-          <ST>
-            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
-// Tc3_EventLogger.HRESULTAdsErr_TO_TcEventEntry 演示程序（FB 实例）
-// ============================================================
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：HRESULT ADS 错误码 → TcEventEntry 转换
+// 价值：HRESULT 形式 ADS 错的归一化
+// 验证：登录后给输入赋已知合法值；调用本 FC 后 bOk 应为 TRUE 且输出已填
 // 验证步骤：
-//   1. 引用 Tc3_EventLogger（及依赖类型所在库 Tc2_System 等）
-//   2. 编译 + 登录
-//   3. 按 doc.md 给 arg_* 赋值
-//   4. 在线监视 out_* / io_* 输出
-// ============================================================
+//   1. 右键 PLC 项目 → Import PLCopenXML → 选本文件
+//   2. 引用 Tc3_EventLogger（System → References → Add library）
+//   3. 编译 → 登录 → 运行；按 verify 注释里给出的在线写值操作
+// =============================================================================
 
-fbHRESULTAdsErr_TO_TcEventEntry(
-    hr := arg_hr,
-    stEventEntry := arg_stEventEntry
-);
-</xhtml>
-          </ST>
+bOk := HRESULTAdsErr_TO_TcEventEntry(
+    hr := hr,
+    stEventEntry := stEventEntry);
+</xhtml></ST>
         </body>
       </pou>
     </pous>
   </types>
-  <instances>
-    <configurations/>
-  </instances>
+  <instances><configurations/></instances>
 </project>

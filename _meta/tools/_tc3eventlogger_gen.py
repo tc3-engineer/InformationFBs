@@ -36,6 +36,10 @@ try:
     import _tc3eventlogger_registry4  # noqa: F401, E402
 except ImportError:
     pass
+try:
+    import _tc3eventlogger_registry5  # noqa: F401, E402
+except ImportError:
+    pass
 
 LIB = "Tc3_EventLogger"
 PDF_URL = "https://download.beckhoff.com/download/document/automation/twincat3/TwinCAT_3_PLC_Lib_Tc3_EventLogger_EN.pdf"
