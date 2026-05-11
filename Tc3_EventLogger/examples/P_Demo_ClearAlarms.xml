@@ -14,48 +14,53 @@
       <pou name="P_Demo_ClearAlarms" pouType="program">
         <interface>
           <localVars>
-            <variable name="fbClearAlarms">
-              <type><derived name="ClearAlarms"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">Tc3_EventLogger.ClearAlarms 实例</xhtml></documentation>
+            <variable name="fbLogger">
+              <type><derived name="FB_TcEventLogger"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">EventLogger 实例</xhtml></documentation>
             </variable>
-            <variable name="arg_nTimeStamp">
-              <type><ULINT/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT nTimeStamp</xhtml></documentation>
-            </variable>
-            <variable name="arg_bResetConfirmation">
+            <variable name="bClearAll">
+              <initialValue><simpleValue value="FALSE"/></initialValue>
               <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT bResetConfirmation</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">上升沿触发批量清除</xhtml></documentation>
             </variable>
-            <variable name="arg_ipFilter">
-              <type><derived name="I_TcEventFilter"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT ipFilter</xhtml></documentation>
+            <variable name="bClearAllPrev">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">边沿检测</xhtml></documentation>
+            </variable>
+            <variable name="bResetConfirmation">
+              <initialValue><simpleValue value="FALSE"/></initialValue>
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">是否同时重置确认状态（审计场景慎用）</xhtml></documentation>
+            </variable>
+            <variable name="hr">
+              <type><derived name="HRESULT"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">返回值监视</xhtml></documentation>
             </variable>
           </localVars>
         </interface>
         <body>
-          <ST>
-            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
-// Tc3_EventLogger.ClearAlarms 演示程序（FB 实例）
-// ============================================================
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：HMI 上「批量清除当前所有活动报警」按钮的实现
+// 价值：一句调用清掉所有活动 alarm，省去自建报警表遍历
+// 验证：需要先有几条 alarm 处于 Raised 状态。写 bClearAll := TRUE 触发后 HMI EventLogger 视图所有 Raised 应变 Cleared；若 bResetConfirmation 也为 TRUE 则 WaitForConfirmation 状态同时变 Reset
 // 验证步骤：
-//   1. 引用 Tc3_EventLogger（及依赖类型所在库 Tc2_System 等）
-//   2. 编译 + 登录
-//   3. 按 doc.md 给 arg_* 赋值
-//   4. 在线监视 out_* / io_* 输出
-// ============================================================
+//   1. 右键 PLC 项目 → Import PLCopenXML → 选本文件
+//   2. 引用 Tc3_EventLogger（System → References → Add library）
+//   3. 编译 → 登录 → 运行；按 verify 注释里给出的在线写值操作
+// =============================================================================
 
-fbClearAlarms(
-    nTimeStamp := arg_nTimeStamp,
-    bResetConfirmation := arg_bResetConfirmation,
-    ipFilter := arg_ipFilter
-);
-</xhtml>
-          </ST>
+// 边沿触发：批量清除全部活动 alarm。生产环境下应在 HMI 加二次确认。
+IF bClearAll AND NOT bClearAllPrev THEN
+    hr := fbLogger.ClearAlarms(
+        nTimeStamp := 0,                       // 用当前系统时间
+        bResetConfirmation := bResetConfirmation,
+        ipFilter := 0);                        // 0 = 不过滤，清全部
+END_IF;
+bClearAllPrev := bClearAll;
+</xhtml></ST>
         </body>
       </pou>
     </pous>
   </types>
-  <instances>
-    <configurations/>
-  </instances>
+  <instances><configurations/></instances>
 </project>

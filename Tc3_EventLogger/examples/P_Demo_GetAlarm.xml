@@ -14,53 +14,64 @@
       <pou name="P_Demo_GetAlarm" pouType="program">
         <interface>
           <localVars>
-            <variable name="fbGetAlarm">
-              <type><derived name="GetAlarm"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">Tc3_EventLogger.GetAlarm 实例</xhtml></documentation>
+            <variable name="fbLogger">
+              <type><derived name="FB_TcEventLogger"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">EventLogger 实例</xhtml></documentation>
             </variable>
-            <variable name="arg_eventClass">
+            <variable name="fbAlarmRef">
+              <type><derived name="FB_TcAlarm"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">查询输出</xhtml></documentation>
+            </variable>
+            <variable name="guidEventClass">
               <type><derived name="GUID"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT eventClass</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">要查询的事件类 GUID</xhtml></documentation>
             </variable>
-            <variable name="arg_nEventId">
+            <variable name="nEventId">
+              <initialValue><simpleValue value="1001"/></initialValue>
               <type><UDINT/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT nEventId</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">要查询的事件 ID</xhtml></documentation>
             </variable>
-            <variable name="arg_ipSourceInfo">
-              <type><derived name="I_TcSourceInfo"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT ipSourceInfo</xhtml></documentation>
+            <variable name="bDoGet">
+              <initialValue><simpleValue value="FALSE"/></initialValue>
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">上升沿触发</xhtml></documentation>
             </variable>
-            <variable name="arg_fbAlarm">
-              <type><reference><baseType><derived name="FB_TcAlarm"/></baseType></reference></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT fbAlarm</xhtml></documentation>
+            <variable name="bDoGetPrev">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">边沿检测</xhtml></documentation>
+            </variable>
+            <variable name="hr">
+              <type><derived name="HRESULT"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">返回值监视</xhtml></documentation>
             </variable>
           </localVars>
         </interface>
         <body>
-          <ST>
-            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
-// Tc3_EventLogger.GetAlarm 演示程序（FB 实例）
-// ============================================================
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：按 GUID + EventID 查询已注册的 alarm 引用，调用其 Raise 方法
+// 价值：无需直接持有 alarm 实例即可操控它
+// 验证：先确保有 alarm 已 Create；写 bDoGet := TRUE 触发查询；若 hr = S_OK 则 fbAlarmRef 可用，调用 Raise 应能让该 alarm 进 Raised 状态；不匹配的 GUID → hr = ADS_E_NOTFOUND
 // 验证步骤：
-//   1. 引用 Tc3_EventLogger（及依赖类型所在库 Tc2_System 等）
-//   2. 编译 + 登录
-//   3. 按 doc.md 给 arg_* 赋值
-//   4. 在线监视 out_* / io_* 输出
-// ============================================================
+//   1. 右键 PLC 项目 → Import PLCopenXML → 选本文件
+//   2. 引用 Tc3_EventLogger（System → References → Add library）
+//   3. 编译 → 登录 → 运行；按 verify 注释里给出的在线写值操作
+// =============================================================================
 
-fbGetAlarm(
-    eventClass := arg_eventClass,
-    nEventId := arg_nEventId,
-    ipSourceInfo := arg_ipSourceInfo,
-    fbAlarm := arg_fbAlarm
-);
-</xhtml>
-          </ST>
+IF bDoGet AND NOT bDoGetPrev THEN
+    hr := fbLogger.GetAlarm(
+        eventClass := guidEventClass,
+        nEventId := nEventId,
+        ipSourceInfo := 0,                     // 用默认源信息匹配
+        fbAlarm := fbAlarmRef);
+    IF SUCCEEDED(hr) THEN
+        fbAlarmRef.Raise(nTimeStamp := 0);     // 拿到引用后即可操作
+    END_IF;
+END_IF;
+bDoGetPrev := bDoGet;
+</xhtml></ST>
         </body>
       </pou>
     </pous>
   </types>
-  <instances>
-    <configurations/>
-  </instances>
+  <instances><configurations/></instances>
 </project>

@@ -14,34 +14,59 @@
       <pou name="P_Demo_FB_TcEventLogger" pouType="program">
         <interface>
           <localVars>
-            <variable name="fbFB_TcEventLogger">
+            <variable name="fbLogger">
               <type><derived name="FB_TcEventLogger"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">Tc3_EventLogger.FB_TcEventLogger 实例</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">EventLogger 实例（实际工程用全局单例）</xhtml></documentation>
+            </variable>
+            <variable name="bRunArchiveNow">
+              <initialValue><simpleValue value="FALSE"/></initialValue>
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">在线置 TRUE 触发归档流程</xhtml></documentation>
+            </variable>
+            <variable name="bRunArchiveNowPrev">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">边沿检测</xhtml></documentation>
+            </variable>
+            <variable name="sExportPath">
+              <initialValue><simpleValue value="'C:\Temp\events_2026-05-11.csv'"/></initialValue>
+              <type><string><length>120</length></string></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">导出文件路径</xhtml></documentation>
+            </variable>
+            <variable name="bExportDone">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">ExportLoggedEvents 完成标志</xhtml></documentation>
+            </variable>
+            <variable name="hr">
+              <type><derived name="HRESULT"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">返回值监视</xhtml></documentation>
             </variable>
           </localVars>
         </interface>
         <body>
-          <ST>
-            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
-// Tc3_EventLogger.FB_TcEventLogger 演示程序（FB 实例）
-// ============================================================
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：MES 集成的每日归档触发流程（导出 + 清除日志 + 确认所有报警）
+// 价值：一段代码完成多个 EventLogger 维护动作的串联
+// 验证：登录后写 bRunArchiveNow := TRUE，应先看到 ExportLoggedEvents 异步返回 TRUE（导出完成），再 ClearLoggedEvents、再 ConfirmAllAlarms 各调一次；HMI EventLogger 视图历史事件应被清空但导出文件保留
 // 验证步骤：
-//   1. 引用 Tc3_EventLogger（及依赖类型所在库 Tc2_System 等）
-//   2. 编译 + 登录
-//   3. 按 doc.md 给 arg_* 赋值
-//   4. 在线监视 out_* / io_* 输出
-// ============================================================
+//   1. 右键 PLC 项目 → Import PLCopenXML → 选本文件
+//   2. 引用 Tc3_EventLogger（System → References → Add library）
+//   3. 编译 → 登录 → 运行；按 verify 注释里给出的在线写值操作
+// =============================================================================
 
-fbFB_TcEventLogger(
-
-);
-</xhtml>
-          </ST>
+// 边沿触发：先异步导出 → 等完成 → 清日志 → 确认所有报警
+IF bRunArchiveNow AND NOT bRunArchiveNowPrev THEN
+    // 启动异步导出。实际工程要分多个状态机周期等 bExportDone = TRUE 后再继续。
+    bExportDone := fbLogger.ExportLoggedEvents(sFileName := sExportPath, ipExportSettings := 0);
+    IF bExportDone THEN
+        hr := fbLogger.ClearLoggedEvents(ipClearSettings := 0);    // 0 = 清全部
+        hr := fbLogger.ConfirmAllAlarms(nTimeStamp := 0);           // 一并确认
+    END_IF;
+END_IF;
+bRunArchiveNowPrev := bRunArchiveNow;
+</xhtml></ST>
         </body>
       </pou>
     </pous>
   </types>
-  <instances>
-    <configurations/>
-  </instances>
+  <instances><configurations/></instances>
 </project>

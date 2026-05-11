@@ -169,6 +169,16 @@ def _xml_escape(s: str) -> str:
     return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
 
+def _xml_attr_escape(s: str) -> str:
+    """Escape for use inside an XML attribute value (double-quoted)."""
+    return (
+        s.replace("&", "&amp;")
+        .replace("<", "&lt;")
+        .replace(">", "&gt;")
+        .replace('"', "&quot;")
+    )
+
+
 def _render_var_table(vars_list: list, var_descs: dict, with_default: bool) -> str:
     if not vars_list:
         return "无。\n"
@@ -325,7 +335,7 @@ def _render_xml(parent: str, name: str, reg_entry: dict, parsed: dict) -> str:
     for nm, typ, default, comment in xml_vars:
         inner = []
         if default:
-            inner.append(f"<initialValue><simpleValue value=\"{_xml_escape(default)}\"/></initialValue>")
+            inner.append(f"<initialValue><simpleValue value=\"{_xml_attr_escape(default)}\"/></initialValue>")
         inner.append(f"<type>{_type_to_xml(typ)}</type>")
         if comment:
             inner.append(

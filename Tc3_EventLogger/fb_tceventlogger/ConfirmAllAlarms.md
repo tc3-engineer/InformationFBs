@@ -1,22 +1,27 @@
 # ConfirmAllAlarms
+
 ## 元信息
 
 | 字段 | 值 |
 |---|---|
 | Library | `Tc3_EventLogger` |
 | Library Version | `1.6.2` |
-| Type | `FUNCTION_BLOCK` |
-| Category | `Function blocks` |
-| Source | https://infosys.beckhoff.com/content/1033/tcplclib_tc3_eventlogger/ |
+| Type | `METHOD` |
+| Category | `FB_TcEventLogger` |
 | Source PDF | https://download.beckhoff.com/download/document/automation/twincat3/TwinCAT_3_PLC_Lib_Tc3_EventLogger_EN.pdf |
-| Verified | 2026-05-10 ✅ |
+| Source InfoSys | https://infosys.beckhoff.com/content/1033/tcplclib_tc3_eventlogger/5050773003.html |
+| Verified | 2026-05-11 ✅ |
+| InfoSys-checked | ✅ 2026-05-11 |
 | Status | `verified` |
 | Example | [`examples/P_Demo_ConfirmAllAlarms.xml`](../examples/P_Demo_ConfirmAllAlarms.xml) |
 
 ---
+
 ## 1. 功能简述
 
-This method calls the Confirm() method for all alarms having the confirmation state WaitForConfirmation. Syntax METHOD ConfirmAllAlarms : HRESULT
+`FB_TcEventLogger.ConfirmAllAlarms()` 是 `ConfirmAlarms()` 的便捷版本——无过滤器参数，对所有处于 `WaitForConfirmation` 状态的 alarm 调用 Confirm。
+
+适合"一键确认全部"操作。
 
 ## 2. 接口定义
 
@@ -28,13 +33,14 @@ VAR_INPUT
 END_VAR
 ```
 
-| 名称 | 类型 | 说明 |
-|---|---|---|
-| `nTimeStamp` | `ULINT` | （详见 PDF） |
+| 名称 | 类型 | 默认值 | 说明 |
+|---|---|---|---|
+| `nTimeStamp` | `ULINT` | `0` | 确认时间戳：0 = 用当前系统时间 |
+
 
 ### VAR_OUTPUT
 
-无 VAR_OUTPUT。
+无。
 
 ### VAR_IN_OUT
 
@@ -42,40 +48,48 @@ END_VAR
 
 ## 3. 行为说明
 
-- 见上方功能简述。
-- 详细行为（时序、错误码、状态机）请对照 PDF 第 3.10.5 节。
+调用时 EventLogger 即对所有处于 `WaitForConfirmation` 状态的 alarm 同步执行 Confirm，确认状态切换为 Confirmed。Raised/Cleared 主状态不受影响——Confirm 与主状态机正交。`nTimeStamp = 0` 用当前系统时间记录批量确认时刻，写入事件日志供事后审计。
+
+**与 ConfirmAlarms 的区别**：本方法等价于 `ConfirmAlarms(ipFilter := 0)`，无过滤参数；用本方法 vs 显式传 0 看代码可读性偏好。已 Confirmed 的 alarm 再调用本方法不会变化（幂等操作）。
 
 ## 4. 错误码 / 返回值
 
-本方法返回 `HRESULT`（`S_OK` = 成功；其他错误码请见对应 InfoSys 页面，⚠️ 待人工补全）。
+本方法返回 `HRESULT`（32 位有符号整数）。`SUCCEEDED(hr)` 为 TRUE 表示调用成功。
+
+| HRESULT | 含义 | 处理建议 |
+|---|---|---|
+| `S_OK` | 全部 WaitForConfirmation alarm 已确认 | 继续业务 |
+| `其他错误` | ⚠️ PDF 未列详细码 | 查 ADS Return Codes |
 
 ## 5. 使用注意 / 常见坑
 
-- VAR_INPUT / VAR_OUTPUT / VAR_IN_OUT 已逐字从 PDF 抽取并通过 `verify_doc.py` 自检。
-- 描述句、时序行为、错误码表等细节请以 PDF 第 3.10.5 节为准（⚠️ 待人工细化）。
+- "全确认"是审计敏感动作——HMI 端应加权限管控（管理员才能用）。（工程经验补充）
+- 已 Confirmed 的 alarm 再 Confirm 不变化（幂等）。
+- 批量确认时不记录"哪些 alarm 被确认"——审计追溯需要事后查 EventLogger 历史。（工程经验补充）
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_ConfirmAllAlarms.xml`](../examples/P_Demo_ConfirmAllAlarms.xml)
+> 配套可导入文件：[`examples/P_Demo_ConfirmAllAlarms.xml`](../examples/P_Demo_ConfirmAllAlarms.xml)（PLCopenXML，可直接导入 TwinCAT 3 XAE）
 >
-> 详见 [`examples/README.md`](../examples/README.md)
+> 导入步骤：右键 PLC 项目 → Import PLCopenXML → 选该文件 → OK
 
 ```iecst
-PROGRAM P_Demo_ConfirmAllAlarms
-VAR
-    fbConfirmAllAlarms : ConfirmAllAlarms;
-    arg_nTimeStamp : ULINT;
-END_VAR
-
-fbConfirmAllAlarms(
-    nTimeStamp := arg_nTimeStamp
-);
+// 详见 examples 目录下的 .xml 文件
 ```
 
-## 7. 相关
+## 7. 业务场景与实际价值
 
-- 见 [`Tc3_EventLogger README`](../README.md) 同库其他条目
+管理员下班前"一键确认所有遗留报警"准备交班
 
-## 8. 待确认项
 
-- 详细描述/时序/错误码表待人工细化（auto-gen 阶段只确保 VAR 区与 PDF 一致）。
+单次调用完成批量确认；事件日志自动记录时刻供审计
+
+
+`ConfirmAlarms` 带过滤器 → 精细控制；本方法适合"全确认"按钮
+
+
+## 8. 参考资料
+
+- **PDF**：[TwinCAT_3_PLC_Lib_Tc3_EventLogger_EN.pdf](https://download.beckhoff.com/download/document/automation/twincat3/TwinCAT_3_PLC_Lib_Tc3_EventLogger_EN.pdf) §3.10.5
+- **InfoSys topic**：https://infosys.beckhoff.com/content/1033/tcplclib_tc3_eventlogger/5050773003.html
+- **相关**：`FB_TcEventLogger.ConfirmAlarms`, `FB_TcEventLogger.ClearAllAlarms`
