@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <project xmlns="http://www.plcopen.org/xml/tc6_0200">
-  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-10T08:00:00"/>
-  <contentHeader name="Tc2_Standard.TOF Demo" modificationDateTime="2026-05-10T08:00:00">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-11T07:00:00"/>
+  <contentHeader name="Tc2_Standard.TOF Demo" modificationDateTime="2026-05-11T07:00:00">
     <coordinateInfo>
       <fbd><scaling x="1" y="1"/></fbd>
       <ld><scaling x="1" y="1"/></ld>
@@ -14,52 +14,59 @@
       <pou name="P_Demo_TOF" pouType="program">
         <interface>
           <localVars>
-            <variable name="fbTOF">
+            <variable name="fbCoolDownDelay">
               <type><derived name="TOF"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">Timer 实例</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">断开延时定时器实例：电机停后风扇延时关</xhtml></documentation>
             </variable>
-            <variable name="bMotorReq">
+            <variable name="bMotorRun">
               <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">电机请求</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">电机运行信号（在线写值模拟）</xhtml></documentation>
             </variable>
-            <variable name="bRunning">
-              <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">电机当前运行允许（带断电延时）</xhtml></documentation>
-            </variable>
-            <variable name="tElapsed">
+            <variable name="tCoolDownPeriod">
+              <initialValue><simpleValue value="T#60S"/></initialValue>
               <type><TIME/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">下降沿后已经过时间</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">停机后散热延时 = 60 秒</xhtml></documentation>
+            </variable>
+            <variable name="bFanOn">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">风扇运行输出</xhtml></documentation>
+            </variable>
+            <variable name="tCoolElapsed">
+              <type><TIME/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">已散热时长（监视：电机停后从 0 累加到 60s）</xhtml></documentation>
             </variable>
           </localVars>
         </interface>
         <body>
-          <ST>
-            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
-// Tc2_Standard.TOF 演示程序
-// ============================================================
-// 场景：信号消失后再延时 5 秒才关闭电机
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：风冷电机停机后散热风扇延时关闭。电机运行时风扇随之运行；操作员发出
+//       停机指令后，电机立刻停，但风扇还要继续转 60 秒散热，防止电机过热损坏。
+//
+// 价值：用一行 TOF 完成"立即通、延时断"语义；不用本 FB 就要自己实现"上一周期
+//       状态保存 + 下降沿启动计时 + 期间被打断要清零"，约 8-10 行边界容易写错。
+//
 // 验证步骤：
-//   1. 把本 PROGRAM 加到 PlcTask 调用列表
-//   2. 编译并登录目标
-//   1. bMotorReq := TRUE → bRunning 立即 TRUE
-//   2. bMotorReq := FALSE → bRunning 仍 TRUE，tElapsed 开始累加
-//   3. 5 秒后 bRunning 变 FALSE
-//   4. 5 秒未到时 bMotorReq 再变 TRUE → tElapsed 立即归零，bRunning 保持 TRUE
-// ============================================================
+//   1. PLC 项目 → Import PLCopenXML → 选本文件
+//   2. 引用 Tc2_Standard 库
+//   3. 编译、登录、运行
+//   4. 在线 monitor bFanOn 与 tCoolElapsed
+//   5. 在线 bMotorRun := TRUE → bFanOn 立刻变 TRUE，tCoolElapsed 保持 0
+//   6. 在线 bMotorRun := FALSE → bFanOn 仍 TRUE，tCoolElapsed 从 0 开始累加
+//   7. tCoolElapsed 到 60s → bFanOn 变 FALSE
+//   8. 测试中途打断：散热 30s 时把 bMotorRun 再置 TRUE 一下，看 tCoolElapsed
+//      立刻清零、bFanOn 继续 TRUE；再 FALSE，重新从 0 数 60s
+// =============================================================================
 
-fbTOF(
-    IN := bMotorReq,
-    PT := T#5S,
-    Q  =&gt; bRunning,
-    ET =&gt; tElapsed
+fbCoolDownDelay(
+    IN := bMotorRun,
+    PT := tCoolDownPeriod,
+    Q  =&gt; bFanOn,
+    ET =&gt; tCoolElapsed
 );
-</xhtml>
-          </ST>
+</xhtml></ST>
         </body>
       </pou>
     </pous>
   </types>
-  <instances>
-    <configurations/>
-  </instances>
+  <instances><configurations/></instances>
 </project>
