@@ -57,16 +57,22 @@ def lint(path: str) -> tuple[int, list[str]]:
         if not name.startswith("P_Demo_"):
             diags.append(f"pou name must start with P_Demo_, got {name!r}")
         demoed = name.removeprefix("P_Demo_")
+        # For OO method demos with parent-prefixed stems (P_Demo_FB_TcAlarm_Create),
+        # also accept the tail token (Create) as the demoed FB/method name.
+        candidates = [demoed]
+        if "_" in demoed:
+            candidates.append(demoed.rsplit("_", 1)[1])
         derived = pou.findall(f".//{{{NS}}}derived")
-        has_derived = any(d.get("name") == demoed for d in derived)
-        # Functions (FCs) are called as expressions, not instantiated — accept
-        # if the ST body invokes the symbol like NAME( ... ).
         st_node = pou.find(f"{{{NS}}}body/{{{NS}}}ST/{{http://www.w3.org/1999/xhtml}}xhtml")
         st_text_for_check = "".join(st_node.itertext()) if st_node is not None else ""
-        called_as_function = bool(re.search(rf"\b{re.escape(demoed)}\s*\(", st_text_for_check))
-        # Global constants / globals are referenced as bare identifiers (no parens).
-        bare_reference = bool(re.search(rf"\b{re.escape(demoed)}\b", st_text_for_check))
-        if not has_derived and not called_as_function and not bare_reference:
+
+        def _ok(sym: str) -> bool:
+            has_derived = any(d.get("name") == sym for d in derived)
+            called = bool(re.search(rf"\b{re.escape(sym)}\s*\(", st_text_for_check))
+            bare = bool(re.search(rf"\b{re.escape(sym)}\b", st_text_for_check))
+            return has_derived or called or bare
+
+        if not any(_ok(c) for c in candidates):
             diags.append(
                 f"<derived name=\"{demoed}\"/> not in localVars; {demoed}(...) not called; "
                 f"and {demoed} not referenced in ST body"

@@ -27,7 +27,7 @@
 | Tc2_System | 1.17.1 | ~150 | ⏳ pending | ADS、文件、任务、时间、字符串、EventLogger 接入 |
 | Tc2_Utilities | 2.18.2 | 344 | ✅ done (344/344) | 通用工具（97 FB + 1 OO parent + 245 FC + 1 GVL） |
 | Tc2_Math | 1.3.3 | 9 | ✅ done (9/9) | 取整 / 模运算（无矩阵/统计/滤波；那些在 Tc3_Controller） |
-| Tc3_EventLogger | 1.6.2 | ~20 | ⏳ pending | 事件/报警分发 |
+| Tc3_EventLogger | 1.6.2 | 74 | ✅ done (74/74) | 事件/报警分发（7 OO parent + 66 method + 1 standalone FB） |
 
 ## Tier 2 · 运动控制
 
