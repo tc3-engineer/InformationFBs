@@ -96,7 +96,7 @@ bKbusErrorDetected := stCouplerStatus.Byte0.0;
 rTrigKbusErr(CLK := bKbusErrorDetected);
 IF rTrigKbusErr.Q THEN
     bTriggerReadDiagOnce := TRUE;
-END_IF
+END_IF;
 
 // 单次调用形式：bExecute 在完成后由下面 IF 块手动复位
 fbReadDiag(
@@ -115,7 +115,7 @@ IF NOT bReadingDiag AND bTriggerReadDiagOnce THEN
     bTriggerReadDiagOnce := FALSE;
     nFirstFlashType  := stDiagResult.stFirstFlashCode.nErrorType;
     nSecondFlashPos  := stDiagResult.stSecondFlashCode.nErrorPosition;
-END_IF
+END_IF;
 </xhtml></ST>
         </body>
       </pou>

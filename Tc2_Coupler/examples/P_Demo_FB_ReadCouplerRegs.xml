@@ -117,7 +117,7 @@ ELSIF bScanKL3464Id THEN
     nActiveTableNo      := 0;
     nActiveStartReg     := 8;
     nActiveEndReg       := 8;
-END_IF
+END_IF;
 
 // 单次调用形式：所有 VAR_INPUT 显式赋值
 fbReadRegs(
@@ -139,7 +139,7 @@ fbReadRegs(
 IF bScanKL3464Id AND NOT bScanBusy AND NOT bScanError THEN
     wKL3464IdReadback := SHL(WORD#(stReadResult.aRegister[8].nHi), 8)
                        + WORD#(stReadResult.aRegister[8].nLo);
-END_IF
+END_IF;
 </xhtml></ST>
         </body>
       </pou>
