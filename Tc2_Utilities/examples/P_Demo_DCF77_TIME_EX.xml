@@ -51,11 +51,11 @@
               <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT READY</xhtml></documentation>
             </variable>
             <variable name="out_CDT">
-              <type><derived name="DATE_AND_TIME"/></type>
+              <type><DATE_AND_TIME/></type>
               <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT CDT</xhtml></documentation>
             </variable>
             <variable name="out_DOW">
-              <type><derived name="BYTE(1..7)"/></type>
+              <type><subrangeUnsigned><range lower="1" upper="7"/><baseType><BYTE/></baseType></subrangeUnsigned></type>
               <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT DOW</xhtml></documentation>
             </variable>
             <variable name="out_TZI">
@@ -71,7 +71,7 @@
               <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT LEAPSEC</xhtml></documentation>
             </variable>
             <variable name="out_RAWDT">
-              <type><derived name="ARRAY[0..60] OF BOOL"/></type>
+              <type><array><dimension lower="0" upper="60"/><baseType><BOOL/></baseType></array></type>
               <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT RAWDT</xhtml></documentation>
             </variable>
           </localVars>

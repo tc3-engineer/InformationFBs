@@ -47,7 +47,7 @@
               <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT nValidLicenses</xhtml></documentation>
             </variable>
             <variable name="out_aValidLicenses">
-              <type><derived name="ARRAY[1..nMaxLicenses} OF ST_TcOnlineLicenseInfoDataEx"/></type>
+              <type><array><dimension lower="1" upper="nMaxLicenses"/><baseType><derived name="ST_TcOnlineLicenseInfoDataEx"/></baseType></array></type>
               <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT aValidLicenses</xhtml></documentation>
             </variable>
             <variable name="out_nPendingLicenses">
@@ -55,7 +55,7 @@
               <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT nPendingLicenses</xhtml></documentation>
             </variable>
             <variable name="out_aPendingLicenses">
-              <type><derived name="ARRAY[1..nMaxLicenses} OF ST_TcOnlineLicenseInfoDataEx"/></type>
+              <type><array><dimension lower="1" upper="nMaxLicenses"/><baseType><derived name="ST_TcOnlineLicenseInfoDataEx"/></baseType></array></type>
               <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT aPendingLicenses</xhtml></documentation>
             </variable>
             <variable name="out_nDemoLicenses">
@@ -63,7 +63,7 @@
               <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT nDemoLicenses</xhtml></documentation>
             </variable>
             <variable name="out_aDemoLicenses">
-              <type><derived name="ARRAY[1..nMaxLicenses} OF ST_TcOnlineLicenseInfoDataEx"/></type>
+              <type><array><dimension lower="1" upper="nMaxLicenses"/><baseType><derived name="ST_TcOnlineLicenseInfoDataEx"/></baseType></array></type>
               <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT aDemoLicenses</xhtml></documentation>
             </variable>
             <variable name="out_nOemLicenses">
@@ -71,7 +71,7 @@
               <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT nOemLicenses</xhtml></documentation>
             </variable>
             <variable name="out_aOemLicenses">
-              <type><derived name="ARRAY[1..nMaxLicenses} OF ST_TcOnlineLicenseInfoDataEx"/></type>
+              <type><array><dimension lower="1" upper="nMaxLicenses"/><baseType><derived name="ST_TcOnlineLicenseInfoDataEx"/></baseType></array></type>
               <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT aOemLicenses</xhtml></documentation>
             </variable>
             <variable name="out_nFailedLicenses">
@@ -79,7 +79,7 @@
               <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT nFailedLicenses</xhtml></documentation>
             </variable>
             <variable name="out_aFailedLicenses">
-              <type><derived name="ARRAY[1..nMaxLicenses} OF ST_TcOnlineLicenseInfoDataEx"/></type>
+              <type><array><dimension lower="1" upper="nMaxLicenses"/><baseType><derived name="ST_TcOnlineLicenseInfoDataEx"/></baseType></array></type>
               <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT aFailedLicenses</xhtml></documentation>
             </variable>
             <variable name="out_nInvalidLicenses">
@@ -87,7 +87,7 @@
               <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT nInvalidLicenses</xhtml></documentation>
             </variable>
             <variable name="out_aInvalidLicenses">
-              <type><derived name="ARRAY[1..nMaxLicenses} OF ST_TcOnlineLicenseInfoDataEx"/></type>
+              <type><array><dimension lower="1" upper="nMaxLicenses"/><baseType><derived name="ST_TcOnlineLicenseInfoDataEx"/></baseType></array></type>
               <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT aInvalidLicenses</xhtml></documentation>
             </variable>
           </localVars>

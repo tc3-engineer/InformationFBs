@@ -27,7 +27,7 @@
               <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT putValue</xhtml></documentation>
             </variable>
             <variable name="arg_putPosPtr">
-              <type><derived name="POINTER TO T_HashTableEntry"/></type>
+              <type><pointer><baseType><derived name="T_HashTableEntry"/></baseType></pointer></type>
               <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT putPosPtr</xhtml></documentation>
             </variable>
             <variable name="out_bOk">
@@ -39,7 +39,7 @@
               <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT getValue</xhtml></documentation>
             </variable>
             <variable name="out_getPosPtr">
-              <type><derived name="POINTER TO T_HashTableEntry"/></type>
+              <type><pointer><baseType><derived name="T_HashTableEntry"/></baseType></pointer></type>
               <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT getPosPtr</xhtml></documentation>
             </variable>
             <variable name="io_hTable">

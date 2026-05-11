@@ -23,15 +23,15 @@
               <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">触发一次调用</xhtml></documentation>
             </variable>
             <variable name="sA">
-              <type><derived name="STRING(255)"/></type>
+              <type><string><length>255</length></string></type>
               <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">测试用本地变量</xhtml></documentation>
             </variable>
             <variable name="sB">
-              <type><derived name="STRING(255)"/></type>
+              <type><string><length>255</length></string></type>
               <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">测试用本地变量</xhtml></documentation>
             </variable>
             <variable name="sC">
-              <type><derived name="STRING(255)"/></type>
+              <type><string><length>255</length></string></type>
               <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">测试用本地变量</xhtml></documentation>
             </variable>
           </localVars>

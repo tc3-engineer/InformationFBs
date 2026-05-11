@@ -27,7 +27,7 @@
               <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT bEnable</xhtml></documentation>
             </variable>
             <variable name="arg_dwCycle">
-              <type><derived name="DWORD(1..86400)"/></type>
+              <type><subrangeUnsigned><range lower="1" upper="86400"/><baseType><DWORD/></baseType></subrangeUnsigned></type>
               <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT dwCycle</xhtml></documentation>
             </variable>
             <variable name="arg_dwOpt">

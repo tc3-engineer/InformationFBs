@@ -43,7 +43,7 @@
               <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT tTimeout: ADS 超时</xhtml></documentation>
             </variable>
             <variable name="out_aEvents">
-              <type><derived name="ARRAY[1..80] OF ST_ReadEvent"/></type>
+              <type><array><dimension lower="1" upper="80"/><baseType><derived name="ST_ReadEvent"/></baseType></array></type>
               <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT aEvents: 查到的消息数组（最多 80 条）</xhtml></documentation>
             </variable>
             <variable name="out_nNumberOfEvents">

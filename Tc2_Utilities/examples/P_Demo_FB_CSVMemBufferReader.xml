@@ -23,7 +23,7 @@
               <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT eCmd</xhtml></documentation>
             </variable>
             <variable name="arg_pBuffer">
-              <type><derived name="POINTER TO BYTE"/></type>
+              <type><pointer><baseType><BYTE/></baseType></pointer></type>
               <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT pBuffer</xhtml></documentation>
             </variable>
             <variable name="arg_cbBuffer">
@@ -39,7 +39,7 @@
               <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT getValue</xhtml></documentation>
             </variable>
             <variable name="out_pValue">
-              <type><derived name="POINTER TO BYTE"/></type>
+              <type><pointer><baseType><BYTE/></baseType></pointer></type>
               <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT pValue</xhtml></documentation>
             </variable>
             <variable name="out_cbValue">

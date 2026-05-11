@@ -27,7 +27,7 @@
               <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">测试用本地变量</xhtml></documentation>
             </variable>
             <variable name="wsOut">
-              <type><derived name="WSTRING(255)"/></type>
+              <type><wstring><length>255</length></wstring></type>
               <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">测试用本地变量</xhtml></documentation>
             </variable>
             <variable name="nDstLen">

@@ -47,7 +47,7 @@
               <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT READY</xhtml></documentation>
             </variable>
             <variable name="out_CDT">
-              <type><derived name="DATE_AND_TIME"/></type>
+              <type><DATE_AND_TIME/></type>
               <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT CDT</xhtml></documentation>
             </variable>
           </localVars>

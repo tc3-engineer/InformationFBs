@@ -47,7 +47,7 @@
               <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT nValidLicenses</xhtml></documentation>
             </variable>
             <variable name="out_aValidLicenses">
-              <type><derived name="ARRAY [1..nMaxLicenses] OF ST_TcOnlineLicenseInfoData"/></type>
+              <type><array><dimension lower="1" upper="nMaxLicenses"/><baseType><derived name="ST_TcOnlineLicenseInfoData"/></baseType></array></type>
               <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT aValidLicenses</xhtml></documentation>
             </variable>
             <variable name="out_nInvalidLicenses">
@@ -55,7 +55,7 @@
               <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT nInvalidLicenses</xhtml></documentation>
             </variable>
             <variable name="out_aInvalidLicenses">
-              <type><derived name="ARRAY [1..nMaxLicenses] OF ST_TcOnlineLicenseInfoData"/></type>
+              <type><array><dimension lower="1" upper="nMaxLicenses"/><baseType><derived name="ST_TcOnlineLicenseInfoData"/></baseType></array></type>
               <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT aInvalidLicenses</xhtml></documentation>
             </variable>
           </localVars>

@@ -15,7 +15,7 @@
         <interface>
           <localVars>
             <variable name="rResult">
-              <type><derived name="ARRAY[0..MAX_STRING_LENGTH] OF BYTE"/></type>
+              <type><array><dimension lower="0" upper="MAX_STRING_LENGTH"/><baseType><BYTE/></baseType></array></type>
               <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">MAXSTRING_TO_BYTEARR 返回值</xhtml></documentation>
             </variable>
             <variable name="bRun">
@@ -28,7 +28,7 @@
               <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">测试用本地变量</xhtml></documentation>
             </variable>
             <variable name="ar">
-              <type><derived name="ARRAY[0..MAX_STRING_LENGTH] OF BYTE"/></type>
+              <type><array><dimension lower="0" upper="MAX_STRING_LENGTH"/><baseType><BYTE/></baseType></array></type>
               <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">测试用本地变量</xhtml></documentation>
             </variable>
           </localVars>

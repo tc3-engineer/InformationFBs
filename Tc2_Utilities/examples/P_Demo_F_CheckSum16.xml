@@ -23,7 +23,7 @@
               <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">触发一次调用</xhtml></documentation>
             </variable>
             <variable name="ar">
-              <type><derived name="ARRAY[0..3] OF BYTE"/></type>
+              <type><array><dimension lower="0" upper="3"/><baseType><BYTE/></baseType></array></type>
               <initialValue><simpleValue value="[1,2,3,4]"/></initialValue>
               <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">测试用本地变量</xhtml></documentation>
             </variable>

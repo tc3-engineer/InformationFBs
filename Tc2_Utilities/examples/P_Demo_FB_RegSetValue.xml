@@ -39,7 +39,7 @@
               <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT cbData</xhtml></documentation>
             </variable>
             <variable name="arg_pData">
-              <type><derived name="POINTER TO BYTE"/></type>
+              <type><pointer><baseType><BYTE/></baseType></pointer></type>
               <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT pData</xhtml></documentation>
             </variable>
             <variable name="arg_bExecute">

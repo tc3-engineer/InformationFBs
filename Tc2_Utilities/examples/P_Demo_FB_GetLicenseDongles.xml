@@ -47,7 +47,7 @@
               <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT nLicenseDeviceDongles</xhtml></documentation>
             </variable>
             <variable name="out_aLicenseDeviceDongles">
-              <type><derived name="ARRAY[1..nMaxLicenseDevices] OF ST_LicenseDongle"/></type>
+              <type><array><dimension lower="1" upper="nMaxLicenseDevices"/><baseType><derived name="ST_LicenseDongle"/></baseType></array></type>
               <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT aLicenseDeviceDongles</xhtml></documentation>
             </variable>
           </localVars>
