@@ -137,8 +137,8 @@ fbReadRegs(
 
 // 完成后从 stReadResult[8] 还原 WORD；字段名以 ST_CouplerTable/ST_CouplerReg 实际定义为准
 IF bScanKL3464Id AND NOT bScanBusy AND NOT bScanError THEN
-    wKL3464IdReadback := SHL(WORD#(stReadResult.aRegister[8].nHi), 8)
-                       + WORD#(stReadResult.aRegister[8].nLo);
+    wKL3464IdReadback := SHL(TO_WORD(stReadResult.aRegister[8].nHi), 8)
+                       + TO_WORD(stReadResult.aRegister[8].nLo);
 END_IF;
 </xhtml></ST>
         </body>

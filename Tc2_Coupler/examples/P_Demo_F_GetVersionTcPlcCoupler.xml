@@ -88,10 +88,10 @@ bVersionOkLegacy := (nMajorOld &gt; nRequiredMajor)
 // 一次性结构化访问 + 内置比较
 bVersionOkModern := F_CmpLibVersion(
     stLibVersion := stLibVersion_Tc2_Coupler,
-    iMajor       := INT#(nRequiredMajor),
-    iMinor       := INT#(nRequiredMinor),
+    iMajor       := TO_INT(nRequiredMajor),
+    iMinor       := TO_INT(nRequiredMinor),
     iBuild       := 0,
-    iRevision    := INT#(nRequiredRevision),
+    iRevision    := TO_INT(nRequiredRevision),
     nCmpType     := E_CmpLibVersion.GreaterOrEqual
 );
 </xhtml></ST>
