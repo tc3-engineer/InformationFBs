@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <project xmlns="http://www.plcopen.org/xml/tc6_0200">
-  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-10T10:00:00"/>
-  <contentHeader name="Tc2_Math.F_GetVersionTcMath Demo" modificationDateTime="2026-05-10T10:00:00">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-11T07:00:00"/>
+  <contentHeader name="Tc2_Math.F_GetVersionTcMath Demo (obsolete)" modificationDateTime="2026-05-11T07:00:00">
     <coordinateInfo>
       <fbd><scaling x="1" y="1"/></fbd>
       <ld><scaling x="1" y="1"/></ld>
@@ -14,39 +14,87 @@
       <pou name="P_Demo_F_GetVersionTcMath" pouType="program">
         <interface>
           <localVars>
-            <variable name="rResult">
+            <variable name="nMajor_OldWay">
               <type><UINT/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">F_GetVersionTcMath 的返回值</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">旧 API：F_GetVersionTcMath(1) 返回 major</xhtml></documentation>
             </variable>
-            <variable name="bRun">
+            <variable name="nMinor_OldWay">
+              <type><UINT/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">旧 API：F_GetVersionTcMath(2) 返回 minor</xhtml></documentation>
+            </variable>
+            <variable name="nRevision_OldWay">
+              <type><UINT/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">旧 API：F_GetVersionTcMath(3) 返回 revision</xhtml></documentation>
+            </variable>
+            <variable name="nMajor_NewWay">
+              <type><UINT/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">新 API：stLibVersion_Tc2_Math.iMajor</xhtml></documentation>
+            </variable>
+            <variable name="nMinor_NewWay">
+              <type><UINT/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">新 API：stLibVersion_Tc2_Math.iMinor</xhtml></documentation>
+            </variable>
+            <variable name="nBuild_NewWay">
+              <type><UINT/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">新 API 独有：stLibVersion_Tc2_Math.iBuild（旧 API 拿不到）</xhtml></documentation>
+            </variable>
+            <variable name="nRevision_NewWay">
+              <type><UINT/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">新 API：stLibVersion_Tc2_Math.iRevision</xhtml></documentation>
+            </variable>
+            <variable name="sVersion_NewWay">
+              <type><string><length>23</length></string></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">新 API 独有：完整版本字符串，方便 HMI 显示</xhtml></documentation>
+            </variable>
+            <variable name="bChecked">
               <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">触发一次调用</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">只跑一次的 latch（版本是编译期常量，无需每周期取）</xhtml></documentation>
             </variable>
           </localVars>
         </interface>
         <body>
-          <ST>
-            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
-// Tc2_Math.F_GetVersionTcMath 演示程序（FUNCTION）
-// ============================================================
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：从 TwinCAT 2 迁移过来的老工程中残留 F_GetVersionTcMath 调用，本程序
+//       并行对比旧 API（F_GetVersionTcMath）与新 API（stLibVersion_Tc2_Math
+//       + F_CmpLibVersion）取相同版本数据，用作迁移参考。
+//
+// 价值：本程序是"反面教材"——展示旧 API 是新 API 的真子集，缺 build 字段、
+//       缺字符串、需要传魔法数 1/2/3。新代码应一律改用新 API。
+//
 // 验证步骤：
-//   1. 引用 Tc2_Math
-//   2. 编译 + 登录
-//   3. 强制 bRun := TRUE 一个周期
-//   4. 在线监视 rResult 应为 major (e.g. 3)
-// ============================================================
+//   1. 引用 Tc2_Math + Tc2_System
+//   2. 在 PLC 项目右键 → Import PLCopenXML → 选本文件 → OK
+//   3. 编译、登录、运行
+//   4. 在线 monitor 看：
+//      - nMajor_OldWay = nMajor_NewWay = 1
+//      - nMinor_OldWay = nMinor_NewWay = 3
+//      - nRevision_OldWay = nRevision_NewWay = 3
+//      - nBuild_NewWay 独立有值（如 0），旧 API 完全拿不到这个字段
+//      - sVersion_NewWay 显示 '1.3.3.0' 字符串
+//   5. 结论：旧 API 是子集——没有任何继续使用的理由
+// =============================================================================
 
-IF bRun THEN
-    rResult := F_GetVersionTcMath(1);
-    bRun := FALSE;
+IF NOT bChecked THEN
+    bChecked := TRUE;
+
+    // ─── 旧 API（弃用，仅迁移参考）──────────────────────
+    // 注意：每个字段都要传魔法数 1/2/3，无 self-documenting
+    nMajor_OldWay    := F_GetVersionTcMath(nVersionElement := 1);
+    nMinor_OldWay    := F_GetVersionTcMath(nVersionElement := 2);
+    nRevision_OldWay := F_GetVersionTcMath(nVersionElement := 3);
+
+    // ─── 新 API（强烈推荐）─────────────────────────────
+    // 直接成员访问；类型即文档；还能拿 build 与完整字符串
+    nMajor_NewWay    := stLibVersion_Tc2_Math.iMajor;
+    nMinor_NewWay    := stLibVersion_Tc2_Math.iMinor;
+    nBuild_NewWay    := stLibVersion_Tc2_Math.iBuild;
+    nRevision_NewWay := stLibVersion_Tc2_Math.iRevision;
+    sVersion_NewWay  := stLibVersion_Tc2_Math.sVersion;
 END_IF;
-</xhtml>
-          </ST>
+</xhtml></ST>
         </body>
       </pou>
     </pous>
   </types>
-  <instances>
-    <configurations/>
-  </instances>
+  <instances><configurations/></instances>
 </project>

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <project xmlns="http://www.plcopen.org/xml/tc6_0200">
-  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-10T10:00:00"/>
-  <contentHeader name="Tc2_Math.CEIL Demo" modificationDateTime="2026-05-10T10:00:00">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-11T07:00:00"/>
+  <contentHeader name="Tc2_Math.CEIL Demo" modificationDateTime="2026-05-11T07:00:00">
     <coordinateInfo>
       <fbd><scaling x="1" y="1"/></fbd>
       <ld><scaling x="1" y="1"/></ld>
@@ -14,39 +14,50 @@
       <pou name="P_Demo_CEIL" pouType="program">
         <interface>
           <localVars>
-            <variable name="rResult">
+            <variable name="lrPackageWeightKg">
+              <initialValue><simpleValue value="0.3"/></initialValue>
               <type><LREAL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">CEIL 的返回值</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">称重模块的读数；在线写值模拟不同包裹重量</xhtml></documentation>
             </variable>
-            <variable name="bRun">
-              <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">触发一次调用</xhtml></documentation>
+            <variable name="lrChargeTier">
+              <type><LREAL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">向上取整后的收费档位（公斤）</xhtml></documentation>
+            </variable>
+            <variable name="nChargeYuan">
+              <type><DINT/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">收费系统接收的整数金额（元）</xhtml></documentation>
             </variable>
           </localVars>
         </interface>
         <body>
-          <ST>
-            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
-// Tc2_Math.CEIL 演示程序（FUNCTION）
-// ============================================================
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：分拣线按重量阶梯收费——0.01-1.00kg 收 1 元、1.01-2.00kg 收 2 元……
+//       需要把称重模块的 LREAL 读数向上取整到下一公斤，得到收费档位。
+//
+// 价值：CEIL 一行替代多段 IF/ELSIF 阈值判断；返回 LREAL 还能处理超出 DINT
+//       范围的大数（极少数大宗物料场景）；负数侧朝 +∞ 取整有明确语义。
+//
 // 验证步骤：
 //   1. 引用 Tc2_Math
-//   2. 编译 + 登录
-//   3. 强制 bRun := TRUE 一个周期
-//   4. 在线监视 rResult 应为 3
-// ============================================================
+//   2. 在 PLC 项目右键 → Import PLCopenXML → 选本文件 → OK
+//   3. 编译、登录、运行
+//   4. 在线 monitor 看：
+//      - lrPackageWeightKg = 0.3 → lrChargeTier 应为 1.0，nChargeYuan = 1
+//      - 在线改 lrPackageWeightKg = 1.0 → lrChargeTier 仍 1.0（边界含值）
+//      - 改 1.01 → 2.0
+//      - 改 -0.3 → 0.0 （负数朝 +∞，验证 CEIL 不是绝对值变大）
+// =============================================================================
 
-IF bRun THEN
-    rResult := CEIL(2.8);
-    bRun := FALSE;
-END_IF;
-</xhtml>
-          </ST>
+// 单行调用：CEIL 朝 +∞ 方向取整，正数侧符合"向上取"直觉
+lrChargeTier := CEIL(lrPackageWeightKg);
+
+// LREAL → DINT 显式转换，规避隐式转换编译警告
+// （CEIL 已保证 lrChargeTier 是整数值，转换不损失精度）
+nChargeYuan := LREAL_TO_DINT(lrChargeTier);
+</xhtml></ST>
         </body>
       </pou>
     </pous>
   </types>
-  <instances>
-    <configurations/>
-  </instances>
+  <instances><configurations/></instances>
 </project>

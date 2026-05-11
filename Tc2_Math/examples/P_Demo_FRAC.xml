@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <project xmlns="http://www.plcopen.org/xml/tc6_0200">
-  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-10T10:00:00"/>
-  <contentHeader name="Tc2_Math.FRAC Demo" modificationDateTime="2026-05-10T10:00:00">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-11T07:00:00"/>
+  <contentHeader name="Tc2_Math.FRAC Demo" modificationDateTime="2026-05-11T07:00:00">
     <coordinateInfo>
       <fbd><scaling x="1" y="1"/></fbd>
       <ld><scaling x="1" y="1"/></ld>
@@ -14,39 +14,55 @@
       <pou name="P_Demo_FRAC" pouType="program">
         <interface>
           <localVars>
-            <variable name="rResult">
+            <variable name="lrUnixTimeSec">
+              <initialValue><simpleValue value="1715433600.5"/></initialValue>
               <type><LREAL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">FRAC 的返回值</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">外部送入的 Unix 秒（含小数）；在线写值模拟不同时间戳</xhtml></documentation>
             </variable>
-            <variable name="bRun">
-              <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">触发一次调用</xhtml></documentation>
+            <variable name="lrFractionalSec">
+              <type><LREAL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">FRAC 输出：带符号的小数部分</xhtml></documentation>
+            </variable>
+            <variable name="lrIntegerSec">
+              <type><LREAL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">LTRUNC 输出：朝零截断的整数部分（与 FRAC 互补）</xhtml></documentation>
+            </variable>
+            <variable name="nNanosecondPart">
+              <type><DINT/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">小数部分 × 1e9 后的纳秒整数</xhtml></documentation>
             </variable>
           </localVars>
         </interface>
         <body>
-          <ST>
-            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
-// Tc2_Math.FRAC 演示程序（FUNCTION）
-// ============================================================
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：上位机送来 LREAL 秒数（如 Unix epoch 1715433600.5），需要拆成
+//       "整秒"+"纳秒部分"两份：整秒用于 MES 主键，纳秒部分给质量时序对齐。
+//
+// 价值：FRAC 一行直接给出带符号的小数部分；与 LTRUNC 互补完成整数+小数拆分。
+//       省去自己写 x-LTRUNC(x) 的两步代码。
+//
 // 验证步骤：
 //   1. 引用 Tc2_Math
-//   2. 编译 + 登录
-//   3. 强制 bRun := TRUE 一个周期
-//   4. 在线监视 rResult 应为 0.8
-// ============================================================
+//   2. 在 PLC 项目右键 → Import PLCopenXML → 选本文件 → OK
+//   3. 编译、登录、运行
+//   4. 在线 monitor 看：
+//      - lrUnixTimeSec = 1715433600.5 → lrFractionalSec = 0.5,
+//        lrIntegerSec = 1715433600, nNanosecondPart = 500_000_000
+//      - 在线改 1715433600.0 → 0.0 / 1715433600 / 0
+//      - 改 -1.25 → -0.25 / -1 / -250_000_000 （验证符号保留）
+// =============================================================================
 
-IF bRun THEN
-    rResult := FRAC(2.8);
-    bRun := FALSE;
-END_IF;
-</xhtml>
-          </ST>
+// 单行调用：FRAC 取带符号小数部分；LTRUNC 取朝零截断的整数部分
+// 两者相加恒等于 lrUnixTimeSec（LREAL 精度内）
+lrFractionalSec := FRAC(lrUnixTimeSec);
+lrIntegerSec   := LTRUNC(lrUnixTimeSec);
+
+// 小数秒 × 1e9 转纳秒整数；典型 Unix 时间戳 ~1.7e9 远低于 2^53，安全
+nNanosecondPart := LREAL_TO_DINT(lrFractionalSec * 1.0E9);
+</xhtml></ST>
         </body>
       </pou>
     </pous>
   </types>
-  <instances>
-    <configurations/>
-  </instances>
+  <instances><configurations/></instances>
 </project>
