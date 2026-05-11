@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <project xmlns="http://www.plcopen.org/xml/tc6_0200">
-  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-10T10:00:00"/>
-  <contentHeader name="Tc2_Math.MODTURNS Demo" modificationDateTime="2026-05-10T10:00:00">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-11T07:00:00"/>
+  <contentHeader name="Tc2_Math.MODTURNS Demo" modificationDateTime="2026-05-11T07:00:00">
     <coordinateInfo>
       <fbd><scaling x="1" y="1"/></fbd>
       <ld><scaling x="1" y="1"/></ld>
@@ -14,39 +14,57 @@
       <pou name="P_Demo_MODTURNS" pouType="program">
         <interface>
           <localVars>
-            <variable name="rResult">
-              <type><DINT/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">MODTURNS 的返回值</xhtml></documentation>
+            <variable name="lrAxisAbsPositionDeg">
+              <initialValue><simpleValue value="800.56"/></initialValue>
+              <type><LREAL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">伺服累计绝对位置（度）；在线写值模拟编码器读数</xhtml></documentation>
             </variable>
-            <variable name="bRun">
-              <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">触发一次调用</xhtml></documentation>
+            <variable name="lrTurnSizeDeg">
+              <initialValue><simpleValue value="360.0"/></initialValue>
+              <type><LREAL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">一圈大小（NC 模值范围）</xhtml></documentation>
+            </variable>
+            <variable name="nCompletedTurns">
+              <type><DINT/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">MODTURNS 输出：朝零截断的整数圈数；DINT 范围限制 ±2^31</xhtml></documentation>
+            </variable>
+            <variable name="lrAngleInTurnDeg">
+              <type><LREAL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">LMOD 输出：圈内带符号余数；与 MODTURNS 互补恢复原值</xhtml></documentation>
             </variable>
           </localVars>
         </interface>
         <body>
-          <ST>
-            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
-// Tc2_Math.MODTURNS 演示程序（FUNCTION）
-// ============================================================
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：长行程伺服 + 转盘——累计角度跑多圈后要拆成"圈数 + 圈内位置"两份显示：
+//       圈数给操作员看进度，圈内位置驱动指示灯阵列。MODTURNS + LMOD 是 PDF
+//       推荐的标准配对方式。
+//
+// 价值：MODTURNS 给 DINT 整数圈数可直接喂给计数器/数组下标；与 LMOD 配对
+//       一次性分解累计量，省去 LTRUNC + 减法的三步代码。
+//
 // 验证步骤：
 //   1. 引用 Tc2_Math
-//   2. 编译 + 登录
-//   3. 强制 bRun := TRUE 一个周期
-//   4. 在线监视 rResult 应为 2
-// ============================================================
+//   2. 在 PLC 项目右键 → Import PLCopenXML → 选本文件 → OK
+//   3. 编译、登录、运行
+//   4. 在线 monitor 看：
+//      - lrAxisAbsPositionDeg = 800.56 → nCompletedTurns = 2,
+//        lrAngleInTurnDeg = 80.56 （2*360 + 80.56 = 800.56 ✓）
+//      - 在线改 -400.56 → -1, -40.56 （-1*360 + -40.56 = -400.56 ✓）
+//      - 改 720 → 2, 0 （整 2 圈）
+//      - 改 359.99 → 0, 359.99 （差一点不到 1 圈）
+// 注：MODTURNS 朝零截断；MODABS 不与 MODTURNS 严格互补，配对必须用 LMOD。
+// =============================================================================
 
-IF bRun THEN
-    rResult := MODTURNS(800.56, 360.0);
-    bRun := FALSE;
-END_IF;
-</xhtml>
-          </ST>
+// 单行调用：MODTURNS 给整数商；返回 DINT 直接用
+nCompletedTurns := MODTURNS(lrAxisAbsPositionDeg, lrTurnSizeDeg);
+
+// 与 LMOD 配对：MODTURNS * m + LMOD = 原值（PDF 标准用法）
+lrAngleInTurnDeg := LMOD(lrAxisAbsPositionDeg, lrTurnSizeDeg);
+</xhtml></ST>
         </body>
       </pou>
     </pous>
   </types>
-  <instances>
-    <configurations/>
-  </instances>
+  <instances><configurations/></instances>
 </project>

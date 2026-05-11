@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <project xmlns="http://www.plcopen.org/xml/tc6_0200">
-  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-10T10:00:00"/>
-  <contentHeader name="Tc2_Math.MODABS Demo" modificationDateTime="2026-05-10T10:00:00">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-11T07:00:00"/>
+  <contentHeader name="Tc2_Math.MODABS Demo" modificationDateTime="2026-05-11T07:00:00">
     <coordinateInfo>
       <fbd><scaling x="1" y="1"/></fbd>
       <ld><scaling x="1" y="1"/></ld>
@@ -14,39 +14,58 @@
       <pou name="P_Demo_MODABS" pouType="program">
         <interface>
           <localVars>
-            <variable name="rResult">
+            <variable name="lrAxisAbsPositionDeg">
+              <initialValue><simpleValue value="400.56"/></initialValue>
               <type><LREAL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">MODABS 的返回值</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">伺服轴累计绝对位置（度）；在线写值模拟编码器读数</xhtml></documentation>
             </variable>
-            <variable name="bRun">
-              <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">触发一次调用</xhtml></documentation>
+            <variable name="lrTurnSizeDeg">
+              <initialValue><simpleValue value="360.0"/></initialValue>
+              <type><LREAL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">一圈大小（NC 模值范围）</xhtml></documentation>
+            </variable>
+            <variable name="lrPositionInOneTurnDeg">
+              <type><LREAL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">MODABS 输出：[0, 360) 的无符号物理位置</xhtml></documentation>
+            </variable>
+            <variable name="nCurrentStationIndex">
+              <type><DINT/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">当前工位号（0..3，每 90 度一工位）</xhtml></documentation>
             </variable>
           </localVars>
         </interface>
         <body>
-          <ST>
-            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
-// Tc2_Math.MODABS 演示程序（FUNCTION）
-// ============================================================
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：转盘式装配工位（4 工位每 90°），驱动是单方向累计的伺服轴。
+//       本程序读累计绝对位置 lrAxisAbsPositionDeg（可跑多圈），用 MODABS
+//       归一到 [0, 360) 然后算出当前工位号，给 HMI 与工艺逻辑使用。
+//
+// 价值：MODABS 一行处理"多圈累计 + 反向 + 零点"；选错用 LMOD 反向跑出
+//       负角度会让 HMI 显示 -90° 而不是 270°——典型陷阱。
+//
 // 验证步骤：
 //   1. 引用 Tc2_Math
-//   2. 编译 + 登录
-//   3. 强制 bRun := TRUE 一个周期
-//   4. 在线监视 rResult 应为 40.56
-// ============================================================
+//   2. 在 PLC 项目右键 → Import PLCopenXML → 选本文件 → OK
+//   3. 编译、登录、运行
+//   4. 在线 monitor 看：
+//      - lrAxisAbsPositionDeg = 400.56 → lrPositionInOneTurnDeg = 40.56,
+//        nCurrentStationIndex = 0
+//      - 在线改 -400.56 → 319.44, station 3 （验证负数翻正）
+//      - 改 90 → 90, station 1
+//      - 改 -1 → 359, station 3 （边界翻正）
+//      - 改 720 → 0, station 0 （整模值归零）
+// =============================================================================
 
-IF bRun THEN
-    rResult := MODABS(400.56, 360.0);
-    bRun := FALSE;
-END_IF;
-</xhtml>
-          </ST>
+// 单行调用：MODABS 把累计角度归一为 [0, 360) 物理位置
+// 与 LMOD 关键区别：负被除数也给正余数
+lrPositionInOneTurnDeg := MODABS(lrAxisAbsPositionDeg, lrTurnSizeDeg);
+
+// 工位号 = FLOOR(归一角度 / 90)；保证 89.999° 落到第 0 工位、90° 落到第 1
+nCurrentStationIndex := LREAL_TO_DINT(FLOOR(lrPositionInOneTurnDeg / 90.0));
+</xhtml></ST>
         </body>
       </pou>
     </pous>
   </types>
-  <instances>
-    <configurations/>
-  </instances>
+  <instances><configurations/></instances>
 </project>
