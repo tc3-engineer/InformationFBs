@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <project xmlns="http://www.plcopen.org/xml/tc6_0200">
-  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-11T07:00:00"/>
-  <contentHeader name="Tc2_Standard.CTU Demo" modificationDateTime="2026-05-11T07:00:00">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-10T08:00:00"/>
+  <contentHeader name="Tc2_Standard.CTU Demo" modificationDateTime="2026-05-10T08:00:00">
     <coordinateInfo>
       <fbd><scaling x="1" y="1"/></fbd>
       <ld><scaling x="1" y="1"/></ld>
@@ -14,65 +14,56 @@
       <pou name="P_Demo_CTU" pouType="program">
         <interface>
           <localVars>
-            <variable name="fbBoxCounter">
+            <variable name="fbCTU">
               <type><derived name="CTU"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">向上计数器实例：传送带满箱计数</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">Counter 实例</xhtml></documentation>
             </variable>
-            <variable name="bProductSensor">
+            <variable name="bReset">
               <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">光电传感器（每经过一件工件来一个上升沿）</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">复位计数到 0</xhtml></documentation>
             </variable>
-            <variable name="bBoxChangedAck">
+            <variable name="bCountUp">
               <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">操作员"换箱完成"按钮（上升沿复位）</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">每个产品到位给一次上升沿</xhtml></documentation>
             </variable>
-            <variable name="nBoxCapacity">
-              <initialValue><simpleValue value="100"/></initialValue>
+            <variable name="bFull">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">达到 10 件时 TRUE</xhtml></documentation>
+            </variable>
+            <variable name="nCV">
               <type><WORD/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">满箱产品数门限 = 100</xhtml></documentation>
-            </variable>
-            <variable name="bBoxFull">
-              <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">满箱信号（CV ≥ 100 时 TRUE）</xhtml></documentation>
-            </variable>
-            <variable name="nCurrentCount">
-              <type><WORD/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">当前已数件数（监视：从 0 数到 100）</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">已累计件数（监视）</xhtml></documentation>
             </variable>
           </localVars>
         </interface>
         <body>
-          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
-// 场景：传送带上每过一个工件，光电传感器发一个上升沿；累计满 100 件后输出
-//       "满箱"通知打包工位换箱子；操作员换完按"换箱完成"复位计数器从 0 重新数。
-//
-// 价值：1 次调用拿到"边沿检测+自加+门限比较+复位"完整状态机；手写约 8 行
-//       （含上一周期值保存防止误重复计数）。
-//
+          <ST>
+            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
+// Tc2_Standard.CTU 演示程序
+// ============================================================
+// 场景：累计 10 个产品后发出'换托盘'信号
 // 验证步骤：
-//   1. PLC 项目 → Import PLCopenXML → 选本文件
-//   2. 引用 Tc2_Standard 库
-//   3. 编译、登录、运行
-//   4. 在线 monitor nCurrentCount 与 bBoxFull
-//   5. 反复在线把 bProductSensor 在 TRUE/FALSE 间切换（每来一次上升沿
-//      nCurrentCount 加 1）；连发 100 次 → bBoxFull 变 TRUE
-//   6. 在线 bBoxChangedAck := TRUE → nCurrentCount 立即回 0、bBoxFull 回 FALSE；
-//      再把 bBoxChangedAck := FALSE 即可继续数下一箱
-//   7. 测试边沿语义：把 bProductSensor 一直 TRUE，nCurrentCount 不会持续累加，
-//      只在第一次进入 TRUE 时加 1
-// =============================================================================
+//   1. 把本 PROGRAM 加到 PlcTask 调用列表
+//   2. 编译并登录目标
+//   1. 强制 bReset := TRUE 一个周期 → nCV 归 0、bFull = FALSE
+//   2. 重复给 bCountUp 上升沿 10 次 → nCV 增到 10、bFull = TRUE
+//   3. CV >= PV 后的进一步行为 PDF 未描述（⚠️ 待人工确认）
+// ============================================================
 
-fbBoxCounter(
-    CU    := bProductSensor,
-    RESET := bBoxChangedAck,
-    PV    := nBoxCapacity,
-    Q     =&gt; bBoxFull,
-    CV    =&gt; nCurrentCount
+fbCTU(
+    CU    := bCountUp,
+    RESET := bReset,
+    PV    := WORD#10,
+    Q     =&gt; bFull,
+    CV    =&gt; nCV
 );
-</xhtml></ST>
+</xhtml>
+          </ST>
         </body>
       </pou>
     </pous>
   </types>
-  <instances><configurations/></instances>
+  <instances>
+    <configurations/>
+  </instances>
 </project>

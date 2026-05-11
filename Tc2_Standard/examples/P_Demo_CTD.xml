@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <project xmlns="http://www.plcopen.org/xml/tc6_0200">
-  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-11T07:00:00"/>
-  <contentHeader name="Tc2_Standard.CTD Demo" modificationDateTime="2026-05-11T07:00:00">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-10T08:00:00"/>
+  <contentHeader name="Tc2_Standard.CTD Demo" modificationDateTime="2026-05-10T08:00:00">
     <coordinateInfo>
       <fbd><scaling x="1" y="1"/></fbd>
       <ld><scaling x="1" y="1"/></ld>
@@ -14,65 +14,56 @@
       <pou name="P_Demo_CTD" pouType="program">
         <interface>
           <localVars>
-            <variable name="fbCreditCounter">
+            <variable name="fbCTD">
               <type><derived name="CTD"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">向下计数器实例：售货机出货次数余量</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">Counter 实例</xhtml></documentation>
             </variable>
-            <variable name="bRechargeReq">
+            <variable name="bLoad">
               <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">充值/投币（LOAD 上升沿把 PV 装入 CV）</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">脉冲一次：把 CV 装入 5</xhtml></documentation>
             </variable>
-            <variable name="bDispenseDone">
+            <variable name="bCountDown">
               <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">出货完成脉冲（CD 上升沿余量 -1）</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">每给一次上升沿 CV 减 1</xhtml></documentation>
             </variable>
-            <variable name="nMaxDispenses">
-              <initialValue><simpleValue value="10"/></initialValue>
+            <variable name="bDone">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">CV 减到 0 时 TRUE</xhtml></documentation>
+            </variable>
+            <variable name="nCV">
               <type><WORD/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">一次充值后可出货 10 次（50 元 / 5 元）</xhtml></documentation>
-            </variable>
-            <variable name="bNeedRecharge">
-              <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">需充值提示（CV=0 时 TRUE）</xhtml></documentation>
-            </variable>
-            <variable name="nDispensesLeft">
-              <type><WORD/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">剩余次数（监视：从 10 数到 0）</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">当前剩余计数（监视）</xhtml></documentation>
             </variable>
           </localVars>
         </interface>
         <body>
-          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
-// 场景：自动售货机一次充值 50 元，每次出货扣 5 元 = 10 次。剩余 0 次（CV=0）
-//       时点亮"请充值"指示灯并禁止再出货，等用户投币（LOAD 上升沿）重新装载。
-//
-// 价值：1 次调用拿到"装载+减+到底停止+状态比较"完整状态机；手写约 8 行且
-//       容易忘记防下溢导致 WORD 回卷成 65535（CTD 内部已正确处理）。
-//
+          <ST>
+            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
+// Tc2_Standard.CTD 演示程序
+// ============================================================
+// 场景：倒计时 5 个产品后置位完成位
 // 验证步骤：
-//   1. PLC 项目 → Import PLCopenXML → 选本文件
-//   2. 引用 Tc2_Standard 库
-//   3. 编译、登录、运行
-//   4. 在线 monitor nDispensesLeft 与 bNeedRecharge
-//   5. 初始 CV=0、bNeedRecharge=TRUE（已到底）
-//   6. 在线 bRechargeReq 短按（TRUE → FALSE）→ nDispensesLeft 跳到 10，
-//      bNeedRecharge 回 FALSE
-//   7. 反复短按 bDispenseDone（TRUE 然后 FALSE）→ 每次 nDispensesLeft -1
-//      数到 0 时 bNeedRecharge 又 TRUE；之后再按 bDispenseDone 无效（防下溢）
-//   8. 注意：LOAD 必须是脉冲，如果一直 TRUE 计数器永远是 10 数不下来
-// =============================================================================
+//   1. 把本 PROGRAM 加到 PlcTask 调用列表
+//   2. 编译并登录目标
+//   1. 强制 bLoad := TRUE 一个周期 → nCV 变成 5
+//   2. 重复给 bCountDown FALSE → TRUE → FALSE 五次 → nCV 减到 0
+//   3. nCV = 0 时观察 bDone 为 TRUE
+// ============================================================
 
-fbCreditCounter(
-    CD   := bDispenseDone,
-    LOAD := bRechargeReq,
-    PV   := nMaxDispenses,
-    Q    =&gt; bNeedRecharge,
-    CV   =&gt; nDispensesLeft
+fbCTD(
+    CD   := bCountDown,
+    LOAD := bLoad,
+    PV   := WORD#5,
+    Q    =&gt; bDone,
+    CV   =&gt; nCV
 );
-</xhtml></ST>
+</xhtml>
+          </ST>
         </body>
       </pou>
     </pous>
   </types>
-  <instances><configurations/></instances>
+  <instances>
+    <configurations/>
+  </instances>
 </project>

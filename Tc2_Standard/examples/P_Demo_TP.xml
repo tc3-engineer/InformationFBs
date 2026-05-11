@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <project xmlns="http://www.plcopen.org/xml/tc6_0200">
-  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-11T07:00:00"/>
-  <contentHeader name="Tc2_Standard.TP Demo" modificationDateTime="2026-05-11T07:00:00">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-10T08:00:00"/>
+  <contentHeader name="Tc2_Standard.TP Demo" modificationDateTime="2026-05-10T08:00:00">
     <coordinateInfo>
       <fbd><scaling x="1" y="1"/></fbd>
       <ld><scaling x="1" y="1"/></ld>
@@ -14,59 +14,51 @@
       <pou name="P_Demo_TP" pouType="program">
         <interface>
           <localVars>
-            <variable name="fbValvePulse">
+            <variable name="fbTP">
               <type><derived name="TP"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">脉冲发生器实例：电磁阀定时开</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">Timer 实例</xhtml></documentation>
             </variable>
-            <variable name="bOpenValveReq">
+            <variable name="bSensor">
               <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">操作员按钮（在线置 TRUE 触发一次脉冲）</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">传感器到位（一瞬间 TRUE）</xhtml></documentation>
             </variable>
-            <variable name="tValveOpenWidth">
-              <initialValue><simpleValue value="T#200MS"/></initialValue>
-              <type><TIME/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">脉冲宽度 = 200 ms（电磁阀机械寿命约束）</xhtml></documentation>
-            </variable>
-            <variable name="bValveCoilEnergize">
+            <variable name="bPulse">
               <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">电磁阀线圈驱动输出（脉冲）</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">200ms 输出脉冲</xhtml></documentation>
             </variable>
-            <variable name="tPulseElapsed">
+            <variable name="tInPulse">
               <type><TIME/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">脉冲已经过时长（监视）</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">脉冲已经过时间</xhtml></documentation>
             </variable>
           </localVars>
         </interface>
         <body>
-          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
-// 场景：脉冲式电磁阀控制。短按"开阀"按钮，发出一次固定 200 ms 的线圈驱动脉冲；
-//       不管按钮按多久，阀都只开 200 ms（电磁阀机械寿命和散热约束）。
-//
-// 价值：1 行 TP 完成"边沿触发、固定宽度、不可重入"完整语义；手写需要约 10 行
-//       上升沿检测+状态保存+输入屏蔽+ET 累加+到点 Q 落+等 IN 回落清零。
-//
+          <ST>
+            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
+// Tc2_Standard.TP 演示程序
+// ============================================================
+// 场景：传感器到位时输出 200ms 标定脉冲（用于打标/喷码）
 // 验证步骤：
-//   1. PLC 项目 → Import PLCopenXML → 选本文件
-//   2. 引用 Tc2_Standard 库
-//   3. 编译、登录、运行
-//   4. 在线 monitor bValveCoilEnergize 与 tPulseElapsed
-//   5. 在线把 bOpenValveReq 短按（TRUE 然后 FALSE）→ 观察 bValveCoilEnergize
-//      变 TRUE 200ms 后自动回 FALSE，tPulseElapsed 从 0 累加到 200ms
-//   6. 测试不可重触发：在 bValveCoilEnergize 还是 TRUE 的时候再点一次按钮，
-//      pulse 不会重启或延长，依然按原计划在 200ms 结束
-//   7. 测试长按：bOpenValveReq 持续 TRUE 5 秒，bValveCoilEnergize 仍只 TRUE 200ms
-// =============================================================================
+//   1. 把本 PROGRAM 加到 PlcTask 调用列表
+//   2. 编译并登录目标
+//   1. bSensor 给一次上升沿 → bPulse 立即 TRUE 持续 200ms 后自动 FALSE
+//   2. 脉冲期内 bSensor 再给上升沿 → **被忽略**（PDF 行为：脉冲完成前不再触发）
+//   3. 脉冲期内 bSensor := FALSE 也不会缩短 bPulse
+// ============================================================
 
-fbValvePulse(
-    IN := bOpenValveReq,
-    PT := tValveOpenWidth,
-    Q  =&gt; bValveCoilEnergize,
-    ET =&gt; tPulseElapsed
+fbTP(
+    IN := bSensor,
+    PT := T#200MS,
+    Q  =&gt; bPulse,
+    ET =&gt; tInPulse
 );
-</xhtml></ST>
+</xhtml>
+          </ST>
         </body>
       </pou>
     </pous>
   </types>
-  <instances><configurations/></instances>
+  <instances>
+    <configurations/>
+  </instances>
 </project>
