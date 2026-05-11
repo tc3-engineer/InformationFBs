@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <project xmlns="http://www.plcopen.org/xml/tc6_0200">
-  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-09T00:00:00"/>
-  <contentHeader name="Tc2_Standard.TON Demo" modificationDateTime="2026-05-09T00:00:00">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-11T07:00:00"/>
+  <contentHeader name="Tc2_Standard.TON Demo" modificationDateTime="2026-05-11T07:00:00">
     <coordinateInfo>
       <fbd><scaling x="1" y="1"/></fbd>
       <ld><scaling x="1" y="1"/></ld>
@@ -14,50 +14,60 @@
       <pou name="P_Demo_TON" pouType="program">
         <interface>
           <localVars>
-            <variable name="fbTON">
+            <variable name="fbStartupDelay">
               <type><derived name="TON"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">接通延时定时器</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">接通延时定时器实例：用于电机启动按钮防抖</xhtml></documentation>
             </variable>
-            <variable name="bMotorReq">
+            <variable name="bMotorStartReq">
               <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">启动请求</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">启动按钮（在线置 TRUE 模拟按下；置 FALSE 模拟松开）</xhtml></documentation>
             </variable>
-            <variable name="bRunOk">
-              <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">启动延时完成（输出）</xhtml></documentation>
-            </variable>
-            <variable name="tElapsed">
+            <variable name="tStartupHold">
+              <initialValue><simpleValue value="T#3S"/></initialValue>
               <type><TIME/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">已经过时间（监视用）</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">必须按住的最短时长 = 3 秒（防误触）</xhtml></documentation>
+            </variable>
+            <variable name="bMotorRun">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">电机允许运行（按住 3 秒后置 TRUE）</xhtml></documentation>
+            </variable>
+            <variable name="tHoldElapsed">
+              <type><TIME/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">当前已按住时长（监视用，看 ET 累加是否到 3s）</xhtml></documentation>
             </variable>
           </localVars>
         </interface>
         <body>
-          <ST>
-            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
-// Tc2_Standard.TON 演示程序
-// ============================================================
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：变频电机的"启动按钮防误触"。操作员按下启动按钮后，必须保持 3 秒不松手
+//       才算真正启动；松开就清零重新计时。这是工业惯例：避免操作员手肘碰一下
+//       按钮就启动重型设备。
+//
+// 价值：业务代码只需 1 次调用就完成"上升沿启动、ET 累加、PT 到点 Q 置位、下降沿
+//       清零"完整逻辑；手写需要约 8-10 行 IF + 上一周期值保存 + 边界判断。
+//
 // 验证步骤：
-//   1. 把本 PROGRAM 加到 PlcTask
-//   2. 在线监视 bRunOk 与 tElapsed
-//   3. 强制 bMotorReq := TRUE → tElapsed 从 0 累加，到 3s 时 bRunOk 变 TRUE
-//   4. 强制 bMotorReq := FALSE → bRunOk 立刻变 FALSE，tElapsed 清零
-//   5. 中途打断（不到 3s 就 FALSE）→ 计时被复位，重启计时
-// ============================================================
+//   1. 在 PLC 项目中右键 → Import PLCopenXML → 选本文件
+//   2. 引用 Tc2_Standard 库（System 节点 → References）
+//   3. 编译、登录、运行
+//   4. 在线 monitor bMotorRun 与 tHoldElapsed
+//   5. 在线写 bMotorStartReq := TRUE → 观察 tHoldElapsed 从 0 累加
+//      到 3s 时 bMotorRun 变 TRUE；之后 tHoldElapsed 保持 3s 不再增长
+//   6. 在线写 bMotorStartReq := FALSE → bMotorRun 立刻回 FALSE，tHoldElapsed 清零
+//   7. 试中途打断（按 1 秒就松开再按）→ 验证计时确实从 0 重新开始而不是续计
+// =============================================================================
 
-fbTON(
-    IN := bMotorReq,
-    PT := T#3S,
-    Q  => bRunOk,
-    ET => tElapsed
+// 单次调用形式：所有 VAR_INPUT 显式赋值，输出端用 =&gt; 截获
+fbStartupDelay(
+    IN := bMotorStartReq,
+    PT := tStartupHold,
+    Q  =&gt; bMotorRun,
+    ET =&gt; tHoldElapsed
 );
-</xhtml>
-          </ST>
+</xhtml></ST>
         </body>
       </pou>
     </pous>
   </types>
-  <instances>
-    <configurations/>
-  </instances>
+  <instances><configurations/></instances>
 </project>
