@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <project xmlns="http://www.plcopen.org/xml/tc6_0200">
-  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-09T00:00:00"/>
-  <contentHeader name="Tc2_Standard.RS Demo" modificationDateTime="2026-05-09T00:00:00">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-11T07:00:00"/>
+  <contentHeader name="Tc2_Standard.RS Demo" modificationDateTime="2026-05-11T07:00:00">
     <coordinateInfo>
       <fbd><scaling x="1" y="1"/></fbd>
       <ld><scaling x="1" y="1"/></ld>
@@ -14,50 +14,55 @@
       <pou name="P_Demo_RS" pouType="program">
         <interface>
           <localVars>
-            <variable name="fbRS">
+            <variable name="fbRunInterlock">
               <type><derived name="RS"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">RESET 优先双稳态实例</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">RS 实例：电机启动 + 急停联锁（RESET 优先）</xhtml></documentation>
             </variable>
-            <variable name="bStart">
+            <variable name="bStartPressed">
               <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">操作员启动按钮（在线模拟脉冲）</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">启动按钮（按下时 TRUE）</xhtml></documentation>
             </variable>
-            <variable name="bEStop">
+            <variable name="bEmergencyStop">
               <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">急停信号（按下时为 TRUE）</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">急停按钮（按下时 TRUE = 急停触发，RESET 输入）</xhtml></documentation>
             </variable>
-            <variable name="bRunOk">
+            <variable name="bMotorEnabled">
               <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">运行允许位（输出，监视此值）</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">运行允许（锁存输出 Q1）</xhtml></documentation>
             </variable>
           </localVars>
         </interface>
         <body>
-          <ST>
-            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
-// Tc2_Standard.RS 演示程序
-// ============================================================
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：电机启动 + 急停联锁。操作员按"启动"置位运行允许，按"急停"复位运行允许；
+//       任何时刻急停按下都立刻停机——即使操作员同时按住启动也无法启动。这是
+//       工业急停场景的标准 PLC 软件实现。
+//
+// 价值：1 次调用拿到"RESET 主导锁存"完整语义；用 RS 而不是 SR 在这里关乎人身
+//       安全——SR 会让急停按住时启动按钮仍能启动设备。
+//
 // 验证步骤：
-//   1. 把本 PROGRAM 加到 PlcTask 调用列表
-//   2. 编译并登录目标
-//   3. 在线监视 bRunOk
-//   4. 强制 bStart := TRUE  → bRunOk 变 TRUE
-//   5. 强制 bEStop := TRUE  → bRunOk 立即变 FALSE（验证 RESET 优先）
-//   6. 即便 bStart 还在 TRUE，只要 bEStop 在 TRUE，bRunOk 一直为 FALSE
-// ============================================================
+//   1. PLC 项目 → Import PLCopenXML → 选本文件
+//   2. 引用 Tc2_Standard 库
+//   3. 编译、登录、运行
+//   4. 在线 monitor bMotorEnabled
+//   5. 在线 bStartPressed := TRUE → bMotorEnabled 立刻 TRUE
+//   6. bStartPressed := FALSE → bMotorEnabled 保持 TRUE（锁存）
+//   7. bEmergencyStop := TRUE → bMotorEnabled 立刻 FALSE
+//   8. 关键测试：bEmergencyStop 仍 TRUE 同时 bStartPressed := TRUE
+//      → bMotorEnabled 仍 FALSE（RESET 赢，急停永远赢过启动）
+//   9. 注意：本 FB 不能替代硬件安全继电器，真急停必须叠加 TwinSAFE
+// =============================================================================
 
-fbRS(
-    SET    := bStart,
-    RESET1 := bEStop,
-    Q1     => bRunOk
+fbRunInterlock(
+    SET    := bStartPressed,
+    RESET1 := bEmergencyStop,
+    Q1     =&gt; bMotorEnabled
 );
-</xhtml>
-          </ST>
+</xhtml></ST>
         </body>
       </pou>
     </pous>
   </types>
-  <instances>
-    <configurations/>
-  </instances>
+  <instances><configurations/></instances>
 </project>
