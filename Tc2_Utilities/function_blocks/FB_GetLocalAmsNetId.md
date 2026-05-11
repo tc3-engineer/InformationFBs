@@ -25,7 +25,7 @@ This function block can be used to read the network address (AmsNetID) of a loca
 ```iecst
 VAR_INPUT
     bExecute : BOOL;
-    tTimeOut : TIME;
+    tTimeOut : TIME := DEFAULT_ADS_TIMEOUT;
 END_VAR
 ```
 

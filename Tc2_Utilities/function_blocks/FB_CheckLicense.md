@@ -25,7 +25,7 @@ If you use OEM licenses make sure you encrypt your boot project! Remember that t
 ```iecst
 VAR_INPUT
     bExecute : BOOL;
-    tTimeout : TIME;
+    tTimeout : TIME := DEFAULT_ADS_TIMEOUT;
     sNetId : T_AmsNetId;
     stLicenseId : GUID;
 END_VAR

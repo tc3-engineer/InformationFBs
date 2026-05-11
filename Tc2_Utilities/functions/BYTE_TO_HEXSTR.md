@@ -27,7 +27,7 @@ FUNCTION BYTE_TO_HEXSTR : T_MaxString
 VAR_INPUT
     in : BYTE;
     iPrecision : INT;
-    bLoCase : BOOL;
+    bLoCase : BOOL := FALSE;
 END_VAR
 ```
 

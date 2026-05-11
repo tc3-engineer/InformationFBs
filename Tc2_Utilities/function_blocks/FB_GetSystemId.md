@@ -25,7 +25,7 @@ The function block reads the system ID of type GUID (see "About TwinCAT..." at t
 ```iecst
 VAR_INPUT
     bExecute : BOOL;
-    tTimeout : TIME;
+    tTimeout : TIME := DEFAULT_ADS_TIMEOUT;
     sNetId : T_AmsNetId;
 END_VAR
 ```

@@ -25,7 +25,7 @@ The function block reads the valid and invalid TwinCAT licenses.
 ```iecst
 VAR_INPUT
     bExecute : BOOL;
-    tTimeout : TIME;
+    tTimeout : TIME := DEFAULT_ADS_TIMEOUT;
     sNetId : T_AmsNetId;
 END_VAR
 ```

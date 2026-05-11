@@ -27,7 +27,7 @@ FUNCTION WORD_TO_HEXSTR : T_MaxString
 VAR_INPUT
     in : WORD;
     iPrecision : INT;
-    bLoCase : BOOL;
+    bLoCase : BOOL := FALSE;
 END_VAR
 ```
 

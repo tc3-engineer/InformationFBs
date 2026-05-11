@@ -277,8 +277,12 @@ def verify(doc_path: str) -> tuple[int, list[str]]:
     # an OO parent like TC_CoreBoostMonitor.GetAllRtCoreThrottling at
     # section 3.83.1) — its body legitimately contains a METHOD declaration
     # for the method itself, and we need its VAR_INPUT block.
+    # Don't cut for inline-method entries (synthetic `<sec>#mN` ids): the
+    # section_text IS the method body whose METHOD header + VAR_INPUT we
+    # want to keep.
     entry_depth = entry["section"].count(".") + 1
-    if entry_depth <= 2:
+    is_inline_method = entry.get("inline_method") or "#" in entry["section"]
+    if entry_depth <= 2 and not is_inline_method:
         inline_method = re.search(r"(?m)^\s*METHOD\s+\w+", section_text)
         if inline_method:
             section_text = section_text[: inline_method.start()]

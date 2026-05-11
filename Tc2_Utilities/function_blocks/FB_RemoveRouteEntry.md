@@ -27,7 +27,7 @@ VAR_INPUT
     sNetID : T_AmsNetId;
     sName : String (MAX_ROUTE_NAME_LEN);
     bExecute : BOOL;
-    tTimeout : TIME;
+    tTimeout : TIME := DEFAULT_ADS_TIMEOUT;
 END_VAR
 ```
 

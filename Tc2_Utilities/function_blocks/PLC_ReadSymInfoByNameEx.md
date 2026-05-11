@@ -28,7 +28,7 @@ VAR_INPUT
     PORT : T_AmsPort;
     SYMNAME : T_MaxString;
     START : BOOL;
-    TMOUT : TIME;
+    TMOUT : TIME := DEFAULT_ADS_TIMEOUT;
 END_VAR
 ```
 
