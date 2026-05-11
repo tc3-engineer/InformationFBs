@@ -43,7 +43,7 @@
               <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT nErrID</xhtml></documentation>
             </variable>
             <variable name="out_arrAdapters">
-              <type><derived name="ARRAY[0..MAX_LOCAL_ADAPTERS] OF ST_IpAdapterInfo"/></type>
+              <type><array><dimension lower="0" upper="MAX_LOCAL_ADAPTERS"/><baseType><derived name="ST_IpAdapterInfo"/></baseType></array></type>
               <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT arrAdapters</xhtml></documentation>
             </variable>
             <variable name="out_nCount">

@@ -31,7 +31,7 @@
               <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT eCmd</xhtml></documentation>
             </variable>
             <variable name="arg_pFindList">
-              <type><derived name="POINTER TO ST_FindFileEntry"/></type>
+              <type><pointer><baseType><derived name="ST_FindFileEntry"/></baseType></pointer></type>
               <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT pFindList</xhtml></documentation>
             </variable>
             <variable name="arg_cbFindList">

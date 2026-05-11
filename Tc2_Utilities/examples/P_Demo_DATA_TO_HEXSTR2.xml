@@ -23,7 +23,7 @@
               <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">触发一次调用</xhtml></documentation>
             </variable>
             <variable name="sHex">
-              <type><derived name="STRING(63)"/></type>
+              <type><string><length>63</length></string></type>
               <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">测试用本地变量</xhtml></documentation>
             </variable>
           </localVars>

@@ -23,7 +23,7 @@
               <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">触发一次调用</xhtml></documentation>
             </variable>
             <variable name="ar">
-              <type><derived name="ARRAY[0..15] OF T_LinkedListEntry"/></type>
+              <type><array><dimension lower="0" upper="15"/><baseType><derived name="T_LinkedListEntry"/></baseType></array></type>
               <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">测试用本地变量</xhtml></documentation>
             </variable>
             <variable name="h">

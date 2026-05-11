@@ -23,22 +23,22 @@
               <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">触发一次调用</xhtml></documentation>
             </variable>
             <variable name="sIn">
-              <type><derived name="STRING(255)"/></type>
+              <type><string><length>255</length></string></type>
               <initialValue><simpleValue value="'foo bar foo'"/></initialValue>
               <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">测试用本地变量</xhtml></documentation>
             </variable>
             <variable name="sDel">
-              <type><derived name="STRING(31)"/></type>
+              <type><string><length>31</length></string></type>
               <initialValue><simpleValue value="'foo'"/></initialValue>
               <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">测试用本地变量</xhtml></documentation>
             </variable>
             <variable name="sIns">
-              <type><derived name="STRING(31)"/></type>
+              <type><string><length>31</length></string></type>
               <initialValue><simpleValue value="'XYZ'"/></initialValue>
               <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">测试用本地变量</xhtml></documentation>
             </variable>
             <variable name="sOut">
-              <type><derived name="STRING(255)"/></type>
+              <type><string><length>255</length></string></type>
               <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">测试用本地变量</xhtml></documentation>
             </variable>
           </localVars>

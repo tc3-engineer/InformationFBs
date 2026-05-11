@@ -51,7 +51,7 @@
               <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT nUsedCpuCount</xhtml></documentation>
             </variable>
             <variable name="arg_stRtPerformanceData">
-              <type><derived name="ARRAY [1..nMaxCpuCount] OF ST_RtPerformanceData"/></type>
+              <type><array><dimension lower="1" upper="nMaxCpuCount"/><baseType><derived name="ST_RtPerformanceData"/></baseType></array></type>
               <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT stRtPerformanceData</xhtml></documentation>
             </variable>
           </localVars>

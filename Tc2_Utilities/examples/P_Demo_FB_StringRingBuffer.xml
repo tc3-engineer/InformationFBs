@@ -27,7 +27,7 @@
               <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT putValue</xhtml></documentation>
             </variable>
             <variable name="arg_pBuffer">
-              <type><derived name="POINTER TO BYTE"/></type>
+              <type><pointer><baseType><BYTE/></baseType></pointer></type>
               <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT pBuffer</xhtml></documentation>
             </variable>
             <variable name="arg_cbBuffer">

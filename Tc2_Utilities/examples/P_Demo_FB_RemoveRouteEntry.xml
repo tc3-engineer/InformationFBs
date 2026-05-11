@@ -23,7 +23,7 @@
               <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT sNetID</xhtml></documentation>
             </variable>
             <variable name="arg_sName">
-              <type><derived name="String (MAX_ROUTE_NAME_LEN)"/></type>
+              <type><string><length>MAX_ROUTE_NAME_LEN</length></string></type>
               <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT sName</xhtml></documentation>
             </variable>
             <variable name="arg_bExecute">
