@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project xmlns="http://www.plcopen.org/xml/tc6_0200">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-10T20:00:00"/>
+  <contentHeader name="Tc2_Utilities.FB_MemRingBufferEx Demo" modificationDateTime="2026-05-10T20:00:00">
+    <coordinateInfo>
+      <fbd><scaling x="1" y="1"/></fbd>
+      <ld><scaling x="1" y="1"/></ld>
+      <sfc><scaling x="1" y="1"/></sfc>
+    </coordinateInfo>
+  </contentHeader>
+  <types>
+    <dataTypes/>
+    <pous>
+      <pou name="P_Demo_FB_MemRingBufferEx" pouType="program">
+        <interface>
+          <localVars>
+            <variable name="fbFB_MemRingBufferEx">
+              <type><derived name="FB_MemRingBufferEx"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">Tc2_Utilities.FB_MemRingBufferEx 实例</xhtml></documentation>
+            </variable>
+            <variable name="arg_pWrite">
+              <type><derived name="POINTER TO BYTE"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT pWrite</xhtml></documentation>
+            </variable>
+            <variable name="arg_cbWrite">
+              <type><UDINT/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT cbWrite</xhtml></documentation>
+            </variable>
+            <variable name="arg_pBuffer">
+              <type><derived name="POINTER TO BYTE"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT pBuffer</xhtml></documentation>
+            </variable>
+            <variable name="arg_cbBuffer">
+              <type><UDINT/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT cbBuffer</xhtml></documentation>
+            </variable>
+            <variable name="out_bOk">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT bOk</xhtml></documentation>
+            </variable>
+            <variable name="out_pRead">
+              <type><derived name="POINTER TO BYTE"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT pRead</xhtml></documentation>
+            </variable>
+            <variable name="out_cbRead">
+              <type><UDINT/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT cbRead</xhtml></documentation>
+            </variable>
+            <variable name="out_nCount">
+              <type><UDINT/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT nCount</xhtml></documentation>
+            </variable>
+            <variable name="out_cbSize">
+              <type><UDINT/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT cbSize</xhtml></documentation>
+            </variable>
+            <variable name="out_cbFree">
+              <type><UDINT/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT cbFree</xhtml></documentation>
+            </variable>
+          </localVars>
+        </interface>
+        <body>
+          <ST>
+            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
+// Tc2_Utilities.FB_MemRingBufferEx 演示程序（FB 实例）
+// ============================================================
+// 验证步骤：
+//   1. 引用 Tc2_Utilities（及依赖类型所在库 Tc2_System 等）
+//   2. 编译 + 登录
+//   3. 按 doc.md 给 arg_* 赋值
+//   4. 在线监视 out_* / io_* 输出
+// ============================================================
+
+fbFB_MemRingBufferEx(
+    pWrite := arg_pWrite,
+    cbWrite := arg_cbWrite,
+    pBuffer := arg_pBuffer,
+    cbBuffer := arg_cbBuffer,
+    bOk =&gt; out_bOk,
+    pRead =&gt; out_pRead,
+    cbRead =&gt; out_cbRead,
+    nCount =&gt; out_nCount,
+    cbSize =&gt; out_cbSize,
+    cbFree =&gt; out_cbFree
+);
+</xhtml>
+          </ST>
+        </body>
+      </pou>
+    </pous>
+  </types>
+  <instances>
+    <configurations/>
+  </instances>
+</project>

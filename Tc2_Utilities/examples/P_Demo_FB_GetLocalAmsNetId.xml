@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project xmlns="http://www.plcopen.org/xml/tc6_0200">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-10T20:00:00"/>
+  <contentHeader name="Tc2_Utilities.FB_GetLocalAmsNetId Demo" modificationDateTime="2026-05-10T20:00:00">
+    <coordinateInfo>
+      <fbd><scaling x="1" y="1"/></fbd>
+      <ld><scaling x="1" y="1"/></ld>
+      <sfc><scaling x="1" y="1"/></sfc>
+    </coordinateInfo>
+  </contentHeader>
+  <types>
+    <dataTypes/>
+    <pous>
+      <pou name="P_Demo_FB_GetLocalAmsNetId" pouType="program">
+        <interface>
+          <localVars>
+            <variable name="fbFB_GetLocalAmsNetId">
+              <type><derived name="FB_GetLocalAmsNetId"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">Tc2_Utilities.FB_GetLocalAmsNetId 实例</xhtml></documentation>
+            </variable>
+            <variable name="arg_bExecute">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT bExecute</xhtml></documentation>
+            </variable>
+            <variable name="arg_tTimeOut">
+              <type><TIME/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT tTimeOut</xhtml></documentation>
+            </variable>
+            <variable name="out_bBusy">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT bBusy</xhtml></documentation>
+            </variable>
+            <variable name="out_bError">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT bError</xhtml></documentation>
+            </variable>
+            <variable name="out_nErrId">
+              <type><UDINT/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT nErrId</xhtml></documentation>
+            </variable>
+            <variable name="out_AddrString">
+              <type><derived name="T_AmsNetId"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT AddrString</xhtml></documentation>
+            </variable>
+            <variable name="out_AddrBytes">
+              <type><derived name="T_AmsNetIdArr"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT AddrBytes</xhtml></documentation>
+            </variable>
+          </localVars>
+        </interface>
+        <body>
+          <ST>
+            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
+// Tc2_Utilities.FB_GetLocalAmsNetId 演示程序（FB 实例）
+// ============================================================
+// 验证步骤：
+//   1. 引用 Tc2_Utilities（及依赖类型所在库 Tc2_System 等）
+//   2. 编译 + 登录
+//   3. 按 doc.md 给 arg_* 赋值
+//   4. 在线监视 out_* / io_* 输出
+// ============================================================
+
+fbFB_GetLocalAmsNetId(
+    bExecute := arg_bExecute,
+    tTimeOut := arg_tTimeOut,
+    bBusy =&gt; out_bBusy,
+    bError =&gt; out_bError,
+    nErrId =&gt; out_nErrId,
+    AddrString =&gt; out_AddrString,
+    AddrBytes =&gt; out_AddrBytes
+);
+</xhtml>
+          </ST>
+        </body>
+      </pou>
+    </pous>
+  </types>
+  <instances>
+    <configurations/>
+  </instances>
+</project>

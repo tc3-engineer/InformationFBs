@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project xmlns="http://www.plcopen.org/xml/tc6_0200">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-10T20:00:00"/>
+  <contentHeader name="Tc2_Utilities.RTC Demo" modificationDateTime="2026-05-10T20:00:00">
+    <coordinateInfo>
+      <fbd><scaling x="1" y="1"/></fbd>
+      <ld><scaling x="1" y="1"/></ld>
+      <sfc><scaling x="1" y="1"/></sfc>
+    </coordinateInfo>
+  </contentHeader>
+  <types>
+    <dataTypes/>
+    <pous>
+      <pou name="P_Demo_RTC" pouType="program">
+        <interface>
+          <localVars>
+            <variable name="fbRTC">
+              <type><derived name="RTC"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">Tc2_Utilities.RTC 实例</xhtml></documentation>
+            </variable>
+            <variable name="arg_EN">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT EN</xhtml></documentation>
+            </variable>
+            <variable name="arg_PDT">
+              <type><derived name="DATE_AND_TIME"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT PDT</xhtml></documentation>
+            </variable>
+            <variable name="out_Q">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT Q</xhtml></documentation>
+            </variable>
+            <variable name="out_CDT">
+              <type><derived name="DATE_AND_TIME"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT CDT</xhtml></documentation>
+            </variable>
+          </localVars>
+        </interface>
+        <body>
+          <ST>
+            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
+// Tc2_Utilities.RTC 演示程序（FB 实例）
+// ============================================================
+// 验证步骤：
+//   1. 引用 Tc2_Utilities（及依赖类型所在库 Tc2_System 等）
+//   2. 编译 + 登录
+//   3. 按 doc.md 给 arg_* 赋值
+//   4. 在线监视 out_* / io_* 输出
+// ============================================================
+
+fbRTC(
+    EN := arg_EN,
+    PDT := arg_PDT,
+    Q =&gt; out_Q,
+    CDT =&gt; out_CDT
+);
+</xhtml>
+          </ST>
+        </body>
+      </pou>
+    </pous>
+  </types>
+  <instances>
+    <configurations/>
+  </instances>
+</project>

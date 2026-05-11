@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project xmlns="http://www.plcopen.org/xml/tc6_0200">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-10T20:00:00"/>
+  <contentHeader name="Tc2_Utilities.DCF77_TIME_EX Demo" modificationDateTime="2026-05-10T20:00:00">
+    <coordinateInfo>
+      <fbd><scaling x="1" y="1"/></fbd>
+      <ld><scaling x="1" y="1"/></ld>
+      <sfc><scaling x="1" y="1"/></sfc>
+    </coordinateInfo>
+  </contentHeader>
+  <types>
+    <dataTypes/>
+    <pous>
+      <pou name="P_Demo_DCF77_TIME_EX" pouType="program">
+        <interface>
+          <localVars>
+            <variable name="fbDCF77_TIME_EX">
+              <type><derived name="DCF77_TIME_EX"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">Tc2_Utilities.DCF77_TIME_EX 实例</xhtml></documentation>
+            </variable>
+            <variable name="arg_DCF_PULSE">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT DCF_PULSE</xhtml></documentation>
+            </variable>
+            <variable name="arg_RUN">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT RUN</xhtml></documentation>
+            </variable>
+            <variable name="arg_TLP">
+              <type><TIME/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT TLP</xhtml></documentation>
+            </variable>
+            <variable name="out_BUSY">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT BUSY</xhtml></documentation>
+            </variable>
+            <variable name="out_ERR">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT ERR</xhtml></documentation>
+            </variable>
+            <variable name="out_ERRID">
+              <type><UDINT/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT ERRID</xhtml></documentation>
+            </variable>
+            <variable name="out_ERRCNT">
+              <type><UDINT/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT ERRCNT</xhtml></documentation>
+            </variable>
+            <variable name="out_READY">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT READY</xhtml></documentation>
+            </variable>
+            <variable name="out_CDT">
+              <type><derived name="DATE_AND_TIME"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT CDT</xhtml></documentation>
+            </variable>
+            <variable name="out_DOW">
+              <type><derived name="BYTE(1..7)"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT DOW</xhtml></documentation>
+            </variable>
+            <variable name="out_TZI">
+              <type><derived name="E_TimeZoneID"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT TZI</xhtml></documentation>
+            </variable>
+            <variable name="out_ADVTZI">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT ADVTZI</xhtml></documentation>
+            </variable>
+            <variable name="out_LEAPSEC">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT LEAPSEC</xhtml></documentation>
+            </variable>
+            <variable name="out_RAWDT">
+              <type><derived name="ARRAY[0..60] OF BOOL"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT RAWDT</xhtml></documentation>
+            </variable>
+          </localVars>
+        </interface>
+        <body>
+          <ST>
+            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
+// Tc2_Utilities.DCF77_TIME_EX 演示程序（FB 实例）
+// ============================================================
+// 验证步骤：
+//   1. 引用 Tc2_Utilities（及依赖类型所在库 Tc2_System 等）
+//   2. 编译 + 登录
+//   3. 按 doc.md 给 arg_* 赋值
+//   4. 在线监视 out_* / io_* 输出
+// ============================================================
+
+fbDCF77_TIME_EX(
+    DCF_PULSE := arg_DCF_PULSE,
+    RUN := arg_RUN,
+    TLP := arg_TLP,
+    BUSY =&gt; out_BUSY,
+    ERR =&gt; out_ERR,
+    ERRID =&gt; out_ERRID,
+    ERRCNT =&gt; out_ERRCNT,
+    READY =&gt; out_READY,
+    CDT =&gt; out_CDT,
+    DOW =&gt; out_DOW,
+    TZI =&gt; out_TZI,
+    ADVTZI =&gt; out_ADVTZI,
+    LEAPSEC =&gt; out_LEAPSEC,
+    RAWDT =&gt; out_RAWDT
+);
+</xhtml>
+          </ST>
+        </body>
+      </pou>
+    </pous>
+  </types>
+  <instances>
+    <configurations/>
+  </instances>
+</project>

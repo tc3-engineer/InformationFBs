@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project xmlns="http://www.plcopen.org/xml/tc6_0200">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-10T20:00:00"/>
+  <contentHeader name="Tc2_Utilities.FB_GetLicenses Demo" modificationDateTime="2026-05-10T20:00:00">
+    <coordinateInfo>
+      <fbd><scaling x="1" y="1"/></fbd>
+      <ld><scaling x="1" y="1"/></ld>
+      <sfc><scaling x="1" y="1"/></sfc>
+    </coordinateInfo>
+  </contentHeader>
+  <types>
+    <dataTypes/>
+    <pous>
+      <pou name="P_Demo_FB_GetLicenses" pouType="program">
+        <interface>
+          <localVars>
+            <variable name="fbFB_GetLicenses">
+              <type><derived name="FB_GetLicenses"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">Tc2_Utilities.FB_GetLicenses 实例</xhtml></documentation>
+            </variable>
+            <variable name="arg_bExecute">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT bExecute</xhtml></documentation>
+            </variable>
+            <variable name="arg_tTimeout">
+              <type><TIME/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT tTimeout</xhtml></documentation>
+            </variable>
+            <variable name="arg_sNetId">
+              <type><derived name="T_AmsNetId"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT sNetId</xhtml></documentation>
+            </variable>
+            <variable name="out_bBusy">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT bBusy</xhtml></documentation>
+            </variable>
+            <variable name="out_bError">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT bError</xhtml></documentation>
+            </variable>
+            <variable name="out_nErrorId">
+              <type><UDINT/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT nErrorId</xhtml></documentation>
+            </variable>
+            <variable name="out_nValidLicenses">
+              <type><UDINT/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT nValidLicenses</xhtml></documentation>
+            </variable>
+            <variable name="out_aValidLicenses">
+              <type><derived name="ARRAY [1..nMaxLicenses] OF ST_TcOnlineLicenseInfoData"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT aValidLicenses</xhtml></documentation>
+            </variable>
+            <variable name="out_nInvalidLicenses">
+              <type><UDINT/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT nInvalidLicenses</xhtml></documentation>
+            </variable>
+            <variable name="out_aInvalidLicenses">
+              <type><derived name="ARRAY [1..nMaxLicenses] OF ST_TcOnlineLicenseInfoData"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT aInvalidLicenses</xhtml></documentation>
+            </variable>
+          </localVars>
+        </interface>
+        <body>
+          <ST>
+            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
+// Tc2_Utilities.FB_GetLicenses 演示程序（FB 实例）
+// ============================================================
+// 验证步骤：
+//   1. 引用 Tc2_Utilities（及依赖类型所在库 Tc2_System 等）
+//   2. 编译 + 登录
+//   3. 按 doc.md 给 arg_* 赋值
+//   4. 在线监视 out_* / io_* 输出
+// ============================================================
+
+fbFB_GetLicenses(
+    bExecute := arg_bExecute,
+    tTimeout := arg_tTimeout,
+    sNetId := arg_sNetId,
+    bBusy =&gt; out_bBusy,
+    bError =&gt; out_bError,
+    nErrorId =&gt; out_nErrorId,
+    nValidLicenses =&gt; out_nValidLicenses,
+    aValidLicenses =&gt; out_aValidLicenses,
+    nInvalidLicenses =&gt; out_nInvalidLicenses,
+    aInvalidLicenses =&gt; out_aInvalidLicenses
+);
+</xhtml>
+          </ST>
+        </body>
+      </pou>
+    </pous>
+  </types>
+  <instances>
+    <configurations/>
+  </instances>
+</project>

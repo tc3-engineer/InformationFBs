@@ -52,8 +52,12 @@ def extract(lib: str, section: str) -> str:
     # Allow any identifier-like first character (uppercase or lowercase letter,
     # digit, underscore) — Beckhoff uses some lowercase-first POU names like
     # "sLiteral_TO_UTF8" and "wsLiteral_TO_UTF8".
+    # Disallow `:` `,` `.` in the title to avoid matching descriptive lines
+    # such as "100 ms pulse (zero): min: 70 ms, typical: 95 ms" inside body
+    # text — real Beckhoff section titles are POU names or short category
+    # phrases without those punctuation marks.
     next_heading = re.compile(
-        r"(?m)^\s*(?:" + "|".join(depth_alts) + r")\s+[A-Za-z_][^\.\n]{0,80}$"
+        r"(?m)^\s*(?:" + "|".join(depth_alts) + r")\s+[A-Za-z_][^.:,\n]{0,80}$"
     )
     after = full[start + 1 :]
     nm = next_heading.search(after)
