@@ -187,12 +187,20 @@ def verify(doc_path: str) -> tuple[int, list[str]]:
             section_text = section_text[: cm.start()]
 
     # FBs that document their methods inline (e.g. FB_GetAdaptersInfoEx with
-    # an inline `METHOD Get : BOOL`) expose method-internal VAR_INPUTs that
-    # don't belong to the FB's own interface. Cut at the first inline METHOD
-    # declaration so we compare only the FB-level VAR.
-    inline_method = re.search(r"(?m)^\s*METHOD\s+\w+", section_text)
-    if inline_method:
-        section_text = section_text[: inline_method.start()]
+    # an inline `METHOD Get : BOOL`, or FB_CalcHashValue whose body is
+    # entirely methods with no FB-level VAR) expose method-internal
+    # VAR_INPUTs that don't belong to the FB's own interface. Cut at the
+    # first inline METHOD declaration.
+    #
+    # Skip the cut when the entry IS itself a method (depth-3+ child under
+    # an OO parent like TC_CoreBoostMonitor.GetAllRtCoreThrottling at
+    # section 3.83.1) — its body legitimately contains a METHOD declaration
+    # for the method itself, and we need its VAR_INPUT block.
+    entry_depth = entry["section"].count(".") + 1
+    if entry_depth <= 2:
+        inline_method = re.search(r"(?m)^\s*METHOD\s+\w+", section_text)
+        if inline_method:
+            section_text = section_text[: inline_method.start()]
 
     # If the entry is NOT a global constant, the PDF section may still embed
     # a VAR_GLOBAL CONSTANT block inside an Example (e.g. WEST_EUROPE_TZI in
