@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project xmlns="http://www.plcopen.org/xml/tc6_0200">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-11T01:00:00"/>
+  <contentHeader name="Tc3_EventLogger.FB_RequestEventDetails Demo" modificationDateTime="2026-05-11T01:00:00">
+    <coordinateInfo>
+      <fbd><scaling x="1" y="1"/></fbd>
+      <ld><scaling x="1" y="1"/></ld>
+      <sfc><scaling x="1" y="1"/></sfc>
+    </coordinateInfo>
+  </contentHeader>
+  <types>
+    <dataTypes/>
+    <pous>
+      <pou name="P_Demo_FB_RequestEventDetails" pouType="program">
+        <interface>
+          <localVars>
+            <variable name="fbFB_RequestEventDetails">
+              <type><derived name="FB_RequestEventDetails"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">Tc3_EventLogger.FB_RequestEventDetails 实例</xhtml></documentation>
+            </variable>
+            <variable name="arg_nIndex">
+              <type><UDINT/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT nIndex</xhtml></documentation>
+            </variable>
+            <variable name="arg_fbDetail">
+              <type><derived name="REFERENCE TO FB_TcDetail"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT fbDetail</xhtml></documentation>
+            </variable>
+            <variable name="arg_eventClass">
+              <type><derived name="GUID"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT eventClass</xhtml></documentation>
+            </variable>
+            <variable name="arg_nEventId">
+              <type><UDINT/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT nEventId</xhtml></documentation>
+            </variable>
+            <variable name="arg_nLangId">
+              <type><DINT/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT nLangId</xhtml></documentation>
+            </variable>
+            <variable name="arg_ipRemoteLogger">
+              <type><derived name="I_TcRemoteEventLogger"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT ipRemoteLogger</xhtml></documentation>
+            </variable>
+          </localVars>
+        </interface>
+        <body>
+          <ST>
+            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
+// Tc3_EventLogger.FB_RequestEventDetails 演示程序（FB 实例）
+// ============================================================
+// 验证步骤：
+//   1. 引用 Tc3_EventLogger（及依赖类型所在库 Tc2_System 等）
+//   2. 编译 + 登录
+//   3. 按 doc.md 给 arg_* 赋值
+//   4. 在线监视 out_* / io_* 输出
+// ============================================================
+
+fbFB_RequestEventDetails(
+    nIndex := arg_nIndex,
+    fbDetail := arg_fbDetail,
+    eventClass := arg_eventClass,
+    nEventId := arg_nEventId,
+    nLangId := arg_nLangId,
+    ipRemoteLogger := arg_ipRemoteLogger
+);
+</xhtml>
+          </ST>
+        </body>
+      </pou>
+    </pous>
+  </types>
+  <instances>
+    <configurations/>
+  </instances>
+</project>

@@ -435,3 +435,77 @@
 2026-05-10T20:00:00Z | Tc2_Utilities | Function blocks | TC_SysLatency                            | verified | auto-extracted VAR from PDF
 2026-05-10T20:00:00Z | Tc2_Utilities | Function blocks | TC_SysLatencyEx                          | verified | auto-extracted VAR from PDF
 2026-05-10T20:00:00Z | Tc2_Utilities | Function blocks | WritePersistentData                      | verified | auto-extracted VAR from PDF
+2026-05-11T01:00:00Z | Tc3_EventLogger | Asynchronous text requests               | FB_AsyncStrResult                        | verified | auto-extracted VAR from PDF
+2026-05-11T01:00:00Z | Tc3_EventLogger | Asynchronous text requests               | FB_RequestCauseRemedy                    | verified | auto-extracted VAR from PDF
+2026-05-11T01:00:00Z | Tc3_EventLogger | Asynchronous text requests               | FB_RequestEventClassDetails              | verified | auto-extracted VAR from PDF
+2026-05-11T01:00:00Z | Tc3_EventLogger | Asynchronous text requests               | FB_RequestEventClassName                 | verified | auto-extracted VAR from PDF
+2026-05-11T01:00:00Z | Tc3_EventLogger | Asynchronous text requests               | FB_RequestEventDetails                   | verified | auto-extracted VAR from PDF
+2026-05-11T01:00:00Z | Tc3_EventLogger | Asynchronous text requests               | FB_RequestEventText                      | verified | auto-extracted VAR from PDF
+2026-05-11T01:00:00Z | Tc3_EventLogger | Asynchronous text requests               | FB_RequestTranslation                    | verified | auto-extracted VAR from PDF
+2026-05-11T01:00:00Z | Tc3_EventLogger | Asynchronous text requests               | FB_TcCauseRemedy                         | verified | auto-extracted VAR from PDF
+2026-05-11T01:00:00Z | Tc3_EventLogger | Asynchronous text requests               | FB_TcDetail                              | verified | auto-extracted VAR from PDF
+2026-05-11T01:00:00Z | Tc3_EventLogger | Asynchronous text requests               | F_GetEventClassName                      | verified | auto-extracted VAR from PDF
+2026-05-11T01:00:00Z | Tc3_EventLogger | Asynchronous text requests               | F_GetEventText                           | verified | auto-extracted VAR from PDF
+2026-05-11T01:00:00Z | Tc3_EventLogger | EventEntry conversion                    | AdsErr_TO_TcEventEntry                   | verified | auto-extracted VAR from PDF
+2026-05-11T01:00:00Z | Tc3_EventLogger | EventEntry conversion                    | HRESULTAdsErr_TO_TcEventEntry            | verified | auto-extracted VAR from PDF
+2026-05-11T01:00:00Z | Tc3_EventLogger | EventEntry conversion                    | TcEventEntry_TO_AdsErr                   | verified | auto-extracted VAR from PDF
+2026-05-11T01:00:00Z | Tc3_EventLogger | EventEntry conversion                    | TcEventEntry_TO_HRESULTAdsErr            | verified | auto-extracted VAR from PDF
+2026-05-11T01:00:00Z | Tc3_EventLogger | Filter                                   | FB_TcClearLoggedEventsSettings           | verified | auto-extracted VAR from PDF
+2026-05-11T01:00:00Z | Tc3_EventLogger | Filter                                   | FB_TcEventCsvExportSettings              | verified | auto-extracted VAR from PDF
+2026-05-11T01:00:00Z | Tc3_EventLogger | Filter                                   | FB_TcEventFilter                         | verified | auto-extracted VAR from PDF
+2026-05-11T01:00:00Z | Tc3_EventLogger | RemoteEventLogger                        | FB_RemoteListenerBase                    | verified | auto-extracted VAR from PDF
+2026-05-11T01:00:00Z | Tc3_EventLogger | RemoteEventLogger                        | FB_TcRemoteEventLogger                   | verified | auto-extracted VAR from PDF
+2026-05-11T01:00:00Z | Tc3_EventLogger | Functions and function blocks            | FB_ListenerBase2                         | verified | auto-extracted VAR from PDF
+2026-05-11T01:00:00Z | Tc3_EventLogger | FB_ListenerBase2                         | Execute                                  | verified | auto-extracted VAR from PDF
+2026-05-11T01:00:00Z | Tc3_EventLogger | FB_ListenerBase2                         | OnAlarmCleared                           | verified | auto-extracted VAR from PDF
+2026-05-11T01:00:00Z | Tc3_EventLogger | FB_ListenerBase2                         | OnAlarmConfirmed                         | verified | auto-extracted VAR from PDF
+2026-05-11T01:00:00Z | Tc3_EventLogger | FB_ListenerBase2                         | OnAlarmDisposed                          | verified | auto-extracted VAR from PDF
+2026-05-11T01:00:00Z | Tc3_EventLogger | FB_ListenerBase2                         | OnAlarmRaised                            | verified | auto-extracted VAR from PDF
+2026-05-11T01:00:00Z | Tc3_EventLogger | FB_ListenerBase2                         | OnMessageSent                            | verified | auto-extracted VAR from PDF
+2026-05-11T01:00:00Z | Tc3_EventLogger | FB_ListenerBase2                         | Subscribe                                | verified | auto-extracted VAR from PDF
+2026-05-11T01:00:00Z | Tc3_EventLogger | FB_ListenerBase2                         | Subscribe2                               | verified | auto-extracted VAR from PDF
+2026-05-11T01:00:00Z | Tc3_EventLogger | FB_ListenerBase2                         | Unsubscribe                              | verified | auto-extracted VAR from PDF
+2026-05-11T01:00:00Z | Tc3_EventLogger | Functions and function blocks            | FB_TcAlarm                               | verified | auto-extracted VAR from PDF
+2026-05-11T01:00:00Z | Tc3_EventLogger | FB_TcAlarm                               | Clear                                    | verified | auto-extracted VAR from PDF
+2026-05-11T01:00:00Z | Tc3_EventLogger | FB_TcAlarm                               | Confirm                                  | verified | auto-extracted VAR from PDF
+2026-05-11T01:00:00Z | Tc3_EventLogger | FB_TcAlarm                               | Create                                   | verified | auto-extracted VAR from PDF
+2026-05-11T01:00:00Z | Tc3_EventLogger | FB_TcAlarm                               | CreateEx                                 | verified | auto-extracted VAR from PDF
+2026-05-11T01:00:00Z | Tc3_EventLogger | FB_TcAlarm                               | Raise                                    | verified | auto-extracted VAR from PDF
+2026-05-11T01:00:00Z | Tc3_EventLogger | FB_TcAlarm                               | SetJsonAttribute                         | verified | auto-extracted VAR from PDF
+2026-05-11T01:00:00Z | Tc3_EventLogger | Functions and function blocks            | FB_TcArguments                           | verified | auto-extracted VAR from PDF
+2026-05-11T01:00:00Z | Tc3_EventLogger | FB_TcArguments                           | IsEmpty                                  | verified | auto-extracted VAR from PDF
+2026-05-11T01:00:00Z | Tc3_EventLogger | Functions and function blocks            | FB_TcEvent                               | verified | auto-extracted VAR from PDF
+2026-05-11T01:00:00Z | Tc3_EventLogger | Functions and function blocks            | FB_TcEventBase                           | verified | auto-extracted VAR from PDF
+2026-05-11T01:00:00Z | Tc3_EventLogger | FB_TcEventBase                           | EqualsTo                                 | verified | auto-extracted VAR from PDF
+2026-05-11T01:00:00Z | Tc3_EventLogger | FB_TcEventBase                           | EqualsToEventClass                       | verified | auto-extracted VAR from PDF
+2026-05-11T01:00:00Z | Tc3_EventLogger | FB_TcEventBase                           | EqualsToEventEntry                       | verified | auto-extracted VAR from PDF
+2026-05-11T01:00:00Z | Tc3_EventLogger | FB_TcEventBase                           | EqualsToEventEntryEx                     | verified | auto-extracted VAR from PDF
+2026-05-11T01:00:00Z | Tc3_EventLogger | FB_TcEventBase                           | GetJsonAttribute                         | verified | auto-extracted VAR from PDF
+2026-05-11T01:00:00Z | Tc3_EventLogger | FB_TcEventBase                           | Release                                  | verified | auto-extracted VAR from PDF
+2026-05-11T01:00:00Z | Tc3_EventLogger | FB_TcEventBase                           | RequestEventClassName                    | verified | auto-extracted VAR from PDF
+2026-05-11T01:00:00Z | Tc3_EventLogger | FB_TcEventBase                           | RequestEventText                         | verified | auto-extracted VAR from PDF
+2026-05-11T01:00:00Z | Tc3_EventLogger | FB_TcEventBase                           | ipArguments                              | verified | auto-extracted VAR from PDF
+2026-05-11T01:00:00Z | Tc3_EventLogger | FB_TcEventBase                           | ipSourceInfo                             | verified | auto-extracted VAR from PDF
+2026-05-11T01:00:00Z | Tc3_EventLogger | Functions and function blocks            | FB_TcEventLogger                         | verified | auto-extracted VAR from PDF
+2026-05-11T01:00:00Z | Tc3_EventLogger | FB_TcEventLogger                         | ClearAlarms                              | verified | auto-extracted VAR from PDF
+2026-05-11T01:00:00Z | Tc3_EventLogger | FB_TcEventLogger                         | ClearAllAlarms                           | verified | auto-extracted VAR from PDF
+2026-05-11T01:00:00Z | Tc3_EventLogger | FB_TcEventLogger                         | ClearLoggedEvents                        | verified | auto-extracted VAR from PDF
+2026-05-11T01:00:00Z | Tc3_EventLogger | FB_TcEventLogger                         | ConfirmAlarms                            | verified | auto-extracted VAR from PDF
+2026-05-11T01:00:00Z | Tc3_EventLogger | FB_TcEventLogger                         | ConfirmAllAlarms                         | verified | auto-extracted VAR from PDF
+2026-05-11T01:00:00Z | Tc3_EventLogger | FB_TcEventLogger                         | ExportLoggedEvents                       | verified | auto-extracted VAR from PDF
+2026-05-11T01:00:00Z | Tc3_EventLogger | FB_TcEventLogger                         | GetAlarm                                 | verified | auto-extracted VAR from PDF
+2026-05-11T01:00:00Z | Tc3_EventLogger | FB_TcEventLogger                         | GetAlarmEx                               | verified | auto-extracted VAR from PDF
+2026-05-11T01:00:00Z | Tc3_EventLogger | FB_TcEventLogger                         | IsAlarmRaised                            | verified | auto-extracted VAR from PDF
+2026-05-11T01:00:00Z | Tc3_EventLogger | FB_TcEventLogger                         | IsAlarmRaisedEx                          | verified | auto-extracted VAR from PDF
+2026-05-11T01:00:00Z | Tc3_EventLogger | FB_TcEventLogger                         | SendMessage                              | verified | auto-extracted VAR from PDF
+2026-05-11T01:00:00Z | Tc3_EventLogger | FB_TcEventLogger                         | SendMessage2                             | verified | auto-extracted VAR from PDF
+2026-05-11T01:00:00Z | Tc3_EventLogger | FB_TcEventLogger                         | SendMessageEx                            | verified | auto-extracted VAR from PDF
+2026-05-11T01:00:00Z | Tc3_EventLogger | FB_TcEventLogger                         | SendMessageEx2                           | verified | auto-extracted VAR from PDF
+2026-05-11T01:00:00Z | Tc3_EventLogger | Functions and function blocks            | FB_TcMessage                             | verified | auto-extracted VAR from PDF
+2026-05-11T01:00:00Z | Tc3_EventLogger | FB_TcMessage                             | Create                                   | verified | auto-extracted VAR from PDF
+2026-05-11T01:00:00Z | Tc3_EventLogger | FB_TcMessage                             | CreateEx                                 | verified | auto-extracted VAR from PDF
+2026-05-11T01:00:00Z | Tc3_EventLogger | FB_TcMessage                             | SetJsonAttribute                         | verified | auto-extracted VAR from PDF
+2026-05-11T01:00:00Z | Tc3_EventLogger | Functions and function blocks            | FB_TcSourceInfo                          | verified | auto-extracted VAR from PDF
+2026-05-11T01:00:00Z | Tc3_EventLogger | FB_TcSourceInfo                          | Clear                                    | verified | auto-extracted VAR from PDF
+2026-05-11T01:00:00Z | Tc3_EventLogger | FB_TcSourceInfo                          | ExtendName                               | verified | auto-extracted VAR from PDF
+2026-05-11T01:00:00Z | Tc3_EventLogger | FB_TcSourceInfo                          | ResetToDefault                           | verified | auto-extracted VAR from PDF

@@ -166,9 +166,21 @@ def verify(doc_path: str) -> tuple[int, list[str]]:
             f"Library Version mismatch: doc='{meta.get('Library Version')}' pdf='{cache_meta['version']}'"
         )
 
-    # find section for this name
+    # find section for this name. Some libs have the same method name under
+    # multiple OO parents (Tc3_EventLogger: FB_TcAlarm.Create vs
+    # FB_TcMessage.Create vs FB_TcSourceInfo.Clear etc.). Disambiguate by
+    # using the doc's parent directory as a hint: the subdir is the lowercased
+    # category name (FB_TcMessage -> fb_tcmessage).
     toc = parse_toc(lib)
-    entry = next((e for e in toc if e["name"] == name), None)
+    parent_dir = p.parent.name.lower()
+    candidates = [e for e in toc if e["name"] == name]
+    entry = None
+    if len(candidates) > 1:
+        entry = next(
+            (e for e in candidates if e["category"].lower() == parent_dir), None
+        )
+    if entry is None and candidates:
+        entry = candidates[0]
     if entry is None:
         return 2, [f"{name} not found in TOC of {lib}"]
 
@@ -230,10 +242,14 @@ def verify(doc_path: str) -> tuple[int, list[str]]:
     if extra:
         diags.append(f"VAR in doc not in PDF: {sorted(extra)}")
 
-    # example link
+    # example link — read the actual link from the doc so parent-prefixed
+    # stems for OO method collisions (e.g. P_Demo_FB_TcAlarm_Create.xml) are
+    # honoured.
     examples_dir = p.parent.parent / "examples"
-    if not (examples_dir / f"P_Demo_{name}.xml").exists():
-        diags.append(f"example missing: examples/P_Demo_{name}.xml")
+    m_ex = re.search(r"examples/P_Demo_([A-Za-z0-9_]+)\.xml", doc)
+    example_stem = m_ex.group(1) if m_ex else name
+    if not (examples_dir / f"P_Demo_{example_stem}.xml").exists():
+        diags.append(f"example missing: examples/P_Demo_{example_stem}.xml")
 
     # Empty VAR on both sides is legitimate for pure-OO parent FBs that only
     # expose methods (e.g. FB_CalcHashValue: start()/update()/finish()) and
