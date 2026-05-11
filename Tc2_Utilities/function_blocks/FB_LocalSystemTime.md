@@ -24,11 +24,11 @@ In some applications the local Windows system time is synchronized via the SNTP 
 
 ```iecst
 VAR_INPUT
-    sNetID : T_AmsNetID;
+    sNetID : T_AmsNetID := '';
     bEnable : BOOL;
-    dwCycle : DWORD(1..86400);
-    dwOpt : DWORD;
-    tTimeout : TIME;
+    dwCycle : DWORD(1..86400) := 5;
+    dwOpt : DWORD := 1;
+    tTimeout : TIME := DEFAULT_ADS_TIMEOUT;
 END_VAR
 ```
 
@@ -46,7 +46,7 @@ END_VAR
 VAR_OUTPUT
     bValid : BOOL;
     systemTime : TIMESTRUCT;
-    tzID : E_TimeZoneID;
+    tzID : E_TimeZoneID := eTimeZoneID_Invalid;
 END_VAR
 ```
 

@@ -24,11 +24,11 @@ This function block consolidates individual smaller data segments to form a larg
 
 ```iecst
 VAR_INPUT
-    eCmd : E_EnumCmdType;
+    eCmd : E_EnumCmdType := eEnumCmd_First;
     pBuffer : POINTER TO BYTE;
     cbBuffer : UDINT;
-    pSegment : POINTER TO BYTE;
-    cbSegment : UDINT;
+    pSegment : POINTER TO BYTE := 0;
+    cbSegment : UDINT := 0;
 END_VAR
 ```
 

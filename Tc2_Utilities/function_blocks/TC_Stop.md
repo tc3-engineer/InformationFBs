@@ -26,7 +26,7 @@ The function block TC_Stop can be used to stop the TwinCAT system. The function 
 VAR_INPUT
     NETID : T_AmsNetId;
     STOP : BOOL;
-    TMOUT : TIME;
+    TMOUT : TIME := DEFAULT_ADS_TIMEOUT;
 END_VAR
 ```
 

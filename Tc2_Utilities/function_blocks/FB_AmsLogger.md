@@ -24,11 +24,11 @@ The "TwinCAT AMS Logger" is a component of the "TwinCAT ADS Monitor" (.. \TwinCA
 
 ```iecst
 VAR_INPUT
-    sNetId : T_AmsNetId;
-    eMode : E_AmsLoggerMode;
-    sCfgFilePath : T_MaxString;
+    sNetId : T_AmsNetId := '';
+    eMode : E_AmsLoggerMode := AMSLOGGER_RUN;
+    sCfgFilePath : T_MaxString := '';
     bExecute : BOOL;
-    tTimeout : TIME;
+    tTimeout : TIME := DEFAULT_ADS_TIMEOUT;
 END_VAR
 ```
 

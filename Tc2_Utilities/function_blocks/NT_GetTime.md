@@ -26,7 +26,7 @@ The function block NT_GetTime can be used to determine the local Windows system 
 VAR_INPUT
     NETID : T_AmsNetId;
     START : BOOL;
-    TMOUT : TIME;
+    TMOUT : TIME := DEFAULT_ADS_TIMEOUT;
 END_VAR
 ```
 

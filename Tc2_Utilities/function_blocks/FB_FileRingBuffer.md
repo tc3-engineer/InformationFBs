@@ -24,17 +24,17 @@ The function block FB_FileRingBuffer allows data sets of varying lengths to be w
 
 ```iecst
 VAR_INPUT
-    sNetId : T_AmsNetId;
-    sPathName : T_MaxString;
-    ePath : E_OpenPath;
-    nID : UDINT;
-    cbBuffer : UDINT;
-    bOverwrite : BOOL;
+    sNetId : T_AmsNetId := '';
+    sPathName : T_MaxString := 'c:\Temp\data.dat';
+    ePath : E_OpenPath := PATH_GENERIC;
+    nID : UDINT := 0;
+    cbBuffer : UDINT := 16#100000;
+    bOverwrite : BOOL := FALSE;
     pWriteBuff : POINTER TO BYTE;
     cbWriteLen : UDINT;
     pReadBuff : POINTER TO BYTE;
     cbReadLen : UDINT;
-    tTimeout : TIME;
+    tTimeout : TIME := DEFAULT_ADS_TIMEOUT;
 END_VAR
 ```
 

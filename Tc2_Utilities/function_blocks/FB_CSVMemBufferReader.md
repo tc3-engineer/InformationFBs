@@ -24,7 +24,7 @@ This function block can be used to decompose/interpret data sets stored in an ex
 
 ```iecst
 VAR_INPUT
-    eCmd : E_EnumCmdType;
+    eCmd : E_EnumCmdType := eEnumCmd_First;
     pBuffer : POINTER TO BYTE;
     cbBuffer : UDINT;
 END_VAR
@@ -41,11 +41,11 @@ END_VAR
 ```iecst
 VAR_OUTPUT
     bOk : BOOL;
-    getValue : T_MaxString;
-    pValue : POINTER TO BYTE;
-    cbValue : UDINT;
-    bCRLF : BOOL;
-    cbRead : UDINT;
+    getValue : T_MaxString := '';
+    pValue : POINTER TO BYTE := 0;
+    cbValue : UDINT := 0;
+    bCRLF : BOOL := FALSE;
+    cbRead : UDINT := 0;
 END_VAR
 ```
 

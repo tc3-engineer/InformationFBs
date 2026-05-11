@@ -107,7 +107,57 @@ _PAGE_HEADER_BARE_RE = re.compile(
 _PAGE_MARKER_RE = re.compile(r"\n?=== PAGE \d+ ===\n")
 
 
+_INLINE_METHOD_HEADER = re.compile(
+    r"(?m)^[ \t]+Methods\s+([A-Za-z_]\w*)\s*\(\s*\)"
+)
+
+
+def _extract_inline_method(parent_body: str, method_name: str) -> str:
+    """Slice parent_body to the chunk for a single inline method.
+
+    Range = from the matching " Methods <name>()" header up to the next
+    inline method header OR the "Requirements" / next major heading.
+    """
+    starts: list[tuple[str, int, int]] = []
+    for mm in _INLINE_METHOD_HEADER.finditer(parent_body):
+        starts.append((mm.group(1), mm.start(), mm.end()))
+    if not starts:
+        return ""
+    idx = next((i for i, s in enumerate(starts) if s[0] == method_name), -1)
+    if idx < 0:
+        return ""
+    start = starts[idx][1]
+    if idx + 1 < len(starts):
+        end = starts[idx + 1][1]
+    else:
+        # cut at "Requirements" or first all-uppercase section-like line
+        rest = parent_body[start:]
+        rm = re.search(r"(?m)^Requirements\s*$", rest)
+        end = (start + rm.start()) if rm else len(parent_body)
+    return parent_body[start:end].rstrip()
+
+
 def extract(lib: str, section: str) -> str:  # type: ignore[no-redef]
+    # Synthetic id "<parent_section>#mN" or "<parent_section>#<method_name>"
+    if "#" in section:
+        parent_sec, _, marker = section.partition("#")
+        parent = _orig_extract(lib, parent_sec)
+        parent = parent.replace("\xa0", " ")
+        parent = _PAGE_HEADER_WITH_MARKER_RE.sub("\n", parent)
+        parent = _PAGE_HEADER_BARE_RE.sub("\n", parent)
+        parent = _PAGE_MARKER_RE.sub("\n", parent)
+        # marker is "mN" (index) or a method name
+        if marker.startswith("m") and marker[1:].isdigit():
+            idx = int(marker[1:]) - 1
+            names: list[str] = []
+            for mm in _INLINE_METHOD_HEADER.finditer(parent):
+                if mm.group(1) not in names:
+                    names.append(mm.group(1))
+            if 0 <= idx < len(names):
+                return _extract_inline_method(parent, names[idx])
+            return ""
+        return _extract_inline_method(parent, marker)
+
     out = _orig_extract(lib, section)
     out = out.replace("\xa0", " ")
     out = _PAGE_HEADER_WITH_MARKER_RE.sub("\n", out)

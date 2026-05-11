@@ -26,7 +26,7 @@ This function block can be used to read the time zone settings of the operating 
 VAR_INPUT
     sNetID : T_AmsNetID;
     bExecute : BOOL;
-    tTimeout : TIME;
+    tTimeout : TIME := DEFAULT_ADS_TIMEOUT;
 END_VAR
 ```
 

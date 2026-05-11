@@ -27,7 +27,7 @@ VAR_INPUT
     sNetID : T_AmsNetID;
     sPathName : T_MaxString;
     bExecute : BOOL;
-    tTimeout : TIME;
+    tTimeout : TIME := DEFAULT_ADS_TIMEOUT;
 END_VAR
 ```
 

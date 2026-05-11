@@ -26,7 +26,7 @@ This function block can be used to read adapter information for a TwinCAT PC. Th
 VAR_INPUT
     sNetID : T_AmsNetID;
     bExecute : BOOL;
-    tTimeout : TIME;
+    tTimeout : TIME := DEFAULT_ADS_TIMEOUT;
 END_VAR
 ```
 

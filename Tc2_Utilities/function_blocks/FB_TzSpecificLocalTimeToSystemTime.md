@@ -39,7 +39,7 @@ END_VAR
 ```iecst
 VAR_OUTPUT
     out : TIMESTRUCT;
-    eTzID : E_TimeZoneID;
+    eTzID : E_TimeZoneID := eTimeZoneID_Unknown;
     bB : BOOL;
 END_VAR
 ```

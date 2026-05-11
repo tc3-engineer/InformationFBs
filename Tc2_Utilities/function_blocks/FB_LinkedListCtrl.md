@@ -24,8 +24,8 @@ The function block FB_LinkedListCtrl can be used to implement a linked list in t
 
 ```iecst
 VAR_INPUT
-    putValue : PVOID;
-    putPosPtr : POINTER TO T_LinkedListEntry;
+    putValue : PVOID := 0;
+    putPosPtr : POINTER TO T_LinkedListEntry := 0;
 END_VAR
 ```
 
@@ -38,9 +38,9 @@ END_VAR
 
 ```iecst
 VAR_OUTPUT
-    bOk : BOOL;
-    getValue : PVOID;
-    getPosPtr : POINTER TO T_LinkedListEntry;
+    bOk : BOOL := FALSE;
+    getValue : PVOID := 0;
+    getPosPtr : POINTER TO T_LinkedListEntry := 0;
 END_VAR
 ```
 

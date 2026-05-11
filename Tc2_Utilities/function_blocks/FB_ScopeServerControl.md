@@ -25,11 +25,11 @@ The function block FB_ScopeServerControl enables the PLC to collect data for sub
 ```iecst
 VAR_INPUT
     sNetId : T_AmsNetId;
-    eReqState : E_ScopeServerState;
+    eReqState : E_ScopeServerState := SCOPE_SERVER_IDLE;
     sConfigFile : STRING;
     sSaveFile : STRING;
-    tTimeout : TIME;
-    bExternalTriggerEvent : BOOL;
+    tTimeout : TIME := DEFAULT_ADS_TIMEOUT;
+    bExternalTriggerEvent : BOOL := FALSE;
 END_VAR
 ```
 
