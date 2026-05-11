@@ -19,9 +19,9 @@
 
 ## 1. 功能简述
 
-`FB_TcAlarm.SetJsonAttribute()` 给 alarm 实例追加一个 JSON 形式的自定义属性，在事件分发到 HMI / 数据库 / 远程客户端时一起传递。
+`FB_TcAlarm.SetJsonAttribute()` 给 alarm 实例追加一段 JSON 形式的自定义属性，在事件分发到 HMI / 数据库 / 远程客户端时与标准字段（EventClass/EventID/Severity/SourceInfo/Arguments）一并传递。
 
-用途：在标准 alarm 字段（EventClass/EventID/Severity/SourceInfo/Arguments）之外携带工程语义信息，例如 `{"batch":"B-2026-0511-001","operator":"WangWu","recipe":"R03"}`，便于 MES/ERP 系统结构化分析。
+整段属性以 JSON 字符串形式传入，可携带任意键值结构，例如 `'{"batch":"B-2026-0511-001","operator":"WangWu","recipe":"R03"}'`。便于 MES/ERP 系统在事后审计时做结构化分析。
 
 ## 2. 接口定义
 
@@ -35,7 +35,7 @@ END_VAR
 
 | 名称 | 类型 | 说明 |
 |---|---|---|
-| `sJsonAttribute` | `STRING` | ⚠️ 待人工确认（PDF/InfoSys Description 列为空或仅英文） |
+| `sJsonAttribute` | `STRING` | 合法 JSON 字符串（建议用 STRING(255) 或更长以容纳完整 JSON 对象） |
 
 
 ### VAR_OUTPUT
@@ -52,16 +52,16 @@ END_VAR
 
 | 名称 | 类型 | 说明 |
 |---|---|---|
-| `sJsonAttribute` | `STRING` | ⚠️ 待人工确认（PDF/InfoSys Description 列为空或仅英文） |
+| `sJsonAttribute` | `STRING` | 合法 JSON 字符串（建议用 STRING(255) 或更长以容纳完整 JSON 对象） |
 
 
 ## 3. 行为说明
 
-方法接收 `sName`（属性名）和 `sValue`（属性值，JSON 字符串）。EventLogger 把它存到 alarm 的扩展属性表里，再下一次状态变化（Raise/Clear/Confirm）时随事件一起广播。
+方法签名只有一个 `VAR_IN_OUT CONSTANT sJsonAttribute : STRING`。EventLogger 把整段 JSON 存入 alarm 的扩展属性，下一次状态变化（Raise/Clear/Confirm）时随事件一起广播。
 
-**调用时机**：通常在 Raise 之前调用，确保事件分发时属性已附上。多次调同名属性会覆盖。属性值必须是合法 JSON——字符串要双引号、数字直接写、bool 用 true/false。手写时常见错误是漏掉外层引号或者把 Tab/换行不转义。
+**调用时机**：在 Raise 之前调用，确保事件分发时属性已附上。多次调用会**覆盖**上一次的 JSON 内容。字符串必须是合法 JSON，否则 EventLogger 端解析失败、HMI 看不到自定义字段。
 
-本方法是 TwinCAT 3 EventLogger 4026+ 版本才支持，老版本调用会被静默忽略或返回错误。
+本方法在 TwinCAT 3 EventLogger 4026+ 版本完整可用，老版本可能行为受限。VAR_IN_OUT CONSTANT 形式：调用方传入字符串时 PLC 不复制（节省栈），方法内部不能修改它。
 
 ## 4. 错误码 / 返回值
 
@@ -69,16 +69,15 @@ END_VAR
 
 | HRESULT | 含义 | 处理建议 |
 |---|---|---|
-| `S_OK` | 属性已添加/更新 | 继续业务 |
-| `E_INVALIDARG` | 属性名或值无效（如空字符串、非法 JSON） | 检查 JSON 格式 |
-| `其他错误` | ⚠️ PDF 未列详细码 | 查 ADS Return Codes |
+| `S_OK` | JSON 属性已成功写入 | 继续业务 |
+| `其他错误` | ⚠️ PDF 未列详细码，可能因 JSON 非法、长度超限等 | 校验 JSON 格式 / 缩短内容 / 查 ADS Return Codes |
 
 ## 5. 使用注意 / 常见坑
 
-- `sValue` 必须是 JSON 合法值：`'"hello"'`（字符串带引号）/ `'42'`（数字）/ `'true'`。漏外层引号是最常见错误。
-- TwinCAT 老版本（4022 及以下）此方法可能无效，迁移工程时确认目标版本。（工程经验补充）
-- 属性名同名会覆盖；删除属性需要传空 JSON `null`。（工程经验补充）
-- HMI 端要主动消费 JSON 属性——TwinCAT HMI 默认只显示标准字段，需要绑定 JSON 属性到自定义控件。（工程经验补充）
+- 传入字符串必须是**合法 JSON 整体**——`'{"a":1}'` 行；裸 `'hello'` 不是合法 JSON 对象/数组会被丢弃。
+- STRING 默认长度 80 字节往往不够，注意声明 `STRING(255)` 或 `STRING(1024)`。（工程经验补充）
+- 调用会覆盖上次内容——要追加键得自己在 PLC 端拼接完整 JSON 再传入。（工程经验补充）
+- HMI 端要主动消费 JSON——TwinCAT HMI 默认只显示标准字段，需要绑定 JSON 到自定义控件。（工程经验补充）
 
 ## 6. 最小例程
 
@@ -95,10 +94,10 @@ END_VAR
 批次追溯。每个 alarm 附带 batch id + operator name + recipe version，事故事后能精确定位"某批某操作员在某配方下出的问题"
 
 
-把工艺上下文直接附在 alarm 上，省掉手写"alarm + 上下文表"的 JOIN 查询；MES 拉数据时一个 EventEntry 就够
+把工艺上下文直接挂在 alarm 上，省掉手写"alarm + 上下文表"的 JOIN 查询；MES 拉数据时一个 EventEntry 就够
 
 
-把上下文塞进 `FB_TcArguments` → 适合数值型参数（int/real/bool）不适合复杂 JSON；走外部数据库 INSERT → 阻塞 PLC 周期、且与 alarm 时间戳不严格同步
+把上下文塞进 `FB_TcArguments` → 适合标准类型参数（int/real/bool/string），JSON 属性更适合**嵌套/动态**结构；走外部数据库 INSERT → 阻塞 PLC 周期、且与 alarm 时间戳不严格同步
 
 
 ## 8. 参考资料

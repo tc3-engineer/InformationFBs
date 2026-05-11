@@ -27,6 +27,15 @@ sys.path.insert(0, str(ROOT / "_meta" / "tools"))
 from _tc3eventlogger_extract import get_section_text, parse_vars  # noqa: E402
 from _tc3eventlogger_urls import url_for  # noqa: E402
 from _tc3eventlogger_registry import REG, EXAMPLE_STEMS  # noqa: E402
+import _tc3eventlogger_registry2  # noqa: F401, E402 — registers more entries
+try:
+    import _tc3eventlogger_registry3  # noqa: F401, E402
+except ImportError:
+    pass
+try:
+    import _tc3eventlogger_registry4  # noqa: F401, E402
+except ImportError:
+    pass
 
 LIB = "Tc3_EventLogger"
 PDF_URL = "https://download.beckhoff.com/download/document/automation/twincat3/TwinCAT_3_PLC_Lib_Tc3_EventLogger_EN.pdf"

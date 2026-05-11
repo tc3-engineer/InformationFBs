@@ -14,38 +14,37 @@
       <pou name="P_Demo_EqualsToEventClass" pouType="program">
         <interface>
           <localVars>
-            <variable name="fbEqualsToEventClass">
-              <type><derived name="EqualsToEventClass"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">Tc3_EventLogger.EqualsToEventClass 实例</xhtml></documentation>
+            <variable name="fbAlarm">
+              <type><derived name="FB_TcAlarm"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">alarm 实例</xhtml></documentation>
             </variable>
-            <variable name="arg_OtherEventClass">
+            <variable name="guidExpected">
               <type><derived name="GUID"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT OtherEventClass</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">要匹配的事件类 GUID</xhtml></documentation>
+            </variable>
+            <variable name="bMatch">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">比较结果</xhtml></documentation>
             </variable>
           </localVars>
         </interface>
         <body>
-          <ST>
-            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
-// Tc3_EventLogger.EqualsToEventClass 演示程序（FB 实例）
-// ============================================================
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：判断当前 alarm 是否属于「安全报警」类
+// 价值：一次调用即可分流
+// 验证：登录后让 fbAlarm.Create 用某 GUID，再写 guidExpected 为相同 GUID → bMatch=TRUE；改 guidExpected 任一字节 → FALSE
 // 验证步骤：
-//   1. 引用 Tc3_EventLogger（及依赖类型所在库 Tc2_System 等）
-//   2. 编译 + 登录
-//   3. 按 doc.md 给 arg_* 赋值
-//   4. 在线监视 out_* / io_* 输出
-// ============================================================
+//   1. 右键 PLC 项目 → Import PLCopenXML → 选本文件
+//   2. 引用 Tc3_EventLogger（System → References → Add library）
+//   3. 编译 → 登录 → 运行；按 verify 注释里给出的在线写值操作
+// =============================================================================
 
-fbEqualsToEventClass(
-    OtherEventClass := arg_OtherEventClass
-);
-</xhtml>
-          </ST>
+// 调用者已经持有 alarm 实例，判断它是否属于 guidExpected 这个事件类
+bMatch := fbAlarm.EqualsToEventClass(eventClass := guidExpected);
+</xhtml></ST>
         </body>
       </pou>
     </pous>
   </types>
-  <instances>
-    <configurations/>
-  </instances>
+  <instances><configurations/></instances>
 </project>

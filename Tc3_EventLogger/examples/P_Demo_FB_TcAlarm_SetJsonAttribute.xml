@@ -32,6 +32,10 @@
               <type><string><length>64</length></string></type>
               <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">批次号</xhtml></documentation>
             </variable>
+            <variable name="sJsonAttribute">
+              <type><string><length>255</length></string></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">拼接好的完整 JSON</xhtml></documentation>
+            </variable>
             <variable name="hr">
               <type><derived name="HRESULT"/></type>
               <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">返回值监视</xhtml></documentation>
@@ -40,20 +44,23 @@
         </interface>
         <body>
           <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
-// 场景：包装机 alarm 附加批次追溯信息（batch id + 操作员 + 配方版本）
+// 场景：包装机 alarm 附加批次追溯信息（batch id + 操作员）
 // 价值：一句 SetJsonAttribute 把工艺上下文绑到 alarm 上，MES 拉取时一并到位
-// 验证：登录后写 bSetAttr := TRUE 触发一次设置；HMI EventLogger 的事件详情面板（或 ADS 工具查事件）应能看到 batchId 字段；改写 sBatchId := 'B-002' 再触发，覆盖原属性
+// 验证：登录后写 bSetAttr := TRUE 触发一次设置；EventLogger 的事件详情面板（或 ADS 工具查事件）应能看到 JSON 字段；改写 sBatchId := 'B-002' 后再次触发会覆盖前一次
 // 验证步骤：
 //   1. 右键 PLC 项目 → Import PLCopenXML → 选本文件
 //   2. 引用 Tc3_EventLogger（System → References → Add library）
 //   3. 编译 → 登录 → 运行；按 verify 注释里给出的在线写值操作
 // =============================================================================
 
-// 边沿触发：在 Raise 之前给 alarm 附加 batch id（合法 JSON：字符串要带双引号）
+// 拼接完整 JSON（包含批次号 + 操作员）。注意 STRING 容量要够装下整段 JSON。
+sJsonAttribute := CONCAT('{"batch":"',
+                        CONCAT(sBatchId,
+                        CONCAT('","operator":"', '"WangWu"}')));
+
+// 边沿触发：在 Raise 之前调一次 SetJsonAttribute；该 JSON 会随后续 Raise/Clear/Confirm 一起广播
 IF bSetAttr AND NOT bSetAttrPrev THEN
-    hr := fbAlarm.SetJsonAttribute(
-        sName := 'batchId',
-        sValue := CONCAT('"', CONCAT(sBatchId, '"')));   // 输出 "B-2026-0511-001"
+    hr := fbAlarm.SetJsonAttribute(sJsonAttribute := sJsonAttribute);
 END_IF;
 bSetAttrPrev := bSetAttr;
 </xhtml></ST>
