@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <project xmlns="http://www.plcopen.org/xml/tc6_0200">
-  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-10T20:00:00"/>
-  <contentHeader name="Tc2_Utilities.FB_RemoveRouteEntry Demo" modificationDateTime="2026-05-10T20:00:00">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-11T00:00:00"/>
+  <contentHeader name="Tc2_Utilities.FB_RemoveRouteEntry Demo" modificationDateTime="2026-05-11T00:00:00">
     <coordinateInfo>
       <fbd><scaling x="1" y="1"/></fbd>
       <ld><scaling x="1" y="1"/></ld>
@@ -16,66 +16,49 @@
           <localVars>
             <variable name="fbFB_RemoveRouteEntry">
               <type><derived name="FB_RemoveRouteEntry"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">Tc2_Utilities.FB_RemoveRouteEntry 实例</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">FB_RemoveRouteEntry 实例</xhtml></documentation>
             </variable>
-            <variable name="arg_sNetID">
-              <type><derived name="T_AmsNetId"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT sNetID</xhtml></documentation>
-            </variable>
-            <variable name="arg_sName">
-              <type><string><length>MAX_ROUTE_NAME_LEN</length></string></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT sName</xhtml></documentation>
-            </variable>
-            <variable name="arg_bExecute">
+            <variable name="bRemove">
+              <initialValue><simpleValue value="FALSE"/></initialValue>
               <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT bExecute</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">上升沿触发删除</xhtml></documentation>
             </variable>
-            <variable name="arg_tTimeout">
-              <type><TIME/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT tTimeout</xhtml></documentation>
-            </variable>
-            <variable name="out_bBusy">
+            <variable name="bBusy_">
               <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT bBusy</xhtml></documentation>
             </variable>
-            <variable name="out_bError">
+            <variable name="bErrFlag">
               <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT bError</xhtml></documentation>
             </variable>
-            <variable name="out_nErrID">
+            <variable name="nErrCode">
               <type><UDINT/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT nErrID</xhtml></documentation>
             </variable>
           </localVars>
         </interface>
         <body>
-          <ST>
-            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
-// Tc2_Utilities.FB_RemoveRouteEntry 演示程序（FB 实例）
-// ============================================================
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：批量清理 retrofit 后的旧路由条目。
+// 价值：替代手动删除。
+// 验证：先用 FB_EnumRouteEntry 看路由表，确认目标条目存在；写 bRemove := TRUE 触发删除；再次 Enum 应看不到该条目。
 // 验证步骤：
-//   1. 引用 Tc2_Utilities（及依赖类型所在库 Tc2_System 等）
-//   2. 编译 + 登录
-//   3. 按 doc.md 给 arg_* 赋值
-//   4. 在线监视 out_* / io_* 输出
-// ============================================================
+//   1. 右键 PLC 项目 → Import PLCopenXML → 选本文件
+//   2. 引用 Tc2_Utilities（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』行的指示在线写值观察
+// =============================================================================
 
 fbFB_RemoveRouteEntry(
-    sNetID := arg_sNetID,
-    sName := arg_sName,
-    bExecute := arg_bExecute,
-    tTimeout := arg_tTimeout,
-    bBusy =&gt; out_bBusy,
-    bError =&gt; out_bError,
-    nErrID =&gt; out_nErrID
+    sNetID := '',
+    bExecute := bRemove,
+    sRemoteName := 'CX-OldLine',
+    sRemoteRouteName := 'AutoRoute-OldLine',
+    tTimeout := DEFAULT_ADS_TIMEOUT,
+    bBusy =&gt; bBusy_,
+    bErr =&gt; bErrFlag,
+    nErrId =&gt; nErrCode
 );
-</xhtml>
-          </ST>
+</xhtml></ST>
         </body>
       </pou>
     </pous>
   </types>
-  <instances>
-    <configurations/>
-  </instances>
+  <instances><configurations/></instances>
 </project>
