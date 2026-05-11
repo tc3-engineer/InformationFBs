@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <project xmlns="http://www.plcopen.org/xml/tc6_0200">
-  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-10T08:00:00"/>
-  <contentHeader name="Tc2_Standard.WREPLACE Demo" modificationDateTime="2026-05-10T08:00:00">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-11T08:00:00"/>
+  <contentHeader name="Tc2_Standard.WREPLACE Demo" modificationDateTime="2026-05-11T08:00:00">
     <coordinateInfo>
       <fbd><scaling x="1" y="1"/></fbd>
       <ld><scaling x="1" y="1"/></ld>
@@ -14,40 +14,64 @@
       <pou name="P_Demo_WREPLACE" pouType="program">
         <interface>
           <localVars>
-            <variable name="sResult">
-              <type><wstring><stringLength><value>255</value></stringLength></wstring></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">WREPLACE 的返回值（监视）</xhtml></documentation>
+            <variable name="sLogLine">
+              <type><wstring><length>255</length></wstring></type>
+              <initialValue><simpleValue value="&quot;警告 电机异常&quot;"/></initialValue>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">原始中文日志：等级 + 空格 + 消息体</xhtml></documentation>
             </variable>
-            <variable name="bRun">
+            <variable name="sNewLevel">
+              <type><wstring><length>255</length></wstring></type>
+              <initialValue><simpleValue value="&quot;错误&quot;"/></initialValue>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">升级后的等级标识</xhtml></documentation>
+            </variable>
+            <variable name="sResult">
+              <type><wstring><length>255</length></wstring></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">等级升级后的完整日志</xhtml></documentation>
+            </variable>
+            <variable name="nReplaceLen">
+              <type><INT/></type>
+              <initialValue><simpleValue value="2"/></initialValue>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">被替换段字符数 = 2（&quot;警告&quot; 2 个汉字）</xhtml></documentation>
+            </variable>
+            <variable name="nReplacePos">
+              <type><INT/></type>
+              <initialValue><simpleValue value="1"/></initialValue>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">替换起点 = 第 1 字符</xhtml></documentation>
+            </variable>
+            <variable name="bUpgrade">
               <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">触发一次 WREPLACE 调用</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">触发一次等级升级</xhtml></documentation>
             </variable>
           </localVars>
         </interface>
         <body>
-          <ST>
-            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
-// Tc2_Standard.WREPLACE 演示程序（FUNCTION）
-// ============================================================
-// 场景：对 WSTRING 执行 REPLACE 操作
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：报警系统判定某条 &quot;警告&quot; 级中文日志在 30 秒内累积 5 次未恢复，需要
+//       升级为 &quot;错误&quot; 重发到值班手机。WREPLACE 一行调用把前 2 字 &quot;警告&quot;
+//       换成 &quot;错误&quot;，消息体保持不变。
+//
+// 价值：WREPLACE 按 UCS-2 字符算位置和长度，业务侧看到&quot;前 2 字&quot;就是 2 字。
+//       STRING + REPLACE 要传 nReplaceLen = 6（按 UTF-8 字节）才行，错位风险大。
+//       另：本函数不是模式匹配替换，要替换所有出现必须配合 WFIND 写循环。
+//
 // 验证步骤：
-//   1. 编译并登录目标
-//   2. 强制 bRun := TRUE 一个周期
-//   3. 观察 sResult = "SKYSI"
-//   4. bRun 自动复位
-// ============================================================
+//   1. 导入本文件、引用 Tc2_Standard、编译、登录、运行
+//   2. 在线 monitor sResult（Unicode 显示）
+//   3. 在线写 bUpgrade := TRUE
+//   4. 下一周期 sResult = &quot;错误 电机异常&quot;
+//   5. 把 sNewLevel 改成 &quot;紧急停机&quot;（4 字）+ 再触发 →
+//      sResult = &quot;紧急停机 电机异常&quot;（长度自动变长，验证替换段可不等长）
+// =============================================================================
 
-IF bRun THEN
-    sResult := WREPLACE("SUXYSI","K",2,2);
-    bRun := FALSE;
+// 入参顺序：(STR1, STR2, L, P) — L 在 P 前，按字符算
+IF bUpgrade THEN
+    sResult := WREPLACE(sLogLine, sNewLevel, nReplaceLen, nReplacePos);
+    bUpgrade := FALSE;
 END_IF;
-</xhtml>
-          </ST>
+</xhtml></ST>
         </body>
       </pou>
     </pous>
   </types>
-  <instances>
-    <configurations/>
-  </instances>
+  <instances><configurations/></instances>
 </project>

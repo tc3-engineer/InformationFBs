@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <project xmlns="http://www.plcopen.org/xml/tc6_0200">
-  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-10T08:00:00"/>
-  <contentHeader name="Tc2_Standard.LEFT Demo" modificationDateTime="2026-05-10T08:00:00">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-11T08:00:00"/>
+  <contentHeader name="Tc2_Standard.LEFT Demo" modificationDateTime="2026-05-11T08:00:00">
     <coordinateInfo>
       <fbd><scaling x="1" y="1"/></fbd>
       <ld><scaling x="1" y="1"/></ld>
@@ -14,40 +14,53 @@
       <pou name="P_Demo_LEFT" pouType="program">
         <interface>
           <localVars>
-            <variable name="sResult">
-              <type><string><stringLength><value>255</value></stringLength></string></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">LEFT 的返回值（监视）</xhtml></documentation>
+            <variable name="sLogLine">
+              <type><string><length>255</length></string></type>
+              <initialValue><simpleValue value="'ERROR Motor overcurrent'"/></initialValue>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">日志行：固定 5 字符等级前缀 + 空格 + 消息体</xhtml></documentation>
             </variable>
-            <variable name="bRun">
+            <variable name="sLevel">
+              <type><string><length>255</length></string></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">提取出的等级前缀（用于分流）</xhtml></documentation>
+            </variable>
+            <variable name="nLevelWidth">
+              <type><INT/></type>
+              <initialValue><simpleValue value="5"/></initialValue>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">等级字段固定宽度 = 5（INFO_ / WARN_ / ERROR / DEBUG 都补到 5 字符）</xhtml></documentation>
+            </variable>
+            <variable name="bExtract">
               <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">触发一次 LEFT 调用</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">触发一次 LEFT</xhtml></documentation>
             </variable>
           </localVars>
         </interface>
         <body>
-          <ST>
-            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
-// Tc2_Standard.LEFT 演示程序（FUNCTION）
-// ============================================================
-// 场景：取产品编号前 3 位（区域码）
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：日志分流模块按等级（ERROR/WARN/INFO）走不同分支。原始日志行 'ERROR
+//       Motor overcurrent' 头部固定 5 字符是等级标识，后面是空格+消息体。
+//       LEFT(s, 5) 一行拿到等级用于 CASE 分支判断。
+//
+// 价值：LEFT 接受字符数直接截前段，超长源串只取前 5 不报错。不用本 FC
+//       要自己写 MEMCPY + SIZEOF + 0x00 补结束符 3 行代码。
+//
 // 验证步骤：
-//   1. 编译并登录目标
-//   2. 强制 bRun := TRUE 一个周期
-//   3. 观察 sResult = 'SUS'
-//   4. bRun 自动复位
-// ============================================================
+//   1. 导入本文件、引用 Tc2_Standard、编译、登录、运行
+//   2. 在线 monitor sLevel
+//   3. 在线写 bExtract := TRUE
+//   4. 下一周期 sLevel = &apos;ERROR&apos;（前 5 字符），bExtract 复位
+//   5. 把 sLogLine 改成 &apos;OK&apos;（只有 2 字符）+ 再触发 →
+//      sLevel = &apos;OK&apos;（LEFT 在 SIZE&gt;LEN 时返回整个源串，不补空格不报错）
+// =============================================================================
 
-IF bRun THEN
-    sResult := LEFT('SUSI',3);
-    bRun := FALSE;
+// LEFT(s, 5) 表示"从左数 5 个字符"，1-based 角度看是 [1..5]
+IF bExtract THEN
+    sLevel := LEFT(sLogLine, nLevelWidth);
+    bExtract := FALSE;
 END_IF;
-</xhtml>
-          </ST>
+</xhtml></ST>
         </body>
       </pou>
     </pous>
   </types>
-  <instances>
-    <configurations/>
-  </instances>
+  <instances><configurations/></instances>
 </project>
