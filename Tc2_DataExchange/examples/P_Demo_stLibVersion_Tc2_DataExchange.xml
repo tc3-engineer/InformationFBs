@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <project xmlns="http://www.plcopen.org/xml/tc6_0200">
-  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-10T09:00:00"/>
-  <contentHeader name="Tc2_DataExchange.stLibVersion_Tc2_DataExchange Demo" modificationDateTime="2026-05-10T09:00:00">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-11T07:00:00"/>
+  <contentHeader name="Tc2_DataExchange.stLibVersion Demo" modificationDateTime="2026-05-11T07:00:00">
     <coordinateInfo>
       <fbd><scaling x="1" y="1"/></fbd>
       <ld><scaling x="1" y="1"/></ld>
@@ -14,45 +14,72 @@
       <pou name="P_Demo_stLibVersion_Tc2_DataExchange" pouType="program">
         <interface>
           <localVars>
-            <variable name="stMyVer">
+            <variable name="stCurrentLibVer">
               <type><derived name="ST_LibVersion"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">本地副本（监视用）</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">运行时实际加载的库版本快照（在线 monitor 用）</xhtml></documentation>
             </variable>
-            <variable name="bOk">
+            <variable name="bLibVersionOk">
               <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">版本检查结果</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">启动门禁结果：版本是否满足业务最低要求</xhtml></documentation>
+            </variable>
+            <variable name="sLibCheckMsg">
+              <type><string><length>80</length></string></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">HMI 显示用的检查结果消息</xhtml></documentation>
+            </variable>
+            <variable name="bChecked">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">只检查一次的 latch（避免每周期重跑）</xhtml></documentation>
             </variable>
           </localVars>
         </interface>
         <body>
-          <ST>
-            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
-// Tc2_DataExchange.stLibVersion_Tc2_DataExchange 演示程序
-// ============================================================
-// 注意：项目须引用 Tc2_DataExchange 与 Tc2_System（ST_LibVersion / F_CmpLibVersion）
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：工程代码依赖 Tc2_DataExchange ≥ 1.2.2 的 FB_WriteWatchdog 修复行为。
+//       PLC 启动时先检查所引用的库版本是否够新，不够就停机并给 HMI 报警，
+//       避免现场升级时无意降到旧库引入隐蔽 bug。
+//
+// 价值：把"版本依赖"从注释里的口头约定变成运行时强制门禁，让版本不匹配在启动
+//       一瞬间被发现，而不是在故障复现时苦苦排查。
+//
 // 验证步骤：
-//   1. 编译 + 登录
-//   2. 在线监视 stMyVer.iMajor/iMinor/iBuild — 应显示 1.2.2
-//   3. 在线监视 bOk — 应为 TRUE
-// ============================================================
+//   1. 引用 Tc2_DataExchange + Tc2_System
+//   2. 在 PLC 项目右键 → Import PLCopenXML → 选本文件 → OK
+//   3. 编译、登录、运行
+//   4. 在线 monitor 看 stCurrentLibVer 应显示 iMajor=1 iMinor=2 iBuild=2
+//   5. 看 bLibVersionOk 应为 TRUE，sLibCheckMsg 显示 "version OK"
+//   6. 反例验证：在 XAE 把 Tc2_DataExchange 库降到 1.2.1 → 重新下载
+//      → bLibVersionOk 应变 FALSE，sLibCheckMsg 显示 "too old, need 1.2.2+"
+// =============================================================================
 
-stMyVer := stLibVersion_Tc2_DataExchange;
+// 启动只跑一次（PLC 进入 Run 后第一个周期）
+IF NOT bChecked THEN
+    bChecked := TRUE;
 
-bOk := F_CmpLibVersion(
-    stLibVersion := stLibVersion_Tc2_DataExchange,
-    iMajor       := 1,
-    iMinor       := 2,
-    iBuild       := 2,
-    iRevision    := 0,
-    nCmpType     := E_CmpLibVersion.GreaterOrEqual
-);
-</xhtml>
-          </ST>
+    // 快照当前库版本号（仅诊断给 HMI 看）
+    stCurrentLibVer := stLibVersion_Tc2_DataExchange;
+
+    // 调 Tc2_System 提供的版本比较器，要求 ≥ 1.2.2.0
+    bLibVersionOk := F_CmpLibVersion(
+        stLibVersion := stLibVersion_Tc2_DataExchange,
+        iMajor       := 1,
+        iMinor       := 2,
+        iBuild       := 2,
+        iRevision    := 0,
+        nCmpType     := E_CmpLibVersion.GreaterOrEqual
+    );
+
+    // 决策分支：不够就把消息丢出来给 HMI / 报警系统
+    IF bLibVersionOk THEN
+        sLibCheckMsg := 'Tc2_DataExchange version OK';
+    ELSE
+        sLibCheckMsg := 'Tc2_DataExchange too old, need 1.2.2+';
+        // 真实工程在这里应该把 PLC 切到 SAFE_STOP，而不是继续跑业务
+    END_IF
+END_IF
+</xhtml></ST>
         </body>
       </pou>
     </pous>
   </types>
-  <instances>
-    <configurations/>
-  </instances>
+  <instances><configurations/></instances>
 </project>

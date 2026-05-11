@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <project xmlns="http://www.plcopen.org/xml/tc6_0200">
-  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-10T09:00:00"/>
-  <contentHeader name="Tc2_DataExchange.FB_WriteWatchdog Demo" modificationDateTime="2026-05-10T09:00:00">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-11T07:00:00"/>
+  <contentHeader name="Tc2_DataExchange.FB_WriteWatchdog Demo" modificationDateTime="2026-05-11T07:00:00">
     <coordinateInfo>
       <fbd><scaling x="1" y="1"/></fbd>
       <ld><scaling x="1" y="1"/></ld>
@@ -14,94 +14,99 @@
       <pou name="P_Demo_FB_WriteWatchdog" pouType="program">
         <interface>
           <localVars>
-            <variable name="fbFB_WriteWatchdog">
+            <variable name="fbWriteWatchdog">
               <type><derived name="FB_WriteWatchdog"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">Watchdog function blocks 实例</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">发送端心跳生成器实例</xhtml></documentation>
             </variable>
-            <variable name="arg_bEnable">
+            <variable name="bEnableHeartbeat">
+              <initialValue><simpleValue value="FALSE"/></initialValue>
               <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT bEnable: 使能</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">在线置 TRUE 启动周期心跳</xhtml></documentation>
             </variable>
-            <variable name="arg_sNetId">
+            <variable name="sSlaveNetId">
+              <initialValue><simpleValue value="'192.168.1.20.1.1'"/></initialValue>
               <type><derived name="T_AmsNetId"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT sNetId: 目标 ADS 设备 AmsNetId</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">对端 Slave PLC 的 AMS NetID</xhtml></documentation>
             </variable>
-            <variable name="arg_nPort">
+            <variable name="nSlavePort">
+              <initialValue><simpleValue value="851"/></initialValue>
               <type><derived name="T_AmsPort"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT nPort: 目标 AMS 端口</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">TwinCAT3 第一个 PLC 任务端口</xhtml></documentation>
             </variable>
-            <variable name="arg_nIdxGrp">
-              <type><UDINT/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT nIdxGrp: 目标 IndexGroup</xhtml></documentation>
+            <variable name="sSlaveSymbol">
+              <initialValue><simpleValue value="'GVL.nMasterHeartbeat'"/></initialValue>
+              <type><STRING/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">对端目标符号名（与 IdxGrp/IdxOffs 二选一）</xhtml></documentation>
             </variable>
-            <variable name="arg_nIdxOffs">
-              <type><UDINT/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT nIdxOffs: 目标 IndexOffset</xhtml></documentation>
-            </variable>
-            <variable name="arg_sVarName">
-              <type><string/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT sVarName: 目标符号名（IndexGroup/Offset 与之二选一）</xhtml></documentation>
-            </variable>
-            <variable name="arg_tWatchdogTime">
+            <variable name="tHeartbeatPeriod">
+              <initialValue><simpleValue value="T#2S"/></initialValue>
               <type><TIME/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT tWatchdogTime: 发送周期</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">心跳周期，不应短于 1s</xhtml></documentation>
             </variable>
-            <variable name="arg_bSendNow">
+            <variable name="bDiagnosticPing">
               <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT bSendNow: 上升沿立即发送一次</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">上升沿强制立刻发一次（诊断用）</xhtml></documentation>
             </variable>
-            <variable name="out_bBusy">
+            <variable name="bWriting">
               <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT bBusy: 传输进行中</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">FB 内部 ADS Write 正在执行</xhtml></documentation>
             </variable>
-            <variable name="out_nLastCnt">
+            <variable name="nLastCounterSent">
               <type><UDINT/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT nLastCnt: 最近一次发送的计数值</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">最近一次成功发出的计数值（应每 2 秒 +1）</xhtml></documentation>
             </variable>
-            <variable name="out_bError">
+            <variable name="bWriteError">
               <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT bError: 传输出错</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">上次 ADS Write 失败</xhtml></documentation>
             </variable>
-            <variable name="out_nErrorId">
+            <variable name="nLastAdsError">
               <type><UDINT/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT nErrorId: ADS 错误号</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">ADS 错误号</xhtml></documentation>
             </variable>
           </localVars>
         </interface>
         <body>
-          <ST>
-            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
-// Tc2_DataExchange.FB_WriteWatchdog 演示程序
-// ============================================================
-// 场景：在主控制器侧每秒发送 watchdog 心跳到从机
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：本机是冗余主备里的 Master PLC，对端是 Slave PLC（NetID 192.168.1.20.1.1
+//       端口 851）。每 2 秒往 Slave 的 GVL.nMasterHeartbeat 写一次递增计数，让
+//       Slave 用 FB_CheckWatchdog 监视主机是否还活着。
+//
+// 价值：业务代码只关心 NetID/端口/周期；本 FB 内部封装了周期触发、计数递增、ADS Write
+//       状态机、错误诊断、即时触发 bSendNow 五件事。
+//
 // 验证步骤：
-//   1. 引用 Tc2_DataExchange（及其依赖：Tc2_System 等）
-//   2. 编译 + 登录
-//   3. 在线监视各 out_* 输出
-//   4. 必要时按场景给 arg_* 输入赋值（详见 doc.md 的'使用注意'）
-// ============================================================
+//   1. 引用 Tc2_DataExchange（含依赖 Tc2_System）
+//   2. 在 XAE SYSTEM → Routes 加上 Slave PLC 的 AMS 路由
+//   3. Slave 端用 P_Demo_FB_CheckWatchdog 例程接收
+//   4. 编译、登录、运行
+//   5. 在线把 bEnableHeartbeat := TRUE
+//      → nLastCounterSent 应每 2 秒 +1，bWriting 短暂闪烁
+//   6. 在线给 Slave 断电（拔网线模拟）
+//      → bWriteError 被点亮，nLastAdsError 显示 6 或 7
+//   7. 恢复 Slave → bWriteError 在下一周期自动清零
+//   8. 按下 bDiagnosticPing 单脉冲
+//      → 即使保持 bEnableHeartbeat=FALSE 也会立刻发一次（nLastCounterSent +1）
+// =============================================================================
 
-fbFB_WriteWatchdog(
-    bEnable := arg_bEnable,
-    sNetId := arg_sNetId,
-    nPort := arg_nPort,
-    nIdxGrp := arg_nIdxGrp,
-    nIdxOffs := arg_nIdxOffs,
-    sVarName := arg_sVarName,
-    tWatchdogTime := arg_tWatchdogTime,
-    bSendNow := arg_bSendNow,
-    bBusy => out_bBusy,
-    nLastCnt => out_nLastCnt,
-    bError => out_bError,
-    nErrorId => out_nErrorId
+// 单次调用形式：所有 VAR_INPUT 显式赋值（IdxGrp / IdxOffs 不用 时传 0）
+fbWriteWatchdog(
+    bEnable       := bEnableHeartbeat,
+    sNetId        := sSlaveNetId,
+    nPort         := nSlavePort,
+    nIdxGrp       := 0,
+    nIdxOffs      := 0,
+    sVarName      := sSlaveSymbol,
+    tWatchdogTime := tHeartbeatPeriod,
+    bSendNow      := bDiagnosticPing,
+    bBusy         =&gt; bWriting,
+    nLastCnt      =&gt; nLastCounterSent,
+    bError        =&gt; bWriteError,
+    nErrorId      =&gt; nLastAdsError
 );
-</xhtml>
-          </ST>
+</xhtml></ST>
         </body>
       </pou>
     </pous>
   </types>
-  <instances>
-    <configurations/>
-  </instances>
+  <instances><configurations/></instances>
 </project>
