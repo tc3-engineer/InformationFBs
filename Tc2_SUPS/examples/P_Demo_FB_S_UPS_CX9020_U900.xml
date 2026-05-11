@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <project xmlns="http://www.plcopen.org/xml/tc6_0200">
-  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-10T09:00:00"/>
-  <contentHeader name="Tc2_SUPS.FB_S_UPS_CX9020_U900 Demo" modificationDateTime="2026-05-10T09:00:00">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-11T08:00:00"/>
+  <contentHeader name="Tc2_SUPS.FB_S_UPS_CX9020_U900 Demo" modificationDateTime="2026-05-11T08:00:00">
     <coordinateInfo>
       <fbd><scaling x="1" y="1"/></fbd>
       <ld><scaling x="1" y="1"/></ld>
@@ -14,74 +14,65 @@
       <pou name="P_Demo_FB_S_UPS_CX9020_U900" pouType="program">
         <interface>
           <localVars>
-            <variable name="fbFB_S_UPS_CX9020_U900">
+            <variable name="fbSUPS">
               <type><derived name="FB_S_UPS_CX9020_U900"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">CX9020-U900 实例</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">CX9020-U900 平台 1-second UPS 管家</xhtml></documentation>
             </variable>
-            <variable name="arg_sNetID">
-              <type><derived name="T_AmsNetId"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT sNetID: 控制器 AmsNetId（空字符串表本地）</xhtml></documentation>
-            </variable>
-            <variable name="arg_iPLCPort">
-              <type><UINT/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT iPLCPort: 写持久化数据的 PLC runtime 端口（851/852/...，0 = 自动）</xhtml></documentation>
-            </variable>
-            <variable name="arg_tTimeout">
+            <variable name="tPumpRunTimeRetain">
               <type><TIME/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT tTimeout: ADS 超时（默认 DEFAULT_ADS_TIMEOUT）</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">变频泵累计运行时间；工程里加 VAR RETAIN</xhtml></documentation>
             </variable>
-            <variable name="arg_eUpsMode">
-              <type><derived name="E_S_UPS_Mode"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT eUpsMode: UPS 工作模式（默认 eSUPS_WrPersistData_Shutdown）</xhtml></documentation>
+            <variable name="eModeRetain">
+              <type><INT/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">设备模式 1=Manual 2=Auto 3=Maintenance；工程里加 VAR RETAIN</xhtml></documentation>
             </variable>
-            <variable name="arg_ePersistentMode">
-              <type><derived name="E_PersistentMode"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT ePersistentMode: 持久化数据写入模式（默认 SPDM_2PASS）</xhtml></documentation>
-            </variable>
-            <variable name="arg_tRecoverTime">
-              <type><TIME/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT tRecoverTime: 短时断电恢复时间（默认 T#10s）</xhtml></documentation>
-            </variable>
-            <variable name="out_bPowerFailDetect">
+            <variable name="bPowerFailNow">
               <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT bPowerFailDetect: 断电期间为 TRUE</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">实时电源标志：掉电中 = TRUE</xhtml></documentation>
             </variable>
-            <variable name="out_eState">
+            <variable name="eUpsState">
               <type><derived name="E_S_UPS_State"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT eState: FB 内部状态</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">在线 monitor 观察应急流程当前阶段</xhtml></documentation>
             </variable>
           </localVars>
         </interface>
         <body>
-          <ST>
-            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
-// Tc2_SUPS.FB_S_UPS_CX9020_U900 演示程序
-// ============================================================
-// 场景：在 CX9020-U900 平台上接管 1-second UPS：检测断电时保存持久数据并执行 quick shutdown
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：某 CX9020-U900 控制器装在远程泵站本地控制柜，监视水位 + 控制变频泵。
+//       掉电时要保留变频泵累计运行时间 tPumpRunTimeRetain 和当前模式 eModeRetain，
+//       重启后能从上次状态继续而不需要现场工程师手动回填。
+//
+// 价值：CX9020-U900 上 UPS 状态由 FB 内部读取（不暴露 iUPSPort），业务侧只
+//       需每周期调一次 + 看 eUpsState 即可。不用本 FB 要自己读 UPS 寄存器 +
+//       写双段持久化 + 调 QuickShutdown，约 70-90 行手写代码。
+//
 // 验证步骤：
-//   1. 引用 Tc2_SUPS（及其依赖：Tc2_System 等）
-//   2. 编译 + 登录
-//   3. 在线监视各 out_* 输出
-//   4. 必要时按场景给 arg_* 输入赋值（详见 doc.md 的'使用注意'）
-// ============================================================
+//   1. 引用 Tc2_SUPS（含依赖 Tc2_System）
+//   2. 在 PLC 项目中右键 → Import PLCopenXML → 选本文件 → OK
+//   3. 工程里把 tPumpRunTimeRetain / eModeRetain 改为 VAR RETAIN
+//   4. Properties → PLC → Router Memory 调到 retain 总量的 1.5-2 倍
+//   5. 编译、登录、运行
+//   6. 在线把 tPumpRunTimeRetain 改到非零（例如 T#1234H）
+//   7. 模拟掉电（仅台架拔 24V）→ 观察 eUpsState 走 eSUPS_PowerFailure →
+//      eSUPS_WritePersistentData → eSUPS_QuickShutdown → 系统重启
+//   8. 上电后再连接 → 验证 tPumpRunTimeRetain 仍是掉电前的值
+// =============================================================================
 
-fbFB_S_UPS_CX9020_U900(
-    sNetID := arg_sNetID,
-    iPLCPort := arg_iPLCPort,
-    tTimeout := arg_tTimeout,
-    eUpsMode := arg_eUpsMode,
-    ePersistentMode := arg_ePersistentMode,
-    tRecoverTime := arg_tRecoverTime,
-    bPowerFailDetect => out_bPowerFailDetect,
-    eState => out_eState
+// 单次调用形式：CX9020-U900 接口里没有 iUPSPort（与 CX5x 系列不同）
+fbSUPS(
+    sNetID           := '',
+    iPLCPort         := 0,
+    tTimeout         := DEFAULT_ADS_TIMEOUT,
+    eUpsMode         := eSUPS_WrPersistData_Shutdown,
+    ePersistentMode  := SPDM_2PASS,
+    tRecoverTime     := T#10S,
+    bPowerFailDetect =&gt; bPowerFailNow,
+    eState           =&gt; eUpsState
 );
-</xhtml>
-          </ST>
+</xhtml></ST>
         </body>
       </pou>
     </pous>
   </types>
-  <instances>
-    <configurations/>
-  </instances>
+  <instances><configurations/></instances>
 </project>

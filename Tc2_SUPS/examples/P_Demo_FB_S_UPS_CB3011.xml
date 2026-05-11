@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <project xmlns="http://www.plcopen.org/xml/tc6_0200">
-  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-10T09:00:00"/>
-  <contentHeader name="Tc2_SUPS.FB_S_UPS_CB3011 Demo" modificationDateTime="2026-05-10T09:00:00">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-11T08:00:00"/>
+  <contentHeader name="Tc2_SUPS.FB_S_UPS_CB3011 Demo" modificationDateTime="2026-05-11T08:00:00">
     <coordinateInfo>
       <fbd><scaling x="1" y="1"/></fbd>
       <ld><scaling x="1" y="1"/></ld>
@@ -14,74 +14,69 @@
       <pou name="P_Demo_FB_S_UPS_CB3011" pouType="program">
         <interface>
           <localVars>
-            <variable name="fbFB_S_UPS_CB3011">
+            <variable name="fbSUPS">
               <type><derived name="FB_S_UPS_CB3011"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">CB3011 实例</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">CB3011 平台 1-second UPS 管家</xhtml></documentation>
             </variable>
-            <variable name="arg_sNetID">
-              <type><derived name="T_AmsNetId"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT sNetID: 控制器 AmsNetId（空字符串表本地）</xhtml></documentation>
+            <variable name="nBatchKgRetain">
+              <type><LREAL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">本班次累计灌装重量；工程里应声明为 VAR RETAIN</xhtml></documentation>
             </variable>
-            <variable name="arg_iPLCPort">
-              <type><UINT/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT iPLCPort: 写持久化数据的 PLC runtime 端口（851/852/...，0 = 自动）</xhtml></documentation>
-            </variable>
-            <variable name="arg_tTimeout">
-              <type><TIME/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT tTimeout: ADS 超时（默认 DEFAULT_ADS_TIMEOUT）</xhtml></documentation>
-            </variable>
-            <variable name="arg_eUpsMode">
-              <type><derived name="E_S_UPS_Mode"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT eUpsMode: UPS 工作模式（默认 eSUPS_WrPersistData_Shutdown）</xhtml></documentation>
-            </variable>
-            <variable name="arg_ePersistentMode">
-              <type><derived name="E_PersistentMode"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT ePersistentMode: 持久化数据写入模式（默认 SPDM_2PASS）</xhtml></documentation>
-            </variable>
-            <variable name="arg_tRecoverTime">
-              <type><TIME/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT tRecoverTime: 短时断电恢复时间（默认 T#10s）</xhtml></documentation>
-            </variable>
-            <variable name="out_bPowerFailDetect">
+            <variable name="bPowerFailNow">
               <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT bPowerFailDetect: 断电期间为 TRUE</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">实时电源标志：掉电中 = TRUE</xhtml></documentation>
             </variable>
-            <variable name="out_eState">
+            <variable name="eUpsState">
               <type><derived name="E_S_UPS_State"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT eState: FB 内部状态</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">当前 UPS 状态机阶段（在线 monitor 观察应急流程进度）</xhtml></documentation>
             </variable>
           </localVars>
         </interface>
         <body>
-          <ST>
-            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
-// Tc2_SUPS.FB_S_UPS_CB3011 演示程序
-// ============================================================
-// 场景：在 CB3011 平台上接管 1-second UPS：检测断电时保存持久数据并执行 quick shutdown
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：某 CB3011 工控机做食品灌装计量，断电时必须保存"本班次累计灌装重量"
+//       这个 retain 变量。1-second UPS 给我们 2-3 秒在掉电后存数据 + 关机。
+//
+// 价值：不用本 FB 要自己写：读 UPS 寄存器 → 解析电源位 → 启动 SPDM_2PASS →
+//       等待写完 → 调 FB_NT_QuickShutdown → 监督 timeout。本 FB 把这套
+//       封装好，业务侧只关心 eState 走到哪一步即可。约省 60-80 行 + 边界测试。
+//
 // 验证步骤：
-//   1. 引用 Tc2_SUPS（及其依赖：Tc2_System 等）
-//   2. 编译 + 登录
-//   3. 在线监视各 out_* 输出
-//   4. 必要时按场景给 arg_* 输入赋值（详见 doc.md 的'使用注意'）
-// ============================================================
+//   1. 引用 Tc2_SUPS（含依赖 Tc2_System）
+//   2. 在 PLC 项目中右键 → Import PLCopenXML → 选本文件 → OK
+//   3. 把 nBatchKgRetain 在 GVL 里改为带 RETAIN 限定的变量（演示文件这里
+//      为了便携保留普通 VAR；实际工程必须 RETAIN 才会被 SPDM_2PASS 存盘）
+//   4. 在 PLC 项目 Properties → PLC → Router Memory 调到 retain 总量的 1.5-2 倍
+//   5. 编译、登录、运行
+//   6. 拔掉外部 24V（仅在台架且无负载下做） → 观察 bPowerFailNow 立即变 TRUE，
+//      eUpsState 依次走过 eSUPS_PowerFailure → eSUPS_WritePersistentData →
+//      eSUPS_QuickShutdown → eSUPS_WaitForPowerOFF → 系统重启
+//   7. 上电后再连接 → 检查 nBatchKgRetain 是否仍为掉电前的值
+// =============================================================================
 
-fbFB_S_UPS_CB3011(
-    sNetID := arg_sNetID,
-    iPLCPort := arg_iPLCPort,
-    tTimeout := arg_tTimeout,
-    eUpsMode := arg_eUpsMode,
-    ePersistentMode := arg_ePersistentMode,
-    tRecoverTime := arg_tRecoverTime,
-    bPowerFailDetect => out_bPowerFailDetect,
-    eState => out_eState
+// 单次调用形式：所有 VAR_INPUT 显式赋值；输出端用 =&gt; 截获
+// 全部保持 PDF 推荐默认（CB3011 平台不应改动）：
+//   - sNetID = ''     本机操作
+//   - iPLCPort = 0    自动探测 runtime 端口（多 runtime 时手动填 851/852）
+//   - eUpsMode        默认「写 retain 后立即 quick shutdown」最常用
+//   - ePersistentMode 必须 SPDM_2PASS（fast 2-pass），其它模式时间不够
+fbSUPS(
+    sNetID          := '',
+    iPLCPort        := 0,
+    tTimeout        := DEFAULT_ADS_TIMEOUT,
+    eUpsMode        := eSUPS_WrPersistData_Shutdown,
+    ePersistentMode := SPDM_2PASS,
+    tRecoverTime    := T#10S,
+    bPowerFailDetect =&gt; bPowerFailNow,
+    eState           =&gt; eUpsState
 );
-</xhtml>
-          </ST>
+
+// 业务侧示例：每次写 retain 量都直接累加，本 FB 会负责掉电时把这个值落盘
+// （此处不放 IF 条件，是为了让在线测试时直接改 nBatchKgRetain 看效果）
+</xhtml></ST>
         </body>
       </pou>
     </pous>
   </types>
-  <instances>
-    <configurations/>
-  </instances>
+  <instances><configurations/></instances>
 </project>

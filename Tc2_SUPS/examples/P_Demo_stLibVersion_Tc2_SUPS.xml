@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <project xmlns="http://www.plcopen.org/xml/tc6_0200">
-  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-10T09:00:00"/>
-  <contentHeader name="Tc2_SUPS.stLibVersion_Tc2_SUPS Demo" modificationDateTime="2026-05-10T09:00:00">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-11T08:00:00"/>
+  <contentHeader name="Tc2_SUPS.stLibVersion_Tc2_SUPS Demo" modificationDateTime="2026-05-11T08:00:00">
     <coordinateInfo>
       <fbd><scaling x="1" y="1"/></fbd>
       <ld><scaling x="1" y="1"/></ld>
@@ -14,45 +14,78 @@
       <pou name="P_Demo_stLibVersion_Tc2_SUPS" pouType="program">
         <interface>
           <localVars>
-            <variable name="stMyVer">
+            <variable name="stCurrentVersion">
               <type><derived name="ST_LibVersion"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">本地副本（监视用）</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">从 stLibVersion_Tc2_SUPS 拷贝到本地的版本副本（在线 monitor 查看各字段）</xhtml></documentation>
             </variable>
-            <variable name="bOk">
+            <variable name="nRequiredMajor">
+              <initialValue><simpleValue value="1"/></initialValue>
+              <type><USINT/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">业务要求的最小主版本号</xhtml></documentation>
+            </variable>
+            <variable name="nRequiredMinor">
+              <initialValue><simpleValue value="5"/></initialValue>
+              <type><USINT/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">业务要求的最小次版本号</xhtml></documentation>
+            </variable>
+            <variable name="nRequiredBuild">
+              <initialValue><simpleValue value="2"/></initialValue>
+              <type><USINT/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">业务要求的最小 build 号</xhtml></documentation>
+            </variable>
+            <variable name="nRequiredRevision">
+              <initialValue><simpleValue value="0"/></initialValue>
+              <type><USINT/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">业务要求的最小 revision</xhtml></documentation>
+            </variable>
+            <variable name="bLibOK">
               <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">版本检查结果</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">版本检查结果：TRUE = 库版本满足要求</xhtml></documentation>
+            </variable>
+            <variable name="bLibVersionTooOld">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">便于 HMI 接：库版本过低标志</xhtml></documentation>
             </variable>
           </localVars>
         </interface>
         <body>
-          <ST>
-            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
-// Tc2_SUPS.stLibVersion_Tc2_SUPS 演示程序
-// ============================================================
-// 注意：项目须引用 Tc2_SUPS 与 Tc2_System（ST_LibVersion / F_CmpLibVersion）
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：设备厂同一份 PLC 代码部署到多家客户，不同客户 TwinCAT 镜像里
+//       Tc2_SUPS 版本可能不同；业务依赖 1.5.2 的新特性。PLC init 阶段做一次
+//       版本检查，不满足就置 bLibVersionTooOld 让 HMI 弹「请联系系统集成商
+//       升级 Tc2_SUPS 库」。
+//
+// 价值：上电 1 秒内立刻发现版本不够、停在 init 等运维处理；
+//       vs 编译通过 + 运行隐蔽错乱 + 几天后排查到。
+//
 // 验证步骤：
-//   1. 编译 + 登录
-//   2. 在线监视 stMyVer.iMajor/iMinor/iBuild — 应显示 1.5.2
-//   3. 在线监视 bOk — 应为 TRUE
-// ============================================================
+//   1. 引用 Tc2_SUPS（含依赖 Tc2_System，提供 ST_LibVersion / F_CmpLibVersion /
+//      E_CmpLibVersion）
+//   2. 在 PLC 项目中右键 → Import PLCopenXML → 选本文件 → OK
+//   3. 编译、登录、运行
+//   4. 在线 monitor stCurrentVersion.iMajor / iMinor / iBuild — 应为 1 / 5 / 2
+//   5. 在线 monitor bLibOK 应为 TRUE（基线 1.5.2 ≥ 1.5.2）
+//   6. 在线把 nRequiredMajor 改为 99 → bLibOK 应翻 FALSE、bLibVersionTooOld 翻 TRUE
+//   7. 改回 1 → 恢复正常
+// =============================================================================
 
-stMyVer := stLibVersion_Tc2_SUPS;
+// 拷贝到本地变量便于在线 monitor 各字段
+stCurrentVersion := stLibVersion_Tc2_SUPS;
 
-bOk := F_CmpLibVersion(
+// init 阶段调一次即可——常量值不变，不需要每周期重复
+bLibOK := F_CmpLibVersion(
     stLibVersion := stLibVersion_Tc2_SUPS,
-    iMajor       := 1,
-    iMinor       := 5,
-    iBuild       := 2,
-    iRevision    := 0,
+    iMajor       := nRequiredMajor,
+    iMinor       := nRequiredMinor,
+    iBuild       := nRequiredBuild,
+    iRevision    := nRequiredRevision,
     nCmpType     := E_CmpLibVersion.GreaterOrEqual
 );
-</xhtml>
-          </ST>
+bLibVersionTooOld := NOT bLibOK;
+</xhtml></ST>
         </body>
       </pou>
     </pous>
   </types>
-  <instances>
-    <configurations/>
-  </instances>
+  <instances><configurations/></instances>
 </project>

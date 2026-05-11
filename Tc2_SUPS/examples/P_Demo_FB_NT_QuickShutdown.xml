@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <project xmlns="http://www.plcopen.org/xml/tc6_0200">
-  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-10T09:00:00"/>
-  <contentHeader name="Tc2_SUPS.FB_NT_QuickShutdown Demo" modificationDateTime="2026-05-10T09:00:00">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-11T08:00:00"/>
+  <contentHeader name="Tc2_SUPS.FB_NT_QuickShutdown Demo" modificationDateTime="2026-05-11T08:00:00">
     <coordinateInfo>
       <fbd><scaling x="1" y="1"/></fbd>
       <ld><scaling x="1" y="1"/></ld>
@@ -14,64 +14,75 @@
       <pou name="P_Demo_FB_NT_QuickShutdown" pouType="program">
         <interface>
           <localVars>
-            <variable name="fbFB_NT_QuickShutdown">
+            <variable name="fbQuickShutdown">
               <type><derived name="FB_NT_QuickShutdown"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">Function blocks 实例</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">⚠️ 内部用 FB：业务代码请改用 FB_S_UPS_*，不要独立调用本 FB</xhtml></documentation>
             </variable>
-            <variable name="arg_NETID">
+            <variable name="sLocalNetIDForReboot">
+              <initialValue><simpleValue value="''"/></initialValue>
               <type><derived name="T_AmsNetId"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT NETID: 控制器 AmsNetId</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">本机 AmsNetID = 空串</xhtml></documentation>
             </variable>
-            <variable name="arg_START">
+            <variable name="bTriggerEmergencyReboot">
+              <initialValue><simpleValue value="FALSE"/></initialValue>
               <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT START: 上升沿触发立即重启</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">⚠️ 上升沿即重启；演示用，工程禁用</xhtml></documentation>
             </variable>
-            <variable name="arg_TMOUT">
+            <variable name="tShutdownAdsTimeout">
+              <initialValue><simpleValue value="DEFAULT_ADS_TIMEOUT"/></initialValue>
               <type><TIME/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT TMOUT: ADS 超时（默认 DEFAULT_ADS_TIMEOUT）</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">ADS 超时，默认即可</xhtml></documentation>
             </variable>
-            <variable name="out_BUSY">
+            <variable name="bQuickShutdownBusy">
               <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT BUSY: 正在执行 quick shutdown</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">quick shutdown 命令仍在执行</xhtml></documentation>
             </variable>
-            <variable name="out_ERR">
+            <variable name="bQuickShutdownError">
               <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT ERR: 出错时为 TRUE</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">出错标志：TRUE = 触发失败</xhtml></documentation>
             </variable>
-            <variable name="out_ERRID">
+            <variable name="nQuickShutdownErrID">
               <type><UDINT/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT ERRID: ERR 为 TRUE 时返回错误号</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">错误号（仅当 bQuickShutdownError = TRUE）</xhtml></documentation>
             </variable>
           </localVars>
         </interface>
         <body>
-          <ST>
-            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
-// Tc2_SUPS.FB_NT_QuickShutdown 演示程序
-// ============================================================
-// 场景：演示用：仅展示调用方式（实际项目中应通过 FB_S_UPS_* 间接使用）
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// ⚠️ 警告：本例程仅用于演示 FB_NT_QuickShutdown 的接口结构。
+//         实际工程中不要直接调用本 FB——它不会先存 retain，重启时数据会丢。
+//         所有断电应急场景都应该用 FB_S_UPS_CB3011 / FB_S_UPS / FB_S_UPS_CX51x0
+//         / FB_S_UPS_CX9020_U900 / FB_S_UPS_BAPI 之一。
+//
+// 场景：演示用——让工程师能在 PLC 工程里看到这个 FB 的接口长什么样。
+//
+// 价值：避免误用。读懂接口后请改用 FB_S_UPS_*。
+//
 // 验证步骤：
-//   1. 引用 Tc2_SUPS（及其依赖：Tc2_System 等）
-//   2. 编译 + 登录
-//   3. 在线监视各 out_* 输出
-//   4. 必要时按场景给 arg_* 输入赋值（详见 doc.md 的'使用注意'）
-// ============================================================
+//   1. 引用 Tc2_SUPS（含依赖 Tc2_System）
+//   2. 在 PLC 项目中右键 → Import PLCopenXML → 选本文件 → OK
+//   3. 编译、登录、运行（但**不要**给 bTriggerEmergencyReboot 置 TRUE
+//      除非台架且 retain 不重要）
+//   4. 在线观察 bQuickShutdownBusy / bQuickShutdownError / nQuickShutdownErrID
+//      均为初始默认（FALSE / FALSE / 0），证明 FB 已正确实例化
+//   5. 若确实要演示重启效果（仅台架）：在线把 bTriggerEmergencyReboot 置 TRUE
+//      一个周期 → 系统在 100-500 ms 内重启
+// =============================================================================
 
-fbFB_NT_QuickShutdown(
-    NETID := arg_NETID,
-    START := arg_START,
-    TMOUT := arg_TMOUT,
-    BUSY => out_BUSY,
-    ERR => out_ERR,
-    ERRID => out_ERRID
+// 单次调用形式：所有输入显式赋值；输出端 3 项全部接出
+// ⚠️ 工程中不要把 bTriggerEmergencyReboot 接到任何业务信号上
+fbQuickShutdown(
+    NETID := sLocalNetIDForReboot,
+    START := bTriggerEmergencyReboot,
+    TMOUT := tShutdownAdsTimeout,
+    BUSY  =&gt; bQuickShutdownBusy,
+    ERR   =&gt; bQuickShutdownError,
+    ERRID =&gt; nQuickShutdownErrID
 );
-</xhtml>
-          </ST>
+</xhtml></ST>
         </body>
       </pou>
     </pous>
   </types>
-  <instances>
-    <configurations/>
-  </instances>
+  <instances><configurations/></instances>
 </project>
