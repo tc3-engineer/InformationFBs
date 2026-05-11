@@ -26,14 +26,14 @@
 
 ```iecst
 VAR_INPUT
-    bEnable         : BOOL; (* := FALSE *)
-    sNetId          : T_AmsNetId;
-    nPort           : T_AmsPort;
-    nIdxGrp         : UDINT;
-    nIdxOffs        : UDINT;
-    sVarName        : STRING;
-    tWatchdogTime   : TIME; (* := t#0s *)
-    bSendNow        : BOOL;
+    bEnable          :  BOOL := FALSE;
+    sNetId           :  T_AmsNetId;
+    nPort            :  T_AmsPort;
+    nIdxGrp          :  UDINT;
+    nIdxOffs         :  UDINT;
+    sVarName         :  STRING;
+    tWatchdogTime    :  TIME := t#0s;
+    bSendNow         :  BOOL;
 END_VAR
 ```
 
@@ -53,10 +53,10 @@ END_VAR
 
 ```iecst
 VAR_OUTPUT
-    bBusy              : BOOL; (* := FALSE *)
-    nLastCnt           : UDINT; (* := 0 *)
-    bError             : BOOL; (* := FALSE *)
-    nErrorId           : UDINT; (* := 0 *)
+    bBusy     :  BOOL := FALSE;
+    nLastCnt  :  UDINT := 0;
+    bError    :  BOOL := FALSE;
+    nErrorId  :  UDINT := 0;
 END_VAR
 ```
 

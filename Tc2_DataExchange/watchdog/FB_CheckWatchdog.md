@@ -26,9 +26,9 @@
 
 ```iecst
 VAR_INPUT
-    bEnable         : BOOL; (* := FALSE *)
-    tWatchdogTime   : TIME; (* := t#0s *)
-    nCnt            : UDINT;
+    bEnable        :  BOOL := FALSE;
+    tWatchdogTime  :  TIME := t#0s;
+    nCnt           :  UDINT;
 END_VAR
 ```
 
@@ -43,8 +43,8 @@ END_VAR
 
 ```iecst
 VAR_OUTPUT
-    bWatchdog          : BOOL; (* := FALSE *)
-    nLastCnt           : UDINT;
+    bWatchdog  : BOOL := FALSE;
+    nLastCnt   : UDINT;
 END_VAR
 ```
 

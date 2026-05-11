@@ -28,12 +28,12 @@
 
 ```iecst
 VAR_INPUT
-    sNetID          : T_AmsNetId; (* '' = local netid *)
+    sNetID          : T_AmsNetId:= ''; (* '' = local netid *)
     iPLCPort        : UINT; (* PLC Runtime System for writing persistent data *)
-    tTimeout        : TIME; (* ADS Timeout *)
-    eUpsMode        : E_S_UPS_Mode; (* UPS mode (w/ wo writing persistent data, w/wo shutdown) *)
-    ePersistentMode : E_PersistentMode; (* mode for writing persistent data *)
-    tRecoverTime    : TIME; (* ON time to recover from short power failure in mode eSUPS_WrPersistData_NoShutdown/eSUPS_CheckPowerStatus *)
+    tTimeout        : TIME := DEFAULT_ADS_TIMEOUT; (* ADS Timeout *)
+    eUpsMode        : E_S_UPS_Mode := eSUPS_WrPersistData_Shutdown; (* UPS mode (w/ wo writing persistent data, w/wo shutdown) *)
+    ePersistentMode : E_PersistentMode := SPDM_2PASS; (* mode for writing persistent data *)
+    tRecoverTime    : TIME := T#10s; (* ON time to recover from short power failure in mode eSUPS_WrPersistData_NoShutdown/eSUPS_CheckPowerStatus *)
 END_VAR
 ```
 
@@ -52,7 +52,7 @@ END_VAR
 ```iecst
 VAR_OUTPUT
     bPowerFailDetect   : BOOL; (* TRUE while powerfailure is detected *)
-    eState             : E_S_UPS_State; (* current ups state *)
+    eState             : E_S_UPS_State := eSUPS_PowerOK; (* current ups state *)
 END_VAR
 ```
 

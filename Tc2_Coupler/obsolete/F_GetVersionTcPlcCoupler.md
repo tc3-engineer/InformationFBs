@@ -11,7 +11,7 @@
 | Source | https://infosys.beckhoff.com/content/1033/tcplclib_tc2_coupler/ |
 | Source PDF | https://download.beckhoff.com/download/document/automation/twincat3/TwinCAT_3_PLC_Lib_Tc2_Coupler_EN.pdf |
 | Verified | 2026-05-10 ✅ |
-| Status | `verified` |
+| Status | `verified · deprecated` |
 | Example | [`examples/P_Demo_F_GetVersionTcPlcCoupler.xml`](../examples/P_Demo_F_GetVersionTcPlcCoupler.xml) |
 
 ---

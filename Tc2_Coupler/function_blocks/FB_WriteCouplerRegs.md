@@ -27,7 +27,7 @@
 ```iecst
 VAR_INPUT
     stState         : PLCINTFSTRUCT;
-    nTerminal       : BYTE; (* := TERM_COUPLER *)
+    nTerminal       : BYTE := TERM_COUPLER;
     nTable          : BYTE;
     nStartReg       : BYTE;
     nEndReg         : BYTE;
