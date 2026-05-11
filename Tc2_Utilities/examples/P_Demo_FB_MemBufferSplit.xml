@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project xmlns="http://www.plcopen.org/xml/tc6_0200">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-10T20:00:00"/>
+  <contentHeader name="Tc2_Utilities.FB_MemBufferSplit Demo" modificationDateTime="2026-05-10T20:00:00">
+    <coordinateInfo>
+      <fbd><scaling x="1" y="1"/></fbd>
+      <ld><scaling x="1" y="1"/></ld>
+      <sfc><scaling x="1" y="1"/></sfc>
+    </coordinateInfo>
+  </contentHeader>
+  <types>
+    <dataTypes/>
+    <pous>
+      <pou name="P_Demo_FB_MemBufferSplit" pouType="program">
+        <interface>
+          <localVars>
+            <variable name="fbFB_MemBufferSplit">
+              <type><derived name="FB_MemBufferSplit"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">Tc2_Utilities.FB_MemBufferSplit 实例</xhtml></documentation>
+            </variable>
+            <variable name="arg_eCmd">
+              <type><derived name="E_EnumCmdType"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT eCmd</xhtml></documentation>
+            </variable>
+            <variable name="arg_pBuffer">
+              <type><derived name="POINTER TO BYTE"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT pBuffer</xhtml></documentation>
+            </variable>
+            <variable name="arg_cbBuffer">
+              <type><UDINT/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT cbBuffer</xhtml></documentation>
+            </variable>
+            <variable name="arg_cbSize">
+              <type><UDINT/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT cbSize</xhtml></documentation>
+            </variable>
+            <variable name="out_bOk">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT bOk</xhtml></documentation>
+            </variable>
+            <variable name="out_pSegment">
+              <type><derived name="POINTER TO BYTE"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT pSegment</xhtml></documentation>
+            </variable>
+            <variable name="out_cbSegment">
+              <type><UDINT/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT cbSegment</xhtml></documentation>
+            </variable>
+            <variable name="out_bEOS">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT bEOS</xhtml></documentation>
+            </variable>
+          </localVars>
+        </interface>
+        <body>
+          <ST>
+            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
+// Tc2_Utilities.FB_MemBufferSplit 演示程序（FB 实例）
+// ============================================================
+// 验证步骤：
+//   1. 引用 Tc2_Utilities（及依赖类型所在库 Tc2_System 等）
+//   2. 编译 + 登录
+//   3. 按 doc.md 给 arg_* 赋值
+//   4. 在线监视 out_* / io_* 输出
+// ============================================================
+
+fbFB_MemBufferSplit(
+    eCmd := arg_eCmd,
+    pBuffer := arg_pBuffer,
+    cbBuffer := arg_cbBuffer,
+    cbSize := arg_cbSize,
+    bOk =&gt; out_bOk,
+    pSegment =&gt; out_pSegment,
+    cbSegment =&gt; out_cbSegment,
+    bEOS =&gt; out_bEOS
+);
+</xhtml>
+          </ST>
+        </body>
+      </pou>
+    </pous>
+  </types>
+  <instances>
+    <configurations/>
+  </instances>
+</project>

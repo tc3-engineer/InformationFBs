@@ -186,6 +186,34 @@ def verify(doc_path: str) -> tuple[int, list[str]]:
         if cm:
             section_text = section_text[: cm.start()]
 
+    # FBs that document their methods inline (e.g. FB_GetAdaptersInfoEx with
+    # an inline `METHOD Get : BOOL`, or FB_CalcHashValue whose body is
+    # entirely methods with no FB-level VAR) expose method-internal
+    # VAR_INPUTs that don't belong to the FB's own interface. Cut at the
+    # first inline METHOD declaration.
+    #
+    # Skip the cut when the entry IS itself a method (depth-3+ child under
+    # an OO parent like TC_CoreBoostMonitor.GetAllRtCoreThrottling at
+    # section 3.83.1) — its body legitimately contains a METHOD declaration
+    # for the method itself, and we need its VAR_INPUT block.
+    entry_depth = entry["section"].count(".") + 1
+    if entry_depth <= 2:
+        inline_method = re.search(r"(?m)^\s*METHOD\s+\w+", section_text)
+        if inline_method:
+            section_text = section_text[: inline_method.start()]
+
+    # If the entry is NOT a global constant, the PDF section may still embed
+    # a VAR_GLOBAL CONSTANT block inside an Example (e.g. WEST_EUROPE_TZI in
+    # FB_SetTimeZoneInformation). Strip those so they don't appear in the FB
+    # VAR comparison set.
+    if entry.get("type") != "GVL":
+        section_text = re.sub(
+            r"VAR_GLOBAL(?:\s+CONSTANT)?\s*\n[\s\S]*?END_VA[R]?",
+            "",
+            section_text,
+            flags=re.IGNORECASE,
+        )
+
     pdf_vars = _vars_from_text(section_text)
     # Restrict doc VAR scan to the Interface section (above "最小例程" / "Minimum Example")
     interface_doc = re.split(r"##\s*\d*\.?\s*(?:最小例程|Minimum Example)", doc, maxsplit=1)[0]
@@ -207,7 +235,11 @@ def verify(doc_path: str) -> tuple[int, list[str]]:
     if not (examples_dir / f"P_Demo_{name}.xml").exists():
         diags.append(f"example missing: examples/P_Demo_{name}.xml")
 
-    if not pdf_vars:
+    # Empty VAR on both sides is legitimate for pure-OO parent FBs that only
+    # expose methods (e.g. FB_CalcHashValue: start()/update()/finish()) and
+    # for methods that take no args. Only flag if PDF has none but doc claims
+    # to have some — which would indicate doc-side hallucination.
+    if not pdf_vars and doc_vars:
         diags.append(
             "PDF section had no VAR_INPUT/OUTPUT — manual review needed (FC with no params?)"
         )

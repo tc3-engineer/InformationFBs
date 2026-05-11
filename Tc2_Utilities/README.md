@@ -1,6 +1,6 @@
 # Tc2_Utilities
 
-> 通用工具库（数学/字符串/字节序/系统/许可/CSV...）。版本 `2.18.2`，**总条目 343** （97 FB + 245 FC + 1 GVL）。
+> 通用工具库（数学/字符串/字节序/系统/许可/CSV...）。版本 `2.18.2`，**总条目 344**（97 FB + 1 OO parent FB + 245 FC + 1 GVL）·**全部完成 ✅**。
 
 - [官方 InfoSys](https://infosys.beckhoff.com/content/1033/tcplclib_tc2_utilities/)
 - [官方 PDF](https://download.beckhoff.com/download/document/automation/twincat3/TwinCAT_3_PLC_Lib_Tc2_Utilities_EN.pdf)
@@ -21,8 +21,8 @@
 | 7 | 64-bit functions (signed) | 15 | ✅ done |
 | 8 | 64-bit integer functions (unsigned) | 31 | ✅ done |
 | 9 | Functions（散） | 66 | ✅ done |
-| - | Function blocks (剩余) | ~83 | ⏳ pending |
-| - | **当前累计** | **256 / 344** | 74.4% |
+| 10 | Function blocks | 88 | ✅ done |
+| - | **当前累计** | **344 / 344** | **100%** |
 
 ## Round 1 索引（28 条 · 全部 ✅ verified）
 
@@ -259,6 +259,14 @@
 | LREALEX 安全转换 | `BYTE/WORD/DWORD/UINT/UDINT/USINT_TO_LREALEX`（TC2 ARM unsigned safe） |
 | ULINT ↔ ULARGE | `ULINT_TO_ULARGE` |
 | 其他 | `F_SwapRealEx`(BC/BX ↔ IPC) `F_GetClassIdVersioned` `F_FormatArgToStr`(FB_FormatString helper) `PVOID_TO_STRING`/`STRING_TO_PVOID` `ROUTETRANSPORT_TO_STRING` |
+
+### Function blocks（88，Round 10 自动生成）
+
+> 88 个 FB 自动从 PDF 抽取 VAR_INPUT / VAR_OUTPUT / VAR_IN_OUT，描述句简化版（详细行为与错误码请对照 PDF 第 3.x 章）。所有 doc + xml 均通过 `verify_doc.py` 与 `lint_plcopen.py`。
+
+涵盖：BCD ↔ DEC、DCF77 时钟、AMS 路由、ADS logger、PID、Hash 计算（含 OO 父 FB）、License/Dongle、CSV 缓冲、FindFile 枚举、文件属性/环形缓冲、Format 字符串、网卡信息、Hash 表 / 链表控制、本地系统时间、内存合并/拆分/环形缓冲/栈缓冲、注册表读写、Scope server 控制、时区设置/转换、持久化数据写入、RT 性能、远程 PC 信息、NT 操作（重启/关机/进程）、PLC 控制（启动/停止/复位/符号表）、Profiler、RTC 系列、TC_Config/TC_Restart/TC_Stop、CPU 使用率、系统延迟等。
+
+各条文档与例程在 `Tc2_Utilities/function_blocks/<Name>.md` + `Tc2_Utilities/examples/P_Demo_<Name>.xml`。
 
 ### Library version（1）
 

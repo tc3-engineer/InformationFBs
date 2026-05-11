@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project xmlns="http://www.plcopen.org/xml/tc6_0200">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-10T20:00:00"/>
+  <contentHeader name="Tc2_Utilities.TC_SysLatencyEx Demo" modificationDateTime="2026-05-10T20:00:00">
+    <coordinateInfo>
+      <fbd><scaling x="1" y="1"/></fbd>
+      <ld><scaling x="1" y="1"/></ld>
+      <sfc><scaling x="1" y="1"/></sfc>
+    </coordinateInfo>
+  </contentHeader>
+  <types>
+    <dataTypes/>
+    <pous>
+      <pou name="P_Demo_TC_SysLatencyEx" pouType="program">
+        <interface>
+          <localVars>
+            <variable name="fbTC_SysLatencyEx">
+              <type><derived name="TC_SysLatencyEx"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">Tc2_Utilities.TC_SysLatencyEx 实例</xhtml></documentation>
+            </variable>
+            <variable name="arg_bExecute">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT bExecute</xhtml></documentation>
+            </variable>
+            <variable name="arg_tTimeout">
+              <type><TIME/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT tTimeout</xhtml></documentation>
+            </variable>
+            <variable name="arg_sNetId">
+              <type><derived name="T_AmsNetId"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT sNetId</xhtml></documentation>
+            </variable>
+            <variable name="arg_nCpuId">
+              <type><USINT/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT nCpuId</xhtml></documentation>
+            </variable>
+            <variable name="arg_bBusy">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT bBusy</xhtml></documentation>
+            </variable>
+            <variable name="arg_bError">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT bError</xhtml></documentation>
+            </variable>
+            <variable name="arg_nErrorId">
+              <type><UDINT/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT nErrorId</xhtml></documentation>
+            </variable>
+            <variable name="arg_nActual">
+              <type><UDINT/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT nActual</xhtml></documentation>
+            </variable>
+            <variable name="arg_nMaximum">
+              <type><UDINT/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT nMaximum</xhtml></documentation>
+            </variable>
+          </localVars>
+        </interface>
+        <body>
+          <ST>
+            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
+// Tc2_Utilities.TC_SysLatencyEx 演示程序（FB 实例）
+// ============================================================
+// 验证步骤：
+//   1. 引用 Tc2_Utilities（及依赖类型所在库 Tc2_System 等）
+//   2. 编译 + 登录
+//   3. 按 doc.md 给 arg_* 赋值
+//   4. 在线监视 out_* / io_* 输出
+// ============================================================
+
+fbTC_SysLatencyEx(
+    bExecute := arg_bExecute,
+    tTimeout := arg_tTimeout,
+    sNetId := arg_sNetId,
+    nCpuId := arg_nCpuId,
+    bBusy := arg_bBusy,
+    bError := arg_bError,
+    nErrorId := arg_nErrorId,
+    nActual := arg_nActual,
+    nMaximum := arg_nMaximum
+);
+</xhtml>
+          </ST>
+        </body>
+      </pou>
+    </pous>
+  </types>
+  <instances>
+    <configurations/>
+  </instances>
+</project>
