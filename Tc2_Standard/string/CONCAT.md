@@ -84,7 +84,7 @@ InfoSys topic 74411019 与 PDF §4.1 文本一致，仅举例无额外行为补�
 
 - **STRING(255) 是上限不是固定长度**：返回值容器是 255 字节，但若调用方接收变量是 `STRING(80)`，赋值会再截断一次到 80 字节。一律用 `STRING(255)` 或更大的容器接收，避免双重截断。（工程经验补充）
 - **拼接超长 → 静默截断**：超 255 字节没有任何错误提示，调试时最容易踩。性能允许时调用前手动 `IF LEN(STR1)+LEN(STR2)>255 THEN`。（工程经验补充）
-- **多次嵌套性能不佳**：`CONCAT(CONCAT(CONCAT(a,b),c),d)` 实际复制了 a+a+a+a 字节。3 段以上推荐用 `Tc2_Utilities.CONCAT2` / `CONCAT3` 等扩展，或先 `MEMCPY` 再补 `0x00`。
+- **多次嵌套性能不佳**：`CONCAT(CONCAT(CONCAT(a,b),c),d)` 实际复制了 a+a+a+a 字节。3 段以上可用 `Tc2_Utilities.CONCAT2`（仅二元，不是 3/4 元；本仓库 `Tc2_Utilities/extended_string/` 只提供 `CONCAT2` 与 `WCONCAT2`）链式或先 `MEMCPY` 再补 `0x00`。
 - **不要传 WSTRING**：本函数只处理 `STRING`（单字节 ANSI）。Unicode 文本必须用 `WCONCAT`，否则编译失败或得到乱码。
 - **运行时分隔符**：常见需求"用 `,` 把字段拼起来"——本函数不带分隔符，必须自己写 `CONCAT(CONCAT(s1,','),s2)`。
 - **`+` 操作符等价**：`s1 + s2 + s3` 在 TwinCAT 中和 `CONCAT(CONCAT(s1,s2),s3)` 完全等价。看个人风格选择，但 `+` 行更短、`CONCAT` 更利于代码 grep。
@@ -118,7 +118,7 @@ END_IF;
 - **价值**：一行代码完成首尾拼接，不必自己写循环逐字节复制，也不必关心 `0x00` 结束符位置。配合 `+` 操作符可以做到 `s := 'TAG[' + nIdx + ']:' + sValue;` 这种类 C 写法。
 - **替代方案对比**：
   - **`+` 操作符**：完全等价，更短，适合临时拼接
-  - **`Tc2_Utilities.CONCAT2 / CONCAT3 / CONCAT4`**：一次拼接 3-4 段，省去嵌套
+  - **`Tc2_Utilities.CONCAT2`**：本仓库的 `Tc2_Utilities/extended_string/` 仅提供 `CONCAT2`（二元）与 `WCONCAT2`，不存在 `CONCAT3` / `CONCAT4`。3 段以上仍需嵌套或 `MEMCPY`。
   - **`SPRINTF` / 格式化函数**：需要数字格式化（前导零、小数位数）时用这个，纯字符串拼接用 `CONCAT` 更轻量
   - **本 FC**：IEC 标准、零依赖、所有 PLC 平台兼容，**默认首选**
 
