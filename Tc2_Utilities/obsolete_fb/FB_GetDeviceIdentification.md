@@ -26,7 +26,7 @@
 ```iecst
 VAR_INPUT
     bExecute : BOOL;
-    tTimeout : TIME; (* := DEFAULT_ADS_TIMEOUT *)
+    tTimeout : TIME := DEFAULT_ADS_TIMEOUT;
     sNetId : T_AmsNetId;
 END_VAR
 ```

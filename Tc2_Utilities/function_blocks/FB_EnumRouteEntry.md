@@ -25,9 +25,9 @@ This function block is used to transfer information to other TwinCAT systems via
 ```iecst
 VAR_INPUT
     sNetID : T_AmsNetID;
-    eCmd : E_EnumCmdType;
+    eCmd : E_EnumCmdType := eEnumCmd_First;
     bExecute : BOOL;
-    tTimeout : TIME;
+    tTimeout : TIME := DEFAULT_ADS_TIMEOUT;
 END_VAR
 ```
 

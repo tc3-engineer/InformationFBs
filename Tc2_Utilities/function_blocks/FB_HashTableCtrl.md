@@ -24,9 +24,9 @@ The hash table can be used to find an individual data element quickly among a la
 
 ```iecst
 VAR_INPUT
-    key : DWORD;
-    putValue : PVOID;
-    putPosPtr : POINTER TO T_HashTableEntry;
+    key : DWORD := 0;
+    putValue : PVOID := 0;
+    putPosPtr : POINTER TO T_HashTableEntry := 0;
 END_VAR
 ```
 
@@ -40,9 +40,9 @@ END_VAR
 
 ```iecst
 VAR_OUTPUT
-    bOk : BOOL;
-    getValue : PVOID;
-    getPosPtr : POINTER TO T_HashTableEntry;
+    bOk : BOOL := FALSE;
+    getValue : PVOID := 0;
+    getPosPtr : POINTER TO T_HashTableEntry := 0;
 END_VAR
 ```
 

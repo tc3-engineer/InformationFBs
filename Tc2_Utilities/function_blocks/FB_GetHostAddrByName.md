@@ -25,9 +25,9 @@ This function block can be used to read the (IPv4) Internet protocol network add
 ```iecst
 VAR_INPUT
     sNetID : T_AmsNetId;
-    sHostName : T_MaxString;
+    sHostName : T_MaxString := '';
     bExecute : BOOL;
-    tTimeout : TIME;
+    tTimeout : TIME := DEFAULT_ADS_TIMEOUT;
 END_VAR
 ```
 
@@ -45,8 +45,8 @@ VAR_OUTPUT
     bBusy : BOOL;
     bError : BOOL;
     nErrID : UDINT;
-    sAddr : T_IPv4Addr;
-    arrAddr : T_IPv4AddrArr;
+    sAddr : T_IPv4Addr := '';
+    arrAddr : T_IPv4AddrArr := [ 0, 0, 0, 0];
 END_VAR
 ```
 

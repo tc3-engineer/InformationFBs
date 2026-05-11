@@ -27,7 +27,7 @@ FUNCTION DATA_TO_HEXSTR : T_MaxString
 VAR_INPUT
     pData : POINTER TO BYTE;
     cbData : UDINT(0..85);
-    bLoCase : BOOL; (* := FALSE *)
+    bLoCase : BOOL := FALSE;
 END_VAR
 ```
 

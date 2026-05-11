@@ -24,11 +24,11 @@ This function block can be used to generate data sets in an external buffer in C
 
 ```iecst
 VAR_INPUT
-    eCmd : E_EnumCmdType;
-    putValue : T_MaxString;
-    pValue : POINTER TO BYTE;
-    cbValue : UDINT;
-    bCRLF : BOOL;
+    eCmd : E_EnumCmdType := eEnumCmd_First;
+    putValue : T_MaxString := '';
+    pValue : POINTER TO BYTE := 0;
+    cbValue : UDINT := 0;
+    bCRLF : BOOL := FALSE;
     pBuffer : POINTER TO BYTE;
     cbBuffer : UDINT;
 END_VAR

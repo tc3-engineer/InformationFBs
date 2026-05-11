@@ -25,8 +25,8 @@ This function block can be used to search a string in a REPEAT or WHILE loop for
 ```iecst
 VAR_INPUT
     sSearch : T_MaxString;
-    eCmd : E_EnumCmdType;
-    eType : E_NumGroupTypes;
+    eCmd : E_EnumCmdType := eEnumCmd_First;
+    eType : E_NumGroupTypes := eNumGroup_Float;
 END_VAR
 ```
 

@@ -25,8 +25,8 @@
 ```iecst
 FUNCTION F_CreateHashTableHnd : BOOL
 VAR_INPUT
-    pEntries : POINTER TO T_HashTableEntry; (* := 0 *)
-    cbEntries : UDINT; (* := 0 *)
+    pEntries : POINTER TO T_HashTableEntry := 0;
+    cbEntries : UDINT := 0;
 END_VAR
 ```
 

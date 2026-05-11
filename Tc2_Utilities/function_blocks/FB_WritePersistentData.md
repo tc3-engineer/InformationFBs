@@ -27,7 +27,7 @@ VAR_INPUT
     NETID : T_AmsNetId;
     PORT : UINT;
     START : BOOL;
-    TMOUT : TIME;
+    TMOUT : TIME := DEFAULT_ADS_TIMEOUT;
     MODE : E_PersistentMode;
 END_VAR
 ```

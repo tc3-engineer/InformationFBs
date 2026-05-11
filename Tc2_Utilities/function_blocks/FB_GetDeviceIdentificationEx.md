@@ -25,7 +25,7 @@ The function block reads the device ID. Allows longer strings for hardware model
 ```iecst
 VAR_INPUT
     bExecute : BOOL;
-    tTimeout : TIME;
+    tTimeout : TIME := DEFAULT_ADS_TIMEOUT;
     sNetId : T_AmsNetId;
 END_VAR
 ```

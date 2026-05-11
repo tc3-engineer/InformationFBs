@@ -26,13 +26,13 @@
 
 ```iecst
 VAR_INPUT
-    stState         : PLCINTFSTRUCT;
-    nTerminal       : BYTE; (* := TERM_COUPLER *)
-    nTable          : BYTE;
-    nStartReg       : BYTE;
-    nEndReg         : BYTE;
-    bExecute        : BOOL;
-    tTimeout        : TIME;
+    stState       : PLCINTFSTRUCT;
+    nTerminal     : BYTE:= TERM_COUPLER;
+    nTable        : BYTE;
+    nStartReg     : BYTE;
+    nEndReg       : BYTE;
+    bExecute      : BOOL;
+    tTimeout      : TIME;
 END_VAR
 ```
 

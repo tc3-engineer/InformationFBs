@@ -26,7 +26,7 @@ The function block GetRemotePCInfo can be used to read information about configu
 VAR_INPUT
     NETID : T_AmsNetId;
     START : BOOL;
-    TMOUT : TIME;
+    TMOUT : TIME := DEFAULT_ADS_TIMEOUT;
 END_VAR
 ```
 

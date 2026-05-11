@@ -24,7 +24,7 @@ This function block splits a memory area (data buffer) into several smaller segm
 
 ```iecst
 VAR_INPUT
-    eCmd : E_EnumCmdType;
+    eCmd : E_EnumCmdType := eEnumCmd_First;
     pBuffer : POINTER TO BYTE;
     cbBuffer : UDINT;
     cbSize : UDINT;

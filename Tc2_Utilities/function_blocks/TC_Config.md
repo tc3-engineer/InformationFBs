@@ -26,7 +26,7 @@ A TwinCAT system in RUN mode (green TwinCAT system icon) can be switched to CONF
 VAR_INPUT
     NETID : T_AmsNetId;
     SET : BOOL;
-    TMOUT : TIME;
+    TMOUT : TIME := DEFAULT_ADS_TIMEOUT;
 END_VAR
 ```
 

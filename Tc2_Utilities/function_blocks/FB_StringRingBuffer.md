@@ -25,7 +25,7 @@ The function block FB_StringRingBuffer can be used to write string variables int
 ```iecst
 VAR_INPUT
     bOverwrite : BOOL;
-    putValue : T_MaxString;
+    putValue : T_MaxString := '';
     pBuffer : POINTER TO BYTE;
     cbBuffer : UDINT;
 END_VAR
@@ -43,7 +43,7 @@ END_VAR
 ```iecst
 VAR_OUTPUT
     bOk : BOOL;
-    getValue : T_MaxString;
+    getValue : T_MaxString := '';
     nCount : UDINT;
     cbSize : UDINT;
 END_VAR

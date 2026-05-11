@@ -26,7 +26,7 @@ The function block TC_CpuUsage allows the current CPU usage of a TwinCAT system 
 VAR_INPUT
     NETID : T_AmsNetId;
     START : BOOL;
-    TMOUT : TIME;
+    TMOUT : TIME := DEFAULT_ADS_TIMEOUT;
 END_VAR
 ```
 

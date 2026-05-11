@@ -26,7 +26,7 @@ The function block FB_GetRouterStatusInfo can be used to read status information
 VAR_INPUT
     sNetID : T_AmsNetId;
     bExecute : BOOL;
-    tTimeout : TIME;
+    tTimeout : TIME := DEFAULT_ADS_TIMEOUT;
 END_VAR
 ```
 

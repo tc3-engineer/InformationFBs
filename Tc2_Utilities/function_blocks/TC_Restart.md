@@ -26,7 +26,7 @@ The function block TC_Restart can be used to restart the TwinCAT system. The fun
 VAR_INPUT
     NETID : T_AmsNetId;
     RESTART : BOOL;
-    TMOUT : TIME;
+    TMOUT : TIME := DEFAULT_ADS_TIMEOUT;
 END_VAR
 ```
 

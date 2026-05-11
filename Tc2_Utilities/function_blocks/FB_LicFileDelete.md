@@ -29,7 +29,7 @@ VAR_INPUT
     sFileName : STRING;
     bExecute : BOOL;
     dwPassCode : DWORD;
-    tTimeout : TIME;
+    tTimeout : TIME := DEFAULT_ADS_TIMEOUT;
 END_VAR
 ```
 
