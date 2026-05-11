@@ -20,9 +20,9 @@
 | 6 | Extended STRING functions | 30 | ✅ done |
 | 7 | 64-bit functions (signed) | 15 | ✅ done |
 | 8 | 64-bit integer functions (unsigned) | 31 | ✅ done |
-| - | Functions（散） | 66 | ⏳ pending |
+| 9 | Functions（散） | 66 | ✅ done |
 | - | Function blocks (剩余) | ~83 | ⏳ pending |
-| - | **当前累计** | **190 / 344** | 55.2% |
+| - | **当前累计** | **256 / 344** | 74.4% |
 
 ## Round 1 索引（28 条 · 全部 ✅ verified）
 
@@ -240,6 +240,25 @@
 | 构造器 | `ULARGE_INTEGER`(high, low) |
 
 各条文档 / 例程：`Tc2_Utilities/uint64/<Name>.md` + `Tc2_Utilities/examples/P_Demo_<Name>.xml`。
+
+### Functions（66 散类）
+
+> 涵盖 CRC/CSV/GUID/hash/角度/格式化/HEX/Base36/字符串大小写/路由层枚举 等。详见 `Tc2_Utilities/functions/<Name>.md` 与 `Tc2_Utilities/examples/P_Demo_<Name>.xml`。
+
+| 子类 | 条目（部分） |
+|---|---|
+| CRC / 校验和 | `F_BYTE_TO_CRC16_CCITT` `F_DATA_TO_CRC16_CCITT` `F_CheckSum16` |
+| 哈希 | `F_GenerateHashValue`（SHA/MD5） `F_CreateHashTableHnd` `F_CreateLinkedListHnd` |
+| CSV | `ARG_TO_CSVFIELD` `CSVFIELD_TO_ARG` `STRING_TO_CSVFIELD` `CSVFIELD_TO_STRING`（PDF typo `CSFIELD`） |
+| GUID | `GUID_TO_STRING` `GUID_TO_REGSTRING` `STRING_TO_GUID` `REGSTRING_TO_GUID` `GuidsEqualByVal` |
+| 数 ↔ 字符串 | `BYTE/WORD/DWORD/LWORD/PVOID/DINT/LINT_TO_{BIN,DEC,OCT,HEX}STR` `LWORD_TO_BASE36STR` `LREAL_TO_FMTSTR` |
+| HEX ↔ binary | `DATA_TO_HEXSTR`(≤85B) `HEXSTR_TO_DATA` `HEXASCNIBBLE_TO_BYTE` `HEXCHRNIBBLE_TO_BYTE` |
+| 角度 | `DEG_TO_RAD` `RAD_TO_DEG` |
+| 字符串处理 | `F_LTrim` `F_RTrim` `F_ToLCase` `F_ToUCase` `MAXSTRING_TO_BYTEARR` `BYTEARR_TO_MAXSTRING` |
+| BIC | `BIC_TO_BTN` `F_SplitBIC` |
+| LREALEX 安全转换 | `BYTE/WORD/DWORD/UINT/UDINT/USINT_TO_LREALEX`（TC2 ARM unsigned safe） |
+| ULINT ↔ ULARGE | `ULINT_TO_ULARGE` |
+| 其他 | `F_SwapRealEx`(BC/BX ↔ IPC) `F_GetClassIdVersioned` `F_FormatArgToStr`(FB_FormatString helper) `PVOID_TO_STRING`/`STRING_TO_PVOID` `ROUTETRANSPORT_TO_STRING` |
 
 ### Library version（1）
 
