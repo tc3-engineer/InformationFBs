@@ -509,3 +509,9 @@
 2026-05-11T01:00:00Z | Tc3_EventLogger | FB_TcSourceInfo                          | Clear                                    | verified | auto-extracted VAR from PDF
 2026-05-11T01:00:00Z | Tc3_EventLogger | FB_TcSourceInfo                          | ExtendName                               | verified | auto-extracted VAR from PDF
 2026-05-11T01:00:00Z | Tc3_EventLogger | FB_TcSourceInfo                          | ResetToDefault                           | verified | auto-extracted VAR from PDF
+
+# 2026-05-11 audit-fix
+2026-05-11T04:00:00Z | Tc2_Standard | Counter   | CTU  | verified | fix: remove unsourced "Q 保持 TRUE 直到溢出回 0" claim (PDF §3.2.2 silent on CV>=PV continuation); InfoSys cross-checked
+2026-05-11T04:00:00Z | Tc2_Standard | Counter   | CTUD | verified | fix: remove unsourced "RESET 优先于 LOAD" claim (PDF §3.2.3 does not state priority); InfoSys cross-checked
+2026-05-11T04:00:00Z | Tc2_Standard | Bistable  | RS   | verified | fix: replace "电平触发" claim with PDF/InfoSys dual-statement note (Inputs table says "on a rising edge" but boolean eq is combinational)
+2026-05-11T04:00:00Z | Tc2_Standard | Bistable  | SR   | verified | fix: replace "电平触发" claim with PDF/InfoSys dual-statement note (same as RS)
