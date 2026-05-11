@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <project xmlns="http://www.plcopen.org/xml/tc6_0200">
-  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-10T09:00:00"/>
-  <contentHeader name="Tc2_Coupler.FB_ReadCouplerDiag Demo" modificationDateTime="2026-05-10T09:00:00">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-11T08:00:00"/>
+  <contentHeader name="Tc2_Coupler.FB_ReadCouplerDiag Demo" modificationDateTime="2026-05-11T08:00:00">
     <coordinateInfo>
       <fbd><scaling x="1" y="1"/></fbd>
       <ld><scaling x="1" y="1"/></ld>
@@ -14,74 +14,112 @@
       <pou name="P_Demo_FB_ReadCouplerDiag" pouType="program">
         <interface>
           <localVars>
-            <variable name="fbFB_ReadCouplerDiag">
+            <variable name="fbReadDiag">
               <type><derived name="FB_ReadCouplerDiag"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">Function blocks 实例</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">读耦合器诊断 FB 实例</xhtml></documentation>
             </variable>
-            <variable name="arg_stState">
+            <variable name="rTrigKbusErr">
+              <type><derived name="R_TRIG"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">K-bus error 上升沿检测</xhtml></documentation>
+            </variable>
+            <variable name="stCouplerStatus">
               <type><derived name="PLCINTFSTRUCT"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT stState: 2-byte PLC interface 状态字</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">2-byte PLC interface status（链接耦合器）</xhtml></documentation>
             </variable>
-            <variable name="arg_bExecute">
+            <variable name="stCouplerControl">
+              <type><derived name="PLCINTFSTRUCT"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">2-byte PLC interface control（链接耦合器）</xhtml></documentation>
+            </variable>
+            <variable name="bKbusErrorDetected">
               <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT bExecute: 上升沿触发</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">K-bus error 位（typ. stState.Byte0.0；位号查耦合器手册）</xhtml></documentation>
             </variable>
-            <variable name="arg_tTimeout">
+            <variable name="bTriggerReadDiagOnce">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">触发一次诊断读（上升沿后保持到完成）</xhtml></documentation>
+            </variable>
+            <variable name="tDiagReadTimeout">
+              <initialValue><simpleValue value="T#3S"/></initialValue>
               <type><TIME/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT tTimeout: 执行超时</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">诊断读超时；不要短于 2 秒（要读两段）</xhtml></documentation>
             </variable>
-            <variable name="out_stCtrl">
-              <type><derived name="PLCINTFSTRUCT"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT stCtrl: 2-byte PLC interface 控制字</xhtml></documentation>
-            </variable>
-            <variable name="out_bBusy">
+            <variable name="bReadingDiag">
               <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT bBusy: 执行中</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">诊断读进行中</xhtml></documentation>
             </variable>
-            <variable name="out_bError">
+            <variable name="bReadError">
               <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT bError: 执行出错</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">读取出错</xhtml></documentation>
             </variable>
-            <variable name="out_nErrId">
+            <variable name="nReadErrId">
               <type><UDINT/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT nErrId: 错误号</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">错误号</xhtml></documentation>
             </variable>
-            <variable name="out_stDiag">
+            <variable name="stDiagResult">
               <type><derived name="ST_CouplerDiag"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT stDiag: 诊断结果（含两序列闪烁码）</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">两段闪烁码结果</xhtml></documentation>
+            </variable>
+            <variable name="nFirstFlashType">
+              <type><BYTE/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">第一序列长闪次数（错误类别），供 HMI 显示</xhtml></documentation>
+            </variable>
+            <variable name="nSecondFlashPos">
+              <type><BYTE/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">第二序列短闪次数（错误位置/端子号）</xhtml></documentation>
             </variable>
           </localVars>
         </interface>
         <body>
-          <ST>
-            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
-// Tc2_Coupler.FB_ReadCouplerDiag 演示程序
-// ============================================================
-// 场景：K-bus 故障时读取耦合器错误闪烁码定位故障端子
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：BK5120（Lightbus 耦合器）+ 一串 KLxxx 端子。当 K-bus error 位置位时，
+//       自动读耦合器面板 LED 的两段闪烁码送 HMI 显示故障原因（例如"端子 7
+//       之后 K-bus 中断"），让维修人员不必到现场看 LED 数闪几下。
+//
+// 价值：把"先看 stState K-bus error 位 + 上升沿触发读 + 两段闪烁码串行获取
+//       + 超时管理"封装为一次调用；HMI 直接拿 nFirstFlashType /
+//       nSecondFlashPos 两个数显示。
+//
 // 验证步骤：
-//   1. 引用 Tc2_Coupler（及其依赖：Tc2_System 等）
-//   2. 编译 + 登录
-//   3. 在线监视各 out_* 输出
-//   4. 必要时按场景给 arg_* 输入赋值（详见 doc.md 的'使用注意'）
-// ============================================================
+//   1. 在 System Manager 给 BK5120 启用 2-byte PLC interface 并链接 IO
+//   2. 引用 Tc2_Coupler，编译，登录
+//   3. 人为拔掉某个端子（例如端子 7）-&gt; 观察 bKbusErrorDetected 变 TRUE
+//   4. 上升沿触发 fbReadDiag 一次 -&gt; bReadingDiag 短暂 TRUE，1-3 秒后回 FALSE
+//   5. 完成后查看 nFirstFlashType / nSecondFlashPos，对照 BK5120 手册
+//      LED diagnosis 表翻译成故障描述（例如 4/7 = 端子 7 之后中断）
+//   6. 注意：先读本 FB 再触发 CouplerReset，反过来会丢失诊断信息
+// =============================================================================
 
-fbFB_ReadCouplerDiag(
-    stState := arg_stState,
-    bExecute := arg_bExecute,
-    tTimeout := arg_tTimeout,
-    stCtrl => out_stCtrl,
-    bBusy => out_bBusy,
-    bError => out_bError,
-    nErrId => out_nErrId,
-    stDiag => out_stDiag
+// 监视 K-bus error 位（位号以具体耦合器手册为准；这里假设是 Byte0.0）
+bKbusErrorDetected := stCouplerStatus.Byte0.0;
+
+// 上升沿触发一次诊断读取，避免周期性反复读浪费总线
+rTrigKbusErr(CLK := bKbusErrorDetected);
+IF rTrigKbusErr.Q THEN
+    bTriggerReadDiagOnce := TRUE;
+END_IF
+
+// 单次调用形式：bExecute 在完成后由下面 IF 块手动复位
+fbReadDiag(
+    stState  := stCouplerStatus,
+    bExecute := bTriggerReadDiagOnce,
+    tTimeout := tDiagReadTimeout,
+    stCtrl   =&gt; stCouplerControl,
+    bBusy    =&gt; bReadingDiag,
+    bError   =&gt; bReadError,
+    nErrId   =&gt; nReadErrId,
+    stDiag   =&gt; stDiagResult
 );
-</xhtml>
-          </ST>
+
+// 完成后取出两段闪烁码并清触发；字段名以 ST_CouplerDiag 实际定义为准
+IF NOT bReadingDiag AND bTriggerReadDiagOnce THEN
+    bTriggerReadDiagOnce := FALSE;
+    nFirstFlashType  := stDiagResult.stFirstFlashCode.nErrorType;
+    nSecondFlashPos  := stDiagResult.stSecondFlashCode.nErrorPosition;
+END_IF
+</xhtml></ST>
         </body>
       </pou>
     </pous>
   </types>
-  <instances>
-    <configurations/>
-  </instances>
+  <instances><configurations/></instances>
 </project>

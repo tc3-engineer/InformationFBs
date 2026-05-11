@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <project xmlns="http://www.plcopen.org/xml/tc6_0200">
-  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-10T09:00:00"/>
-  <contentHeader name="Tc2_Coupler.FB_ReadCouplerRegs Demo" modificationDateTime="2026-05-10T09:00:00">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-11T08:00:00"/>
+  <contentHeader name="Tc2_Coupler.FB_ReadCouplerRegs Demo" modificationDateTime="2026-05-11T08:00:00">
     <coordinateInfo>
       <fbd><scaling x="1" y="1"/></fbd>
       <ld><scaling x="1" y="1"/></ld>
@@ -14,94 +14,136 @@
       <pou name="P_Demo_FB_ReadCouplerRegs" pouType="program">
         <interface>
           <localVars>
-            <variable name="fbFB_ReadCouplerRegs">
+            <variable name="fbReadRegs">
               <type><derived name="FB_ReadCouplerRegs"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">Function blocks 实例</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">批量读耦合器/端子寄存器</xhtml></documentation>
             </variable>
-            <variable name="arg_stState">
+            <variable name="rTrigScan">
+              <type><derived name="R_TRIG"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">扫描请求上升沿</xhtml></documentation>
+            </variable>
+            <variable name="stCouplerStatus">
               <type><derived name="PLCINTFSTRUCT"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT stState: 2-byte PLC interface 状态字</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">2-byte PLC interface status</xhtml></documentation>
             </variable>
-            <variable name="arg_nTerminal">
-              <type><BYTE/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT nTerminal: 目标端子号（0=耦合器；不计无源端子）</xhtml></documentation>
+            <variable name="stCouplerControl">
+              <type><derived name="PLCINTFSTRUCT"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">2-byte PLC interface control</xhtml></documentation>
             </variable>
-            <variable name="arg_nTable">
-              <type><BYTE/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT nTable: 表号（智能端子每通道 1 表）</xhtml></documentation>
-            </variable>
-            <variable name="arg_nStartReg">
-              <type><BYTE/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT nStartReg: 起始寄存器号</xhtml></documentation>
-            </variable>
-            <variable name="arg_nEndReg">
-              <type><BYTE/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT nEndReg: 结束寄存器号</xhtml></documentation>
-            </variable>
-            <variable name="arg_bExecute">
+            <variable name="bScanCouplerReg">
               <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT bExecute: 上升沿触发</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">扫描耦合器自身 reg 0..15</xhtml></documentation>
             </variable>
-            <variable name="arg_tTimeout">
+            <variable name="bScanKL3464Id">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">读 KL3464 (端子号 2) 的 reg 8</xhtml></documentation>
+            </variable>
+            <variable name="nActiveTerminalSlot">
+              <initialValue><simpleValue value="TERM_COUPLER"/></initialValue>
+              <type><BYTE/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">当前目标端子号</xhtml></documentation>
+            </variable>
+            <variable name="nActiveTableNo">
+              <initialValue><simpleValue value="0"/></initialValue>
+              <type><BYTE/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">表号</xhtml></documentation>
+            </variable>
+            <variable name="nActiveStartReg">
+              <initialValue><simpleValue value="0"/></initialValue>
+              <type><BYTE/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">起始寄存器号（含）</xhtml></documentation>
+            </variable>
+            <variable name="nActiveEndReg">
+              <initialValue><simpleValue value="15"/></initialValue>
+              <type><BYTE/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">结束寄存器号（含）</xhtml></documentation>
+            </variable>
+            <variable name="tScanTimeout">
+              <initialValue><simpleValue value="T#10S"/></initialValue>
               <type><TIME/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT tTimeout: 执行超时</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">扫描超时 (经验式 N*100ms+2s)</xhtml></documentation>
             </variable>
-            <variable name="out_stCtrl">
-              <type><derived name="PLCINTFSTRUCT"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT stCtrl: 2-byte PLC interface 控制字</xhtml></documentation>
-            </variable>
-            <variable name="out_bBusy">
+            <variable name="bScanBusy">
               <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT bBusy: 执行中</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">扫描进行中</xhtml></documentation>
             </variable>
-            <variable name="out_bError">
+            <variable name="bScanError">
               <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT bError: 执行出错</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">扫描出错</xhtml></documentation>
             </variable>
-            <variable name="out_nErrId">
+            <variable name="nLastErrId">
               <type><UDINT/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT nErrId: 错误号</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">最近一次错误号</xhtml></documentation>
             </variable>
-            <variable name="out_stCouplerTable">
+            <variable name="stReadResult">
               <type><derived name="ST_CouplerTable"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT stCouplerTable: 读取的寄存器值数组</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">读到的寄存器表，下标 = 寄存器号</xhtml></documentation>
+            </variable>
+            <variable name="wKL3464IdReadback">
+              <type><WORD/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">KL3464 reg 8 还原为 WORD，应为 16#0D80</xhtml></documentation>
             </variable>
           </localVars>
         </interface>
         <body>
-          <ST>
-            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
-// Tc2_Coupler.FB_ReadCouplerRegs 演示程序
-// ============================================================
-// 场景：诊断时读取智能端子的 register table 值
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：BK3120 + 端子排 [KL1408, KL9100, KL3464, KL4022]。上电后做硬件巡检：
+//   (a) 读耦合器自身 reg 0..15（型号 / 固件 / 站点配置）；
+//   (b) 读 KL3464（端子号 2，因 KL9100 是无源端子不计）的 reg 8（端子型号，
+//       应得 16#0D80 = 3456 = KL3464），与工程图纸对比，接错就拒绝启动。
+//
+// 价值：把"2-byte PLC interface 批量寄存器握手 + 高/低字节填表 + 超时管理"
+//       封装为一次调用。手写实现 100+ 行状态机；本 FB 一行调用。
+//
 // 验证步骤：
-//   1. 引用 Tc2_Coupler（及其依赖：Tc2_System 等）
-//   2. 编译 + 登录
-//   3. 在线监视各 out_* 输出
-//   4. 必要时按场景给 arg_* 输入赋值（详见 doc.md 的'使用注意'）
-// ============================================================
+//   1. 在 System Manager 给 BK3120 启用 2-byte PLC interface 并链 IO
+//   2. 引用 Tc2_Coupler，编译，登录
+//   3. 在线置 bScanCouplerReg := TRUE 触发一次 -&gt; 数秒后 bScanBusy 回 FALSE，
+//      stReadResult 中 [0..15] 应有耦合器表数据
+//   4. 在线置 bScanKL3464Id := TRUE 触发 -&gt; wKL3464IdReadback 应等于 16#0D80
+//   5. 若误把端子号 nActiveTerminalSlot 设为 3（把 KL9100 也数进去）触发 -&gt;
+//      可能 nLastErrId = 16#400，证明无源端子确实不计入
+//   6. 触发完成后由 HMI 把 bScanX 标志清零再做下一次（上升沿语义）
+// =============================================================================
 
-fbFB_ReadCouplerRegs(
-    stState := arg_stState,
-    nTerminal := arg_nTerminal,
-    nTable := arg_nTable,
-    nStartReg := arg_nStartReg,
-    nEndReg := arg_nEndReg,
-    bExecute := arg_bExecute,
-    tTimeout := arg_tTimeout,
-    stCtrl => out_stCtrl,
-    bBusy => out_bBusy,
-    bError => out_bError,
-    nErrId => out_nErrId,
-    stCouplerTable => out_stCouplerTable
+// 按请求装载参数；同周期只允许一个请求拉高
+IF bScanCouplerReg THEN
+    nActiveTerminalSlot := TERM_COUPLER;
+    nActiveTableNo      := 0;
+    nActiveStartReg     := 0;
+    nActiveEndReg       := 15;
+ELSIF bScanKL3464Id THEN
+    nActiveTerminalSlot := 2;                    // KL3464（KL9100 无源不计）
+    nActiveTableNo      := 0;
+    nActiveStartReg     := 8;
+    nActiveEndReg       := 8;
+END_IF
+
+// 单次调用形式：所有 VAR_INPUT 显式赋值
+fbReadRegs(
+    stState        := stCouplerStatus,
+    nTerminal      := nActiveTerminalSlot,
+    nTable         := nActiveTableNo,
+    nStartReg      := nActiveStartReg,
+    nEndReg        := nActiveEndReg,
+    bExecute       := bScanCouplerReg OR bScanKL3464Id,
+    tTimeout       := tScanTimeout,
+    stCtrl         =&gt; stCouplerControl,
+    bBusy          =&gt; bScanBusy,
+    bError         =&gt; bScanError,
+    nErrId         =&gt; nLastErrId,
+    stCouplerTable =&gt; stReadResult
 );
-</xhtml>
-          </ST>
+
+// 完成后从 stReadResult[8] 还原 WORD；字段名以 ST_CouplerTable/ST_CouplerReg 实际定义为准
+IF bScanKL3464Id AND NOT bScanBusy AND NOT bScanError THEN
+    wKL3464IdReadback := SHL(WORD#(stReadResult.aRegister[8].nHi), 8)
+                       + WORD#(stReadResult.aRegister[8].nLo);
+END_IF
+</xhtml></ST>
         </body>
       </pou>
     </pous>
   </types>
-  <instances>
-    <configurations/>
-  </instances>
+  <instances><configurations/></instances>
 </project>

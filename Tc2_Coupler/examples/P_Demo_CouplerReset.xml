@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <project xmlns="http://www.plcopen.org/xml/tc6_0200">
-  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-10T09:00:00"/>
-  <contentHeader name="Tc2_Coupler.CouplerReset Demo" modificationDateTime="2026-05-10T09:00:00">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-11T08:00:00"/>
+  <contentHeader name="Tc2_Coupler.CouplerReset Demo" modificationDateTime="2026-05-11T08:00:00">
     <coordinateInfo>
       <fbd><scaling x="1" y="1"/></fbd>
       <ld><scaling x="1" y="1"/></ld>
@@ -14,69 +14,79 @@
       <pou name="P_Demo_CouplerReset" pouType="program">
         <interface>
           <localVars>
-            <variable name="fbCouplerReset">
+            <variable name="fbResetCoupler">
               <type><derived name="CouplerReset"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">Function blocks 实例</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">耦合器软复位 FB 实例</xhtml></documentation>
             </variable>
-            <variable name="arg_STATE">
+            <variable name="stCouplerStatus">
               <type><derived name="PLCINTFSTRUCT"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT STATE: 2-byte PLC interface 状态字（链接到 IO）</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">2-byte PLC interface status word（链接到耦合器）</xhtml></documentation>
             </variable>
-            <variable name="arg_START">
+            <variable name="stCouplerControl">
+              <type><derived name="PLCINTFSTRUCT"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">2-byte PLC interface control word（链接到耦合器）</xhtml></documentation>
+            </variable>
+            <variable name="bMaintenanceResetRequest">
               <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT START: 上升沿触发复位</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">维护按钮单脉冲触发复位</xhtml></documentation>
             </variable>
-            <variable name="arg_TMOUT">
+            <variable name="tResetTimeout">
+              <initialValue><simpleValue value="T#10S"/></initialValue>
               <type><TIME/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT TMOUT: 执行超时</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">复位超时；K-bus 端子多时给足时间</xhtml></documentation>
             </variable>
-            <variable name="out_CONTROL">
-              <type><derived name="PLCINTFSTRUCT"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT CONTROL: 2-byte PLC interface 控制字（链接到 IO）</xhtml></documentation>
-            </variable>
-            <variable name="out_BUSY">
+            <variable name="bResetBusy">
               <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT BUSY: 执行中</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">复位进行中标志</xhtml></documentation>
             </variable>
-            <variable name="out_ERR">
+            <variable name="bResetError">
               <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT ERR: 执行出错</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">复位失败标志</xhtml></documentation>
             </variable>
-            <variable name="out_ERRID">
+            <variable name="nResetErrId">
               <type><UDINT/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT ERRID: 错误号</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">错误号 0/16#100/16#200/16#300/16#400/16#500</xhtml></documentation>
             </variable>
           </localVars>
         </interface>
         <body>
-          <ST>
-            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
-// Tc2_Coupler.CouplerReset 演示程序
-// ============================================================
-// 场景：K-bus 异常时通过 PLC 远程复位耦合器
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：印刷机控制柜里挂的 BK3120（Profibus 耦合器）经常在端子热插拔后报
+//       K-bus error。维护人员希望按一下控制面板的"K-bus 复位"按钮就自动恢复，
+//       无需重启整个站。本程序在维护单脉冲后软复位耦合器。
+//
+// 价值：替代"现场按耦合器面板 reset 按钮"（机柜内部不安全）、"Profibus 站点
+//       reset"（会瞬间打断全站通信，影响范围大）、"整柜断电"（连续工艺代价高）。
+//       本 FB 让 PLC 程序软复位单台耦合器、其它站不受影响。
+//
 // 验证步骤：
-//   1. 引用 Tc2_Coupler（及其依赖：Tc2_System 等）
-//   2. 编译 + 登录
-//   3. 在线监视各 out_* 输出
-//   4. 必要时按场景给 arg_* 输入赋值（详见 doc.md 的'使用注意'）
-// ============================================================
+//   1. 在 System Manager 给 BK3120 的 2-byte PLC interface 选 enabled，
+//      并把 status word / control word 各 2 字节链接到本程序的两个变量
+//   2. 引用 Tc2_Coupler，编译，登录
+//   3. 人为拔掉一个 KLxxx 端子，观察 stCouplerStatus.Byte0 的 K-bus
+//      error 位被置 1；插回端子，K-bus error 仍未自动清
+//   4. 将 bMaintenanceResetRequest 置 TRUE 一个 PLC 周期（在线写值）
+//      -&gt; bResetBusy 应短暂置 TRUE，1-3 秒后回 FALSE
+//   5. 复位完成后 stCouplerStatus.Byte0 中 K-bus error 位应清 0，
+//      bResetError = FALSE，nResetErrId = 0
+//   6. 若设 tResetTimeout = T#1S 再触发 -&gt; 大概率 bResetError = TRUE，
+//      nResetErrId = 16#300（超时），证明 TMOUT 不要设太短
+// =============================================================================
 
-fbCouplerReset(
-    STATE := arg_STATE,
-    START := arg_START,
-    TMOUT := arg_TMOUT,
-    CONTROL => out_CONTROL,
-    BUSY => out_BUSY,
-    ERR => out_ERR,
-    ERRID => out_ERRID
+// 单次调用形式：所有 VAR_INPUT 显式赋值
+fbResetCoupler(
+    STATE   := stCouplerStatus,
+    START   := bMaintenanceResetRequest,
+    TMOUT   := tResetTimeout,
+    CONTROL =&gt; stCouplerControl,
+    BUSY    =&gt; bResetBusy,
+    ERR     =&gt; bResetError,
+    ERRID   =&gt; nResetErrId
 );
-</xhtml>
-          </ST>
+</xhtml></ST>
         </body>
       </pou>
     </pous>
   </types>
-  <instances>
-    <configurations/>
-  </instances>
+  <instances><configurations/></instances>
 </project>
