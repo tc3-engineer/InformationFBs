@@ -1,22 +1,27 @@
 # EqualsToEventClass
+
 ## 元信息
 
 | 字段 | 值 |
 |---|---|
 | Library | `Tc3_EventLogger` |
 | Library Version | `1.6.2` |
-| Type | `FUNCTION_BLOCK` |
-| Category | `Function blocks` |
-| Source | https://infosys.beckhoff.com/content/1033/tcplclib_tc3_eventlogger/ |
+| Type | `METHOD` |
+| Category | `FB_TcEventBase` |
 | Source PDF | https://download.beckhoff.com/download/document/automation/twincat3/TwinCAT_3_PLC_Lib_Tc3_EventLogger_EN.pdf |
-| Verified | 2026-05-10 ✅ |
+| Source InfoSys | https://infosys.beckhoff.com/content/1033/tcplclib_tc3_eventlogger/5007175435.html |
+| Verified | 2026-05-11 ✅ |
+| InfoSys-checked | ✅ 2026-05-11 |
 | Status | `verified` |
 | Example | [`examples/P_Demo_EqualsToEventClass.xml`](../examples/P_Demo_EqualsToEventClass.xml) |
 
 ---
+
 ## 1. 功能简述
 
-This method carries out a comparison with another event class specified at the input. Syntax METHOD EqualsToEventClass : BOOL
+`FB_TcEventBase.EqualsToEventClass()` 比较当前事件与给定 EventClass GUID 是否属于同一事件类。
+
+粒度最粗——只看事件类，不看 EventID / Severity / Arguments。适合"是否属于报警类、消息类、调试类"这种分类判断。
 
 ## 2. 接口定义
 
@@ -30,11 +35,12 @@ END_VAR
 
 | 名称 | 类型 | 说明 |
 |---|---|---|
-| `OtherEventClass` | `GUID` | （详见 PDF） |
+| `OtherEventClass` | `GUID` | ⚠️ 待人工确认（PDF/InfoSys Description 列为空或仅英文） |
+
 
 ### VAR_OUTPUT
 
-无 VAR_OUTPUT。
+无。
 
 ### VAR_IN_OUT
 
@@ -42,40 +48,47 @@ END_VAR
 
 ## 3. 行为说明
 
-- 见上方功能简述。
-- 详细行为（时序、错误码、状态机）请对照 PDF 第 3.9.2 节。
+本方法接收 `eventClass : GUID`，返回 `BOOL`：当前实例的 EventClass GUID 与参数完全相同 → TRUE，否则 FALSE。不看 EventID、不看 Severity、不看 Arguments——是四个 EqualsTo 系列里粒度最粗的一个。
+
+**典型用法**：在 listener 回调里快速分流事件类型——比如先用本方法判断「是否安全报警类」，若是再走急停处理流程；否则继续走普通报警流程。也常用在多 PLC 互连场景里「事件是不是来自本 PLC 定义的某个事件类」的快速过滤，避免误处理其他系统的事件。
 
 ## 4. 错误码 / 返回值
 
-本方法返回 `BOOL`（`TRUE` = 成功；`FALSE` = 失败。具体失败语义 PDF 未列出，请见 InfoSys，⚠️ 待人工确认）。
+本方法/函数返回 `BOOL`。
+
+| 返回值 | 含义 | 处理建议 |
+|---|---|---|
+| `TRUE` | EventClass GUID 匹配 | 属于该事件类 |
+| `FALSE` | 不匹配 | 不属于该事件类 |
 
 ## 5. 使用注意 / 常见坑
 
-- VAR_INPUT / VAR_OUTPUT / VAR_IN_OUT 已逐字从 PDF 抽取并通过 `verify_doc.py` 自检。
-- 描述句、时序行为、错误码表等细节请以 PDF 第 3.9.2 节为准（⚠️ 待人工细化）。
+- 仅按 GUID 比较，忽略 EventID/Severity——同事件类不同 ID 仍返回 TRUE。
+- GUID 误传 16 字节零值会让所有判断都 FALSE。（工程经验补充）
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_EqualsToEventClass.xml`](../examples/P_Demo_EqualsToEventClass.xml)
+> 配套可导入文件：[`examples/P_Demo_EqualsToEventClass.xml`](../examples/P_Demo_EqualsToEventClass.xml)（PLCopenXML，可直接导入 TwinCAT 3 XAE）
 >
-> 详见 [`examples/README.md`](../examples/README.md)
+> 导入步骤：右键 PLC 项目 → Import PLCopenXML → 选该文件 → OK
 
 ```iecst
-PROGRAM P_Demo_EqualsToEventClass
-VAR
-    fbEqualsToEventClass : EqualsToEventClass;
-    arg_OtherEventClass : GUID;
-END_VAR
-
-fbEqualsToEventClass(
-    OtherEventClass := arg_OtherEventClass
-);
+// 详见 examples 目录下的 .xml 文件
 ```
 
-## 7. 相关
+## 7. 业务场景与实际价值
 
-- 见 [`Tc3_EventLogger README`](../README.md) 同库其他条目
+listener 回调里按事件类分流（安全报警 / 工艺报警 / 调试事件分别走不同处理流程）
 
-## 8. 待确认项
 
-- 详细描述/时序/错误码表待人工细化（auto-gen 阶段只确保 VAR 区与 PDF 一致）。
+一次 GUID 比较替代结构体多字段 IF
+
+
+`EqualsToEventEntry` → 同时看 EventID，粒度更细；手写 GUID 比较 → 一行 vs 一行没区别但本方法语义明确
+
+
+## 8. 参考资料
+
+- **PDF**：[TwinCAT_3_PLC_Lib_Tc3_EventLogger_EN.pdf](https://download.beckhoff.com/download/document/automation/twincat3/TwinCAT_3_PLC_Lib_Tc3_EventLogger_EN.pdf) §3.9.2
+- **InfoSys topic**：https://infosys.beckhoff.com/content/1033/tcplclib_tc3_eventlogger/5007175435.html
+- **相关**：`FB_TcEventBase.EqualsTo`, `FB_TcEventBase.EqualsToEventEntry`

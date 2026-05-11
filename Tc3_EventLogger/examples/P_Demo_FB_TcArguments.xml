@@ -14,34 +14,63 @@
       <pou name="P_Demo_FB_TcArguments" pouType="program">
         <interface>
           <localVars>
-            <variable name="fbFB_TcArguments">
-              <type><derived name="FB_TcArguments"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">Tc3_EventLogger.FB_TcArguments 实例</xhtml></documentation>
+            <variable name="fbAlarm">
+              <type><derived name="FB_TcAlarm"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">alarm 实例（已 Create）</xhtml></documentation>
+            </variable>
+            <variable name="ipArgs">
+              <type><derived name="I_TcArguments"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">参数列表接口</xhtml></documentation>
+            </variable>
+            <variable name="sMotorName">
+              <initialValue><simpleValue value="'M-01'"/></initialValue>
+              <type><string><length>40</length></string></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">电机名</xhtml></documentation>
+            </variable>
+            <variable name="rTemperature">
+              <initialValue><simpleValue value="95.5"/></initialValue>
+              <type><REAL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">温度</xhtml></documentation>
+            </variable>
+            <variable name="bArgsEmpty">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">参数表是否为空</xhtml></documentation>
+            </variable>
+            <variable name="bDoAdd">
+              <initialValue><simpleValue value="FALSE"/></initialValue>
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">上升沿触发</xhtml></documentation>
+            </variable>
+            <variable name="bDoAddPrev">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">边沿检测</xhtml></documentation>
             </variable>
           </localVars>
         </interface>
         <body>
-          <ST>
-            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
-// Tc3_EventLogger.FB_TcArguments 演示程序（FB 实例）
-// ============================================================
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：给即将 Raise 的 alarm 添加电机名 + 温度两个参数
+// 价值：结构化参数 + 自动占位符填充
+// 验证：登录后 ipArgs 通过 fbAlarm.ipArguments 拿到；调 IsEmpty 应该为 TRUE；调 AddString/AddReal 后 IsEmpty 为 FALSE
 // 验证步骤：
-//   1. 引用 Tc3_EventLogger（及依赖类型所在库 Tc2_System 等）
-//   2. 编译 + 登录
-//   3. 按 doc.md 给 arg_* 赋值
-//   4. 在线监视 out_* / io_* 输出
-// ============================================================
+//   1. 右键 PLC 项目 → Import PLCopenXML → 选本文件
+//   2. 引用 Tc3_EventLogger（System → References → Add library）
+//   3. 编译 → 登录 → 运行；按 verify 注释里给出的在线写值操作
+// =============================================================================
 
-fbFB_TcArguments(
-
-);
-</xhtml>
-          </ST>
+ipArgs := fbAlarm.ipArguments;                  // 拿到参数列表接口
+IF ipArgs &amp;lt;&amp;gt; 0 THEN
+    bArgsEmpty := ipArgs.IsEmpty();             // 调用 FB_TcArguments.IsEmpty
+    IF bDoAdd AND NOT bDoAddPrev THEN
+        ipArgs.AddString(sValue := sMotorName);
+        ipArgs.AddReal(fValue := rTemperature);
+    END_IF;
+    bDoAddPrev := bDoAdd;
+END_IF;
+</xhtml></ST>
         </body>
       </pou>
     </pous>
   </types>
-  <instances>
-    <configurations/>
-  </instances>
+  <instances><configurations/></instances>
 </project>

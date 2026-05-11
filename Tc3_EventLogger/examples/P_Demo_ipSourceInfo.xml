@@ -14,34 +14,39 @@
       <pou name="P_Demo_ipSourceInfo" pouType="program">
         <interface>
           <localVars>
-            <variable name="fbipSourceInfo">
-              <type><derived name="ipSourceInfo"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">Tc3_EventLogger.ipSourceInfo 实例</xhtml></documentation>
+            <variable name="fbAlarm">
+              <type><derived name="FB_TcAlarm"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">alarm 实例（已 Create）</xhtml></documentation>
+            </variable>
+            <variable name="ipSrc">
+              <type><derived name="I_TcSourceInfo"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">源信息接口</xhtml></documentation>
+            </variable>
+            <variable name="sSourceName">
+              <type><string><length>80</length></string></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">拿到的 SourceName</xhtml></documentation>
             </variable>
           </localVars>
         </interface>
         <body>
-          <ST>
-            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
-// Tc3_EventLogger.ipSourceInfo 演示程序（FB 实例）
-// ============================================================
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：读取 alarm 的源信息用于日志归档
+// 价值：一次调用拿到 SourceInfo 接口供后续读 SourceName/SourceID
+// 验证：登录后 monitor ipSrc，应能拿到非 0 接口；调用 ipSrc 上的 getter 能读出 SourceName 字符串
 // 验证步骤：
-//   1. 引用 Tc3_EventLogger（及依赖类型所在库 Tc2_System 等）
-//   2. 编译 + 登录
-//   3. 按 doc.md 给 arg_* 赋值
-//   4. 在线监视 out_* / io_* 输出
-// ============================================================
+//   1. 右键 PLC 项目 → Import PLCopenXML → 选本文件
+//   2. 引用 Tc3_EventLogger（System → References → Add library）
+//   3. 编译 → 登录 → 运行；按 verify 注释里给出的在线写值操作
+// =============================================================================
 
-fbipSourceInfo(
-
-);
-</xhtml>
-          </ST>
+ipSrc := fbAlarm.ipSourceInfo;
+IF ipSrc &amp;lt;&amp;gt; 0 THEN
+    sSourceName := ipSrc.sSourceName;     // I_TcSourceInfo 的属性
+END_IF;
+</xhtml></ST>
         </body>
       </pou>
     </pous>
   </types>
-  <instances>
-    <configurations/>
-  </instances>
+  <instances><configurations/></instances>
 </project>

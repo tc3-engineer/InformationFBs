@@ -14,43 +14,86 @@
       <pou name="P_Demo_FB_AsyncStrResult" pouType="program">
         <interface>
           <localVars>
-            <variable name="fbFB_AsyncStrResult">
+            <variable name="fbAlarm">
+              <type><derived name="FB_TcAlarm"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">alarm 实例（已 Create）</xhtml></documentation>
+            </variable>
+            <variable name="fbResult">
               <type><derived name="FB_AsyncStrResult"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">Tc3_EventLogger.FB_AsyncStrResult 实例</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">异步结果实例</xhtml></documentation>
             </variable>
-            <variable name="arg_sResult">
-              <type><reference><baseType><derived name="STRING"/></baseType></reference></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT sResult</xhtml></documentation>
-            </variable>
-            <variable name="arg_nResult">
+            <variable name="nLangId">
+              <initialValue><simpleValue value="2052"/></initialValue>
               <type><UDINT/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT nResult</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">简体中文 LCID</xhtml></documentation>
+            </variable>
+            <variable name="bBusy">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">处理状态属性</xhtml></documentation>
+            </variable>
+            <variable name="bError">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">错误状态属性</xhtml></documentation>
+            </variable>
+            <variable name="hrErrorCode">
+              <type><derived name="HRESULT"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">错误码</xhtml></documentation>
+            </variable>
+            <variable name="sEventText">
+              <type><string><length>255</length></string></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">结果文本</xhtml></documentation>
+            </variable>
+            <variable name="bDoReq">
+              <initialValue><simpleValue value="FALSE"/></initialValue>
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">上升沿触发请求</xhtml></documentation>
+            </variable>
+            <variable name="bDoReqPrev">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">边沿检测</xhtml></documentation>
+            </variable>
+            <variable name="bGot">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">已取到结果</xhtml></documentation>
+            </variable>
+            <variable name="hr">
+              <type><derived name="HRESULT"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">Request 返回值</xhtml></documentation>
             </variable>
           </localVars>
         </interface>
         <body>
-          <ST>
-            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
-// Tc3_EventLogger.FB_AsyncStrResult 演示程序（FB 实例）
-// ============================================================
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：异步取事件文本演示
+// 价值：异步轮询拿到本地化文本
+// 验证：先 fbAlarm.RequestEventText 触发；每周期看 fbResult.bBusy 应在几周期内变 FALSE；之后 GetString 取文本
 // 验证步骤：
-//   1. 引用 Tc3_EventLogger（及依赖类型所在库 Tc2_System 等）
-//   2. 编译 + 登录
-//   3. 按 doc.md 给 arg_* 赋值
-//   4. 在线监视 out_* / io_* 输出
-// ============================================================
+//   1. 右键 PLC 项目 → Import PLCopenXML → 选本文件
+//   2. 引用 Tc3_EventLogger（System → References → Add library）
+//   3. 编译 → 登录 → 运行；按 verify 注释里给出的在线写值操作
+// =============================================================================
 
-fbFB_AsyncStrResult(
-    sResult := arg_sResult,
-    nResult := arg_nResult
-);
-</xhtml>
-          </ST>
+// 边沿触发发起请求
+IF bDoReq AND NOT bDoReqPrev THEN
+    hr := fbAlarm.RequestEventText(nLangId := nLangId, fbAsyncResult := fbResult);
+    bGot := FALSE;
+END_IF;
+bDoReqPrev := bDoReq;
+
+// 每周期检查异步状态
+bBusy := fbResult.bBusy;
+bError := fbResult.bError;
+hrErrorCode := fbResult.hrErrorCode;
+
+// 完成后取一次结果
+IF NOT bBusy AND NOT bError AND NOT bGot THEN
+    fbResult.GetString(sResult := sEventText);
+    bGot := TRUE;
+END_IF;
+</xhtml></ST>
         </body>
       </pou>
     </pous>
   </types>
-  <instances>
-    <configurations/>
-  </instances>
+  <instances><configurations/></instances>
 </project>

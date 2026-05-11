@@ -1,4 +1,5 @@
 # FB_TcEvent
+
 ## 元信息
 
 | 字段 | 值 |
@@ -6,27 +7,31 @@
 | Library | `Tc3_EventLogger` |
 | Library Version | `1.6.2` |
 | Type | `FUNCTION_BLOCK` |
-| Category | `Function blocks` |
-| Source | https://infosys.beckhoff.com/content/1033/tcplclib_tc3_eventlogger/ |
+| Category | `Function block` |
 | Source PDF | https://download.beckhoff.com/download/document/automation/twincat3/TwinCAT_3_PLC_Lib_Tc3_EventLogger_EN.pdf |
-| Verified | 2026-05-10 ✅ |
+| Source InfoSys | https://infosys.beckhoff.com/content/1033/tcplclib_tc3_eventlogger/5002372619.html |
+| Verified | 2026-05-11 ✅ |
+| InfoSys-checked | ✅ 2026-05-11 |
 | Status | `verified` |
 | Example | [`examples/P_Demo_FB_TcEvent.xml`](../examples/P_Demo_FB_TcEvent.xml) |
 
 ---
+
 ## 1. 功能简述
 
-This function block provides only read methods and read properties for an event. Syntax Definition: FUNCTION_BLOCK FB_TcEvent EXTENDS FB_TcEventBase IMPLEMENTS I_TcEventBase Inheritance hierarchy FB_TcEventBase [ }   71 ] FB_TcEvent Interfaces Type Description I_TcEventBase [ }   104 ] Basic interface that defines methods and properties of an event.
+`FB_TcEvent` 是 TwinCAT 3 EventLogger 中代表**只读事件视图**的功能块——在 `FB_ListenerBase2` 的回调里收到的 `fbEvent : REFERENCE TO FB_TcEvent` 就是它。
+
+本 FB 只提供**读方法和读属性**，不能修改事件——访问 EventClass / EventID / Severity / 时间戳 / ipArguments / ipSourceInfo / GetJsonAttribute / EqualsTo* 等元信息。
 
 ## 2. 接口定义
 
 ### VAR_INPUT
 
-无 VAR_INPUT。
+无。
 
 ### VAR_OUTPUT
 
-无 VAR_OUTPUT。
+无。
 
 ### VAR_IN_OUT
 
@@ -34,39 +39,44 @@ This function block provides only read methods and read properties for an event.
 
 ## 3. 行为说明
 
-- 见上方功能简述。
-- 详细行为（时序、错误码、状态机）请对照 PDF 第 3.8 节。
+FB_TcEvent 是只读视图，自身没有顶层 VAR_INPUT/OUTPUT。通过继承 `FB_TcEventBase` 拿到 base 类的所有读方法（EqualsTo / RequestEventText / GetJsonAttribute / ipArguments / ipSourceInfo …），但**不**提供 Raise / Clear / Confirm 这种状态改写。
+
+**使用场景**：listener 回调里的 fbEvent 参数；从 EventLogger API 拿到的事件查询结果。**注意**：fbEvent 引用只在回调期间有效，不要拷贝。需要保存事件数据请拷贝具体字段（如 GUID / EventID / 时间戳）。
 
 ## 4. 错误码 / 返回值
 
-本 FB 自身无返回值；运行状态/错误反馈通过其方法返回的 `HRESULT` 或对应输出参数获取，具体见 PDF / InfoSys（⚠️ 待人工确认）。
+本方法/属性不返回数值（`VOID` 或 getter 直接返回引用）。状态通过 EventLogger 的事件日志间接反映。
 
 ## 5. 使用注意 / 常见坑
 
-- VAR_INPUT / VAR_OUTPUT / VAR_IN_OUT 已逐字从 PDF 抽取并通过 `verify_doc.py` 自检。
-- 描述句、时序行为、错误码表等细节请以 PDF 第 3.8 节为准（⚠️ 待人工细化）。
+- fbEvent 引用只在回调期间有效——回调返回后失效。
+- 禁止拷贝 fbEvent 引用到全局变量。
+- FB_TcEvent 是只读——别试图调 Raise / Clear，方法不存在。
+- 需要事件数据请拷贝出 GUID / EventID / Severity / 时间戳到本地变量再用。（工程经验补充）
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_FB_TcEvent.xml`](../examples/P_Demo_FB_TcEvent.xml)
+> 配套可导入文件：[`examples/P_Demo_FB_TcEvent.xml`](../examples/P_Demo_FB_TcEvent.xml)（PLCopenXML，可直接导入 TwinCAT 3 XAE）
 >
-> 详见 [`examples/README.md`](../examples/README.md)
+> 导入步骤：右键 PLC 项目 → Import PLCopenXML → 选该文件 → OK
 
 ```iecst
-PROGRAM P_Demo_FB_TcEvent
-VAR
-    fbFB_TcEvent : FB_TcEvent;
-END_VAR
-
-fbFB_TcEvent(
-
-);
+// 详见 examples 目录下的 .xml 文件
 ```
 
-## 7. 相关
+## 7. 业务场景与实际价值
 
-- 见 [`Tc3_EventLogger README`](../README.md) 同库其他条目
+listener OnAlarmRaised 回调里读 fbEvent 的元数据用于自定义处理
 
-## 8. 待确认项
 
-- 详细描述/时序/错误码表待人工细化（auto-gen 阶段只确保 VAR 区与 PDF 一致）。
+统一的只读事件视图——所有 EventLogger 回调用同一接口，业务侧不区分 alarm/message
+
+
+把每种事件用专门类型 → 接口爆炸；本 FB 一个视图覆盖所有
+
+
+## 8. 参考资料
+
+- **PDF**：[TwinCAT_3_PLC_Lib_Tc3_EventLogger_EN.pdf](https://download.beckhoff.com/download/document/automation/twincat3/TwinCAT_3_PLC_Lib_Tc3_EventLogger_EN.pdf) §3.8
+- **InfoSys topic**：https://infosys.beckhoff.com/content/1033/tcplclib_tc3_eventlogger/5002372619.html
+- **相关**：`FB_TcAlarm`, `FB_TcMessage`, `FB_TcEventBase`, `FB_ListenerBase2.OnAlarmRaised`

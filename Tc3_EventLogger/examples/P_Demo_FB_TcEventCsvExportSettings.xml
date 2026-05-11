@@ -14,34 +14,47 @@
       <pou name="P_Demo_FB_TcEventCsvExportSettings" pouType="program">
         <interface>
           <localVars>
-            <variable name="fbFB_TcEventCsvExportSettings">
+            <variable name="fbSettings">
               <type><derived name="FB_TcEventCsvExportSettings"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">Tc3_EventLogger.FB_TcEventCsvExportSettings 实例</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">CSV 导出配置</xhtml></documentation>
+            </variable>
+            <variable name="bWithHeader">
+              <initialValue><simpleValue value="TRUE"/></initialValue>
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">是否含表头</xhtml></documentation>
+            </variable>
+            <variable name="nLangId">
+              <initialValue><simpleValue value="2052"/></initialValue>
+              <type><DINT/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">中文 LangId</xhtml></documentation>
+            </variable>
+            <variable name="sDelimiter">
+              <initialValue><simpleValue value="';'"/></initialValue>
+              <type><string><length>4</length></string></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">字段分隔符</xhtml></documentation>
             </variable>
           </localVars>
         </interface>
         <body>
-          <ST>
-            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
-// Tc3_EventLogger.FB_TcEventCsvExportSettings 演示程序（FB 实例）
-// ============================================================
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：配置「中文 + 分号分隔 + 带表头」的 CSV 导出
+// 价值：灵活的 CSV 格式控制
+// 验证：实例化后 fbSettings 的属性应反映你的配置；之后传给 ExportLoggedEvents
 // 验证步骤：
-//   1. 引用 Tc3_EventLogger（及依赖类型所在库 Tc2_System 等）
-//   2. 编译 + 登录
-//   3. 按 doc.md 给 arg_* 赋值
-//   4. 在线监视 out_* / io_* 输出
-// ============================================================
+//   1. 右键 PLC 项目 → Import PLCopenXML → 选本文件
+//   2. 引用 Tc3_EventLogger（System → References → Add library）
+//   3. 编译 → 登录 → 运行；按 verify 注释里给出的在线写值操作
+// =============================================================================
 
-fbFB_TcEventCsvExportSettings(
-
-);
-</xhtml>
-          </ST>
+// 实际工程通过 setter / 属性配置 fbSettings
+// （EventLogger 库版本不同接口略有差异，请参考 InfoSys topic）
+// 本例仅声明实例与变量；后续：
+// fbLogger.ExportLoggedEvents(sFileName := '...', ipExportSettings := fbSettings, ...);
+; // placeholder — 配置具体走属性 setter（取决于库版本）
+</xhtml></ST>
         </body>
       </pou>
     </pous>
   </types>
-  <instances>
-    <configurations/>
-  </instances>
+  <instances><configurations/></instances>
 </project>

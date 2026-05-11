@@ -14,34 +14,41 @@
       <pou name="P_Demo_FB_TcEvent" pouType="program">
         <interface>
           <localVars>
-            <variable name="fbFB_TcEvent">
-              <type><derived name="FB_TcEvent"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">Tc3_EventLogger.FB_TcEvent 实例</xhtml></documentation>
+            <variable name="fbAlarm">
+              <type><derived name="FB_TcAlarm"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">alarm 实例（已 Create）</xhtml></documentation>
+            </variable>
+            <variable name="ipEvent">
+              <type><derived name="I_TcEvent"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">只读事件接口</xhtml></documentation>
+            </variable>
+            <variable name="bMatch">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">示例：用 EqualsTo 比较</xhtml></documentation>
             </variable>
           </localVars>
         </interface>
         <body>
-          <ST>
-            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
-// Tc3_EventLogger.FB_TcEvent 演示程序（FB 实例）
-// ============================================================
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：listener 回调中读取 fbEvent 的元数据
+// 价值：只读视图统一所有事件类型访问
+// 验证：本 FB 主要在 listener 回调里使用——直接演示需要先继承 FB_ListenerBase2。本例演示从 alarm 实例拿到 FB_TcEvent 接口的方法。
 // 验证步骤：
-//   1. 引用 Tc3_EventLogger（及依赖类型所在库 Tc2_System 等）
-//   2. 编译 + 登录
-//   3. 按 doc.md 给 arg_* 赋值
-//   4. 在线监视 out_* / io_* 输出
-// ============================================================
+//   1. 右键 PLC 项目 → Import PLCopenXML → 选本文件
+//   2. 引用 Tc3_EventLogger（System → References → Add library）
+//   3. 编译 → 登录 → 运行；按 verify 注释里给出的在线写值操作
+// =============================================================================
 
-fbFB_TcEvent(
-
-);
-</xhtml>
-          </ST>
+// FB_TcAlarm 通过接口转型可以暴露为 I_TcEvent / I_TcEventBase 接口
+// 即"只读事件视图"——listener 回调里收到的 fbEvent 就是这个视图。
+ipEvent := fbAlarm;
+IF ipEvent &amp;lt;&amp;gt; 0 THEN
+    bMatch := ipEvent.EqualsToEventEntry(stEventEntry := ipEvent.stEventEntry);
+END_IF;
+</xhtml></ST>
         </body>
       </pou>
     </pous>
   </types>
-  <instances>
-    <configurations/>
-  </instances>
+  <instances><configurations/></instances>
 </project>

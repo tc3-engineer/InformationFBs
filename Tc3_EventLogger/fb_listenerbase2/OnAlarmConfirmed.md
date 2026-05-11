@@ -1,22 +1,27 @@
 # OnAlarmConfirmed
+
 ## 元信息
 
 | 字段 | 值 |
 |---|---|
 | Library | `Tc3_EventLogger` |
 | Library Version | `1.6.2` |
-| Type | `FUNCTION_BLOCK` |
-| Category | `Function blocks` |
-| Source | https://infosys.beckhoff.com/content/1033/tcplclib_tc3_eventlogger/ |
+| Type | `METHOD` |
+| Category | `FB_ListenerBase2` |
 | Source PDF | https://download.beckhoff.com/download/document/automation/twincat3/TwinCAT_3_PLC_Lib_Tc3_EventLogger_EN.pdf |
-| Verified | 2026-05-10 ✅ |
+| Source InfoSys | https://infosys.beckhoff.com/content/1033/tcplclib_tc3_eventlogger/5051461259.html |
+| Verified | 2026-05-11 ✅ |
+| InfoSys-checked | ✅ 2026-05-11 |
 | Status | `verified` |
 | Example | [`examples/P_Demo_OnAlarmConfirmed.xml`](../examples/P_Demo_OnAlarmConfirmed.xml) |
 
 ---
+
 ## 1. 功能简述
 
-This method is called when an alarm has been confirmed. Syntax METHOD OnAlarmConfirmed : HRESULT
+`FB_ListenerBase2.OnAlarmConfirmed()` 是 alarm 被确认时被 EventLogger 调用的回调方法。
+
+子类 OVERRIDE 本方法即可在操作员确认报警瞬间执行业务逻辑——如计算"故障响应时长"、记录确认操作员。
 
 ## 2. 接口定义
 
@@ -30,11 +35,12 @@ END_VAR
 
 | 名称 | 类型 | 说明 |
 |---|---|---|
-| `fbEvent` | `REFERENCE TO FB_TcEvent` | （详见 PDF） |
+| `fbEvent` | `REFERENCE TO FB_TcEvent` | 事件引用（只在回调期间有效，禁止拷贝） |
+
 
 ### VAR_OUTPUT
 
-无 VAR_OUTPUT。
+无。
 
 ### VAR_IN_OUT
 
@@ -42,40 +48,51 @@ END_VAR
 
 ## 3. 行为说明
 
-- 见上方功能简述。
-- 详细行为（时序、错误码、状态机）请对照 PDF 第 3.5.3 节。
+本方法是事件驱动回调（callback），由 EventLogger 在 alarm 被 Confirm 时 调用。调用上下文是 PLC 任务（调用 listener.Execute() 的任务），因此回调里的代码占用 PLC 周期时间。
+
+**实现约定**：用户继承 `FB_ListenerBase2` 后用 METHOD OVERRIDE 重写本方法，在方法体内执行业务逻辑——如更新内部状态、推送到第三方系统、转发到 OPC UA 等。返回 `S_OK` 让 EventLogger 继续后续回调；返回 `<> S_OK` 让 EventLogger **暂停**回调直到下次 Execute，可用作业务侧节流。
+
+**重要**：参数 `fbEvent : REFERENCE TO FB_TcEvent` 只在本回调期间有效，回调返回后引用失效——绝对不要拷贝引用到全局变量或长期持有的结构里。需要保存事件信息请把 GUID / EventID / Severity / 时间戳等字段拷贝出来。
 
 ## 4. 错误码 / 返回值
 
-本方法返回 `HRESULT`（`S_OK` = 成功；其他错误码请见对应 InfoSys 页面，⚠️ 待人工补全）。
+本方法返回 `HRESULT`（32 位有符号整数）。`SUCCEEDED(hr)` 为 TRUE 表示调用成功。
+
+| HRESULT | 含义 | 处理建议 |
+|---|---|---|
+| `S_OK` | 处理成功 | EventLogger 继续后续回调 |
+| `<> S_OK` | 本回调失败 / 业务侧要求节流 | EventLogger 暂停回调到下次 Execute |
 
 ## 5. 使用注意 / 常见坑
 
-- VAR_INPUT / VAR_OUTPUT / VAR_IN_OUT 已逐字从 PDF 抽取并通过 `verify_doc.py` 自检。
-- 描述句、时序行为、错误码表等细节请以 PDF 第 3.5.3 节为准（⚠️ 待人工细化）。
+- `fbEvent` 不能拷贝——回调返回后引用失效。
+- 回调里耗时操作拖慢 PLC 周期——重操作必须异步化。（工程经验补充）
+- 返回非 S_OK 让事件保留在队列等下次重试——可作节流但不要一直返回非 S_OK。
+- 回调里禁止做阻塞 IO（文件 / 网络）——必须发到后台 FB 处理。（工程经验补充）
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_OnAlarmConfirmed.xml`](../examples/P_Demo_OnAlarmConfirmed.xml)
+> 配套可导入文件：[`examples/P_Demo_OnAlarmConfirmed.xml`](../examples/P_Demo_OnAlarmConfirmed.xml)（PLCopenXML，可直接导入 TwinCAT 3 XAE）
 >
-> 详见 [`examples/README.md`](../examples/README.md)
+> 导入步骤：右键 PLC 项目 → Import PLCopenXML → 选该文件 → OK
 
 ```iecst
-PROGRAM P_Demo_OnAlarmConfirmed
-VAR
-    fbOnAlarmConfirmed : OnAlarmConfirmed;
-    arg_fbEvent : REFERENCE TO FB_TcEvent;
-END_VAR
-
-fbOnAlarmConfirmed(
-    fbEvent := arg_fbEvent
-);
+// 详见 examples 目录下的 .xml 文件
 ```
 
-## 7. 相关
+## 7. 业务场景与实际价值
 
-- 见 [`Tc3_EventLogger README`](../README.md) 同库其他条目
+审计指标：计算"故障 Raise → 操作员 Confirm"的响应时长写入运维数据库
 
-## 8. 待确认项
 
-- 详细描述/时序/错误码表待人工细化（auto-gen 阶段只确保 VAR 区与 PDF 一致）。
+事件驱动模型 = 零延迟接收，无需轮询
+
+
+轮询 EventLogger 日志 → 延迟 + CPU 浪费；本回调是 Beckhoff 推荐方案
+
+
+## 8. 参考资料
+
+- **PDF**：[TwinCAT_3_PLC_Lib_Tc3_EventLogger_EN.pdf](https://download.beckhoff.com/download/document/automation/twincat3/TwinCAT_3_PLC_Lib_Tc3_EventLogger_EN.pdf) §3.5.3
+- **InfoSys topic**：https://infosys.beckhoff.com/content/1033/tcplclib_tc3_eventlogger/5051461259.html
+- **相关**：`FB_ListenerBase2`, `FB_ListenerBase2.Execute`, `FB_TcEvent`

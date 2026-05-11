@@ -1,22 +1,27 @@
 # CreateEx
+
 ## 元信息
 
 | 字段 | 值 |
 |---|---|
 | Library | `Tc3_EventLogger` |
 | Library Version | `1.6.2` |
-| Type | `FUNCTION_BLOCK` |
-| Category | `Function blocks` |
-| Source | https://infosys.beckhoff.com/content/1033/tcplclib_tc3_eventlogger/ |
+| Type | `METHOD` |
+| Category | `FB_TcAlarm` |
 | Source PDF | https://download.beckhoff.com/download/document/automation/twincat3/TwinCAT_3_PLC_Lib_Tc3_EventLogger_EN.pdf |
-| Verified | 2026-05-10 ✅ |
+| Source InfoSys | https://infosys.beckhoff.com/content/1033/tcplclib_tc3_eventlogger/5050478347.html |
+| Verified | 2026-05-11 ✅ |
+| InfoSys-checked | ✅ 2026-05-11 |
 | Status | `verified` |
 | Example | [`examples/P_Demo_FB_TcAlarm_CreateEx.xml`](../examples/P_Demo_FB_TcAlarm_CreateEx.xml) |
 
 ---
+
 ## 1. 功能简述
 
-This method creates an alarm instance in the EventLogger. Syntax METHOD CreateEx : HRESULT
+`FB_TcAlarm.CreateEx()` 与 `Create()` 功能相同——把 alarm 实例注册到 EventLogger——区别在于事件参数以 **`TcEventEntry` 结构体一次性传入**，而不是分散的 `eventClass`/`nEventId`/`eSeverity`。
+
+适合"事件定义本身已经是结构化数据"的场景：从远程 EventLogger 接收事件、从配置文件加载事件清单、或在多个 FB 之间传递事件定义而不想拆解字段。
 
 ## 2. 接口定义
 
@@ -32,13 +37,14 @@ END_VAR
 
 | 名称 | 类型 | 说明 |
 |---|---|---|
-| `stEventEntry` | `TcEventEntry` | （详见 PDF） |
-| `bWithConfirmation` | `BOOL` | （详见 PDF） |
-| `ipSourceInfo` | `I_TcSourceInfo` | （详见 PDF） |
+| `stEventEntry` | `TcEventEntry` | 事件入口结构体（含 GUID + EventID + Severity） |
+| `bWithConfirmation` | `BOOL` | TRUE = 需要操作员 Confirm 才完整结束生命周期 |
+| `ipSourceInfo` | `I_TcSourceInfo` | 源信息接口指针；传 0 用默认（PLC 符号路径） |
+
 
 ### VAR_OUTPUT
 
-无 VAR_OUTPUT。
+无。
 
 ### VAR_IN_OUT
 
@@ -46,45 +52,49 @@ END_VAR
 
 ## 3. 行为说明
 
-- 见上方功能简述。
-- 详细行为（时序、错误码、状态机）请对照 PDF 第 3.6.4 节。
+调用同 `Create()`：成功返回 `S_OK` 并把 alarm 加入活动表，重复返回 `ERROR_ALREADY_EXISTS`。唯一区别是事件定义来源——`stEventEntry` 包含 GUID + EventID + Severity 三件套，EventLogger 内部把它们拆开后走和 `Create()` 一样的流程。
+
+**典型用法**：维护一张全局 `aEvents : ARRAY[1..N] OF TcEventEntry`，初始化阶段循环遍历调用 `CreateEx()`批量注册；业务代码只通过下标引用，便于事件清单的版本控制。
 
 ## 4. 错误码 / 返回值
 
-本方法返回 `HRESULT`（`S_OK` = 成功；其他错误码请见对应 InfoSys 页面，⚠️ 待人工补全）。
+本方法返回 `HRESULT`（32 位有符号整数）。`SUCCEEDED(hr)` 为 TRUE 表示调用成功。
+
+| HRESULT | 含义 | 处理建议 |
+|---|---|---|
+| `S_OK` | alarm 已成功注册 | 继续后续 Raise/Clear/Confirm |
+| `ERROR_ALREADY_EXISTS` | 同事件已注册 | 用 bCreated latch 跳过 |
+| `其他错误` | 事件类未定义或 ADS 异常 ⚠️ PDF 未列具体码 | 查 ADS Return Codes |
 
 ## 5. 使用注意 / 常见坑
 
-- VAR_INPUT / VAR_OUTPUT / VAR_IN_OUT 已逐字从 PDF 抽取并通过 `verify_doc.py` 自检。
-- 描述句、时序行为、错误码表等细节请以 PDF 第 3.6.4 节为准（⚠️ 待人工细化）。
+- `stEventEntry` 必须是有效的事件定义——内部 GUID 全 0 / EventID = 0 会导致 HMI 显示空白。
+- 批量 CreateEx 时把成功标志放在数组每个元素旁，便于失败重试。（工程经验补充）
+- 和 `Create()` 一样要 latch 防止重复注册。
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_FB_TcAlarm_CreateEx.xml`](../examples/P_Demo_FB_TcAlarm_CreateEx.xml)
+> 配套可导入文件：[`examples/P_Demo_FB_TcAlarm_CreateEx.xml`](../examples/P_Demo_FB_TcAlarm_CreateEx.xml)（PLCopenXML，可直接导入 TwinCAT 3 XAE）
 >
-> 详见 [`examples/README.md`](../examples/README.md)
+> 导入步骤：右键 PLC 项目 → Import PLCopenXML → 选该文件 → OK
 
 ```iecst
-PROGRAM P_Demo_FB_TcAlarm_CreateEx
-VAR
-    fbTcAlarm : FB_TcAlarm;
-    arg_stEventEntry : TcEventEntry;
-    arg_bWithConfirmation : BOOL;
-    arg_ipSourceInfo : I_TcSourceInfo;
-    hr : HRESULT;
-END_VAR
-
-hr := fbTcAlarm.CreateEx(
-    stEventEntry := arg_stEventEntry,
-    bWithConfirmation := arg_bWithConfirmation,
-    ipSourceInfo := arg_ipSourceInfo
-);
+// 详见 examples 目录下的 .xml 文件
 ```
 
-## 7. 相关
+## 7. 业务场景与实际价值
 
-- 见 [`Tc3_EventLogger README`](../README.md) 同库其他条目
+从配方文件加载 50 个工艺报警定义后批量注册到 EventLogger
 
-## 8. 待确认项
 
-- 详细描述/时序/错误码表待人工细化（auto-gen 阶段只确保 VAR 区与 PDF 一致）。
+事件清单与代码解耦——改报警定义不用改业务代码，只改配方文件或外部数据库
+
+
+直接 `Create()` 分字段调用 → 当事件已是结构体时多此一举；`AdsErr_TO_TcEventEntry` → 把 ADS 错误码转 TcEventEntry 再 CreateEx 是常见 ADS 错误集中报警模式
+
+
+## 8. 参考资料
+
+- **PDF**：[TwinCAT_3_PLC_Lib_Tc3_EventLogger_EN.pdf](https://download.beckhoff.com/download/document/automation/twincat3/TwinCAT_3_PLC_Lib_Tc3_EventLogger_EN.pdf) §3.6.4
+- **InfoSys topic**：https://infosys.beckhoff.com/content/1033/tcplclib_tc3_eventlogger/5050478347.html
+- **相关**：`FB_TcAlarm.Create`, `AdsErr_TO_TcEventEntry`, `HRESULTAdsErr_TO_TcEventEntry`

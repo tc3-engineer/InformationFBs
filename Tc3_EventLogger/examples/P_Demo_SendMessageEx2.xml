@@ -14,58 +14,58 @@
       <pou name="P_Demo_SendMessageEx2" pouType="program">
         <interface>
           <localVars>
-            <variable name="fbSendMessageEx2">
-              <type><derived name="SendMessageEx2"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">Tc3_EventLogger.SendMessageEx2 实例</xhtml></documentation>
+            <variable name="fbLogger">
+              <type><derived name="FB_TcEventLogger"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">EventLogger 实例</xhtml></documentation>
             </variable>
-            <variable name="arg_stEventEntry">
+            <variable name="stEventEntry">
               <type><derived name="TcEventEntry"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT stEventEntry</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">事件定义</xhtml></documentation>
             </variable>
-            <variable name="arg_ipSourceInfo">
-              <type><derived name="I_TcSourceInfo"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT ipSourceInfo</xhtml></documentation>
+            <variable name="sJsonAttribute">
+              <initialValue><simpleValue value="'{&quot;batch&quot;:&quot;B-001&quot;}'"/></initialValue>
+              <type><string><length>255</length></string></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">合法 JSON</xhtml></documentation>
             </variable>
-            <variable name="arg_nTimeStamp">
-              <type><ULINT/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT nTimeStamp</xhtml></documentation>
+            <variable name="bDoSend">
+              <initialValue><simpleValue value="FALSE"/></initialValue>
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">上升沿触发</xhtml></documentation>
             </variable>
-            <variable name="arg_ipArguments">
-              <type><derived name="I_TcArguments"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT ipArguments</xhtml></documentation>
+            <variable name="bDoSendPrev">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">边沿检测</xhtml></documentation>
             </variable>
-            <variable name="io_sJsonAttribute">
-              <type><string/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_IN_OUT sJsonAttribute</xhtml></documentation>
+            <variable name="hr">
+              <type><derived name="HRESULT"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">返回值监视</xhtml></documentation>
             </variable>
           </localVars>
         </interface>
         <body>
-          <ST>
-            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
-// Tc3_EventLogger.SendMessageEx2 演示程序（FB 实例）
-// ============================================================
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：结构体 + JSON 一次性发送
+// 价值：覆盖所有事件元数据的最完整免实例发送
+// 验证：登录后写 bDoSend := TRUE，HMI 事件含 JSON 字段；改 sJsonAttribute 再发可看到 JSON 内容更新
 // 验证步骤：
-//   1. 引用 Tc3_EventLogger（及依赖类型所在库 Tc2_System 等）
-//   2. 编译 + 登录
-//   3. 按 doc.md 给 arg_* 赋值
-//   4. 在线监视 out_* / io_* 输出
-// ============================================================
+//   1. 右键 PLC 项目 → Import PLCopenXML → 选本文件
+//   2. 引用 Tc3_EventLogger（System → References → Add library）
+//   3. 编译 → 登录 → 运行；按 verify 注释里给出的在线写值操作
+// =============================================================================
 
-fbSendMessageEx2(
-    stEventEntry := arg_stEventEntry,
-    ipSourceInfo := arg_ipSourceInfo,
-    nTimeStamp := arg_nTimeStamp,
-    ipArguments := arg_ipArguments,
-    sJsonAttribute := io_sJsonAttribute
-);
-</xhtml>
-          </ST>
+IF bDoSend AND NOT bDoSendPrev THEN
+    hr := fbLogger.SendMessageEx2(
+        stEventEntry := stEventEntry,
+        ipSourceInfo := 0,
+        nTimeStamp := 0,
+        ipArguments := 0,
+        sJsonAttribute := sJsonAttribute);
+END_IF;
+bDoSendPrev := bDoSend;
+</xhtml></ST>
         </body>
       </pou>
     </pous>
   </types>
-  <instances>
-    <configurations/>
-  </instances>
+  <instances><configurations/></instances>
 </project>

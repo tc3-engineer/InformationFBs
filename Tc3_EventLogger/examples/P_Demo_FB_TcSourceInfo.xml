@@ -14,34 +14,36 @@
       <pou name="P_Demo_FB_TcSourceInfo" pouType="program">
         <interface>
           <localVars>
-            <variable name="fbFB_TcSourceInfo">
+            <variable name="fbSrc">
               <type><derived name="FB_TcSourceInfo"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">Tc3_EventLogger.FB_TcSourceInfo 实例</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">自定义源信息实例</xhtml></documentation>
+            </variable>
+            <variable name="sStationId">
+              <initialValue><simpleValue value="'Station-01'"/></initialValue>
+              <type><string><length>40</length></string></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">工位号</xhtml></documentation>
             </variable>
           </localVars>
         </interface>
         <body>
-          <ST>
-            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
-// Tc3_EventLogger.FB_TcSourceInfo 演示程序（FB 实例）
-// ============================================================
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：配置自定义 SourceInfo 给后续 alarm 用，让事件能定位到具体工位
+// 价值：多工位事件追溯
+// 验证：登录后 fbSrc 实例存在；通过它的 setter 写入工位号；之后给 alarm 用
 // 验证步骤：
-//   1. 引用 Tc3_EventLogger（及依赖类型所在库 Tc2_System 等）
-//   2. 编译 + 登录
-//   3. 按 doc.md 给 arg_* 赋值
-//   4. 在线监视 out_* / io_* 输出
-// ============================================================
+//   1. 右键 PLC 项目 → Import PLCopenXML → 选本文件
+//   2. 引用 Tc3_EventLogger（System → References → Add library）
+//   3. 编译 → 登录 → 运行；按 verify 注释里给出的在线写值操作
+// =============================================================================
 
-fbFB_TcSourceInfo(
-
-);
-</xhtml>
-          </ST>
+// 实际工程：通常在 FB_init 里配置 fbSrc 的 SourceName 字段（通过 setter）。
+// 之后调用 fbAlarm.Create(..., ipSourceInfo := fbSrc); 把 fbSrc 传给 alarm。
+// 本例只演示实例化：实际 setter 接口请见 I_TcSourceInfo 文档。
+fbSrc.ExtendName(sExtName := sStationId);
+</xhtml></ST>
         </body>
       </pou>
     </pous>
   </types>
-  <instances>
-    <configurations/>
-  </instances>
+  <instances><configurations/></instances>
 </project>

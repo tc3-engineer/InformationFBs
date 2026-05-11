@@ -14,43 +14,50 @@
       <pou name="P_Demo_ConfirmAlarms" pouType="program">
         <interface>
           <localVars>
-            <variable name="fbConfirmAlarms">
-              <type><derived name="ConfirmAlarms"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">Tc3_EventLogger.ConfirmAlarms 实例</xhtml></documentation>
+            <variable name="fbLogger">
+              <type><derived name="FB_TcEventLogger"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">EventLogger 实例</xhtml></documentation>
             </variable>
-            <variable name="arg_nTimeStamp">
-              <type><ULINT/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT nTimeStamp</xhtml></documentation>
+            <variable name="fbFilter">
+              <type><derived name="FB_TcEventFilter"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">过滤器实例</xhtml></documentation>
             </variable>
-            <variable name="arg_ipFilter">
-              <type><derived name="I_TcEventFilter"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT ipFilter</xhtml></documentation>
+            <variable name="bConfirmReq">
+              <initialValue><simpleValue value="FALSE"/></initialValue>
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">上升沿触发</xhtml></documentation>
+            </variable>
+            <variable name="bConfirmReqPrev">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">边沿检测</xhtml></documentation>
+            </variable>
+            <variable name="hr">
+              <type><derived name="HRESULT"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">返回值监视</xhtml></documentation>
             </variable>
           </localVars>
         </interface>
         <body>
-          <ST>
-            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
-// Tc3_EventLogger.ConfirmAlarms 演示程序（FB 实例）
-// ============================================================
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：按过滤器批量确认 Warning 及以上级别的所有 alarm
+// 价值：一次调用完成批量确认
+// 验证：先有几条 WaitForConfirmation 状态 alarm；写 bConfirmReq := TRUE，相应 alarm 变 Confirmed
 // 验证步骤：
-//   1. 引用 Tc3_EventLogger（及依赖类型所在库 Tc2_System 等）
-//   2. 编译 + 登录
-//   3. 按 doc.md 给 arg_* 赋值
-//   4. 在线监视 out_* / io_* 输出
-// ============================================================
+//   1. 右键 PLC 项目 → Import PLCopenXML → 选本文件
+//   2. 引用 Tc3_EventLogger（System → References → Add library）
+//   3. 编译 → 登录 → 运行；按 verify 注释里给出的在线写值操作
+// =============================================================================
 
-fbConfirmAlarms(
-    nTimeStamp := arg_nTimeStamp,
-    ipFilter := arg_ipFilter
-);
-</xhtml>
-          </ST>
+IF bConfirmReq AND NOT bConfirmReqPrev THEN
+    hr := fbLogger.ConfirmAlarms(
+        nTimeStamp := 0,
+        ipFilter := fbFilter);                 // 0 也行：fbFilter 用于按类别筛选
+END_IF;
+bConfirmReqPrev := bConfirmReq;
+</xhtml></ST>
         </body>
       </pou>
     </pous>
   </types>
-  <instances>
-    <configurations/>
-  </instances>
+  <instances><configurations/></instances>
 </project>

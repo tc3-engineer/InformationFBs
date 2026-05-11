@@ -14,63 +14,55 @@
       <pou name="P_Demo_SendMessage" pouType="program">
         <interface>
           <localVars>
-            <variable name="fbSendMessage">
-              <type><derived name="SendMessage"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">Tc3_EventLogger.SendMessage 实例</xhtml></documentation>
+            <variable name="fbLogger">
+              <type><derived name="FB_TcEventLogger"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">EventLogger 实例</xhtml></documentation>
             </variable>
-            <variable name="arg_eventClass">
+            <variable name="guidEventClass">
               <type><derived name="GUID"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT eventClass</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">事件类 GUID</xhtml></documentation>
             </variable>
-            <variable name="arg_nEventId">
-              <type><UDINT/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT nEventId</xhtml></documentation>
+            <variable name="bUserLogin">
+              <initialValue><simpleValue value="FALSE"/></initialValue>
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">操作员登录信号</xhtml></documentation>
             </variable>
-            <variable name="arg_eSeverity">
-              <type><derived name="TcEventSeverity"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT eSeverity</xhtml></documentation>
+            <variable name="bUserLoginPrev">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">边沿检测</xhtml></documentation>
             </variable>
-            <variable name="arg_ipSourceInfo">
-              <type><derived name="I_TcSourceInfo"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT ipSourceInfo</xhtml></documentation>
-            </variable>
-            <variable name="arg_nTimeStamp">
-              <type><ULINT/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT nTimeStamp</xhtml></documentation>
-            </variable>
-            <variable name="arg_ipArguments">
-              <type><derived name="I_TcArguments"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT ipArguments</xhtml></documentation>
+            <variable name="hr">
+              <type><derived name="HRESULT"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">返回值监视</xhtml></documentation>
             </variable>
           </localVars>
         </interface>
         <body>
-          <ST>
-            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
-// Tc3_EventLogger.SendMessage 演示程序（FB 实例）
-// ============================================================
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：操作员登录瞬间发一条审计 message
+// 价值：无需声明 message 实例就能发事件
+// 验证：登录后写 bUserLogin := TRUE，HMI EventLogger 应立刻出现一条 Info 级 message；再次置位再发一条
 // 验证步骤：
-//   1. 引用 Tc3_EventLogger（及依赖类型所在库 Tc2_System 等）
-//   2. 编译 + 登录
-//   3. 按 doc.md 给 arg_* 赋值
-//   4. 在线监视 out_* / io_* 输出
-// ============================================================
+//   1. 右键 PLC 项目 → Import PLCopenXML → 选本文件
+//   2. 引用 Tc3_EventLogger（System → References → Add library）
+//   3. 编译 → 登录 → 运行；按 verify 注释里给出的在线写值操作
+// =============================================================================
 
-fbSendMessage(
-    eventClass := arg_eventClass,
-    nEventId := arg_nEventId,
-    eSeverity := arg_eSeverity,
-    ipSourceInfo := arg_ipSourceInfo,
-    nTimeStamp := arg_nTimeStamp,
-    ipArguments := arg_ipArguments
-);
-</xhtml>
-          </ST>
+// 边沿触发：操作员登录瞬间发一条审计消息
+IF bUserLogin AND NOT bUserLoginPrev THEN
+    hr := fbLogger.SendMessage(
+        eventClass := guidEventClass,
+        nEventId := 3001,                      // "操作员登录" 事件 ID
+        eSeverity := TcEventSeverity.Info,
+        ipSourceInfo := 0,
+        nTimeStamp := 0,
+        ipArguments := 0);
+END_IF;
+bUserLoginPrev := bUserLogin;
+</xhtml></ST>
         </body>
       </pou>
     </pous>
   </types>
-  <instances>
-    <configurations/>
-  </instances>
+  <instances><configurations/></instances>
 </project>

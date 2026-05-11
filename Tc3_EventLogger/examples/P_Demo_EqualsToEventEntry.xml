@@ -14,48 +14,36 @@
       <pou name="P_Demo_EqualsToEventEntry" pouType="program">
         <interface>
           <localVars>
-            <variable name="fbEqualsToEventEntry">
-              <type><derived name="EqualsToEventEntry"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">Tc3_EventLogger.EqualsToEventEntry 实例</xhtml></documentation>
+            <variable name="fbAlarm">
+              <type><derived name="FB_TcAlarm"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">alarm 实例</xhtml></documentation>
             </variable>
-            <variable name="arg_OtherEventClass">
-              <type><derived name="GUID"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT OtherEventClass</xhtml></documentation>
+            <variable name="stKnown">
+              <type><derived name="TcEventEntry"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">在线写入预期事件定义</xhtml></documentation>
             </variable>
-            <variable name="arg_nOtherEventID">
-              <type><UDINT/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT nOtherEventID</xhtml></documentation>
-            </variable>
-            <variable name="arg_eOtherSeverity">
-              <type><derived name="TcEventSeverity"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT eOtherSeverity</xhtml></documentation>
+            <variable name="bMatch">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">比较结果</xhtml></documentation>
             </variable>
           </localVars>
         </interface>
         <body>
-          <ST>
-            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
-// Tc3_EventLogger.EqualsToEventEntry 演示程序（FB 实例）
-// ============================================================
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：判断当前 alarm 是否是清单里某个预定义事件
+// 价值：一次调用做事件定义匹配
+// 验证：登录后让 stKnown 与 fbAlarm 的 Create 参数一致 → bMatch=TRUE；改 nEventId → FALSE
 // 验证步骤：
-//   1. 引用 Tc3_EventLogger（及依赖类型所在库 Tc2_System 等）
-//   2. 编译 + 登录
-//   3. 按 doc.md 给 arg_* 赋值
-//   4. 在线监视 out_* / io_* 输出
-// ============================================================
+//   1. 右键 PLC 项目 → Import PLCopenXML → 选本文件
+//   2. 引用 Tc3_EventLogger（System → References → Add library）
+//   3. 编译 → 登录 → 运行；按 verify 注释里给出的在线写值操作
+// =============================================================================
 
-fbEqualsToEventEntry(
-    OtherEventClass := arg_OtherEventClass,
-    nOtherEventID := arg_nOtherEventID,
-    eOtherSeverity := arg_eOtherSeverity
-);
-</xhtml>
-          </ST>
+bMatch := fbAlarm.EqualsToEventEntry(stEventEntry := stKnown);
+</xhtml></ST>
         </body>
       </pou>
     </pous>
   </types>
-  <instances>
-    <configurations/>
-  </instances>
+  <instances><configurations/></instances>
 </project>

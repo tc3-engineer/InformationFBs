@@ -14,68 +14,68 @@
       <pou name="P_Demo_SendMessage2" pouType="program">
         <interface>
           <localVars>
-            <variable name="fbSendMessage2">
-              <type><derived name="SendMessage2"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">Tc3_EventLogger.SendMessage2 实例</xhtml></documentation>
+            <variable name="fbLogger">
+              <type><derived name="FB_TcEventLogger"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">EventLogger 实例</xhtml></documentation>
             </variable>
-            <variable name="arg_eventClass">
+            <variable name="guidEventClass">
               <type><derived name="GUID"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT eventClass</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">事件类 GUID</xhtml></documentation>
             </variable>
-            <variable name="arg_nEventId">
-              <type><UDINT/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT nEventId</xhtml></documentation>
+            <variable name="sBatchId">
+              <initialValue><simpleValue value="'B-2026-0511-001'"/></initialValue>
+              <type><string><length>64</length></string></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">批次号</xhtml></documentation>
             </variable>
-            <variable name="arg_eSeverity">
-              <type><derived name="TcEventSeverity"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT eSeverity</xhtml></documentation>
+            <variable name="sJsonAttribute">
+              <type><string><length>255</length></string></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">拼接好的完整 JSON</xhtml></documentation>
             </variable>
-            <variable name="arg_ipSourceInfo">
-              <type><derived name="I_TcSourceInfo"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT ipSourceInfo</xhtml></documentation>
+            <variable name="bRecipeChange">
+              <initialValue><simpleValue value="FALSE"/></initialValue>
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">配方切换信号</xhtml></documentation>
             </variable>
-            <variable name="arg_nTimeStamp">
-              <type><ULINT/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT nTimeStamp</xhtml></documentation>
+            <variable name="bRecipeChangePrev">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">边沿检测</xhtml></documentation>
             </variable>
-            <variable name="arg_ipArguments">
-              <type><derived name="I_TcArguments"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT ipArguments</xhtml></documentation>
-            </variable>
-            <variable name="io_sJsonAttribute">
-              <type><string/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_IN_OUT sJsonAttribute</xhtml></documentation>
+            <variable name="hr">
+              <type><derived name="HRESULT"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">返回值监视</xhtml></documentation>
             </variable>
           </localVars>
         </interface>
         <body>
-          <ST>
-            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
-// Tc3_EventLogger.SendMessage2 演示程序（FB 实例）
-// ============================================================
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：配方切换审计带批次上下文
+// 价值：一次调用完成事件 + JSON 附加
+// 验证：登录后写 bRecipeChange := TRUE，HMI EventLogger 事件详情应能看到 JSON 字段含 batch id
 // 验证步骤：
-//   1. 引用 Tc3_EventLogger（及依赖类型所在库 Tc2_System 等）
-//   2. 编译 + 登录
-//   3. 按 doc.md 给 arg_* 赋值
-//   4. 在线监视 out_* / io_* 输出
-// ============================================================
+//   1. 右键 PLC 项目 → Import PLCopenXML → 选本文件
+//   2. 引用 Tc3_EventLogger（System → References → Add library）
+//   3. 编译 → 登录 → 运行；按 verify 注释里给出的在线写值操作
+// =============================================================================
 
-fbSendMessage2(
-    eventClass := arg_eventClass,
-    nEventId := arg_nEventId,
-    eSeverity := arg_eSeverity,
-    ipSourceInfo := arg_ipSourceInfo,
-    nTimeStamp := arg_nTimeStamp,
-    ipArguments := arg_ipArguments,
-    sJsonAttribute := io_sJsonAttribute
-);
-</xhtml>
-          </ST>
+// 拼接 JSON
+sJsonAttribute := CONCAT('{"batch":"', CONCAT(sBatchId, '"}'));
+
+// 边沿触发：发送 message 同时附 JSON 上下文
+IF bRecipeChange AND NOT bRecipeChangePrev THEN
+    hr := fbLogger.SendMessage2(
+        eventClass := guidEventClass,
+        nEventId := 3002,
+        eSeverity := TcEventSeverity.Info,
+        ipSourceInfo := 0,
+        nTimeStamp := 0,
+        ipArguments := 0,
+        sJsonAttribute := sJsonAttribute);
+END_IF;
+bRecipeChangePrev := bRecipeChange;
+</xhtml></ST>
         </body>
       </pou>
     </pous>
   </types>
-  <instances>
-    <configurations/>
-  </instances>
+  <instances><configurations/></instances>
 </project>

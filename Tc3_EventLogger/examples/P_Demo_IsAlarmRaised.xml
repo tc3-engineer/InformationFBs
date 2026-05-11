@@ -14,48 +14,57 @@
       <pou name="P_Demo_IsAlarmRaised" pouType="program">
         <interface>
           <localVars>
-            <variable name="fbIsAlarmRaised">
-              <type><derived name="IsAlarmRaised"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">Tc3_EventLogger.IsAlarmRaised 实例</xhtml></documentation>
+            <variable name="fbLogger">
+              <type><derived name="FB_TcEventLogger"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">EventLogger 实例</xhtml></documentation>
             </variable>
-            <variable name="arg_eventClass">
+            <variable name="guidEventClass">
               <type><derived name="GUID"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT eventClass</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">要查询的事件类 GUID</xhtml></documentation>
             </variable>
-            <variable name="arg_nEventId">
+            <variable name="nEventId">
+              <initialValue><simpleValue value="9001"/></initialValue>
               <type><UDINT/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT nEventId</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">急停事件 ID</xhtml></documentation>
             </variable>
-            <variable name="arg_ipSourceInfo">
-              <type><derived name="I_TcSourceInfo"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT ipSourceInfo</xhtml></documentation>
+            <variable name="bIsRaised">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">查询结果</xhtml></documentation>
+            </variable>
+            <variable name="bMotorStartReq">
+              <initialValue><simpleValue value="FALSE"/></initialValue>
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">操作员启动请求</xhtml></documentation>
+            </variable>
+            <variable name="bMotorAllowStart">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">联锁后的允许启动</xhtml></documentation>
             </variable>
           </localVars>
         </interface>
         <body>
-          <ST>
-            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
-// Tc3_EventLogger.IsAlarmRaised 演示程序（FB 实例）
-// ============================================================
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：启动联锁：检查急停安全报警是否 Raised，若是则禁用电机启动
+// 价值：一次查询替代手写引用持有 + 状态访问
+// 验证：先让某 alarm Create+Raise；写本程序的 guidEventClass+nEventId 与之匹配 → bIsRaised = TRUE；对该 alarm 调 Clear → bIsRaised 变 FALSE
 // 验证步骤：
-//   1. 引用 Tc3_EventLogger（及依赖类型所在库 Tc2_System 等）
-//   2. 编译 + 登录
-//   3. 按 doc.md 给 arg_* 赋值
-//   4. 在线监视 out_* / io_* 输出
-// ============================================================
+//   1. 右键 PLC 项目 → Import PLCopenXML → 选本文件
+//   2. 引用 Tc3_EventLogger（System → References → Add library）
+//   3. 编译 → 登录 → 运行；按 verify 注释里给出的在线写值操作
+// =============================================================================
 
-fbIsAlarmRaised(
-    eventClass := arg_eventClass,
-    nEventId := arg_nEventId,
-    ipSourceInfo := arg_ipSourceInfo
-);
-</xhtml>
-          </ST>
+// 每周期查询急停报警是否 Raised
+bIsRaised := fbLogger.IsAlarmRaised(
+    eventClass := guidEventClass,
+    nEventId := nEventId,
+    ipSourceInfo := 0);
+
+// 联锁逻辑：报警 Raised 时禁止启动
+bMotorAllowStart := bMotorStartReq AND NOT bIsRaised;
+</xhtml></ST>
         </body>
       </pou>
     </pous>
   </types>
-  <instances>
-    <configurations/>
-  </instances>
+  <instances><configurations/></instances>
 </project>

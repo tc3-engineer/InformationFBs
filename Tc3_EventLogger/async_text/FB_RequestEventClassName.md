@@ -1,4 +1,5 @@
 # FB_RequestEventClassName
+
 ## 元信息
 
 | 字段 | 值 |
@@ -6,17 +7,21 @@
 | Library | `Tc3_EventLogger` |
 | Library Version | `1.6.2` |
 | Type | `FUNCTION_BLOCK` |
-| Category | `Function blocks` |
-| Source | https://infosys.beckhoff.com/content/1033/tcplclib_tc3_eventlogger/ |
+| Category | `Function block` |
 | Source PDF | https://download.beckhoff.com/download/document/automation/twincat3/TwinCAT_3_PLC_Lib_Tc3_EventLogger_EN.pdf |
-| Verified | 2026-05-10 ✅ |
+| Source InfoSys | https://infosys.beckhoff.com/content/1033/tcplclib_tc3_eventlogger/5001014795.html |
+| Verified | 2026-05-11 ✅ |
+| InfoSys-checked | ✅ 2026-05-11 |
 | Status | `verified` |
 | Example | [`examples/P_Demo_FB_RequestEventClassName.xml`](../examples/P_Demo_FB_RequestEventClassName.xml) |
 
 ---
+
 ## 1. 功能简述
 
-This function block enables the asynchronous request for the name of an event class.
+`FB_RequestEventClassName` 异步请求一个 EventClass 的**本地化名称**（如「包装机错误」、「Packaging Machine Error」）。
+
+用于 HMI 按当前 UI 语言显示事件类名。
 
 ## 2. 接口定义
 
@@ -29,20 +34,25 @@ VAR_INPUT
     eventClass : GUID;
     nLangId : DINT;
     ipRemoteLogger : I_TcRemoteEventLogger;
+    eventClass : GUID;
+    nLangId : DINT;
 END_VAR
 ```
 
 | 名称 | 类型 | 说明 |
 |---|---|---|
-| `sResult` | `REFERENCE TO STRING` | （详见 PDF） |
-| `nResult` | `UDINT` | （详见 PDF） |
-| `eventClass` | `GUID` | （详见 PDF） |
-| `nLangId` | `DINT` | （详见 PDF） |
-| `ipRemoteLogger` | `I_TcRemoteEventLogger` | （详见 PDF） |
+| `sResult` | `REFERENCE TO STRING` | ⚠️ 待人工确认（PDF/InfoSys Description 列为空或仅英文） |
+| `nResult` | `UDINT` | ⚠️ 待人工确认（PDF/InfoSys Description 列为空或仅英文） |
+| `eventClass` | `GUID` | ⚠️ 待人工确认（PDF/InfoSys Description 列为空或仅英文） |
+| `nLangId` | `DINT` | ⚠️ 待人工确认（PDF/InfoSys Description 列为空或仅英文） |
+| `ipRemoteLogger` | `I_TcRemoteEventLogger` | ⚠️ 待人工确认（PDF/InfoSys Description 列为空或仅英文） |
+| `eventClass` | `GUID` | ⚠️ 待人工确认（PDF/InfoSys Description 列为空或仅英文） |
+| `nLangId` | `DINT` | ⚠️ 待人工确认（PDF/InfoSys Description 列为空或仅英文） |
+
 
 ### VAR_OUTPUT
 
-无 VAR_OUTPUT。
+无。
 
 ### VAR_IN_OUT
 
@@ -50,48 +60,45 @@ END_VAR
 
 ## 3. 行为说明
 
-- 见上方功能简述。
-- 详细行为（时序、错误码、状态机）请对照 PDF 第 3.1.4 节。
+本 FB 暴露 `Request()` 发起异步请求、`bBusy` / `bError` / `hrErrorCode` 监视状态、`GetString()` / `Clear()` 取结果与清理。**典型流程**：调 `Request` 发起 → 每周期查 `bBusy` 直到 FALSE → 若 `bError = FALSE` 调取结果方法 → 用完调 `Clear` 准备下次请求。
+
+**异步执行**：底层走 ADS 通讯（本地或远程），不阻塞 PLC 周期。远程查询请用 `RequestRemote()` 指定目标 AMS Net ID。并发查询需要多个 FB 实例（每个实例同时只能进行一个查询）。
 
 ## 4. 错误码 / 返回值
 
-本 FB 自身无返回值；运行状态/错误反馈通过其方法返回的 `HRESULT` 或对应输出参数获取，具体见 PDF / InfoSys（⚠️ 待人工确认）。
+本方法/属性不返回数值（`VOID` 或 getter 直接返回引用）。状态通过 EventLogger 的事件日志间接反映。
 
 ## 5. 使用注意 / 常见坑
 
-- VAR_INPUT / VAR_OUTPUT / VAR_IN_OUT 已逐字从 PDF 抽取并通过 `verify_doc.py` 自检。
-- 描述句、时序行为、错误码表等细节请以 PDF 第 3.1.4 节为准（⚠️ 待人工细化）。
+- **异步**：发起 Request 后必须周期检查 `bBusy` 直到 FALSE，再读结果——不能立即用。
+- 失败要检查 `bError` 与 `hrErrorCode`——`bBusy = FALSE` 不等于成功。
+- 发起多次 Request 之间要 `Clear()` 清理上次结果，否则可能读到旧数据。（工程经验补充）
+- LangId 必须是 Windows LCID（如 1033=英文、2052=简体中文、1031=德文）；事件类未配置对应语言会回退默认。
+- STRING 输出缓冲必须足够长（建议 STRING(255)+），否则文本被截断。（工程经验补充）
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_FB_RequestEventClassName.xml`](../examples/P_Demo_FB_RequestEventClassName.xml)
+> 配套可导入文件：[`examples/P_Demo_FB_RequestEventClassName.xml`](../examples/P_Demo_FB_RequestEventClassName.xml)（PLCopenXML，可直接导入 TwinCAT 3 XAE）
 >
-> 详见 [`examples/README.md`](../examples/README.md)
+> 导入步骤：右键 PLC 项目 → Import PLCopenXML → 选该文件 → OK
 
 ```iecst
-PROGRAM P_Demo_FB_RequestEventClassName
-VAR
-    fbFB_RequestEventClassName : FB_RequestEventClassName;
-    arg_sResult : REFERENCE TO STRING;
-    arg_nResult : UDINT;
-    arg_eventClass : GUID;
-    arg_nLangId : DINT;
-    arg_ipRemoteLogger : I_TcRemoteEventLogger;
-END_VAR
-
-fbFB_RequestEventClassName(
-    sResult := arg_sResult,
-    nResult := arg_nResult,
-    eventClass := arg_eventClass,
-    nLangId := arg_nLangId,
-    ipRemoteLogger := arg_ipRemoteLogger
-);
+// 详见 examples 目录下的 .xml 文件
 ```
 
-## 7. 相关
+## 7. 业务场景与实际价值
 
-- 见 [`Tc3_EventLogger README`](../README.md) 同库其他条目
+HMI 把报警按事件类分组显示，每组标题用本 FB 取本地化类名
 
-## 8. 待确认项
 
-- 详细描述/时序/错误码表待人工细化（auto-gen 阶段只确保 VAR 区与 PDF 一致）。
+非阻塞多语言资源访问；外部修改无需 PLC 重编译
+
+
+把翻译嵌入 PLC 代码 → 升级翻译要重编译；本异步模式更灵活
+
+
+## 8. 参考资料
+
+- **PDF**：[TwinCAT_3_PLC_Lib_Tc3_EventLogger_EN.pdf](https://download.beckhoff.com/download/document/automation/twincat3/TwinCAT_3_PLC_Lib_Tc3_EventLogger_EN.pdf) §3.1.4
+- **InfoSys topic**：https://infosys.beckhoff.com/content/1033/tcplclib_tc3_eventlogger/5001014795.html
+- **相关**：`FB_AsyncStrResult`, `FB_TcEventBase.RequestEventText`

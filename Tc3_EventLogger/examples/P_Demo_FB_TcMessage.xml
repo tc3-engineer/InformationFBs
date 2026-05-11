@@ -14,34 +14,63 @@
       <pou name="P_Demo_FB_TcMessage" pouType="program">
         <interface>
           <localVars>
-            <variable name="fbFB_TcMessage">
+            <variable name="fbMessage">
               <type><derived name="FB_TcMessage"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">Tc3_EventLogger.FB_TcMessage 实例</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">配方切换消息实例</xhtml></documentation>
+            </variable>
+            <variable name="bCreated">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">Create() 仅在第一次扫描调用</xhtml></documentation>
+            </variable>
+            <variable name="bRecipeChanged">
+              <initialValue><simpleValue value="FALSE"/></initialValue>
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">上层在配方切换瞬间置 TRUE</xhtml></documentation>
+            </variable>
+            <variable name="bRecipeChangedPrev">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">边沿检测</xhtml></documentation>
+            </variable>
+            <variable name="hr">
+              <type><derived name="HRESULT"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">返回值监视</xhtml></documentation>
+            </variable>
+            <variable name="guidEventClass">
+              <type><derived name="GUID"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">实际事件类 GUID</xhtml></documentation>
             </variable>
           </localVars>
         </interface>
         <body>
-          <ST>
-            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
-// Tc3_EventLogger.FB_TcMessage 演示程序（FB 实例）
-// ============================================================
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：配方切换审计：每次工艺工程师改配方都送一条结构化消息进 EventLogger
+// 价值：一句 Send() 替代手写 ADSLOGSTR + CSV 拼接 + 时间戳格式化，且自动进 EventLogger 审计窗
+// 验证：登录后写 bRecipeChanged := TRUE，HMI EventLogger 视图应立刻出现一条 Message 行（带时间戳/严重级别/来源 FB）；再次置位还会再发一条；下沿不发
 // 验证步骤：
-//   1. 引用 Tc3_EventLogger（及依赖类型所在库 Tc2_System 等）
-//   2. 编译 + 登录
-//   3. 按 doc.md 给 arg_* 赋值
-//   4. 在线监视 out_* / io_* 输出
-// ============================================================
+//   1. 右键 PLC 项目 → Import PLCopenXML → 选本文件
+//   2. 引用 Tc3_EventLogger（System → References → Add library）
+//   3. 编译 → 登录 → 运行；按 verify 注释里给出的在线写值操作
+// =============================================================================
 
-fbFB_TcMessage(
+// 一次性注册
+IF NOT bCreated THEN
+    hr := fbMessage.Create(
+        eventClass := guidEventClass,
+        nEventId := 2001,                  // "配方切换" 事件 ID
+        eSeverity := TcEventSeverity.Info,
+        ipSourceInfo := 0);
+    bCreated := SUCCEEDED(hr);
+END_IF;
 
-);
-</xhtml>
-          </ST>
+// 上升沿触发 Send（继承自 I_TcMessage）
+IF bRecipeChanged AND NOT bRecipeChangedPrev THEN
+    fbMessage.Send(nTimeStamp := 0);       // 0 = 用当前系统时间
+END_IF;
+bRecipeChangedPrev := bRecipeChanged;
+</xhtml></ST>
         </body>
       </pou>
     </pous>
   </types>
-  <instances>
-    <configurations/>
-  </instances>
+  <instances><configurations/></instances>
 </project>

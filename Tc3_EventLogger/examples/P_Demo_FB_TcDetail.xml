@@ -14,43 +14,47 @@
       <pou name="P_Demo_FB_TcDetail" pouType="program">
         <interface>
           <localVars>
-            <variable name="fbFB_TcDetail">
+            <variable name="fbReq">
+              <type><derived name="FB_RequestEventClassDetails"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">上游请求 FB</xhtml></documentation>
+            </variable>
+            <variable name="fbDetail">
               <type><derived name="FB_TcDetail"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">Tc3_EventLogger.FB_TcDetail 实例</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">承载详情子项</xhtml></documentation>
             </variable>
-            <variable name="arg_sResult">
-              <type><reference><baseType><derived name="STRING"/></baseType></reference></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT sResult</xhtml></documentation>
+            <variable name="sName">
+              <type><string><length>80</length></string></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">name 字段</xhtml></documentation>
             </variable>
-            <variable name="arg_nResult">
-              <type><UDINT/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT nResult</xhtml></documentation>
+            <variable name="sText">
+              <type><string><length>255</length></string></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">text 字段</xhtml></documentation>
+            </variable>
+            <variable name="sComment">
+              <type><string><length>255</length></string></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">comment 字段</xhtml></documentation>
             </variable>
           </localVars>
         </interface>
         <body>
-          <ST>
-            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
-// Tc3_EventLogger.FB_TcDetail 演示程序（FB 实例）
-// ============================================================
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：循环读取事件详情列表的所有项
+// 价值：结构化访问详情字段
+// 验证：先有完成的 FB_RequestEventClassDetails；调 Get 填充本 FB；读各字段
 // 验证步骤：
-//   1. 引用 Tc3_EventLogger（及依赖类型所在库 Tc2_System 等）
-//   2. 编译 + 登录
-//   3. 按 doc.md 给 arg_* 赋值
-//   4. 在线监视 out_* / io_* 输出
-// ============================================================
+//   1. 右键 PLC 项目 → Import PLCopenXML → 选本文件
+//   2. 引用 Tc3_EventLogger（System → References → Add library）
+//   3. 编译 → 登录 → 运行；按 verify 注释里给出的在线写值操作
+// =============================================================================
 
-fbFB_TcDetail(
-    sResult := arg_sResult,
-    nResult := arg_nResult
-);
-</xhtml>
-          </ST>
+fbReq.Get(nIndex := 0, fbResult := fbDetail);
+fbDetail.GetName(sResult := sName);
+fbDetail.GetText(sResult := sText);
+fbDetail.GetComment(sResult := sComment);
+</xhtml></ST>
         </body>
       </pou>
     </pous>
   </types>
-  <instances>
-    <configurations/>
-  </instances>
+  <instances><configurations/></instances>
 </project>

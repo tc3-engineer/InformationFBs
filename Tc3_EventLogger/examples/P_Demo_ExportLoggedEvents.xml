@@ -14,53 +14,64 @@
       <pou name="P_Demo_ExportLoggedEvents" pouType="program">
         <interface>
           <localVars>
-            <variable name="fbExportLoggedEvents">
-              <type><derived name="ExportLoggedEvents"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">Tc3_EventLogger.ExportLoggedEvents 实例</xhtml></documentation>
+            <variable name="fbLogger">
+              <type><derived name="FB_TcEventLogger"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">EventLogger 实例</xhtml></documentation>
             </variable>
-            <variable name="arg_ipExportSettings">
-              <type><derived name="I_TcEventExportSettings"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT ipExportSettings</xhtml></documentation>
+            <variable name="fbExportSettings">
+              <type><derived name="FB_TcEventCsvExportSettings"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">导出过滤器实例</xhtml></documentation>
             </variable>
-            <variable name="out_bError">
+            <variable name="sFileName">
+              <initialValue><simpleValue value="'C:\Temp\events_2026-05-11.csv'"/></initialValue>
+              <type><string><length>120</length></string></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">导出文件路径</xhtml></documentation>
+            </variable>
+            <variable name="bDoExport">
+              <initialValue><simpleValue value="FALSE"/></initialValue>
               <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT bError</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">上升沿触发</xhtml></documentation>
             </variable>
-            <variable name="out_hrErrorCode">
+            <variable name="bExportDone">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">完成标志</xhtml></documentation>
+            </variable>
+            <variable name="bError">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">错误标志</xhtml></documentation>
+            </variable>
+            <variable name="hrErrorCode">
               <type><derived name="HRESULT"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT hrErrorCode</xhtml></documentation>
-            </variable>
-            <variable name="io_sFileName">
-              <type><string/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_IN_OUT sFileName</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">错误码</xhtml></documentation>
             </variable>
           </localVars>
         </interface>
         <body>
-          <ST>
-            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
-// Tc3_EventLogger.ExportLoggedEvents 演示程序（FB 实例）
-// ============================================================
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：每日 23:00 触发的事件归档导出（输出文件名含当日日期）
+// 价值：非阻塞异步导出，PLC 主流程不卡顿
+// 验证：登录后写 bDoExport := TRUE 触发；持续监视 bExportDone 应在几秒内变 TRUE；C:\Temp 下出现 CSV 文件
 // 验证步骤：
-//   1. 引用 Tc3_EventLogger（及依赖类型所在库 Tc2_System 等）
-//   2. 编译 + 登录
-//   3. 按 doc.md 给 arg_* 赋值
-//   4. 在线监视 out_* / io_* 输出
-// ============================================================
+//   1. 右键 PLC 项目 → Import PLCopenXML → 选本文件
+//   2. 引用 Tc3_EventLogger（System → References → Add library）
+//   3. 编译 → 登录 → 运行；按 verify 注释里给出的在线写值操作
+// =============================================================================
 
-fbExportLoggedEvents(
-    ipExportSettings := arg_ipExportSettings,
-    bError =&gt; out_bError,
-    hrErrorCode =&gt; out_hrErrorCode,
-    sFileName := io_sFileName
-);
-</xhtml>
-          </ST>
+// 每周期都调用以推进异步状态；返回 TRUE 表示导出结束
+IF bDoExport THEN
+    bExportDone := fbLogger.ExportLoggedEvents(
+        sFileName := sFileName,
+        ipExportSettings := fbExportSettings,
+        bError =&gt; bError,
+        hrErrorCode =&gt; hrErrorCode);
+    IF bExportDone THEN
+        bDoExport := FALSE;                    // 流程结束
+    END_IF;
+END_IF;
+</xhtml></ST>
         </body>
       </pou>
     </pous>
   </types>
-  <instances>
-    <configurations/>
-  </instances>
+  <instances><configurations/></instances>
 </project>
