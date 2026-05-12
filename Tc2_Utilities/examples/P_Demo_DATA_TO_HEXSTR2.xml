@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <project xmlns="http://www.plcopen.org/xml/tc6_0200">
-  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-10T16:00:00"/>
-  <contentHeader name="Tc2_Utilities.DATA_TO_HEXSTR2 Demo" modificationDateTime="2026-05-10T16:00:00">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-12T00:00:00"/>
+  <contentHeader name="Tc2_Utilities.DATA_TO_HEXSTR2 Demo" modificationDateTime="2026-05-12T00:00:00">
     <coordinateInfo>
       <fbd><scaling x="1" y="1"/></fbd>
       <ld><scaling x="1" y="1"/></ld>
@@ -14,43 +14,37 @@
       <pou name="P_Demo_DATA_TO_HEXSTR2" pouType="program">
         <interface>
           <localVars>
-            <variable name="rResult">
-              <type><UDINT/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">DATA_TO_HEXSTR2 返回值</xhtml></documentation>
-            </variable>
-            <variable name="bRun">
-              <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">触发一次调用</xhtml></documentation>
-            </variable>
-            <variable name="sHex">
-              <type><string><length>63</length></string></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">测试用本地变量</xhtml></documentation>
-            </variable>
+            <variable name="aPdoBytes"><type><array><dimension lower="0" upper="15"/><baseType><BYTE/></baseType></array></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">工业语义：CoE 字典对象 16 字节缓冲</xhtml></documentation></variable>
+            <variable name="sHexOut"><type><string><length>80</length></string></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">转换后的 hex 字符串（用于日志）</xhtml></documentation></variable>
+            <variable name="bDumpHex"><type><BOOL/></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">在线置 TRUE 触发一次 dump</xhtml></documentation></variable>
+            <variable name="nConverted"><type><UDINT/></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">成功转换的源字节数</xhtml></documentation></variable>
           </localVars>
         </interface>
         <body>
-          <ST>
-            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
-// Tc2_Utilities.DATA_TO_HEXSTR2 演示程序（FUNCTION）
-// ============================================================
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：把 EtherCAT 从站的 CoE 对象字典对象（任意字节流）转为 hex 字符串写入日志，便于诊断协议级问题。
+// 价值：替代手写 `FOR i := 0 TO N DO sHex := CONCAT(sHex, ...)` 的 30 行代码；本函数 1 行调用，O(N) 时间且带 size 保护。
 // 验证步骤：
 //   1. 引用 Tc2_Utilities
-//   2. 编译 + 登录
-//   3. 强制 bRun := TRUE 一个周期
-//   4. 在线监视 rResult / 各 demo 变量
-// ============================================================
-
-IF bRun THEN
-    rResult := DATA_TO_HEXSTR2(ADR(stData), SIZEOF(stData), ADR(sHex), SIZEOF(sHex), FALSE);
-    bRun := FALSE;
-END_IF;
-</xhtml>
-          </ST>
+//   2. 编译 + 登录 + 运行
+//   3. 在线写触发位 TRUE，monitor 输出变量
+// =============================================================================
+// 模拟初值：实际工程从 EtherCAT slave 读出
+// 演示：dump 一段 PDO 字节流为 hex 串便于诊断
+IF bDumpHex THEN
+    aPdoBytes[0] := 16#01; aPdoBytes[1] := 16#23;
+    aPdoBytes[2] := 16#AB; aPdoBytes[3] := 16#CD;
+    nConverted := DATA_TO_HEXSTR2(pSrcData   := ADR(aPdoBytes),
+                                  nSrcSize   := SIZEOF(aPdoBytes),
+                                  pDstHexStr := ADR(sHexOut),
+                                  nDstSize   := SIZEOF(sHexOut),
+                                  bLoCase    := FALSE);
+    // nConverted &lt; SIZEOF(aPdoBytes) 意味目标 buffer 不够，结果末尾有 '.'
+    bDumpHex := FALSE;
+END_IF;</xhtml></ST>
         </body>
       </pou>
     </pous>
   </types>
-  <instances>
-    <configurations/>
-  </instances>
+  <instances><configurations/></instances>
 </project>
