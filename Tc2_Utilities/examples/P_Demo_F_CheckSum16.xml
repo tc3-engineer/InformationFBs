@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <project xmlns="http://www.plcopen.org/xml/tc6_0200">
-  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-10T19:00:00"/>
-  <contentHeader name="Tc2_Utilities.F_CheckSum16 Demo" modificationDateTime="2026-05-10T19:00:00">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-12T00:00:00"/>
+  <contentHeader name="Tc2_Utilities.F_CheckSum16 Demo" modificationDateTime="2026-05-12T00:00:00">
     <coordinateInfo>
       <fbd><scaling x="1" y="1"/></fbd>
       <ld><scaling x="1" y="1"/></ld>
@@ -14,44 +14,30 @@
       <pou name="P_Demo_F_CheckSum16" pouType="program">
         <interface>
           <localVars>
-            <variable name="rResult">
-              <type><WORD/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">F_CheckSum16 返回值</xhtml></documentation>
-            </variable>
-            <variable name="bRun">
-              <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">触发一次调用</xhtml></documentation>
-            </variable>
-            <variable name="ar">
-              <type><array><dimension lower="0" upper="3"/><baseType><BYTE/></baseType></array></type>
-              <initialValue><simpleValue value="[1,2,3,4]"/></initialValue>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">测试用本地变量</xhtml></documentation>
-            </variable>
+            <variable name="aBuf"><type><array><dimension lower="0" upper="63"/><baseType><BYTE/></baseType></array></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">工业语义：64 字节配方区</xhtml></documentation></variable>
+            <variable name="wSum"><type><WORD/></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">16 位 checksum 结果</xhtml></documentation></variable>
+            <variable name="bCalc"><type><BOOL/></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">在线触发</xhtml></documentation></variable>
           </localVars>
         </interface>
         <body>
-          <ST>
-            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
-// Tc2_Utilities.F_CheckSum16 演示程序（FUNCTION）
-// ============================================================
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：PLC 启动时校验非易失存储中的配方表完整性：算 checksum 并与存储的预期 checksum 比对，不一致则报警。
+// 价值：替代手写累加循环；O(N) 时间但码量最小。
 // 验证步骤：
 //   1. 引用 Tc2_Utilities
-//   2. 编译 + 登录
-//   3. 强制 bRun := TRUE 一个周期
-//   4. 在线监视 rResult / 各 demo 变量
-// ============================================================
+//   2. 编译 + 登录 + 运行
+//   3. 在线写触发位 TRUE，monitor 输出变量
+// =============================================================================
 
-IF bRun THEN
-    rResult := F_CheckSum16(ADR(ar), SIZEOF(ar), 0);
-    bRun := FALSE;
-END_IF;
-</xhtml>
-          </ST>
+IF bCalc THEN
+    wSum := F_CheckSum16(dwSrcAddr := ADR(aBuf),
+                        cbLen     := SIZEOF(aBuf),
+                        wChkSum   := 0);
+    bCalc := FALSE;
+END_IF;</xhtml></ST>
         </body>
       </pou>
     </pous>
   </types>
-  <instances>
-    <configurations/>
-  </instances>
+  <instances><configurations/></instances>
 </project>

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <project xmlns="http://www.plcopen.org/xml/tc6_0200">
-  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-10T19:00:00"/>
-  <contentHeader name="Tc2_Utilities.F_FormatArgToStr Demo" modificationDateTime="2026-05-10T19:00:00">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-12T00:00:00"/>
+  <contentHeader name="Tc2_Utilities.F_FormatArgToStr Demo" modificationDateTime="2026-05-12T00:00:00">
     <coordinateInfo>
       <fbd><scaling x="1" y="1"/></fbd>
       <ld><scaling x="1" y="1"/></ld>
@@ -14,48 +14,41 @@
       <pou name="P_Demo_F_FormatArgToStr" pouType="program">
         <interface>
           <localVars>
-            <variable name="rResult">
-              <type><UDINT/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">F_FormatArgToStr 返回值</xhtml></documentation>
-            </variable>
-            <variable name="bRun">
-              <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">触发一次调用</xhtml></documentation>
-            </variable>
-            <variable name="n">
-              <type><DINT/></type>
-              <initialValue><simpleValue value="42"/></initialValue>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">测试用本地变量</xhtml></documentation>
-            </variable>
-            <variable name="sOut">
-              <type><derived name="T_MaxString"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">测试用本地变量</xhtml></documentation>
-            </variable>
+            <variable name="nValue"><initialValue><simpleValue value="12345"/></initialValue><type><UDINT/></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">工业语义：要格式化的整数（如生产计数）</xhtml></documentation></variable>
+            <variable name="argFmt"><type><derived name="T_Arg"/></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">T_Arg 描述符</xhtml></documentation></variable>
+            <variable name="eFmt"><type><derived name="E_TypeFieldParam"/></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">格式类型（枚举）</xhtml></documentation></variable>
+            <variable name="nWritten"><type><UDINT/></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">实际写入字节数</xhtml></documentation></variable>
+            <variable name="bFmt"><type><BOOL/></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">在线触发</xhtml></documentation></variable>
           </localVars>
         </interface>
         <body>
-          <ST>
-            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
-// Tc2_Utilities.F_FormatArgToStr 演示程序（FUNCTION）
-// ============================================================
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：自定义可本地化数字显示 FB：根据语言环境调整小数点 / 千分位字符，调用底层 `F_FormatArgToStr` 而不是裸字符串拼接。
+// 价值：**只在自定义格式化器内部用**——`FB_FormatString` 已经包装好 printf-style，业务侧 99% 场景不用裸调本函数。
 // 验证步骤：
 //   1. 引用 Tc2_Utilities
-//   2. 编译 + 登录
-//   3. 强制 bRun := TRUE 一个周期
-//   4. 在线监视 rResult / 各 demo 变量
-// ============================================================
+//   2. 编译 + 登录 + 运行
+//   3. 在线写触发位 TRUE，monitor 输出变量
+// =============================================================================
 
-IF bRun THEN
-    rResult := F_FormatArgToStr(FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, 0, 0, E_TypeFieldParam.eTypeFieldParam_d, F_DINT(n), sOut := sOut);
-    bRun := FALSE;
-END_IF;
-</xhtml>
-          </ST>
+IF bFmt THEN
+    argFmt := F_UDINT(nValue);
+    // eFmt := E_TypeFieldParam.TYPE_d;  // 示意——具体枚举值见 E_TypeFieldParam 文档
+    nWritten := F_FormatArgToStr(bSign     := FALSE,
+                                 bBlank    := FALSE,
+                                 bNull     := FALSE,
+                                 bHash     := FALSE,
+                                 bLAlign   := FALSE,
+                                 bWidth    := TRUE,
+                                 iWidth    := 8,
+                                 iPrecision:= 0,
+                                 eFmtType  := eFmt,
+                                 arg       := argFmt);
+    bFmt := FALSE;
+END_IF;</xhtml></ST>
         </body>
       </pou>
     </pous>
   </types>
-  <instances>
-    <configurations/>
-  </instances>
+  <instances><configurations/></instances>
 </project>

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <project xmlns="http://www.plcopen.org/xml/tc6_0200">
-  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-10T19:00:00"/>
-  <contentHeader name="Tc2_Utilities.GUID_TO_STRING Demo" modificationDateTime="2026-05-10T19:00:00">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-12T00:00:00"/>
+  <contentHeader name="Tc2_Utilities.GUID_TO_STRING Demo" modificationDateTime="2026-05-12T00:00:00">
     <coordinateInfo>
       <fbd><scaling x="1" y="1"/></fbd>
       <ld><scaling x="1" y="1"/></ld>
@@ -14,43 +14,28 @@
       <pou name="P_Demo_GUID_TO_STRING" pouType="program">
         <interface>
           <localVars>
-            <variable name="rResult">
-              <type><string/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">GUID_TO_STRING 返回值</xhtml></documentation>
-            </variable>
-            <variable name="bRun">
-              <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">触发一次调用</xhtml></documentation>
-            </variable>
-            <variable name="g">
-              <type><derived name="GUID"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">测试用本地变量</xhtml></documentation>
-            </variable>
+            <variable name="stGuid"><type><derived name="GUID"/></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">工业语义：UA App ID</xhtml></documentation></variable>
+            <variable name="sStr"><type><string><length>36</length></string></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">格式化字符串</xhtml></documentation></variable>
+            <variable name="bFormat"><type><BOOL/></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">在线触发</xhtml></documentation></variable>
           </localVars>
         </interface>
         <body>
-          <ST>
-            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
-// Tc2_Utilities.GUID_TO_STRING 演示程序（FUNCTION）
-// ============================================================
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：OPC UA Application URI 写入数据库——数据库习惯无大括号 UUID；本函数直接输出可入库格式。
+// 价值：替代手写 16 字节 → hex + 连字符拼接。
 // 验证步骤：
 //   1. 引用 Tc2_Utilities
-//   2. 编译 + 登录
-//   3. 强制 bRun := TRUE 一个周期
-//   4. 在线监视 rResult / 各 demo 变量
-// ============================================================
+//   2. 编译 + 登录 + 运行
+//   3. 在线写触发位 TRUE，monitor 输出变量
+// =============================================================================
 
-IF bRun THEN
-    rResult := GUID_TO_STRING(g);
-    bRun := FALSE;
-END_IF;
-</xhtml>
-          </ST>
+IF bFormat THEN
+    sStr := GUID_TO_STRING(stIn := stGuid);
+    bFormat := FALSE;
+END_IF;</xhtml></ST>
         </body>
       </pou>
     </pous>
   </types>
-  <instances>
-    <configurations/>
-  </instances>
+  <instances><configurations/></instances>
 </project>

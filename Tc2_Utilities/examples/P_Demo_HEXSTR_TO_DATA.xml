@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <project xmlns="http://www.plcopen.org/xml/tc6_0200">
-  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-10T19:00:00"/>
-  <contentHeader name="Tc2_Utilities.HEXSTR_TO_DATA Demo" modificationDateTime="2026-05-10T19:00:00">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-12T00:00:00"/>
+  <contentHeader name="Tc2_Utilities.HEXSTR_TO_DATA Demo" modificationDateTime="2026-05-12T00:00:00">
     <coordinateInfo>
       <fbd><scaling x="1" y="1"/></fbd>
       <ld><scaling x="1" y="1"/></ld>
@@ -14,48 +14,31 @@
       <pou name="P_Demo_HEXSTR_TO_DATA" pouType="program">
         <interface>
           <localVars>
-            <variable name="rResult">
-              <type><UDINT/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">HEXSTR_TO_DATA 返回值</xhtml></documentation>
-            </variable>
-            <variable name="bRun">
-              <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">触发一次调用</xhtml></documentation>
-            </variable>
-            <variable name="sHex">
-              <type><string><length>63</length></string></type>
-              <initialValue><simpleValue value="'AB CD 01 23'"/></initialValue>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">测试用本地变量</xhtml></documentation>
-            </variable>
-            <variable name="ar">
-              <type><array><dimension lower="0" upper="3"/><baseType><BYTE/></baseType></array></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">测试用本地变量</xhtml></documentation>
-            </variable>
+            <variable name="sHexIn"><initialValue><simpleValue value="'01 23 AB CD'"/></initialValue><type><string><length>64</length></string></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">工业语义：配置 hex 串</xhtml></documentation></variable>
+            <variable name="aBytes"><type><array><dimension lower="0" upper="15"/><baseType><BYTE/></baseType></array></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">解析输出缓冲</xhtml></documentation></variable>
+            <variable name="nParsed"><type><UDINT/></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">解析字节数（0 = 失败）</xhtml></documentation></variable>
+            <variable name="bParse"><type><BOOL/></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">在线触发</xhtml></documentation></variable>
           </localVars>
         </interface>
         <body>
-          <ST>
-            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
-// Tc2_Utilities.HEXSTR_TO_DATA 演示程序（FUNCTION）
-// ============================================================
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：从配置文件 / HMI 输入读出的 hex 字符串写入 EtherCAT 配置区。
+// 价值：基础 hex 解析；新代码迁移到 `HEXSTR_TO_DATA2`。
 // 验证步骤：
 //   1. 引用 Tc2_Utilities
-//   2. 编译 + 登录
-//   3. 强制 bRun := TRUE 一个周期
-//   4. 在线监视 rResult / 各 demo 变量
-// ============================================================
+//   2. 编译 + 登录 + 运行
+//   3. 在线写触发位 TRUE，monitor 输出变量
+// =============================================================================
 
-IF bRun THEN
-    rResult := HEXSTR_TO_DATA(sHex, ADR(ar), SIZEOF(ar));
-    bRun := FALSE;
-END_IF;
-</xhtml>
-          </ST>
+IF bParse THEN
+    nParsed := HEXSTR_TO_DATA(sHex   := sHexIn,
+                              pData  := ADR(aBytes),
+                              cbData := SIZEOF(aBytes));
+    bParse := FALSE;
+END_IF;</xhtml></ST>
         </body>
       </pou>
     </pous>
   </types>
-  <instances>
-    <configurations/>
-  </instances>
+  <instances><configurations/></instances>
 </project>

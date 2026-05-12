@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <project xmlns="http://www.plcopen.org/xml/tc6_0200">
-  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-10T19:00:00"/>
-  <contentHeader name="Tc2_Utilities.F_CreateHashTableHnd Demo" modificationDateTime="2026-05-10T19:00:00">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-12T00:00:00"/>
+  <contentHeader name="Tc2_Utilities.F_CreateHashTableHnd Demo" modificationDateTime="2026-05-12T00:00:00">
     <coordinateInfo>
       <fbd><scaling x="1" y="1"/></fbd>
       <ld><scaling x="1" y="1"/></ld>
@@ -14,47 +14,33 @@
       <pou name="P_Demo_F_CreateHashTableHnd" pouType="program">
         <interface>
           <localVars>
-            <variable name="rResult">
-              <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">F_CreateHashTableHnd 返回值</xhtml></documentation>
-            </variable>
-            <variable name="bRun">
-              <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">触发一次调用</xhtml></documentation>
-            </variable>
-            <variable name="ar">
-              <type><array><dimension lower="0" upper="15"/><baseType><derived name="T_HashTableEntry"/></baseType></array></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">测试用本地变量</xhtml></documentation>
-            </variable>
-            <variable name="h">
-              <type><derived name="T_HHASHTABLE"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">测试用本地变量</xhtml></documentation>
-            </variable>
+            <variable name="aEntries"><type><array><dimension lower="0" upper="63"/><baseType><derived name="T_HashTableEntry"/></baseType></array></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">工业语义：64 槽位静态哈希表</xhtml></documentation></variable>
+            <variable name="hTable"><type><derived name="T_HHASHTABLE"/></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">哈希表句柄</xhtml></documentation></variable>
+            <variable name="bOk"><type><BOOL/></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">初始化成功</xhtml></documentation></variable>
+            <variable name="bInit"><type><BOOL/></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">在线触发（实际工程在启动 OB / Init 阶段调用一次）</xhtml></documentation></variable>
           </localVars>
         </interface>
         <body>
-          <ST>
-            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
-// Tc2_Utilities.F_CreateHashTableHnd 演示程序（FUNCTION）
-// ============================================================
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：工业 OPC 标签字典：~1000 个 OPC 节点名 → 内部地址的映射；启动时一次 `F_CreateHashTableHnd`，运行时 O(1) 查找。
+// 价值：替代线性扫描 / 自写哈希函数；标准库提供哈希查找语义（平均 O(1)），用于大 dict 替代 `ARRAY OF STRUCT` 的 O(N) 顺序查找。
 // 验证步骤：
 //   1. 引用 Tc2_Utilities
-//   2. 编译 + 登录
-//   3. 强制 bRun := TRUE 一个周期
-//   4. 在线监视 rResult / 各 demo 变量
-// ============================================================
+//   2. 编译 + 登录 + 运行
+//   3. 在线写触发位 TRUE，monitor 输出变量
+// =============================================================================
 
-IF bRun THEN
-    rResult := F_CreateHashTableHnd(pEntries := ADR(ar), cbEntries := SIZEOF(ar), hTable := h);
-    bRun := FALSE;
-END_IF;
-</xhtml>
-          </ST>
+// 启动时一次性初始化哈希表句柄
+IF bInit THEN
+    bOk := F_CreateHashTableHnd(pEntries  := ADR(aEntries),
+                                cbEntries := SIZEOF(aEntries),
+                                hTable    := hTable);
+    // bOk = TRUE -&gt; 后续可用 FB_HashTableCtrl 操作 hTable
+    bInit := FALSE;
+END_IF;</xhtml></ST>
         </body>
       </pou>
     </pous>
   </types>
-  <instances>
-    <configurations/>
-  </instances>
+  <instances><configurations/></instances>
 </project>
