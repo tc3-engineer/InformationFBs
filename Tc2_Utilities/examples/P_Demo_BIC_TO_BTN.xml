@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <project xmlns="http://www.plcopen.org/xml/tc6_0200">
-  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-10T19:00:00"/>
-  <contentHeader name="Tc2_Utilities.BIC_TO_BTN Demo" modificationDateTime="2026-05-10T19:00:00">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-11T13:00:00"/>
+  <contentHeader name="Tc2_Utilities.BIC_TO_BTN Demo" modificationDateTime="2026-05-11T13:00:00">
     <coordinateInfo>
       <fbd><scaling x="1" y="1"/></fbd>
       <ld><scaling x="1" y="1"/></ld>
@@ -14,44 +14,26 @@
       <pou name="P_Demo_BIC_TO_BTN" pouType="program">
         <interface>
           <localVars>
-            <variable name="rResult">
-              <type><string><stringLength><value>9</value></stringLength></string></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">BIC_TO_BTN 返回值</xhtml></documentation>
-            </variable>
-            <variable name="bRun">
-              <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">触发一次调用</xhtml></documentation>
-            </variable>
-            <variable name="sBIC">
-              <type><string/></type>
-              <initialValue><simpleValue value="'1P193995SBTN0002agdw1KEL7411 Q1 2P112104020018'"/></initialValue>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">测试用本地变量</xhtml></documentation>
-            </variable>
+            <variable name="sBicRaw"><initialValue><simpleValue value="1P193995SBTN0002agdw1KEL7411 Q1 2P112104020018"/></initialValue><type><string><length>255</length></string></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">模拟从 FB_EcCoEReadBIC 读出的 BIC 原始串</xhtml></documentation></variable>
+            <variable name="sBtn"><type><string><length>9</length></string></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">提取出的 BTN，预期 '0002agdw'</xhtml></documentation></variable>
           </localVars>
         </interface>
         <body>
-          <ST>
-            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
-// Tc2_Utilities.BIC_TO_BTN 演示程序（FUNCTION）
-// ============================================================
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：产线 MES 追溯——记录每个 EtherCAT 从站的 BTN 出厂追溯号。
+//       生产时调用 FB_EcCoEReadBIC 读到 BIC 字符串，本 FC 提取 BTN 写入数据库。
+// 价值：替代手写 FIND + MID + RTrim 三步处理，一行解决，长度常量内置。
 // 验证步骤：
 //   1. 引用 Tc2_Utilities
-//   2. 编译 + 登录
-//   3. 强制 bRun := TRUE 一个周期
-//   4. 在线监视 rResult / 各 demo 变量
-// ============================================================
+//   2. 编译 + 登录 + 运行
+//   3. 在线 monitor sBtn -&gt; '0002agdw'
+//   4. 改 sBicRaw 为不含 'SBTN' 的字符串 -&gt; sBtn 应为空串 ''
+// =============================================================================
 
-IF bRun THEN
-    rResult := BIC_TO_BTN(sBIC);
-    bRun := FALSE;
-END_IF;
-</xhtml>
-          </ST>
+sBtn := BIC_TO_BTN(sBicRaw);</xhtml></ST>
         </body>
       </pou>
     </pous>
   </types>
-  <instances>
-    <configurations/>
-  </instances>
+  <instances><configurations/></instances>
 </project>
