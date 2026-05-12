@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <project xmlns="http://www.plcopen.org/xml/tc6_0200">
-  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-10T19:00:00"/>
-  <contentHeader name="Tc2_Utilities.F_CreateLinkedListHnd Demo" modificationDateTime="2026-05-10T19:00:00">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-12T10:00:00"/>
+  <contentHeader name="Tc2_Utilities.F_CreateLinkedListHnd Demo" modificationDateTime="2026-05-12T10:00:00">
     <coordinateInfo>
       <fbd><scaling x="1" y="1"/></fbd>
       <ld><scaling x="1" y="1"/></ld>
@@ -14,47 +14,50 @@
       <pou name="P_Demo_F_CreateLinkedListHnd" pouType="program">
         <interface>
           <localVars>
-            <variable name="rResult">
-              <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">F_CreateLinkedListHnd 返回值</xhtml></documentation>
+            <variable name="arAlarmFifoNodes">
+              <type><array><dimension lower="0" upper="99"/><baseType><derived name="T_LinkedListEntry"/></baseType></array></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">100 节点池：用于产线报警 FIFO 队列</xhtml></documentation>
             </variable>
-            <variable name="bRun">
-              <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">触发一次调用</xhtml></documentation>
-            </variable>
-            <variable name="ar">
-              <type><array><dimension lower="0" upper="15"/><baseType><derived name="T_LinkedListEntry"/></baseType></array></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">测试用本地变量</xhtml></documentation>
-            </variable>
-            <variable name="h">
+            <variable name="hAlarmFifoList">
               <type><derived name="T_HLINKEDLIST"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">测试用本地变量</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">链表句柄；交给 FB_LinkedListCtrl 做 add/remove/iterate</xhtml></documentation>
+            </variable>
+            <variable name="bListInitSucceeded">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">init 是否成功</xhtml></documentation>
+            </variable>
+            <variable name="bListInitDone">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">上电首扫初始化锁；防止重 init 丢节点</xhtml></documentation>
             </variable>
           </localVars>
         </interface>
         <body>
-          <ST>
-            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
-// Tc2_Utilities.F_CreateLinkedListHnd 演示程序（FUNCTION）
-// ============================================================
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：产线报警 FIFO 队列——保存最近 100 条报警按时间顺序滚动显示。
+//       链表适合"频繁尾部追加 + 头部裁剪"模式；本函数是池子 init 的一次性步骤。
+// 价值：手写链表要 50+ 行 prev/next 维护代码，易在首/尾删除时出 NULL 异常；
+//       本函数 + FB_LinkedListCtrl 用 Beckhoff 已验证实现替代。
 // 验证步骤：
-//   1. 引用 Tc2_Utilities
-//   2. 编译 + 登录
-//   3. 强制 bRun := TRUE 一个周期
-//   4. 在线监视 rResult / 各 demo 变量
-// ============================================================
+//   1. 登录后 bListInitDone = FALSE，hAlarmFifoList 各字段为 0。
+//   2. 切到 Run（或单步首扫）→ IF NOT bListInitDone 分支执行。
+//   3. 观察 bListInitSucceeded = TRUE，bListInitDone = TRUE。
+//   4. 后续周期 bListInitDone 保持 TRUE，IF 分支不再进入——印证"不可重 init"陷阱。
+//   5. 进一步：加 FB_LinkedListCtrl 实例引用 hAlarmFifoList 即可 add/remove/iterate。
+// =============================================================================
 
-IF bRun THEN
-    rResult := F_CreateLinkedListHnd(pEntries := ADR(ar), cbEntries := SIZEOF(ar), hList := h);
-    bRun := FALSE;
+// 单次 init：上电只调一次
+IF NOT bListInitDone THEN
+    bListInitSucceeded := F_CreateLinkedListHnd(
+        pEntries  := ADR(arAlarmFifoNodes),
+        cbEntries := SIZEOF(arAlarmFifoNodes),
+        hList     := hAlarmFifoList);
+    bListInitDone := TRUE;
 END_IF;
-</xhtml>
-          </ST>
+</xhtml></ST>
         </body>
       </pou>
     </pous>
   </types>
-  <instances>
-    <configurations/>
-  </instances>
+  <instances><configurations/></instances>
 </project>
