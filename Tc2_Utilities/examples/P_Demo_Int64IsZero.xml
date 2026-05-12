@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <project xmlns="http://www.plcopen.org/xml/tc6_0200">
-  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-10T17:00:00"/>
-  <contentHeader name="Tc2_Utilities.Int64IsZero Demo" modificationDateTime="2026-05-10T17:00:00">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-12T12:00:00"/>
+  <contentHeader name="Tc2_Utilities.Int64IsZero Demo" modificationDateTime="2026-05-12T12:00:00">
     <coordinateInfo>
       <fbd><scaling x="1" y="1"/></fbd>
       <ld><scaling x="1" y="1"/></ld>
@@ -14,36 +14,34 @@
       <pou name="P_Demo_Int64IsZero" pouType="program">
         <interface>
           <localVars>
-            <variable name="rResult">
-              <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">Int64IsZero 返回值</xhtml></documentation>
-            </variable>
-            <variable name="bRun">
-              <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">触发一次调用</xhtml></documentation>
-            </variable>
-            <variable name="a">
+            <variable name="liDivisor">
               <type><derived name="T_LARGE_INTEGER"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">测试用本地变量</xhtml></documentation>
+            </variable>
+            <variable name="bIsZero">
+              <type><BOOL/></type>
+            </variable>
+            <variable name="bCheck">
+              <type><BOOL/></type>
             </variable>
           </localVars>
         </interface>
         <body>
           <ST>
             <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
-// Tc2_Utilities.Int64IsZero 演示程序（FUNCTION）
+// Tc2_Utilities.Int64IsZero 演示程序（FUNCTION，单周期触发）
 // ============================================================
+// 场景：除法 / 模运算前的除数校验。
+// 价值：替代结构体 `=` 比较。
 // 验证步骤：
-//   1. 引用 Tc2_Utilities
+//   1. 把本 PROGRAM 加到 PlcTask 调用列表
 //   2. 编译 + 登录
-//   3. 强制 bRun := TRUE 一个周期
-//   4. 在线监视 rResult
+//   3. 在线把 b... 触发位置 TRUE 一个周期
+//   4. 观察输出变量是否符合期望
 // ============================================================
 
-a := LARGE_INTEGER(0, 0);
-IF bRun THEN
-    rResult := Int64IsZero(a);
-    bRun := FALSE;
+IF bCheck THEN
+    bIsZero := Int64IsZero(liDivisor);
+    bCheck := FALSE;
 END_IF;
 </xhtml>
           </ST>

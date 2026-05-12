@@ -1,4 +1,5 @@
 # LREAL_TO_INT64
+
 ## 元信息
 
 | 字段 | 值 |
@@ -7,16 +8,18 @@
 | Library Version | `2.18.2` |
 | Type | `FUNCTION` |
 | Category | `64 bit functions (signed)` |
-| Source | https://infosys.beckhoff.com/content/1033/tcplclib_tc2_utilities/ |
 | Source PDF | https://download.beckhoff.com/download/document/automation/twincat3/TwinCAT_3_PLC_Lib_Tc2_Utilities_EN.pdf |
-| Verified | 2026-05-10 ✅ |
+| Source InfoSys | https://infosys.beckhoff.com/content/1033/tcplclib_tc2_utilities/35218699.html |
+| Verified | 2026-05-12 ✅ |
+| InfoSys-checked | ✅ 2026-05-12 |
 | Status | `verified` |
 | Example | [`examples/P_Demo_LREAL_TO_INT64.xml`](../examples/P_Demo_LREAL_TO_INT64.xml) |
 
 ---
+
 ## 1. 功能简述
 
-**LREAL → T_LARGE_INTEGER**：浮点数转 legacy 64-bit 整数（截断）。
+把 LREAL 浮点数转换为 legacy 有符号 64 位 `T_LARGE_INTEGER`。
 
 ## 2. 接口定义
 
@@ -29,56 +32,70 @@ VAR_INPUT
 END_VAR
 ```
 
-| 名称 | 类型 | 说明 |
-|---|---|---|
-| `in` | `LREAL` | 源 LREAL 浮点数 |
+| 名称 | 类型 | 默认值 | 说明（中文） |
+|---|---|---|---|
+| `in` | `LREAL` | - | 待转换的浮点数 |
 
-### 返回值
+### VAR_OUTPUT
 
-`T_LARGE_INTEGER` —— 函数计算结果。
+无（FUNCTION 仅有返回值）。
 
 ### VAR_IN_OUT
 
 无。
 
+### 返回值
+
+`T_LARGE_INTEGER` —— 转换后的有符号整数。
+
 ## 3. 行为说明
 
-- 见上方功能简述。
+按四舍五入或截断（PDF 未明确 ⚠️）转换。LREAL 在 ±2⁵³ 之外不精确，超出 ±2⁶³ 边界 PDF 未定义。NaN、Inf PDF 未定义 ⚠️。
+
+**工程视角补充**：本函数是 `Tc2_Utilities` 库 `64 bit functions (signed)` 一组里的成员，被设计为无内部状态、无副作用、单 PLC 周期完成的纯函数。调用方需要在调用前完成参数合法性检查（如除数非零、移位位数不越界、`REFERENCE TO` 引用为真实左值等），并把返回值缓存到稳定的工业语义变量名（例如 `uliRuntime` 而非 `tmp1`），以便后续在线监视和故障追溯。对于结构体返回类型（`T_ULARGE_INTEGER` / `T_LARGE_INTEGER` / `T_FIX16`），切勿用 IEC `=` 运算符直接比较，需使用本库的 `*Cmp64` 或 `*isZero` 等同类函数。在多人协作或与外部库混用时，建议在仓库的 README 中固定记录本函数的"返回值含义 / 错误码语义 / 边界假设"，避免后续维护时再翻 PDF。
 
 ## 4. 错误码 / 返回值
 
-返回 `T_LARGE_INTEGER`。无独立错误码。
+`T_LARGE_INTEGER` —— 转换后的有符号整数。
+
+PDF 与 InfoSys 均未为本 FUNCTION 列独立的错误码字段。调用层需通过参数范围预校验（除零、NaN、移位位数、有符号溢出等）来保证安全。
 
 ## 5. 使用注意 / 常见坑
 
-- **截断到整数部分**（朝零方向）。
-- LREAL 范围 ±1.79E308 远大于 INT64 ±9.22E18，**超界行为未定义**——⚠️ 待人工确认。
-- NaN/INF 输入会触发 FPU 异常——配合 `IsFinite(F_LREAL(x))` 守门。
+- **舍入模式 PDF 未明确** ⚠️
+- **NaN / Inf PDF 未定义** ⚠️ —— 调用前用 `LrealIsNaN` / `LrealIsFinite` 校验
+- **±2⁶³ 之外 PDF 未定义** ⚠️
+- 大于 2⁵³ 时 LREAL 已经丢精度
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_LREAL_TO_INT64.xml`](../examples/P_Demo_LREAL_TO_INT64.xml)
+> 配套可导入文件：[`examples/P_Demo_LREAL_TO_INT64.xml`](../examples/P_Demo_LREAL_TO_INT64.xml)（PLCopenXML，可直接导入 TwinCAT 3 XAE）
 >
-> 详见 [`examples/README.md`](../examples/README.md)
+> 导入步骤：右键 PLC 项目 → Import PLCopenXML → 选该文件 → OK
 
 ```iecst
 PROGRAM P_Demo_LREAL_TO_INT64
 VAR
-    rResult : T_LARGE_INTEGER;
-    bRun    : BOOL;
-    rX : LREAL := 1.234E9;
+    lrCmd        : LREAL := -1.5E9;
+    liSteps      : T_LARGE_INTEGER;
+    bConvert     : BOOL;
 END_VAR
 
-IF bRun THEN
-    rResult := LREAL_TO_INT64(rX);
-    bRun := FALSE;
+IF bConvert AND LrealIsFinite(lrCmd) THEN
+    // 排除 NaN / Inf —— PDF 未定义这些情况
+    liSteps := LREAL_TO_INT64(lrCmd);
+    bConvert := FALSE;
 END_IF;
 ```
 
-## 7. 相关
+## 7. 业务场景与实际价值
 
-- 见 [`Tc2_Utilities README`](../README.md) 同库其他条目
+- **场景**：把 PID 输出的浮点速度命令转有符号 64 位的累计步数。
+- **价值**：替代手写浮点→双倍长整数；一行调用。
+- **替代方案对比**：调用方可手写等价的双倍长 / 位运算 / IEEE 754 检测，但代码量大、易错；本函数封装好硬件指令或位级判断，单次调用即完成，与库内其它同类函数（如 `64 bit functions (signed)` 同组的其他成员）风格统一，便于代码审阅与维护。
 
-## 8. 待确认项
+## 8. 参考资料
 
-- 见上方使用注意中标 ⚠️ 的项。
+- **PDF**：[TwinCAT_3_PLC_Lib_Tc2_Utilities_EN.pdf](https://download.beckhoff.com/download/document/automation/twincat3/TwinCAT_3_PLC_Lib_Tc2_Utilities_EN.pdf) §4.8.14
+- **InfoSys topic**：https://infosys.beckhoff.com/content/1033/tcplclib_tc2_utilities/35218699.html
+- **同组相关 FC**：见库分类 `64 bit functions (signed)`，覆盖加 / 减 / 乘 / 除 / 比较 / 位运算 / 类型转换的完整接口

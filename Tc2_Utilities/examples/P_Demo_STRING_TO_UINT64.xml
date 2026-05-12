@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <project xmlns="http://www.plcopen.org/xml/tc6_0200">
-  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-10T18:00:00"/>
-  <contentHeader name="Tc2_Utilities.STRING_TO_UINT64 Demo" modificationDateTime="2026-05-10T18:00:00">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-12T12:00:00"/>
+  <contentHeader name="Tc2_Utilities.STRING_TO_UINT64 Demo" modificationDateTime="2026-05-12T12:00:00">
     <coordinateInfo>
       <fbd><scaling x="1" y="1"/></fbd>
       <ld><scaling x="1" y="1"/></ld>
@@ -14,36 +14,39 @@
       <pou name="P_Demo_STRING_TO_UINT64" pouType="program">
         <interface>
           <localVars>
-            <variable name="rResult">
-              <type><derived name="T_ULARGE_INTEGER"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">STRING_TO_UINT64 返回值</xhtml></documentation>
+            <variable name="sCountText">
+              <type><string><length>21</length></string></type>
+              <initialValue><simpleValue value="'18446744073709551615';"/></initialValue>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">来自 CSV 报表的极大值</xhtml></documentation>
             </variable>
-            <variable name="bRun">
-              <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">触发一次调用</xhtml></documentation>
+            <variable name="uliCount">
+              <type><derived name="T_ULARGE_INTEGER;"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">解析后的整数</xhtml></documentation>
             </variable>
-            <variable name="s">
-              <type><string><stringLength><value>21</value></stringLength></string></type>
-              <initialValue><simpleValue value="'12345'"/></initialValue>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">测试用本地变量</xhtml></documentation>
+            <variable name="bParse">
+              <type><derived name="BOOL;"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">触发一次解析</xhtml></documentation>
             </variable>
           </localVars>
         </interface>
         <body>
           <ST>
             <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
-// Tc2_Utilities.STRING_TO_UINT64 演示程序（FUNCTION）
+// Tc2_Utilities.STRING_TO_UINT64 演示程序（FUNCTION，单周期触发）
 // ============================================================
+// 场景：从 CSV 报表读到的产量计数字符串还原为 64 位整数用于累加。
+// 价值：替代手写 `WHILE i &amp;lt;= LEN(s) DO ... END_WHILE` 累加循环；一次调用搞定，错误风险集中在校验上而不是解析上。
 // 验证步骤：
-//   1. 引用 Tc2_Utilities
+//   1. 把本 PROGRAM 加到 PlcTask 调用列表
 //   2. 编译 + 登录
-//   3. 强制 bRun := TRUE 一个周期
-//   4. 在线监视 rResult
+//   3. 在线把 b... 触发位置 TRUE 一个周期
+//   4. 观察输出变量是否符合期望
 // ============================================================
 
-IF bRun THEN
-    rResult := STRING_TO_UINT64(s);
-    bRun := FALSE;
+IF bParse THEN
+    // 上升沿触发：实际工程应先用 F_IsValidDecimalString 校验
+    uliCount := STRING_TO_UINT64(sCountText);
+    bParse := FALSE;
 END_IF;
 </xhtml>
           </ST>
