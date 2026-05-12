@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <project xmlns="http://www.plcopen.org/xml/tc6_0200">
-  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-10T13:00:00"/>
-  <contentHeader name="Tc2_Utilities.FB_AdsReadEvents Demo" modificationDateTime="2026-05-10T13:00:00">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-12T00:00:00"/>
+  <contentHeader name="Tc2_Utilities.FB_AdsReadEvents Demo" modificationDateTime="2026-05-12T00:00:00">
     <coordinateInfo>
       <fbd><scaling x="1" y="1"/></fbd>
       <ld><scaling x="1" y="1"/></ld>
@@ -14,86 +14,91 @@
       <pou name="P_Demo_FB_AdsReadEvents" pouType="program">
         <interface>
           <localVars>
-            <variable name="fbFB_AdsReadEvents">
+            <variable name="fbAdsReadEvents">
               <type><derived name="FB_AdsReadEvents"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">[obsolete] 实例</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">FB 实例（已弃用；新代码用 Tc3_EventLogger）</xhtml></documentation>
             </variable>
-            <variable name="arg_sNetId">
+            <variable name="sLocalNetId">
               <type><derived name="T_AMSNetId"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT sNetId: 目标 AmsNetId（空字符串=本地）</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">空串 = 本机</xhtml></documentation>
             </variable>
-            <variable name="arg_bReadEvents">
+            <variable name="bEnableEventQuery">
               <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT bReadEvents: 使能读消息；下降沿同时复位错误输出</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">在线 TRUE 启动周期查询</xhtml></documentation>
             </variable>
-            <variable name="arg_nLanguageId">
+            <variable name="nLanguageId">
               <type><DWORD/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT nLanguageId: Language ID（决定查哪种语言的消息文本）</xhtml></documentation>
+              <initialValue><simpleValue value="1033"/></initialValue>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">语言 ID（1033 = en_US）</xhtml></documentation>
             </variable>
-            <variable name="arg_eDateAndTimeFormat">
+            <variable name="eTimeFormat">
               <type><derived name="E_DateAndTimeFormat"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT eDateAndTimeFormat: 时间戳格式（de_De / en_GB / en_US）</xhtml></documentation>
+              <initialValue><simpleValue value="E_DateAndTimeFormat.en_US"/></initialValue>
             </variable>
-            <variable name="arg_tRefreshTime">
+            <variable name="tRefreshPeriod">
               <type><TIME/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT tRefreshTime: 消息查询周期</xhtml></documentation>
+              <initialValue><simpleValue value="T#1S"/></initialValue>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">查询周期，建议 ≥ 500ms</xhtml></documentation>
             </variable>
-            <variable name="arg_tTimeout">
+            <variable name="tAdsTimeout">
               <type><TIME/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT tTimeout: ADS 超时</xhtml></documentation>
+              <initialValue><simpleValue value="T#5S"/></initialValue>
             </variable>
-            <variable name="out_aEvents">
+            <variable name="aActiveEvents">
               <type><array><dimension lower="1" upper="80"/><baseType><derived name="ST_ReadEvent"/></baseType></array></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT aEvents: 查到的消息数组（最多 80 条）</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">活动消息数组，最多 80 条</xhtml></documentation>
             </variable>
-            <variable name="out_nNumberOfEvents">
+            <variable name="nReportedEvents">
               <type><UDINT/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT nNumberOfEvents: 实际消息数量</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">实际活动消息条数</xhtml></documentation>
             </variable>
-            <variable name="out_bBusy">
+            <variable name="bQueryBusy">
               <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT bBusy: 执行中</xhtml></documentation>
             </variable>
-            <variable name="out_bDone">
+            <variable name="bQueryDone">
               <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT bDone: 完成</xhtml></documentation>
             </variable>
-            <variable name="out_bError">
+            <variable name="bQueryError">
               <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT bError: 出错</xhtml></documentation>
             </variable>
-            <variable name="out_nErrorId">
+            <variable name="nQueryErrorId">
               <type><UDINT/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT nErrorId: 错误号</xhtml></documentation>
             </variable>
           </localVars>
         </interface>
         <body>
           <ST>
             <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
-// Tc2_Utilities.FB_AdsReadEvents 演示程序（已废弃 FB）
+// Tc2_Utilities.FB_AdsReadEvents 演示程序（已弃用 FB）
 // ============================================================
-// ⚠️ 本 FB 已废弃。新代码请使用 PDF 中提示的替代 FB。
-// 验证步骤：
-//   1. 引用 Tc2_Utilities（及依赖类型所在库）
-//   2. 编译 + 登录
-//   3. 按 doc.md 的输入说明给 arg_* 赋值
-//   4. 监视 out_bError / out_nErrorId
+// 场景：维护一个 TwinCAT 3.1 Build 4022 的旧产线，HMI 用一个 Event Table
+//       控件显示当前活动报警。本 FB 是把控制器 EventLogger 里的活动消息
+//       拉到 PLC 端的标准接口——尽管已弃用，旧工程仍要继续维护。
+// 价值：保留旧工程的事件展示功能。如果是新工程，请改用 Tc3_EventLogger
+//       的 FB_TcAlarm + FB_TcEventLogger 订阅机制。
+// 验证：
+//   1. 引用 Tc2_Utilities，编译 + 登录
+//   2. 在线写 bEnableEventQuery := TRUE 启动周期查询
+//   3. 观察 bQueryBusy 周期翻 TRUE/FALSE；bQueryDone 在首次完成后保持 TRUE
+//   4. 触发一个测试报警（用旧版 ADSLOG 调用） → nReportedEvents 在 1-2 个
+//      tRefreshPeriod 内 +1
+//   5. 撤销 bEnableEventQuery → bQueryError / nQueryErrorId 复位为 0（PDF
+//      明确：下降沿复位错误）
 // ============================================================
 
-fbFB_AdsReadEvents(
-    sNetId := arg_sNetId,
-    bReadEvents := arg_bReadEvents,
-    nLanguageId := arg_nLanguageId,
-    eDateAndTimeFormat := arg_eDateAndTimeFormat,
-    tRefreshTime := arg_tRefreshTime,
-    tTimeout := arg_tTimeout,
-    aEvents => out_aEvents,
-    nNumberOfEvents => out_nNumberOfEvents,
-    bBusy => out_bBusy,
-    bDone => out_bDone,
-    bError => out_bError,
-    nErrorId => out_nErrorId
+fbAdsReadEvents(
+    sNetId             := sLocalNetId,
+    bReadEvents        := bEnableEventQuery,
+    nLanguageId        := nLanguageId,
+    eDateAndTimeFormat := eTimeFormat,
+    tRefreshTime       := tRefreshPeriod,
+    tTimeout           := tAdsTimeout,
+    aEvents            => aActiveEvents,
+    nNumberOfEvents    => nReportedEvents,
+    bBusy              => bQueryBusy,
+    bDone              => bQueryDone,
+    bError             => bQueryError,
+    nErrorId           => nQueryErrorId
 );
 </xhtml>
           </ST>

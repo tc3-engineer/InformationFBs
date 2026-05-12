@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <project xmlns="http://www.plcopen.org/xml/tc6_0200">
-  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-10T13:00:00"/>
-  <contentHeader name="Tc2_Utilities.FB_GetDeviceIdentification Demo" modificationDateTime="2026-05-10T13:00:00">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-12T00:00:00"/>
+  <contentHeader name="Tc2_Utilities.FB_GetDeviceIdentification Demo" modificationDateTime="2026-05-12T00:00:00">
     <coordinateInfo>
       <fbd><scaling x="1" y="1"/></fbd>
       <ld><scaling x="1" y="1"/></ld>
@@ -14,62 +14,71 @@
       <pou name="P_Demo_FB_GetDeviceIdentification" pouType="program">
         <interface>
           <localVars>
-            <variable name="fbFB_GetDeviceIdentification">
+            <variable name="fbGetDeviceIdent">
               <type><derived name="FB_GetDeviceIdentification"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">[obsolete] 实例</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">FB 实例（已弃用；新代码用 FB_GetDeviceIdentificationEx）</xhtml></documentation>
             </variable>
-            <variable name="arg_bExecute">
-              <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT bExecute: 上升沿触发</xhtml></documentation>
-            </variable>
-            <variable name="arg_tTimeout">
-              <type><TIME/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT tTimeout: ADS 超时</xhtml></documentation>
-            </variable>
-            <variable name="arg_sNetId">
+            <variable name="sLocalNetId">
               <type><derived name="T_AmsNetId"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT sNetId: 目标 AmsNetId（空 = 本地）</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">空串 = 本机</xhtml></documentation>
             </variable>
-            <variable name="out_bBusy">
+            <variable name="tAdsTimeout">
+              <type><TIME/></type>
+              <initialValue><simpleValue value="DEFAULT_ADS_TIMEOUT"/></initialValue>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">默认约 5s</xhtml></documentation>
+            </variable>
+            <variable name="bReadDeviceInfo">
               <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT bBusy: 执行中</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">上升沿触发一次查询</xhtml></documentation>
             </variable>
-            <variable name="out_bError">
+            <variable name="bIdentBusy">
               <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT bError: 出错</xhtml></documentation>
             </variable>
-            <variable name="out_nErrorId">
+            <variable name="bIdentError">
+              <type><BOOL/></type>
+            </variable>
+            <variable name="nIdentErrorId">
               <type><UDINT/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT nErrorId: ADS 错误号</xhtml></documentation>
             </variable>
-            <variable name="out_stDevIdent">
+            <variable name="stDeviceIdent">
               <type><derived name="ST_DeviceIdentification"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT stDevIdent: 设备识别信息（型号、序列号等）</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">设备身份结构体（型号 / 序列号 / TwinCAT 版本等）</xhtml></documentation>
             </variable>
           </localVars>
         </interface>
         <body>
           <ST>
             <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
-// Tc2_Utilities.FB_GetDeviceIdentification 演示程序（已废弃 FB）
+// Tc2_Utilities.FB_GetDeviceIdentification 演示程序（已弃用 FB）
 // ============================================================
-// ⚠️ 本 FB 已废弃。新代码请使用 PDF 中提示的替代 FB。
-// 验证步骤：
-//   1. 引用 Tc2_Utilities（及依赖类型所在库）
+// 场景：维护一个 TC2 时代的旧 HMI 工程：开机时读本机控制器的硬件型号与序列号，
+//       显示在 HMI "关于"页面上，方便操作员在现场识别设备型号 / 报修时报序列号。
+//       本 FB 是这套旧 HMI 用的标准接口。
+// 价值：在不大改工程的前提下让旧 HMI 继续工作。若发现型号字符串被截断
+//       （如新 Beckhoff 控制器型号过长），改用 FB_GetDeviceIdentificationEx。
+// 验证：
+//   1. 引用 Tc2_Utilities + Tc2_System（DEFAULT_ADS_TIMEOUT 在 Tc2_System）
 //   2. 编译 + 登录
-//   3. 按 doc.md 的输入说明给 arg_* 赋值
-//   4. 监视 out_bError / out_nErrorId
+//   3. 在线写 bReadDeviceInfo := TRUE 一次
+//   4. 观察 bIdentBusy 翻 TRUE 然后回 FALSE（1-2 周期内）
+//   5. bIdentError 应为 FALSE；展开 stDeviceIdent 应见型号、序列号等被填入
+//   6. 完成后 bReadDeviceInfo 自动复位（见下方 IF 块）
 // ============================================================
 
-fbFB_GetDeviceIdentification(
-    bExecute := arg_bExecute,
-    tTimeout := arg_tTimeout,
-    sNetId := arg_sNetId,
-    bBusy => out_bBusy,
-    bError => out_bError,
-    nErrorId => out_nErrorId,
-    stDevIdent => out_stDevIdent
+fbGetDeviceIdent(
+    bExecute   := bReadDeviceInfo,
+    tTimeout   := tAdsTimeout,
+    sNetId     := sLocalNetId,
+    bBusy      => bIdentBusy,
+    bError     => bIdentError,
+    nErrorId   => nIdentErrorId,
+    stDevIdent => stDeviceIdent
 );
+
+// 完成后自动复位 bExecute，便于下次触发
+IF NOT bIdentBusy AND bReadDeviceInfo THEN
+    bReadDeviceInfo := FALSE;
+END_IF;
 </xhtml>
           </ST>
         </body>
