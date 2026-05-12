@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <project xmlns="http://www.plcopen.org/xml/tc6_0200">
-  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-10T14:00:00"/>
-  <contentHeader name="Tc2_Utilities.F_STRINGEx Demo" modificationDateTime="2026-05-10T14:00:00">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-11T00:00:00"/>
+  <contentHeader name="Tc2_Utilities.F_STRINGEx Demo" modificationDateTime="2026-05-11T00:00:00">
     <coordinateInfo>
       <fbd><scaling x="1" y="1"/></fbd>
       <ld><scaling x="1" y="1"/></ld>
@@ -14,35 +14,37 @@
       <pou name="P_Demo_F_STRINGEx" pouType="program">
         <interface>
           <localVars>
-            <variable name="rResult">
-              <type><derived name="T_Arg"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">F_STRINGEx 返回值</xhtml></documentation>
+            <variable name="sRecipeName">
+              <type><string><length>80</length></string></type>
+              <initialValue><simpleValue value="'BatchAlpha'"/></initialValue>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">业务量（STRING）</xhtml></documentation>
             </variable>
-            <variable name="bRun">
+            <variable name="bPackArg">
               <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">触发一次调用</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">在线置 TRUE 触发一次打包</xhtml></documentation>
             </variable>
-            <variable name="v">
-              <type><string/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">测试用本地变量</xhtml></documentation>
+            <variable name="argDescriptor">
+              <type><derived name="T_Arg"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">打包后的 T_Arg 描述符（含 eType/cbLen/pData）</xhtml></documentation>
             </variable>
           </localVars>
         </interface>
         <body>
           <ST>
             <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
-// Tc2_Utilities.F_STRINGEx 演示程序（FUNCTION）
+// Tc2_Utilities.F_STRINGEx 演示程序（FUNCTION，返回 T_Arg）
 // ============================================================
-// 验证步骤：
-//   1. 引用 Tc2_Utilities
-//   2. 编译 + 登录
-//   3. 强制 bRun := TRUE 一个周期
-//   4. 观察 rResult 应为 ...
+// 场景：把 STRING 业务量打包为 T_Arg，供下游 EventLogger / FormatString2
+//       / ADS 消息的可变参数机制使用。
+// 价值：替代手填 T_Arg 三字段（eType/cbLen/pData），一行调用搞定。
+// 验证：在线写 sRecipeName 为示例值，bPackArg := TRUE；
+//       下一周期 argDescriptor.cbLen = SIZEOF(STRING)，argDescriptor.pData &lt;&gt; 0。
 // ============================================================
 
-IF bRun THEN
-    rResult := F_STRINGEx(in := v);
-    bRun := FALSE;
+IF bPackArg THEN
+    // 单次完整调用：返回的 T_Arg 立即可喂给 F_PutInArg(arg := argDescriptor, ...)
+    argDescriptor := F_STRINGEx(sRecipeName);
+    bPackArg := FALSE;
 END_IF;
 </xhtml>
           </ST>
