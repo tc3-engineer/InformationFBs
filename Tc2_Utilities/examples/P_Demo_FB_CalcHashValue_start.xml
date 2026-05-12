@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <project xmlns="http://www.plcopen.org/xml/tc6_0200">
-  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-11T00:00:00"/>
-  <contentHeader name="Tc2_Utilities.FB_CalcHashValue.start Demo" modificationDateTime="2026-05-11T00:00:00">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-12T00:00:00"/>
+  <contentHeader name="Tc2_Utilities.FB_CalcHashValue.start Demo" modificationDateTime="2026-05-12T00:00:00">
     <coordinateInfo>
       <fbd><scaling x="1" y="1"/></fbd>
       <ld><scaling x="1" y="1"/></ld>
@@ -14,34 +14,44 @@
       <pou name="P_Demo_FB_CalcHashValue_start" pouType="program">
         <interface>
           <localVars>
-            <variable name="fbCalc">
+            <variable name="fbHashCalculator">
               <type><derived name="FB_CalcHashValue"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">Tc2_Utilities.FB_CalcHashValue 实例</xhtml></documentation>
             </variable>
-            <variable name="eMode">
+            <variable name="eHashMode">
               <type><derived name="E_HashMode"/></type>
-              <initialValue><simpleValue value="E_HashMode.HashMode_Sha512"/></initialValue>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">Hash 模式（SHA-512 示例）</xhtml></documentation>
+              <initialValue><simpleValue value="E_HashMode.HashMode_Sha256"/></initialValue>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">本次使用的 hash 算法</xhtml></documentation>
+            </variable>
+            <variable name="bStartInit">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">上升沿触发一次 start 初始化</xhtml></documentation>
             </variable>
             <variable name="bStartOk">
               <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">start() 返回值监视</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">start 返回值监视</xhtml></documentation>
             </variable>
           </localVars>
         </interface>
         <body>
           <ST>
             <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
-// Tc2_Utilities.FB_CalcHashValue.start() 演示程序（METHOD）
+// Tc2_Utilities.FB_CalcHashValue.start() 演示程序
 // ============================================================
-// 验证步骤：
-//   1. 引用 Tc2_Utilities
-//   2. 编译 + 登录
-//   3. 在线写值 eMode（如 HashMode_Sha512），观察 bStartOk = TRUE
-//   4. 完整流程需要紧接调用 update() 与 finish()，见 FB_CalcHashValue.md
+// 场景：单独演示 hash 计算三段中的第一步 start()——选定算法并清空内部状态。
+//       这是任何 hash 计算的开局，且复用 FB 实例做下一次 hash 时也要重新调。
+// 价值：让读者理解"start 不可省、不可乱调"——FB 内部 hash 上下文只有在 start
+//       后才是确定的，乱跳会让后续 update/finish 输出不可预期。
+// 验证：
+//   1. 编译 + 登录
+//   2. 在线写 bStartInit := TRUE 触发一次 start 调用
+//   3. 监视 bStartOk 应翻 TRUE（合法 hashMode 总成功）
+//   4. 真要算 hash 必须接着调 update/finish，见 FB_CalcHashValue 顶层例程
 // ============================================================
 
-bStartOk := fbCalc.start(hashMode := eMode);
+IF bStartInit THEN
+    bStartInit := FALSE;
+    bStartOk := fbHashCalculator.start(hashMode := eHashMode);
+END_IF;
 </xhtml>
           </ST>
         </body>
