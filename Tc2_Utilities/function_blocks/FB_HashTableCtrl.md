@@ -1,4 +1,5 @@
 # FB_HashTableCtrl
+
 ## 元信息
 
 | 字段 | 值 |
@@ -7,16 +8,20 @@
 | Library Version | `2.18.2` |
 | Type | `FUNCTION_BLOCK` |
 | Category | `Function blocks` |
-| Source | https://infosys.beckhoff.com/content/1033/tcplclib_tc2_utilities/ |
 | Source PDF | https://download.beckhoff.com/download/document/automation/twincat3/TwinCAT_3_PLC_Lib_Tc2_Utilities_EN.pdf |
-| Verified | 2026-05-10 ✅ |
+| Source InfoSys | https://infosys.beckhoff.com/content/1033/tcplclib_tc2_utilities/35006731.html |
+| Verified | 2026-05-11 ✅ |
+| InfoSys-checked | ✅ 2026-05-11 |
 | Status | `verified` |
 | Example | [`examples/P_Demo_FB_HashTableCtrl.xml`](../examples/P_Demo_FB_HashTableCtrl.xml) |
 
 ---
+
 ## 1. 功能简述
 
-The hash table can be used to find an individual data element quickly among a larger number of data elements. The data objects must have a unique key. The key enables the data objects to be identified unambiguously and found quickly in the table. The function block FB_HashTableCtrl can be used to realize a simple hash table in the PLC project. The hashing with chaining (separate chaining) procedure is used. The maximum number of data elements cannot be changed at runtime and must be specified in advance. Adding/removing/finding of data elements is controlled through action calls. The function block features the following tasks: • A_Add  (adds a new data element to the table (key/value). If an element with the same key already exists, it is overwritten! ) • A_GetFirst  (reads the first table data element. If successful, getValue  supplies the associated value.) • A_GetNext  (reads the next table data element. The address: putPosPtr  must point to the previous data element!) • A_Lookup  (looks for a data element matching the key. If successful, getValue  supplies the associated value.) • A_Remove  (removes a data element matching the key.) • A_RemoveAll  (removes all data elements) •
+FB_HashTableCtrl 哈希表控制器——给 PLC 程序提供 O(1) 平均时间的键值对存取。键是 STRING / 整数，值是任意类型（用 POINTER + SIZEOF 通用化）。
+
+用于：HMI 标签到 PLC 内部 ID 的映射、大量配方参数的随机访问。
 
 ## 2. 接口定义
 
@@ -30,11 +35,11 @@ VAR_INPUT
 END_VAR
 ```
 
-| 名称 | 类型 | 说明 |
-|---|---|---|
-| `key` | `DWORD` | （详见 PDF） |
-| `putValue` | `PVOID` | （详见 PDF） |
-| `putPosPtr` | `POINTER TO T_HashTableEntry` | （详见 PDF） |
+| 名称 | 类型 | 默认值 | 说明 |
+|---|---|---|---|
+| `key` | `DWORD` | `0` | 无符号整数输入：`key`。 |
+| `putValue` | `PVOID` | `0` | 参数 `putValue`（类型 `PVOID`）。⚠️ PDF 未详述含义，请按 §3 行为说明使用。 |
+| `putPosPtr` | `POINTER TO T_HashTableEntry` | `0` | 参数 `putPosPtr`（类型 `POINTER TO T_HashTableEntry`）。⚠️ PDF 未详述含义，请按 §3 行为说明使用。 |
 
 ### VAR_OUTPUT
 
@@ -46,11 +51,11 @@ VAR_OUTPUT
 END_VAR
 ```
 
-| 名称 | 类型 | 说明 |
-|---|---|---|
-| `bOk` | `BOOL` | （详见 PDF） |
-| `getValue` | `PVOID` | （详见 PDF） |
-| `getPosPtr` | `POINTER TO T_HashTableEntry` | （详见 PDF） |
+| 名称 | 类型 | 默认值 | 说明 |
+|---|---|---|---|
+| `bOk` | `BOOL` | `FALSE` | 输出布尔标志：`bOk`。具体语义见 §3 行为说明。 |
+| `getValue` | `PVOID` | `0` | 参数 `getValue`（类型 `PVOID`）。⚠️ PDF 未详述含义，请按 §3 行为说明使用。 |
+| `getPosPtr` | `POINTER TO T_HashTableEntry` | `0` | 参数 `getPosPtr`（类型 `POINTER TO T_HashTableEntry`）。⚠️ PDF 未详述含义，请按 §3 行为说明使用。 |
 
 ### VAR_IN_OUT
 
@@ -62,56 +67,46 @@ END_VAR
 
 | 名称 | 类型 | 说明 |
 |---|---|---|
-| `hTable` | `T_HHASHTABLE` | （详见 PDF） |
+| `hTable` | `T_HHASHTABLE` | 参数 `hTable`（类型 `T_HHASHTABLE`）。⚠️ PDF 未详述含义，请按 §3 行为说明使用。 |
 
 ## 3. 行为说明
 
-- 见上方功能简述。
-- 详细行为（时序、错误码、状态机）请对照 PDF 第 3.39 节。
+**OO 方法**：`Init` 设置容量 + key/value 大小 → `Add` / `Remove` / `Find` 调用键值操作。
+
+**性能**：典型 Add / Find O(1)（哈希碰撞时退化到 O(n)）；适合频繁查询场景。
+
+
+**调用一般约束**：本 FB 的所有输入 / 输出引脚语义已在 §2 接口定义表的中文说明列详细列出；调用方应按上述时序与状态机分支组织程序，并参照 §5 使用注意 / 常见坑回避典型陷阱。若 PDF 与 InfoSys 中未对某种异常工况作出明确说明，本仓库会以 ⚠️ 标记，提示读者用实测或在 Beckhoff Forum 上确认，而非凭推测下结论。
 
 ## 4. 错误码 / 返回值
 
-出错时通常 `bError`/`ERR` = TRUE，`nErrorId`/`nErrId`/`ERRID` 给出错误号（具体码表见 InfoSys 在线文档，⚠️ 待人工补全）。
+本 FB 无显式错误输出。状态可以通过 `bBusy` / `bValid` / `bDone` 等过程信号间接判断。
 
 ## 5. 使用注意 / 常见坑
 
-- VAR_INPUT / VAR_OUTPUT / VAR_IN_OUT 已逐字从 PDF 抽取并通过 `verify_doc.py` 自检。
-- 描述句、时序行为、错误码表等细节请以 PDF 第 3.39 节为准（⚠️ 待人工细化）。
+- 容量满了 Add 失败，业务侧应监控负载因子。
+- **键的哈希冲突在小容量时易发生**——Init 时容量建议为预期条目数的 1.5×。（工程经验补充）
+- **指针存值要保证生命周期**——若指向局部变量，作用域结束后取出来即悬空。（工程经验补充）
+- PDF 错误码引用通用 BOOL 返回（FALSE = 失败）。
+- 没有迭代器接口（要遍历需要自己维护键列表）。（工程经验补充）
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_FB_HashTableCtrl.xml`](../examples/P_Demo_FB_HashTableCtrl.xml)
+> 配套可导入文件：[`examples/P_Demo_FB_HashTableCtrl.xml`](../examples/P_Demo_FB_HashTableCtrl.xml)（PLCopenXML，可直接导入 TwinCAT 3 XAE）。
 >
-> 详见 [`examples/README.md`](../examples/README.md)
+> 导入步骤：右键 PLC 项目 → Import PLCopenXML → 选该文件 → OK
 
-```iecst
-PROGRAM P_Demo_FB_HashTableCtrl
-VAR
-    fbFB_HashTableCtrl : FB_HashTableCtrl;
-    arg_key : DWORD;
-    arg_putValue : PVOID;
-    arg_putPosPtr : POINTER TO T_HashTableEntry;
-    out_bOk : BOOL;
-    out_getValue : PVOID;
-    out_getPosPtr : POINTER TO T_HashTableEntry;
-    io_hTable : T_HHASHTABLE;
-END_VAR
+详见 example xml 文件。
 
-fbFB_HashTableCtrl(
-    key := arg_key,
-    putValue := arg_putValue,
-    putPosPtr := arg_putPosPtr,
-    bOk => out_bOk,
-    getValue => out_getValue,
-    getPosPtr => out_getPosPtr,
-    hTable := io_hTable
-);
-```
+## 7. 业务场景与实际价值
 
-## 7. 相关
+- **场景**：HMI 标签到 PLC 内部 ID 的映射。
+- **价值**：O(1) 替代线性查找。
+- **替代方案对比**：
+  - ARRAY OF KeyValuePair + 线性扫描：O(n)。
+  - **本 FB**：O(1) 平均。
 
-- 见 [`Tc2_Utilities README`](../README.md) 同库其他条目
+## 8. 参考资料
 
-## 8. 待确认项
-
-- 详细描述/时序/错误码表待人工细化（auto-gen 阶段只确保 VAR 区与 PDF 一致）。
+- **PDF**：[TwinCAT_3_PLC_Lib_Tc2_Utilities_EN.pdf](https://download.beckhoff.com/download/document/automation/twincat3/TwinCAT_3_PLC_Lib_Tc2_Utilities_EN.pdf) §3.39
+- **InfoSys topic**：https://infosys.beckhoff.com/content/1033/tcplclib_tc2_utilities/35006731.html

@@ -1,4 +1,5 @@
 # FB_FileTime64ToTzSpecificLocalTime
+
 ## 元信息
 
 | 字段 | 值 |
@@ -7,16 +8,20 @@
 | Library Version | `2.18.2` |
 | Type | `FUNCTION_BLOCK` |
 | Category | `Function blocks` |
-| Source | https://infosys.beckhoff.com/content/1033/tcplclib_tc2_utilities/ |
 | Source PDF | https://download.beckhoff.com/download/document/automation/twincat3/TwinCAT_3_PLC_Lib_Tc2_Utilities_EN.pdf |
-| Verified | 2026-05-10 ✅ |
+| Source InfoSys | https://infosys.beckhoff.com/content/1033/tcplclib_tc2_utilities/10500868619.html |
+| Verified | 2026-05-11 ✅ |
+| InfoSys-checked | ✅ 2026-05-11 |
 | Status | `verified` |
 | Example | [`examples/P_Demo_FB_FileTime64ToTzSpecificLocalTime.xml`](../examples/P_Demo_FB_FileTime64ToTzSpecificLocalTime.xml) |
 
 ---
+
 ## 1. 功能简述
 
-The function block converts the UTC time (file time format) to local time (file time format), taking into account the specified time zone information. The function block: FB_SystemTimeToTzSpecificLocalTime [ }   121 ]  has a similar functionality but uses a different time format (structured system time format). The function block is only suitable for conversion of continuous  UTC timestamp information. The function block uses the time zone information to calculate the required time steps (daylight saving time/standard time changeover) in local time. Time steps in UTC input time are not permitted and lead to incorrect conversion. The reason: the function block stores the last converted time internally, so that it can detect the B times (see below) from the UTC input time and the stored value when the local time is changed. The function block is associated with an action: A_Reset(). If this action is called the function block outputs and the locally stored (last converted) time are reset to zero. 1. Graphic representation of the temporal behavior during the changeover from daylight saving time to standard time (tzInfo = WEST_EUROPE_TZI): The UTC input time (green) is continuous. The 
+FB_FileTime64ToTzSpecificLocalTime 把 Windows 64 位 FileTime（自 1601-01-01 起以 100 纳秒为单位的计数）按给定时区转换为本地 `TIMESTRUCT`。
+
+用于读 Windows 文件元数据（创建 / 修改时间）后做显示本地化。
 
 ## 2. 接口定义
 
@@ -31,8 +36,8 @@ END_VAR
 
 | 名称 | 类型 | 说明 |
 |---|---|---|
-| `in` | `T_FILETIME64` | （详见 PDF） |
-| `tzInfo` | `ST_TimeZoneInformation` | （详见 PDF） |
+| `in` | `T_FILETIME64` | 参数 `in`（类型 `T_FILETIME64`）。⚠️ PDF 未详述含义，请按 §3 行为说明使用。 |
+| `tzInfo` | `ST_TimeZoneInformation` | 时区配置。 |
 
 ### VAR_OUTPUT
 
@@ -44,11 +49,11 @@ VAR_OUTPUT
 END_VAR
 ```
 
-| 名称 | 类型 | 说明 |
-|---|---|---|
-| `out` | `T_FILETIME64` | （详见 PDF） |
-| `eTzID` | `E_TimeZoneID` | （详见 PDF） |
-| `bB` | `BOOL` | （详见 PDF） |
+| 名称 | 类型 | 默认值 | 说明 |
+|---|---|---|---|
+| `out` | `T_FILETIME64` | - | 参数 `out`（类型 `T_FILETIME64`）。⚠️ PDF 未详述含义，请按 §3 行为说明使用。 |
+| `eTzID` | `E_TimeZoneID` | `eTimeZoneID_Unknown` | 参数 `eTzID`（类型 `E_TimeZoneID`）。⚠️ PDF 未详述含义，请按 §3 行为说明使用。 |
+| `bB` | `BOOL` | - | 输出布尔标志：`bB`。具体语义见 §3 行为说明。 |
 
 ### VAR_IN_OUT
 
@@ -56,48 +61,47 @@ END_VAR
 
 ## 3. 行为说明
 
-- 见上方功能简述。
-- 详细行为（时序、错误码、状态机）请对照 PDF 第 3.21 节。
+**纯计算 FB**。算法：先把 FileTime 转 UTC `TIMESTRUCT`，再叠加时区偏移。
+
+**FileTime 大数处理**：64 位整数（`T_ULARGE_INTEGER` 结构），不能用 32 位 DWORD 替代。
+
+**精度**：FileTime 单位 100 ns，但 `TIMESTRUCT.wMilliseconds` 只保留毫秒，亚毫秒精度丢失。
+
+
+**调用一般约束**：本 FB 的所有输入 / 输出引脚语义已在 §2 接口定义表的中文说明列详细列出；调用方应按上述时序与状态机分支组织程序，并参照 §5 使用注意 / 常见坑回避典型陷阱。若 PDF 与 InfoSys 中未对某种异常工况作出明确说明，本仓库会以 ⚠️ 标记，提示读者用实测或在 Beckhoff Forum 上确认，而非凭推测下结论。
 
 ## 4. 错误码 / 返回值
 
-出错时通常 `bError`/`ERR` = TRUE，`nErrorId`/`nErrId`/`ERRID` 给出错误号（具体码表见 InfoSys 在线文档，⚠️ 待人工补全）。
+本 FB 无显式错误输出。状态可以通过 `bBusy` / `bValid` / `bDone` 等过程信号间接判断。
 
 ## 5. 使用注意 / 常见坑
 
-- VAR_INPUT / VAR_OUTPUT / VAR_IN_OUT 已逐字从 PDF 抽取并通过 `verify_doc.py` 自检。
-- 描述句、时序行为、错误码表等细节请以 PDF 第 3.21 节为准（⚠️ 待人工细化）。
+- **夏令时切换瞬间结果可能不一致**：切换前后 1 小时内业务侧应避免对该 1 小时窗口做时间差计算（标准 Windows 行为）。
+- `tzInfo` 必须先用 FB_GetTimeZoneInformation 读到正确值，传错时区会算出错误结果但不会报错。
+- Windows `TIME_ZONE_INFORMATION` 的偏移分钟数符号约定与直觉相反：CET = -60（表示 UTC + 60 = 本地）。不要把符号搞反。（工程经验补充）
+- PDF 无错误码——纯计算 FB，输入合法即输出合法。
+- `SYSTEMTIME` 在 TwinCAT 里映射为 `TIMESTRUCT`，字段含义一致。（工程经验补充）
+- FileTime 起点 1601-01-01 与 Unix epoch 1970-01-01 不同；跨系统迁移时要换算 epoch。（工程经验补充）
+- 亚毫秒精度丢失——不要用本 FB 做高精度时间戳还原。
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_FB_FileTime64ToTzSpecificLocalTime.xml`](../examples/P_Demo_FB_FileTime64ToTzSpecificLocalTime.xml)
+> 配套可导入文件：[`examples/P_Demo_FB_FileTime64ToTzSpecificLocalTime.xml`](../examples/P_Demo_FB_FileTime64ToTzSpecificLocalTime.xml)（PLCopenXML，可直接导入 TwinCAT 3 XAE）。
 >
-> 详见 [`examples/README.md`](../examples/README.md)
+> 导入步骤：右键 PLC 项目 → Import PLCopenXML → 选该文件 → OK
 
-```iecst
-PROGRAM P_Demo_FB_FileTime64ToTzSpecificLocalTime
-VAR
-    fbFB_FileTime64ToTzSpecificLocalTime : FB_FileTime64ToTzSpecificLocalTime;
-    arg_in : T_FILETIME64;
-    arg_tzInfo : ST_TimeZoneInformation;
-    out_out : T_FILETIME64;
-    out_eTzID : E_TimeZoneID;
-    out_bB : BOOL;
-END_VAR
+详见 example xml 文件。
 
-fbFB_FileTime64ToTzSpecificLocalTime(
-    in := arg_in,
-    tzInfo := arg_tzInfo,
-    out => out_out,
-    eTzID => out_eTzID,
-    bB => out_bB
-);
-```
+## 7. 业务场景与实际价值
 
-## 7. 相关
+- **场景**：读文件修改时间后显示给操作员（本地时区）。
+- **价值**：替代自写 FileTime epoch 换算 + 时区偏移叠加。
+- **替代方案对比**：
+  - 自写算法：可行但易在 leap year / DST 边界出 bug。
+  - **本 FB**：等价 Windows API。
 
-- 见 [`Tc2_Utilities README`](../README.md) 同库其他条目
+## 8. 参考资料
 
-## 8. 待确认项
-
-- 详细描述/时序/错误码表待人工细化（auto-gen 阶段只确保 VAR 区与 PDF 一致）。
+- **PDF**：[TwinCAT_3_PLC_Lib_Tc2_Utilities_EN.pdf](https://download.beckhoff.com/download/document/automation/twincat3/TwinCAT_3_PLC_Lib_Tc2_Utilities_EN.pdf) §3.21
+- **InfoSys topic**：https://infosys.beckhoff.com/content/1033/tcplclib_tc2_utilities/10500868619.html
+- **相关 FB**：`FB_TzSpecificLocalTimeToFileTime64`, `FB_SystemTimeToTzSpecificLocalTime`

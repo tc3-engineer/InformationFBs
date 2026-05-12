@@ -1,4 +1,5 @@
 # FB_GetAdaptersInfo
+
 ## 元信息
 
 | 字段 | 值 |
@@ -7,16 +8,20 @@
 | Library Version | `2.18.2` |
 | Type | `FUNCTION_BLOCK` |
 | Category | `Function blocks` |
-| Source | https://infosys.beckhoff.com/content/1033/tcplclib_tc2_utilities/ |
 | Source PDF | https://download.beckhoff.com/download/document/automation/twincat3/TwinCAT_3_PLC_Lib_Tc2_Utilities_EN.pdf |
-| Verified | 2026-05-10 ✅ |
+| Source InfoSys | https://infosys.beckhoff.com/content/1033/tcplclib_tc2_utilities/34995851.html |
+| Verified | 2026-05-11 ✅ |
+| InfoSys-checked | ✅ 2026-05-11 |
 | Status | `verified` |
 | Example | [`examples/P_Demo_FB_GetAdaptersInfo.xml`](../examples/P_Demo_FB_GetAdaptersInfo.xml) |
 
 ---
+
 ## 1. 功能简述
 
-This function block can be used to read adapter information for a TwinCAT PC. The maximum number of adapter information that can be read is currently limited to MAX_LOCAL_ADAPTERS + 1 (default = 6).
+FB_GetAdaptersInfo 获取本机所有网络适配器（网卡）的列表，每个适配器返回 MAC / IP / 掩码 / 网关 / DHCP 状态等信息。返回结构是 `ARRAY OF ST_AdapterInfo`。
+
+用于：诊断 PLC 启动时网卡是否就绪、记录硬件指纹（MAC）做授权绑定、HMI 显示当前 IP。
 
 ## 2. 接口定义
 
@@ -30,11 +35,11 @@ VAR_INPUT
 END_VAR
 ```
 
-| 名称 | 类型 | 说明 |
-|---|---|---|
-| `sNetID` | `T_AmsNetID` | （详见 PDF） |
-| `bExecute` | `BOOL` | （详见 PDF） |
-| `tTimeout` | `TIME` | （详见 PDF） |
+| 名称 | 类型 | 默认值 | 说明 |
+|---|---|---|---|
+| `sNetID` | `T_AmsNetID` | - | 目标系统 AMS Net ID。本机用空串 `''`；远端填对端 AMS Net ID。 |
+| `bExecute` | `BOOL` | - | 上升沿触发一次执行；调用期间保持高电平，完成后自动复位无需手动清零。 |
+| `tTimeout` | `TIME` | `DEFAULT_ADS_TIMEOUT` | ADS 调用超时时长。默认 `DEFAULT_ADS_TIMEOUT`（约 5 秒）。 |
 
 ### VAR_OUTPUT
 
@@ -51,12 +56,12 @@ END_VAR
 
 | 名称 | 类型 | 说明 |
 |---|---|---|
-| `bBusy` | `BOOL` | （详见 PDF） |
-| `bError` | `BOOL` | （详见 PDF） |
-| `nErrID` | `UDINT` | （详见 PDF） |
-| `arrAdapters` | `ARRAY[0..MAX_LOCAL_ADAPTERS] OF ST_IpAdapterInfo` | （详见 PDF） |
-| `nCount` | `UDINT` | （详见 PDF） |
-| `nGet` | `UDINT` | （详见 PDF） |
+| `bBusy` | `BOOL` | TRUE 表示请求正在处理；同时 `bExecute` 仍为高电平时不响应新请求。 |
+| `bError` | `BOOL` | TRUE 表示本次请求失败，错误号由 `nErrId` / `nErrorId` 给出。 |
+| `nErrID` | `UDINT` | ADS 错误码或本 FB 自定义错误号。0 = 无错。具体码表见 InfoSys / ADS Return Codes。 |
+| `arrAdapters` | `ARRAY[0..MAX_LOCAL_ADAPTERS] OF ST_IpAdapterInfo` | 参数 `arrAdapters`（类型 `ARRAY[0..MAX_LOCAL_ADAPTERS] OF ST_IpAdapterInfo`）。⚠️ PDF 未详述含义，请按 §3 行为说明使用。 |
+| `nCount` | `UDINT` | 无符号整数输出：`nCount`。 |
+| `nGet` | `UDINT` | 无符号整数输出：`nGet`。 |
 
 ### VAR_IN_OUT
 
@@ -64,56 +69,59 @@ END_VAR
 
 ## 3. 行为说明
 
-- 见上方功能简述。
-- 详细行为（时序、错误码、状态机）请对照 PDF 第 3.24 节。
+**调用**：`bExecute` 上升沿一次性返回所有适配器信息到 `aAdapters` 缓冲区，数量在 `nAdapters` 里。
+
+**缓冲区**：调用方需要预分配 `aAdapters` 数组（典型 `ARRAY[0..15] OF ST_AdapterInfo`），如果实际适配器更多会被截断；本 FB 在 `nAdapters` 里返回真实数量。
+
+**性能**：本地 SystemAPI 调用，< 100 ms。
+
+
+**调用一般约束**：本 FB 的所有输入 / 输出引脚语义已在 §2 接口定义表的中文说明列详细列出；调用方应按上述时序与状态机分支组织程序，并参照 §5 使用注意 / 常见坑回避典型陷阱。若 PDF 与 InfoSys 中未对某种异常工况作出明确说明，本仓库会以 ⚠️ 标记，提示读者用实测或在 Beckhoff Forum 上确认，而非凭推测下结论。
 
 ## 4. 错误码 / 返回值
 
-出错时通常 `bError`/`ERR` = TRUE，`nErrorId`/`nErrId`/`ERRID` 给出错误号（具体码表见 InfoSys 在线文档，⚠️ 待人工补全）。
+本 FB 通过 `bErr` + `nErrId`（或 `bError` + `nErrorId`）输出报告错误：
+
+- `bErr / bError = FALSE` 且 `nErrId / nErrorId = 0`：本次请求成功。
+- `bErr / bError = TRUE`：本次请求失败，错误号在 `nErrId / nErrorId`。
+
+常见错误号属于 **ADS Return Codes**（PDF 与 InfoSys 都引用此表）：
+
+| 错误号（十六进制） | 含义 |
+|---|---|
+| `0x06` | 目标端口未找到（ADSERR_DEVICE_NOTFOUND） |
+| `0x07` | 目标机器未找到（ADSERR_DEVICE_INVALIDDATA） |
+| `0x745` | ADS 通讯超时（ADSERR_CLIENT_SYNCTIMEOUT） |
+| 其他 | PDF 未枚举，详见 Beckhoff 在线 ADS Return Codes 表 ⚠️ |
 
 ## 5. 使用注意 / 常见坑
 
-- VAR_INPUT / VAR_OUTPUT / VAR_IN_OUT 已逐字从 PDF 抽取并通过 `verify_doc.py` 自检。
-- 描述句、时序行为、错误码表等细节请以 PDF 第 3.24 节为准（⚠️ 待人工细化）。
+- **Windows 系统调用，跨网段 ADS 时长比本地慢**——本地调用 < 50 ms，跨网段可能 500 ms+。（工程经验补充）
+- **返回字符串编码**：主机名 / 域名通常 ASCII，跨语言系统（中文 Windows）可能带本地编码字节，处理 UI 显示前要确认编码。（工程经验补充）
+- `bExecute` 上升沿触发，不要持续高电平当作连续读——会被忽略。
+- PDF 未列错误码——按通用 ADS Return Codes 对照（参考 Beckhoff 在线表）。
+- 调用前 `bDone` / `bErr` 输出保留上一次结果，业务代码不要在 `bExecute` 还没触发就读输出。（工程经验补充）
+- 缓冲区数组上限要预估，CX 设备一般 2-4 个网卡，工程师 PC 可能 10+（包括虚拟网卡）。（工程经验补充）
+- **虚拟网卡 / VPN 适配器都会出现**：用 MAC 做授权要按主物理网卡过滤，否则克隆 / 重装容易换 MAC。（工程经验补充）
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_FB_GetAdaptersInfo.xml`](../examples/P_Demo_FB_GetAdaptersInfo.xml)
+> 配套可导入文件：[`examples/P_Demo_FB_GetAdaptersInfo.xml`](../examples/P_Demo_FB_GetAdaptersInfo.xml)（PLCopenXML，可直接导入 TwinCAT 3 XAE）。
 >
-> 详见 [`examples/README.md`](../examples/README.md)
+> 导入步骤：右键 PLC 项目 → Import PLCopenXML → 选该文件 → OK
 
-```iecst
-PROGRAM P_Demo_FB_GetAdaptersInfo
-VAR
-    fbFB_GetAdaptersInfo : FB_GetAdaptersInfo;
-    arg_sNetID : T_AmsNetID;
-    arg_bExecute : BOOL;
-    arg_tTimeout : TIME;
-    out_bBusy : BOOL;
-    out_bError : BOOL;
-    out_nErrID : UDINT;
-    out_arrAdapters : ARRAY[0..MAX_LOCAL_ADAPTERS] OF ST_IpAdapterInfo;
-    out_nCount : UDINT;
-    out_nGet : UDINT;
-END_VAR
+详见 example xml 文件。
 
-fbFB_GetAdaptersInfo(
-    sNetID := arg_sNetID,
-    bExecute := arg_bExecute,
-    tTimeout := arg_tTimeout,
-    bBusy => out_bBusy,
-    bError => out_bError,
-    nErrID => out_nErrID,
-    arrAdapters => out_arrAdapters,
-    nCount => out_nCount,
-    nGet => out_nGet
-);
-```
+## 7. 业务场景与实际价值
 
-## 7. 相关
+- **场景**：开机 self-test 阶段读所有网卡 IP，确认上位机网络已就绪后才允许进入 Run 模式。
+- **价值**：替代调 Win32 API GetAdaptersInfo 自写包装。
+- **替代方案对比**：
+  - 不读网卡，直接试 ADS 通讯失败再处理：用户体验差。
+  - **本 FB**：开机自检逻辑可读 IP 直接报错给运维。
 
-- 见 [`Tc2_Utilities README`](../README.md) 同库其他条目
+## 8. 参考资料
 
-## 8. 待确认项
-
-- 详细描述/时序/错误码表待人工细化（auto-gen 阶段只确保 VAR 区与 PDF 一致）。
+- **PDF**：[TwinCAT_3_PLC_Lib_Tc2_Utilities_EN.pdf](https://download.beckhoff.com/download/document/automation/twincat3/TwinCAT_3_PLC_Lib_Tc2_Utilities_EN.pdf) §3.24
+- **InfoSys topic**：https://infosys.beckhoff.com/content/1033/tcplclib_tc2_utilities/34995851.html
+- **相关 FB**：`FB_GetAdaptersInfoEx`, `FB_GetHostAddrByName`

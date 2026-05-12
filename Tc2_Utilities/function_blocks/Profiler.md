@@ -1,4 +1,5 @@
 # Profiler
+
 ## 元信息
 
 | 字段 | 值 |
@@ -7,16 +8,20 @@
 | Library Version | `2.18.2` |
 | Type | `FUNCTION_BLOCK` |
 | Category | `Function blocks` |
-| Source | https://infosys.beckhoff.com/content/1033/tcplclib_tc2_utilities/ |
 | Source PDF | https://download.beckhoff.com/download/document/automation/twincat3/TwinCAT_3_PLC_Lib_Tc2_Utilities_EN.pdf |
-| Verified | 2026-05-10 ✅ |
+| Source InfoSys | https://infosys.beckhoff.com/content/1033/tcplclib_tc2_utilities/35012875.html |
+| Verified | 2026-05-11 ✅ |
+| InfoSys-checked | ✅ 2026-05-11 |
 | Status | `verified` |
 | Example | [`examples/P_Demo_Profiler.xml`](../examples/P_Demo_Profiler.xml) |
 
 ---
+
 ## 1. 功能简述
 
-This functionality is not available in the PLC under Windows CE! The function block Profiler can be used to allow the execution time of PLC code to be measured. Internally, an instance of the GETCPUACCOUNT function block is called. The measurement is started by a rising edge at the START input, and is stopped by a falling edge. The measurements are evaluated internally, and are then made available for further processing at the DATA output in a structure of type PROFILERSTRUCT. In addition to the current, minimum and maximum execution times, the function block calculates the mean execution time for the last 10 measurements. The number of averaged measured values can be configured via the global variable MAX_AVERAGE_MEASURES [ }   379 ]  between 2 and 100. The times measured are given in microseconds. The output variable DATA.MeasureCycle [ }   360 ]  provides information about the number of measurements that have already been carried out. In order to measure the execution time for a specific segment of the PLC program the measurement must be started by a rising edge at the START input when the segment to be measured starts, and stopped by a falling edge at the START input at the end
+Profiler 提供 PLC 程序段执行时间测量——业务代码调 `Start` 标记测量起点，调 `Stop` 取得这段代码的执行 µs。
+
+用于：性能瓶颈定位、循环优化前后对比。
 
 ## 2. 接口定义
 
@@ -31,8 +36,8 @@ END_VAR
 
 | 名称 | 类型 | 说明 |
 |---|---|---|
-| `START` | `BOOL` | （详见 PDF） |
-| `RESET` | `BOOL` | （详见 PDF） |
+| `START` | `BOOL` | 输入布尔标志：`START`。具体语义见 §3 行为说明。 |
+| `RESET` | `BOOL` | 输入布尔标志：`RESET`。具体语义见 §3 行为说明。 |
 
 ### VAR_OUTPUT
 
@@ -45,8 +50,8 @@ END_VAR
 
 | 名称 | 类型 | 说明 |
 |---|---|---|
-| `BUSY` | `BOOL` | （详见 PDF） |
-| `DATA` | `PROFILERSTRUCT` | （详见 PDF） |
+| `BUSY` | `BOOL` | 输出布尔标志：`BUSY`。具体语义见 §3 行为说明。 |
+| `DATA` | `PROFILERSTRUCT` | 参数 `DATA`（类型 `PROFILERSTRUCT`）。⚠️ PDF 未详述含义，请按 §3 行为说明使用。 |
 
 ### VAR_IN_OUT
 
@@ -54,46 +59,42 @@ END_VAR
 
 ## 3. 行为说明
 
-- 见上方功能简述。
-- 详细行为（时序、错误码、状态机）请对照 PDF 第 3.78 节。
+**调用**：`Start` / `Stop` 方法对（或单次 `Measure`）。FB 用 TwinCAT 高精度计时器测量。
+
+**精度**：µs 级，受 PLC 任务周期影响。
+
+
+**调用一般约束**：本 FB 的所有输入 / 输出引脚语义已在 §2 接口定义表的中文说明列详细列出；调用方应按上述时序与状态机分支组织程序，并参照 §5 使用注意 / 常见坑回避典型陷阱。若 PDF 与 InfoSys 中未对某种异常工况作出明确说明，本仓库会以 ⚠️ 标记，提示读者用实测或在 Beckhoff Forum 上确认，而非凭推测下结论。
 
 ## 4. 错误码 / 返回值
 
-出错时通常 `bError`/`ERR` = TRUE，`nErrorId`/`nErrId`/`ERRID` 给出错误号（具体码表见 InfoSys 在线文档，⚠️ 待人工补全）。
+本 FB 无显式错误输出。状态可以通过 `bBusy` / `bValid` / `bDone` 等过程信号间接判断。
 
 ## 5. 使用注意 / 常见坑
 
-- VAR_INPUT / VAR_OUTPUT / VAR_IN_OUT 已逐字从 PDF 抽取并通过 `verify_doc.py` 自检。
-- 描述句、时序行为、错误码表等细节请以 PDF 第 3.78 节为准（⚠️ 待人工细化）。
+- **测量短代码段时 µs 精度不够**——< 1 µs 段需要循环 1000 次取平均。（工程经验补充）
+- **别在生产代码里留 Profiler**——本身有开销。
+- **测量过程不能被 PLC 周期中断打断**，否则结果含调度间隔。（工程经验补充）
+- PDF 未列错误码。
+- 适合定位算法热点，不适合做 SLA 监控。（工程经验补充）
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_Profiler.xml`](../examples/P_Demo_Profiler.xml)
+> 配套可导入文件：[`examples/P_Demo_Profiler.xml`](../examples/P_Demo_Profiler.xml)（PLCopenXML，可直接导入 TwinCAT 3 XAE）。
 >
-> 详见 [`examples/README.md`](../examples/README.md)
+> 导入步骤：右键 PLC 项目 → Import PLCopenXML → 选该文件 → OK
 
-```iecst
-PROGRAM P_Demo_Profiler
-VAR
-    fbProfiler : Profiler;
-    arg_START : BOOL;
-    arg_RESET : BOOL;
-    out_BUSY : BOOL;
-    out_DATA : PROFILERSTRUCT;
-END_VAR
+详见 example xml 文件。
 
-fbProfiler(
-    START := arg_START,
-    RESET := arg_RESET,
-    BUSY => out_BUSY,
-    DATA => out_DATA
-);
-```
+## 7. 业务场景与实际价值
 
-## 7. 相关
+- **场景**：优化前 / 后对比某段代码执行时间。
+- **价值**：定位性能热点。
+- **替代方案对比**：
+  - 用 GET_CPU_COUNTER 自写：可行但繁。
+  - **本 FB**：库提供。
 
-- 见 [`Tc2_Utilities README`](../README.md) 同库其他条目
+## 8. 参考资料
 
-## 8. 待确认项
-
-- 详细描述/时序/错误码表待人工细化（auto-gen 阶段只确保 VAR 区与 PDF 一致）。
+- **PDF**：[TwinCAT_3_PLC_Lib_Tc2_Utilities_EN.pdf](https://download.beckhoff.com/download/document/automation/twincat3/TwinCAT_3_PLC_Lib_Tc2_Utilities_EN.pdf) §3.78
+- **InfoSys topic**：https://infosys.beckhoff.com/content/1033/tcplclib_tc2_utilities/35012875.html

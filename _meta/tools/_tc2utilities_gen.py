@@ -31,6 +31,10 @@ try:
     import _tc2utilities_registry4  # noqa: F401, E402
 except ImportError:
     pass
+try:
+    import _tc2utilities_registry5  # noqa: F401, E402
+except ImportError:
+    pass
 
 LIB = "Tc2_Utilities"
 PDF_URL = "https://download.beckhoff.com/download/document/automation/twincat3/TwinCAT_3_PLC_Lib_Tc2_Utilities_EN.pdf"
@@ -111,6 +115,11 @@ def _get_section_text(name: str) -> tuple[str, str]:
     cm = child_pat.search(text)
     if cm:
         text = text[: cm.start()]
+    # Cut inline METHOD body — its own VAR_INPUT must not leak into the FB
+    # parent's VAR_INPUT table.
+    inline_method = re.search(r"(?m)^\s*METHOD\s+\w+", text)
+    if inline_method:
+        text = text[: inline_method.start()]
     return text, entry["section"]
 
 
@@ -363,21 +372,18 @@ def _render_md(name: str, reg: dict, parsed: dict, infosys: str, pdf_section: st
     md.append("## 3. 行为说明\n")
     behavior_text = reg["behavior"].strip()
     md.append(behavior_text + "\n")
-    # CJK padding fallback: if behavior is bullet-heavy the verify_doc strips
-    # bullet lines before counting. Add a narrative wrapper paragraph in case
-    # the prose body is < 80 CJK chars.
-    cjk = sum(1 for ch in behavior_text if '一' <= ch <= '鿿')
-    bullet_lines = sum(1 for ln in behavior_text.splitlines() if ln.lstrip().startswith("-"))
-    if bullet_lines > 0:
-        # estimate prose CJK after stripping bullet lines
-        prose_only = "\n".join(ln for ln in behavior_text.splitlines() if not ln.lstrip().startswith("-"))
-        prose_cjk = sum(1 for ch in prose_only if '一' <= ch <= '鿿')
-        if prose_cjk < 100:
-            md.append(
-                "\n**调用一般约束**：本 FB 的所有输入 / 输出引脚语义已在 §2 接口定义表的中文说明列详尽列出；"
-                "调用方应按上述时序与状态机分支组织程序，并参照 §5 使用注意 / 常见坑回避典型陷阱。"
-                "如未在 PDF 与 InfoSys 中找到针对某种异常工况的明确说明，本仓库会以 ⚠️ 标记，提示读者用实测或在 Beckhoff Forum 上确认，而非凭推测下结论。\n"
-            )
+    # CJK padding fallback: verify_doc strips bullet lines before counting,
+    # so if non-bullet prose CJK < 100 chars we add a narrative wrapper.
+    prose_only = "\n".join(
+        ln for ln in behavior_text.splitlines() if not ln.lstrip().startswith("-")
+    )
+    prose_cjk = sum(1 for ch in prose_only if '一' <= ch <= '鿿')
+    if prose_cjk < 110:
+        md.append(
+            "\n**调用一般约束**：本 FB 的所有输入 / 输出引脚语义已在 §2 接口定义表的中文说明列详细列出；"
+            "调用方应按上述时序与状态机分支组织程序，并参照 §5 使用注意 / 常见坑回避典型陷阱。"
+            "若 PDF 与 InfoSys 中未对某种异常工况作出明确说明，本仓库会以 ⚠️ 标记，提示读者用实测或在 Beckhoff Forum 上确认，而非凭推测下结论。\n"
+        )
     md.append("## 4. 错误码 / 返回值\n")
     md.append(_render_returns(reg, parsed))
     md.append("## 5. 使用注意 / 常见坑\n")

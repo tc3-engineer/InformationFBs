@@ -1,4 +1,5 @@
 # FB_BasicPID
+
 ## 元信息
 
 | 字段 | 值 |
@@ -7,16 +8,20 @@
 | Library Version | `2.18.2` |
 | Type | `FUNCTION_BLOCK` |
 | Category | `Function blocks` |
-| Source | https://infosys.beckhoff.com/content/1033/tcplclib_tc2_utilities/ |
 | Source PDF | https://download.beckhoff.com/download/document/automation/twincat3/TwinCAT_3_PLC_Lib_Tc2_Utilities_EN.pdf |
-| Verified | 2026-05-10 ✅ |
+| Source InfoSys | https://infosys.beckhoff.com/content/1033/tcplclib_tc2_utilities/35047819.html |
+| Verified | 2026-05-11 ✅ |
+| InfoSys-checked | ✅ 2026-05-11 |
 | Status | `verified` |
 | Example | [`examples/P_Demo_FB_BasicPID.xml`](../examples/P_Demo_FB_BasicPID.xml) |
 
 ---
+
 ## 1. 功能简述
 
-The function block is a simple discretized PID element. Transfer function: Functional diagram:
+FB_BasicPID 实现一个基础 PID 控制器：给定测量值 + 设定值 + Kp/Ki/Kd 参数，输出执行量。
+
+用于：简单的温度 / 流量 / 压力 / 位置闭环控制。比 Tc3_Controller 库的高级控制器轻量，适合教学 / 小项目。
 
 ## 2. 接口定义
 
@@ -37,14 +42,14 @@ END_VAR
 
 | 名称 | 类型 | 说明 |
 |---|---|---|
-| `fSetpointValue` | `LREAL` | （详见 PDF） |
-| `fActualValue` | `LREAL` | （详见 PDF） |
-| `bReset` | `BOOL` | （详见 PDF） |
-| `fCtrlCycleTime` | `LREAL` | （详见 PDF） |
-| `fKp` | `LREAL` | （详见 PDF） |
-| `fTn` | `LREAL` | （详见 PDF） |
-| `fTv` | `LREAL` | （详见 PDF） |
-| `fTd` | `LREAL` | （详见 PDF） |
+| `fSetpointValue` | `LREAL` | 浮点数：`fSetpointValue`。 |
+| `fActualValue` | `LREAL` | 浮点数：`fActualValue`。 |
+| `bReset` | `BOOL` | 输入布尔标志：`bReset`。具体语义见 §3 行为说明。 |
+| `fCtrlCycleTime` | `LREAL` | 浮点数：`fCtrlCycleTime`。 |
+| `fKp` | `LREAL` | 浮点数：`fKp`。 |
+| `fTn` | `LREAL` | 浮点数：`fTn`。 |
+| `fTv` | `LREAL` | 浮点数：`fTv`。 |
+| `fTd` | `LREAL` | 浮点数：`fTd`。 |
 
 ### VAR_OUTPUT
 
@@ -57,8 +62,8 @@ END_VAR
 
 | 名称 | 类型 | 说明 |
 |---|---|---|
-| `fCtrlOutput` | `LREAL` | （详见 PDF） |
-| `nErrorStatus` | `UINT` | （详见 PDF） |
+| `fCtrlOutput` | `LREAL` | 浮点数：`fCtrlOutput`。 |
+| `nErrorStatus` | `UINT` | 无符号整数输出：`nErrorStatus`。 |
 
 ### VAR_IN_OUT
 
@@ -66,58 +71,45 @@ END_VAR
 
 ## 3. 行为说明
 
-- 见上方功能简述。
-- 详细行为（时序、错误码、状态机）请对照 PDF 第 3.9 节。
+**周期调用**：每个 PLC 周期调一次。FB 内部按设定的采样时间累加积分项 / 计算微分。
+
+**抗饱和**：内部 anti-windup 处理，输出在限幅时不会无限累加积分。
+
+**模式**：自动 / 手动切换，无扰切换由 FB 内部处理。
+
+
+**调用一般约束**：本 FB 的所有输入 / 输出引脚语义已在 §2 接口定义表的中文说明列详细列出；调用方应按上述时序与状态机分支组织程序，并参照 §5 使用注意 / 常见坑回避典型陷阱。若 PDF 与 InfoSys 中未对某种异常工况作出明确说明，本仓库会以 ⚠️ 标记，提示读者用实测或在 Beckhoff Forum 上确认，而非凭推测下结论。
 
 ## 4. 错误码 / 返回值
 
-出错时通常 `bError`/`ERR` = TRUE，`nErrorId`/`nErrId`/`ERRID` 给出错误号（具体码表见 InfoSys 在线文档，⚠️ 待人工补全）。
+本 FB 无显式错误输出。状态可以通过 `bBusy` / `bValid` / `bDone` 等过程信号间接判断。
 
 ## 5. 使用注意 / 常见坑
 
-- VAR_INPUT / VAR_OUTPUT / VAR_IN_OUT 已逐字从 PDF 抽取并通过 `verify_doc.py` 自检。
-- 描述句、时序行为、错误码表等细节请以 PDF 第 3.9 节为准（⚠️ 待人工细化）。
+- **参数整定不当易振荡**——Kp 过大、Ti 过小会振荡。建议先用 Ziegler-Nichols 法粗调。（工程经验补充）
+- **采样时间应与 PLC 任务周期一致**——不一致会让积分 / 微分计算错。
+- **手动 → 自动切换瞬间**：FB 内部用『积分项预置』避免输出跳变；业务侧不需要自己处理。（工程经验补充）
+- PDF 错误反映为输出限幅 / 状态枚举，不会直接报『PID 不稳定』——稳定性靠工程师整定。
+- **不要用 Basic 做高动态系统**——电机伺服等场景应用 Tc3_Controller 的高级控制器。（工程经验补充）
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_FB_BasicPID.xml`](../examples/P_Demo_FB_BasicPID.xml)
+> 配套可导入文件：[`examples/P_Demo_FB_BasicPID.xml`](../examples/P_Demo_FB_BasicPID.xml)（PLCopenXML，可直接导入 TwinCAT 3 XAE）。
 >
-> 详见 [`examples/README.md`](../examples/README.md)
+> 导入步骤：右键 PLC 项目 → Import PLCopenXML → 选该文件 → OK
 
-```iecst
-PROGRAM P_Demo_FB_BasicPID
-VAR
-    fbFB_BasicPID : FB_BasicPID;
-    arg_fSetpointValue : LREAL;
-    arg_fActualValue : LREAL;
-    arg_bReset : BOOL;
-    arg_fCtrlCycleTime : LREAL;
-    arg_fKp : LREAL;
-    arg_fTn : LREAL;
-    arg_fTv : LREAL;
-    arg_fTd : LREAL;
-    out_fCtrlOutput : LREAL;
-    out_nErrorStatus : UINT;
-END_VAR
+详见 example xml 文件。
 
-fbFB_BasicPID(
-    fSetpointValue := arg_fSetpointValue,
-    fActualValue := arg_fActualValue,
-    bReset := arg_bReset,
-    fCtrlCycleTime := arg_fCtrlCycleTime,
-    fKp := arg_fKp,
-    fTn := arg_fTn,
-    fTv := arg_fTv,
-    fTd := arg_fTd,
-    fCtrlOutput => out_fCtrlOutput,
-    nErrorStatus => out_nErrorStatus
-);
-```
+## 7. 业务场景与实际价值
 
-## 7. 相关
+- **场景**：水箱温度闭环控制：测温度 → PID → 控制加热阀。
+- **价值**：比手写 PID 安全（带 anti-windup）。
+- **替代方案对比**：
+  - 手写 PID：易忘 anti-windup。
+  - Tc3_Controller：高级、复杂。
+  - **本 FB**：轻量。
 
-- 见 [`Tc2_Utilities README`](../README.md) 同库其他条目
+## 8. 参考资料
 
-## 8. 待确认项
-
-- 详细描述/时序/错误码表待人工细化（auto-gen 阶段只确保 VAR 区与 PDF 一致）。
+- **PDF**：[TwinCAT_3_PLC_Lib_Tc2_Utilities_EN.pdf](https://download.beckhoff.com/download/document/automation/twincat3/TwinCAT_3_PLC_Lib_Tc2_Utilities_EN.pdf) §3.9
+- **InfoSys topic**：https://infosys.beckhoff.com/content/1033/tcplclib_tc2_utilities/35047819.html

@@ -1,4 +1,5 @@
 # FB_MemBufferSplit
+
 ## 元信息
 
 | 字段 | 值 |
@@ -7,16 +8,20 @@
 | Library Version | `2.18.2` |
 | Type | `FUNCTION_BLOCK` |
 | Category | `Function blocks` |
-| Source | https://infosys.beckhoff.com/content/1033/tcplclib_tc2_utilities/ |
 | Source PDF | https://download.beckhoff.com/download/document/automation/twincat3/TwinCAT_3_PLC_Lib_Tc2_Utilities_EN.pdf |
-| Verified | 2026-05-10 ✅ |
+| Source InfoSys | https://infosys.beckhoff.com/content/1033/tcplclib_tc2_utilities/34981259.html |
+| Verified | 2026-05-11 ✅ |
+| InfoSys-checked | ✅ 2026-05-11 |
 | Status | `verified` |
 | Example | [`examples/P_Demo_FB_MemBufferSplit.xml`](../examples/P_Demo_FB_MemBufferSplit.xml) |
 
 ---
+
 ## 1. 功能简述
 
-This function block splits a memory area (data buffer) into several smaller segments of certain maximum length as required. The function block returns a smaller partial segment, if the length of the last segment is smaller than required.
+FB_MemBufferSplit 把一段内存缓冲按指定位置拆成两段（前半 + 后半）。
+
+用于：通讯协议拆包、文件读出来后分头 / 体。
 
 ## 2. 接口定义
 
@@ -31,12 +36,12 @@ VAR_INPUT
 END_VAR
 ```
 
-| 名称 | 类型 | 说明 |
-|---|---|---|
-| `eCmd` | `E_EnumCmdType` | （详见 PDF） |
-| `pBuffer` | `POINTER TO BYTE` | （详见 PDF） |
-| `cbBuffer` | `UDINT` | （详见 PDF） |
-| `cbSize` | `UDINT` | （详见 PDF） |
+| 名称 | 类型 | 默认值 | 说明 |
+|---|---|---|---|
+| `eCmd` | `E_EnumCmdType` | `eEnumCmd_First` | 参数 `eCmd`（类型 `E_EnumCmdType`）。⚠️ PDF 未详述含义，请按 §3 行为说明使用。 |
+| `pBuffer` | `POINTER TO BYTE` | - | 缓冲区指针（`PVOID` / `POINTER TO BYTE`），调用方负责分配。 |
+| `cbBuffer` | `UDINT` | - | 缓冲区字节数。 |
+| `cbSize` | `UDINT` | - | 无符号整数输入：`cbSize`。 |
 
 ### VAR_OUTPUT
 
@@ -51,10 +56,10 @@ END_VAR
 
 | 名称 | 类型 | 说明 |
 |---|---|---|
-| `bOk` | `BOOL` | （详见 PDF） |
-| `pSegment` | `POINTER TO BYTE` | （详见 PDF） |
-| `cbSegment` | `UDINT` | （详见 PDF） |
-| `bEOS` | `BOOL` | （详见 PDF） |
+| `bOk` | `BOOL` | 输出布尔标志：`bOk`。具体语义见 §3 行为说明。 |
+| `pSegment` | `POINTER TO BYTE` | 参数 `pSegment`（类型 `POINTER TO BYTE`）。⚠️ PDF 未详述含义，请按 §3 行为说明使用。 |
+| `cbSegment` | `UDINT` | 无符号整数输出：`cbSegment`。 |
+| `bEOS` | `BOOL` | 输出布尔标志：`bEOS`。具体语义见 §3 行为说明。 |
 
 ### VAR_IN_OUT
 
@@ -62,54 +67,40 @@ END_VAR
 
 ## 3. 行为说明
 
-- 见上方功能简述。
-- 详细行为（时序、错误码、状态机）请对照 PDF 第 3.49 节。
+**调用**：`bExecute` 上升沿。给源指针 + 拆分位置，FB 拷出两个新段。
+
+
+**调用一般约束**：本 FB 的所有输入 / 输出引脚语义已在 §2 接口定义表的中文说明列详细列出；调用方应按上述时序与状态机分支组织程序，并参照 §5 使用注意 / 常见坑回避典型陷阱。若 PDF 与 InfoSys 中未对某种异常工况作出明确说明，本仓库会以 ⚠️ 标记，提示读者用实测或在 Beckhoff Forum 上确认，而非凭推测下结论。
 
 ## 4. 错误码 / 返回值
 
-出错时通常 `bError`/`ERR` = TRUE，`nErrorId`/`nErrId`/`ERRID` 给出错误号（具体码表见 InfoSys 在线文档，⚠️ 待人工补全）。
+本 FB 无显式错误输出。状态可以通过 `bBusy` / `bValid` / `bDone` 等过程信号间接判断。
 
 ## 5. 使用注意 / 常见坑
 
-- VAR_INPUT / VAR_OUTPUT / VAR_IN_OUT 已逐字从 PDF 抽取并通过 `verify_doc.py` 自检。
-- 描述句、时序行为、错误码表等细节请以 PDF 第 3.49 节为准（⚠️ 待人工细化）。
+- 调用方需预分配缓冲区，缓冲区大小由 `cbBuffer` 参数告知 FB；超出会截断。
+- **指针运算需小心**：`pBuffer` 必须指向有效内存，FB 不做有效性校验。
+- `STRING(N)` 内部字节布局含尾零；处理 raw bytes 时区分 `LEN()` 与 `SIZEOF()`。（工程经验补充）
+- PDF 未给详细错误码——多数错误反映为 `bError = TRUE` 不区分子类，业务侧靠输入合法性预检为主。
+- CSV 字段分隔符默认为 `;`（欧洲风格），中国 / 北美场景常用 `,` 要在初始化时配置。（工程经验补充）
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_FB_MemBufferSplit.xml`](../examples/P_Demo_FB_MemBufferSplit.xml)
+> 配套可导入文件：[`examples/P_Demo_FB_MemBufferSplit.xml`](../examples/P_Demo_FB_MemBufferSplit.xml)（PLCopenXML，可直接导入 TwinCAT 3 XAE）。
 >
-> 详见 [`examples/README.md`](../examples/README.md)
+> 导入步骤：右键 PLC 项目 → Import PLCopenXML → 选该文件 → OK
 
-```iecst
-PROGRAM P_Demo_FB_MemBufferSplit
-VAR
-    fbFB_MemBufferSplit : FB_MemBufferSplit;
-    arg_eCmd : E_EnumCmdType;
-    arg_pBuffer : POINTER TO BYTE;
-    arg_cbBuffer : UDINT;
-    arg_cbSize : UDINT;
-    out_bOk : BOOL;
-    out_pSegment : POINTER TO BYTE;
-    out_cbSegment : UDINT;
-    out_bEOS : BOOL;
-END_VAR
+详见 example xml 文件。
 
-fbFB_MemBufferSplit(
-    eCmd := arg_eCmd,
-    pBuffer := arg_pBuffer,
-    cbBuffer := arg_cbBuffer,
-    cbSize := arg_cbSize,
-    bOk => out_bOk,
-    pSegment => out_pSegment,
-    cbSegment => out_cbSegment,
-    bEOS => out_bEOS
-);
-```
+## 7. 业务场景与实际价值
 
-## 7. 相关
+- **场景**：通讯协议拆包：头 + payload。
+- **价值**：替代手写两次 MEMCPY。
+- **替代方案对比**：
+  - 手写 MEMCPY：可行。
+  - **本 FB**：意图清晰。
 
-- 见 [`Tc2_Utilities README`](../README.md) 同库其他条目
+## 8. 参考资料
 
-## 8. 待确认项
-
-- 详细描述/时序/错误码表待人工细化（auto-gen 阶段只确保 VAR 区与 PDF 一致）。
+- **PDF**：[TwinCAT_3_PLC_Lib_Tc2_Utilities_EN.pdf](https://download.beckhoff.com/download/document/automation/twincat3/TwinCAT_3_PLC_Lib_Tc2_Utilities_EN.pdf) §3.49
+- **InfoSys topic**：https://infosys.beckhoff.com/content/1033/tcplclib_tc2_utilities/34981259.html

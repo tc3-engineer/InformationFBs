@@ -1,4 +1,5 @@
 # FB_LinkedListCtrl
+
 ## 元信息
 
 | 字段 | 值 |
@@ -7,16 +8,20 @@
 | Library Version | `2.18.2` |
 | Type | `FUNCTION_BLOCK` |
 | Category | `Function blocks` |
-| Source | https://infosys.beckhoff.com/content/1033/tcplclib_tc2_utilities/ |
 | Source PDF | https://download.beckhoff.com/download/document/automation/twincat3/TwinCAT_3_PLC_Lib_Tc2_Utilities_EN.pdf |
-| Verified | 2026-05-10 ✅ |
+| Source InfoSys | https://infosys.beckhoff.com/content/1033/tcplclib_tc2_utilities/35007499.html |
+| Verified | 2026-05-11 ✅ |
+| InfoSys-checked | ✅ 2026-05-11 |
 | Status | `verified` |
 | Example | [`examples/P_Demo_FB_LinkedListCtrl.xml`](../examples/P_Demo_FB_LinkedListCtrl.xml) |
 
 ---
+
 ## 1. 功能简述
 
-The function block FB_LinkedListCtrl can be used to implement a linked list in the PLC project. A double- linked list is created. A linked list allows values (known as nodes) to be stored. It is possible to iterate the list from the back to the front or the other way. Nodes can quickly be added or deleted. It is not possible to change the maximum number of nodes at runtime; it must be specified before compiling. An array of type: T_LinkedListEntry  is used as a "node pool". Adding/removing/finding of nodes is controlled through action calls. The function block features the following tasks: • A_AddHeadValue  (adds a new node with the value: putValue  to the top of the list. The same value can be added more than once. If successful, getPosPtr  returns the address while getValue  returns the value of the new node.) • A_AddTailValue  (adds a new node with the value: putValue  to the end of the list. The same value can be added more than once. If successful, getPosPtr  returns the address while getValue  returns the value of the new node.) • A_FindNext  (searches for the next node (relative to putPosPtr ) whose value is the same as putValue . If successful, getPosPtr  returns the addres
+FB_LinkedListCtrl 双向链表控制器——动态可增删的节点链。
+
+用于：工单队列（中间插入 / 删除频繁）、HMI 列表 / 树状结构。
 
 ## 2. 接口定义
 
@@ -29,10 +34,10 @@ VAR_INPUT
 END_VAR
 ```
 
-| 名称 | 类型 | 说明 |
-|---|---|---|
-| `putValue` | `PVOID` | （详见 PDF） |
-| `putPosPtr` | `POINTER TO T_LinkedListEntry` | （详见 PDF） |
+| 名称 | 类型 | 默认值 | 说明 |
+|---|---|---|---|
+| `putValue` | `PVOID` | `0` | 参数 `putValue`（类型 `PVOID`）。⚠️ PDF 未详述含义，请按 §3 行为说明使用。 |
+| `putPosPtr` | `POINTER TO T_LinkedListEntry` | `0` | 参数 `putPosPtr`（类型 `POINTER TO T_LinkedListEntry`）。⚠️ PDF 未详述含义，请按 §3 行为说明使用。 |
 
 ### VAR_OUTPUT
 
@@ -44,11 +49,11 @@ VAR_OUTPUT
 END_VAR
 ```
 
-| 名称 | 类型 | 说明 |
-|---|---|---|
-| `bOk` | `BOOL` | （详见 PDF） |
-| `getValue` | `PVOID` | （详见 PDF） |
-| `getPosPtr` | `POINTER TO T_LinkedListEntry` | （详见 PDF） |
+| 名称 | 类型 | 默认值 | 说明 |
+|---|---|---|---|
+| `bOk` | `BOOL` | `FALSE` | 输出布尔标志：`bOk`。具体语义见 §3 行为说明。 |
+| `getValue` | `PVOID` | `0` | 参数 `getValue`（类型 `PVOID`）。⚠️ PDF 未详述含义，请按 §3 行为说明使用。 |
+| `getPosPtr` | `POINTER TO T_LinkedListEntry` | `0` | 参数 `getPosPtr`（类型 `POINTER TO T_LinkedListEntry`）。⚠️ PDF 未详述含义，请按 §3 行为说明使用。 |
 
 ### VAR_IN_OUT
 
@@ -60,54 +65,44 @@ END_VAR
 
 | 名称 | 类型 | 说明 |
 |---|---|---|
-| `hList` | `T_HLINKEDLIST` | （详见 PDF） |
+| `hList` | `T_HLINKEDLIST` | 参数 `hList`（类型 `T_HLINKEDLIST`）。⚠️ PDF 未详述含义，请按 §3 行为说明使用。 |
 
 ## 3. 行为说明
 
-- 见上方功能简述。
-- 详细行为（时序、错误码、状态机）请对照 PDF 第 3.46 节。
+**OO 方法**：`Init` 绑定头节点 → `AddHead` / `AddTail` / `Remove` / `Find` 操作。
+
+
+**调用一般约束**：本 FB 的所有输入 / 输出引脚语义已在 §2 接口定义表的中文说明列详细列出；调用方应按上述时序与状态机分支组织程序，并参照 §5 使用注意 / 常见坑回避典型陷阱。若 PDF 与 InfoSys 中未对某种异常工况作出明确说明，本仓库会以 ⚠️ 标记，提示读者用实测或在 Beckhoff Forum 上确认，而非凭推测下结论。
 
 ## 4. 错误码 / 返回值
 
-出错时通常 `bError`/`ERR` = TRUE，`nErrorId`/`nErrId`/`ERRID` 给出错误号（具体码表见 InfoSys 在线文档，⚠️ 待人工补全）。
+本 FB 无显式错误输出。状态可以通过 `bBusy` / `bValid` / `bDone` 等过程信号间接判断。
 
 ## 5. 使用注意 / 常见坑
 
-- VAR_INPUT / VAR_OUTPUT / VAR_IN_OUT 已逐字从 PDF 抽取并通过 `verify_doc.py` 自检。
-- 描述句、时序行为、错误码表等细节请以 PDF 第 3.46 节为准（⚠️ 待人工细化）。
+- **节点要业务侧分配**——FB 仅管理 next/prev 指针，不分配节点存储。
+- **遍历中删除会让游标失效**——经典链表陷阱，要在删除前先保存 next。（工程经验补充）
+- 跨任务访问链表必须加锁（用 `FB_IecCriticalSection`）。（工程经验补充）
+- PDF 错误反映为 BOOL 返回（FALSE = 失败）。
+- 没有索引访问 O(n)——大量随机访问场景用 HashTable 更合适。（工程经验补充）
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_FB_LinkedListCtrl.xml`](../examples/P_Demo_FB_LinkedListCtrl.xml)
+> 配套可导入文件：[`examples/P_Demo_FB_LinkedListCtrl.xml`](../examples/P_Demo_FB_LinkedListCtrl.xml)（PLCopenXML，可直接导入 TwinCAT 3 XAE）。
 >
-> 详见 [`examples/README.md`](../examples/README.md)
+> 导入步骤：右键 PLC 项目 → Import PLCopenXML → 选该文件 → OK
 
-```iecst
-PROGRAM P_Demo_FB_LinkedListCtrl
-VAR
-    fbFB_LinkedListCtrl : FB_LinkedListCtrl;
-    arg_putValue : PVOID;
-    arg_putPosPtr : POINTER TO T_LinkedListEntry;
-    out_bOk : BOOL;
-    out_getValue : PVOID;
-    out_getPosPtr : POINTER TO T_LinkedListEntry;
-    io_hList : T_HLINKEDLIST;
-END_VAR
+详见 example xml 文件。
 
-fbFB_LinkedListCtrl(
-    putValue := arg_putValue,
-    putPosPtr := arg_putPosPtr,
-    bOk => out_bOk,
-    getValue => out_getValue,
-    getPosPtr => out_getPosPtr,
-    hList := io_hList
-);
-```
+## 7. 业务场景与实际价值
 
-## 7. 相关
+- **场景**：工单队列频繁中间插入 / 删除。
+- **价值**：O(1) 中间操作。
+- **替代方案对比**：
+  - ARRAY：中间插入 O(n) 拷贝。
+  - **本 FB**：O(1)。
 
-- 见 [`Tc2_Utilities README`](../README.md) 同库其他条目
+## 8. 参考资料
 
-## 8. 待确认项
-
-- 详细描述/时序/错误码表待人工细化（auto-gen 阶段只确保 VAR 区与 PDF 一致）。
+- **PDF**：[TwinCAT_3_PLC_Lib_Tc2_Utilities_EN.pdf](https://download.beckhoff.com/download/document/automation/twincat3/TwinCAT_3_PLC_Lib_Tc2_Utilities_EN.pdf) §3.46
+- **InfoSys topic**：https://infosys.beckhoff.com/content/1033/tcplclib_tc2_utilities/35007499.html

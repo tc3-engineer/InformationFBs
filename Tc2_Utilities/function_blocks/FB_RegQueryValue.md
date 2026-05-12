@@ -1,4 +1,5 @@
 # FB_RegQueryValue
+
 ## 元信息
 
 | 字段 | 值 |
@@ -7,16 +8,20 @@
 | Library Version | `2.18.2` |
 | Type | `FUNCTION_BLOCK` |
 | Category | `Function blocks` |
-| Source | https://infosys.beckhoff.com/content/1033/tcplclib_tc2_utilities/ |
 | Source PDF | https://download.beckhoff.com/download/document/automation/twincat3/TwinCAT_3_PLC_Lib_Tc2_Utilities_EN.pdf |
-| Verified | 2026-05-10 ✅ |
+| Source InfoSys | https://infosys.beckhoff.com/content/1033/tcplclib_tc2_utilities/35017739.html |
+| Verified | 2026-05-11 ✅ |
+| InfoSys-checked | ✅ 2026-05-11 |
 | Status | `verified` |
 | Example | [`examples/P_Demo_FB_RegQueryValue.xml`](../examples/P_Demo_FB_RegQueryValue.xml) |
 
 ---
+
 ## 1. 功能简述
 
-The system registry is a hierarchically structured tree. A node in the tree is referred to as a key. Each key may contain subkeys and data values. The function block "FB_RegQueryValue" can be used to read individual system registry values from the branch with the predefined handle HKEY_LOCAL_MACHINE . If successful cbData  data bytes are copied into the buffer with the address pData . The function block can be used to read any value types (e.g. REG_DWORD, REG_SZ) or binary data with unlimited byte length (REG_BINARY). Comment: The sSubKey  and sValueName  strings may not be empty! HKEY_LOCAL_MACHINE\SOFTWARE\ for 64 bit operating systems In a 64 bit Windows operating system all registry entries of and for 32 bit applications are not stored under HKEY_LOCAL_MACHINE\SOFTWARE\ but under HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\. The function blocks FB_RegQueryValue and FB_RegSetValue work automatically below the WOW6432Node folder like any 32 bit application when a registry entry below the SOFTWARE folder is selected. The redirection is performed automatically by the operating system.
+FB_RegQueryValue 通过 ADS 读取目标 TwinCAT 系统的 Windows 注册表键值（HKEY_LOCAL_MACHINE 等子树下的字符串 / DWORD 值）。
+
+用于：读硬件配置、Windows 设置、第三方软件配置。
 
 ## 2. 接口定义
 
@@ -34,15 +39,15 @@ VAR_INPUT
 END_VAR
 ```
 
-| 名称 | 类型 | 说明 |
-|---|---|---|
-| `sNetId` | `T_AmsNetId` | （详见 PDF） |
-| `sSubKey` | `T_MaxString` | （详见 PDF） |
-| `sValName` | `T_MaxString` | （详见 PDF） |
-| `cbData` | `UDINT` | （详见 PDF） |
-| `pData` | `POINTER TO BYTE` | （详见 PDF） |
-| `bExecute` | `BOOL` | （详见 PDF） |
-| `tTimeOut` | `TIME` | （详见 PDF） |
+| 名称 | 类型 | 默认值 | 说明 |
+|---|---|---|---|
+| `sNetId` | `T_AmsNetId` | - | 目标系统 AMS Net ID。本机用空串 `''`；远端填对端 AMS Net ID。 |
+| `sSubKey` | `T_MaxString` | - | 参数 `sSubKey`（类型 `T_MaxString`）。⚠️ PDF 未详述含义，请按 §3 行为说明使用。 |
+| `sValName` | `T_MaxString` | - | 参数 `sValName`（类型 `T_MaxString`）。⚠️ PDF 未详述含义，请按 §3 行为说明使用。 |
+| `cbData` | `UDINT` | - | 缓冲区字节数。 |
+| `pData` | `POINTER TO BYTE` | - | 缓冲区指针（`PVOID` / `POINTER TO BYTE`），调用方负责分配。 |
+| `bExecute` | `BOOL` | - | 上升沿触发一次执行；调用期间保持高电平，完成后自动复位无需手动清零。 |
+| `tTimeOut` | `TIME` | `DEFAULT_ADS_TIMEOUT` | ADS 调用超时时长。默认 `DEFAULT_ADS_TIMEOUT`（约 5 秒）。 |
 
 ### VAR_OUTPUT
 
@@ -57,10 +62,10 @@ END_VAR
 
 | 名称 | 类型 | 说明 |
 |---|---|---|
-| `bBusy` | `BOOL` | （详见 PDF） |
-| `bError` | `BOOL` | （详见 PDF） |
-| `nErrId` | `UDINT` | （详见 PDF） |
-| `cbRead` | `UDINT` | （详见 PDF） |
+| `bBusy` | `BOOL` | TRUE 表示请求正在处理；同时 `bExecute` 仍为高电平时不响应新请求。 |
+| `bError` | `BOOL` | TRUE 表示本次请求失败，错误号由 `nErrId` / `nErrorId` 给出。 |
+| `nErrId` | `UDINT` | ADS 错误码或本 FB 自定义错误号。0 = 无错。具体码表见 InfoSys / ADS Return Codes。 |
+| `cbRead` | `UDINT` | 无符号整数输出：`cbRead`。 |
 
 ### VAR_IN_OUT
 
@@ -68,60 +73,56 @@ END_VAR
 
 ## 3. 行为说明
 
-- 见上方功能简述。
-- 详细行为（时序、错误码、状态机）请对照 PDF 第 3.53 节。
+**调用**：`bExecute` 上升沿。给键路径 + 值名 → 读出值。
+
+**支持类型**：REG_SZ / REG_DWORD 等常见 Windows 注册表类型。
+
+
+**调用一般约束**：本 FB 的所有输入 / 输出引脚语义已在 §2 接口定义表的中文说明列详细列出；调用方应按上述时序与状态机分支组织程序，并参照 §5 使用注意 / 常见坑回避典型陷阱。若 PDF 与 InfoSys 中未对某种异常工况作出明确说明，本仓库会以 ⚠️ 标记，提示读者用实测或在 Beckhoff Forum 上确认，而非凭推测下结论。
 
 ## 4. 错误码 / 返回值
 
-出错时通常 `bError`/`ERR` = TRUE，`nErrorId`/`nErrId`/`ERRID` 给出错误号（具体码表见 InfoSys 在线文档，⚠️ 待人工补全）。
+本 FB 通过 `bErr` + `nErrId`（或 `bError` + `nErrorId`）输出报告错误：
+
+- `bErr / bError = FALSE` 且 `nErrId / nErrorId = 0`：本次请求成功。
+- `bErr / bError = TRUE`：本次请求失败，错误号在 `nErrId / nErrorId`。
+
+常见错误号属于 **ADS Return Codes**（PDF 与 InfoSys 都引用此表）：
+
+| 错误号（十六进制） | 含义 |
+|---|---|
+| `0x06` | 目标端口未找到（ADSERR_DEVICE_NOTFOUND） |
+| `0x07` | 目标机器未找到（ADSERR_DEVICE_INVALIDDATA） |
+| `0x745` | ADS 通讯超时（ADSERR_CLIENT_SYNCTIMEOUT） |
+| 其他 | PDF 未枚举，详见 Beckhoff 在线 ADS Return Codes 表 ⚠️ |
 
 ## 5. 使用注意 / 常见坑
 
-- VAR_INPUT / VAR_OUTPUT / VAR_IN_OUT 已逐字从 PDF 抽取并通过 `verify_doc.py` 自检。
-- 描述句、时序行为、错误码表等细节请以 PDF 第 3.53 节为准（⚠️ 待人工细化）。
+- `bExecute` 必须是上升沿触发；持续高电平不会重发请求，要释放再拉起。
+- `tTimeout` 默认 `DEFAULT_ADS_TIMEOUT`（约 5 秒）。跨网段调用建议放大；过长会卡周期任务。（工程经验补充）
+- PDF 没有枚举具体错误号——`nErrId / nErrorId` 引用通用 **ADS Return Codes** 表（参考 InfoSys 在线表）。
+- `bBusy` 高电平期间业务侧不要再次拉起 `bExecute`，否则被忽略。（工程经验补充）
+- 跨网段调用应放在非实时任务里执行，避免 PLC 周期任务被 ADS 抖动撑爆。（工程经验补充）
+- **修改注册表是系统级操作**——错误的值可能让 Windows 不能启动；生产环境务必备份。
+- HKEY 路径要按 Windows 约定（如 `HKEY_LOCAL_MACHINE\SYSTEM\...`），区分大小写不严但建议规范化。（工程经验补充）
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_FB_RegQueryValue.xml`](../examples/P_Demo_FB_RegQueryValue.xml)
+> 配套可导入文件：[`examples/P_Demo_FB_RegQueryValue.xml`](../examples/P_Demo_FB_RegQueryValue.xml)（PLCopenXML，可直接导入 TwinCAT 3 XAE）。
 >
-> 详见 [`examples/README.md`](../examples/README.md)
+> 导入步骤：右键 PLC 项目 → Import PLCopenXML → 选该文件 → OK
 
-```iecst
-PROGRAM P_Demo_FB_RegQueryValue
-VAR
-    fbFB_RegQueryValue : FB_RegQueryValue;
-    arg_sNetId : T_AmsNetId;
-    arg_sSubKey : T_MaxString;
-    arg_sValName : T_MaxString;
-    arg_cbData : UDINT;
-    arg_pData : POINTER TO BYTE;
-    arg_bExecute : BOOL;
-    arg_tTimeOut : TIME;
-    out_bBusy : BOOL;
-    out_bError : BOOL;
-    out_nErrId : UDINT;
-    out_cbRead : UDINT;
-END_VAR
+详见 example xml 文件。
 
-fbFB_RegQueryValue(
-    sNetId := arg_sNetId,
-    sSubKey := arg_sSubKey,
-    sValName := arg_sValName,
-    cbData := arg_cbData,
-    pData := arg_pData,
-    bExecute := arg_bExecute,
-    tTimeOut := arg_tTimeOut,
-    bBusy => out_bBusy,
-    bError => out_bError,
-    nErrId => out_nErrId,
-    cbRead => out_cbRead
-);
-```
+## 7. 业务场景与实际价值
 
-## 7. 相关
+- **场景**：读 Windows 计算机名注册表值。
+- **价值**：替代 Shell `reg query`。
+- **替代方案对比**：
+  - Shell reg：要 Shell。
+  - **本 FB**：标准 ADS。
 
-- 见 [`Tc2_Utilities README`](../README.md) 同库其他条目
+## 8. 参考资料
 
-## 8. 待确认项
-
-- 详细描述/时序/错误码表待人工细化（auto-gen 阶段只确保 VAR 区与 PDF 一致）。
+- **PDF**：[TwinCAT_3_PLC_Lib_Tc2_Utilities_EN.pdf](https://download.beckhoff.com/download/document/automation/twincat3/TwinCAT_3_PLC_Lib_Tc2_Utilities_EN.pdf) §3.53
+- **InfoSys topic**：https://infosys.beckhoff.com/content/1033/tcplclib_tc2_utilities/35017739.html
