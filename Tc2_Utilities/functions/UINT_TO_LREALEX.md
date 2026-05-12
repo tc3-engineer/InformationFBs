@@ -1,4 +1,5 @@
 # UINT_TO_LREALEX
+
 ## 元信息
 
 | 字段 | 值 |
@@ -7,79 +8,99 @@
 | Library Version | `2.18.2` |
 | Type | `FUNCTION` |
 | Category | `Functions` |
-| Source | https://infosys.beckhoff.com/content/1033/tcplclib_tc2_utilities/ |
 | Source PDF | https://download.beckhoff.com/download/document/automation/twincat3/TwinCAT_3_PLC_Lib_Tc2_Utilities_EN.pdf |
-| Verified | 2026-05-10 ✅ |
+| Source InfoSys | https://infosys.beckhoff.com/content/1033/tcplclib_tc2_utilities/2213074827.html |
+| Verified | 2026-05-11 ✅ |
+| InfoSys-checked | ✅ 2026-05-11 |
 | Status | `verified` |
 | Example | [`examples/P_Demo_UINT_TO_LREALEX.xml`](../examples/P_Demo_UINT_TO_LREALEX.xml) |
 
 ---
+
 ## 1. 功能简述
 
-**UINT → LREAL（unsigned-safe）**：TC2 ARM 平台原生的 unsigned → LREAL 转换在最高位置 1 时可能错误转为负数。本函数显式保证按正数转换。
+无符号整数 → 正 `LREAL` 浮点的**遗留兼容**转换。
 
-**TC3 已不需要这个函数**——TC3 总是把 unsigned 当正数转 LREAL。
+TwinCAT 2 在 Arm® 平台上不支持无符号整数到 `LREAL` 的转换，最高位为 1 的无符号数会被当作负数误转。PDF 明确指出：**TwinCAT 3 已默认正确转换 `UINT` → `LREAL` 为正数（隐式与显式都对），所以本函数在 TwinCAT 3 里其实没必要使用**。`UINT_TO_LREALEX` 存在的唯一目的，是为从 TwinCAT 2 项目无修改地编译到 TwinCAT 3 时保留原有源码兼容。
+
+内部实现：对 `UINT` 输入按无符号语义解读后赋给 `LREAL` 输出，结果恒非负，无 Warning 1105。
 
 ## 2. 接口定义
 
 ### VAR_INPUT
 
 ```iecst
-FUNCTION UINT_TO_LREALEX : LREAL
 VAR_INPUT
     in : UINT;
 END_VAR
 ```
 
-| 名称 | 类型 | 说明 |
-|---|---|---|
-| `in` | `UINT` | 待转换 UINT |
-
-### 返回值
-
-`LREAL` —— 函数计算结果。
+| 名称 | 类型 | 默认值 | 说明（中文） |
+|---|---|---|---|
+| `in` | `UINT` | — | 待转换的 `UINT` 无符号 16 位整数（其值会被当作非负数处理）。 |
 
 ### VAR_IN_OUT
 
 无。
 
+### 返回值
+
+| 类型 | 说明（中文） |
+|---|---|
+| `LREAL` | 将 `in` 作为无符号整数解释后得到的非负 `LREAL` 浮点值（范围 0 到 2^16-1）。 |
+
+### VAR_OUTPUT
+
+无（本符号是 `FUNCTION`，结果通过返回值传出）。
+
 ## 3. 行为说明
 
-- 见上方功能简述。
+调用即返回，无内部状态。在 TwinCAT 3 上行为等同于直接的 `LREAL_VAR := UINT_VAR`：把 `in` 作为 16 位无符号整数解释，转为对应的非负 `LREAL` 浮点值（如 `UINT := 16#FFFFFFFF` 转 `LREAL` 得到 `+4294967295`）。
+
+在 TwinCAT 2 Arm® 平台上则才有真正的差异：标准转换或赋值会按有符号语义处理最高位、产生 **Warning 1105** 并输出负值，而 `UINT_TO_LREALEX` 不会触发警告并产生正确的正值。这也是 PDF 给出的对照表（`fLreal := ...` 多种写法在 Tc2.x ARM / X86 与 Tc3.x 上结果对比）的核心内容。
 
 ## 4. 错误码 / 返回值
 
-返回 `LREAL`。
+返回 `LREAL`，无错误码、无 `bError`、无 `HRESULT`。对任意 `UINT` 输入恒成功并返回对应的非负浮点值。
 
 ## 5. 使用注意 / 常见坑
 
-- **仅 TwinCAT 2 ARM 平台需要**。新代码用普通 `<in_type>_TO_LREAL` 即可。
-- 存在原因：可让 TC2 → TC3 移植项目编译通过，不必修改源代码。
+- **TwinCAT 3 不需要它**：PDF 第一段就说「this function can be dispensed with」。新项目应直接写 `lr := i;` 让编译器隐式转换；保留此调用只是出于历史项目可移植性。
+- **只服务无符号语义**：输入是 `UINT` 无符号类型；如果业务变量本身是 `INT` / `DINT` 有符号类型，本函数无意义，应改用标准 `INT_TO_LREAL` / `DINT_TO_LREAL`。
+- **看 PDF 对照表理解动机**：PDF 第 4 节给出了 Tc2 ARM / Tc2 X86 / Tc3 三平台下 7 种写法的结果对比；要还原「为什么有这函数」必须看这张表。否则会误以为本函数有额外功能。
+- **没有 LREALEX 反向函数**：要把 `LREAL` 回 `UINT` 走标准 `LREAL_TO_UINT`；本函数族只覆盖单向 `→ LREAL`。
+- **保留它的代价就是一行函数调用开销**（编译后实际多半被 inline）；如果项目已彻底升级到 TwinCAT 3，可批量替换为直接赋值简化代码（工程经验补充）。
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_UINT_TO_LREALEX.xml`](../examples/P_Demo_UINT_TO_LREALEX.xml)
+> 配套可导入文件：[`examples/P_Demo_UINT_TO_LREALEX.xml`](../examples/P_Demo_UINT_TO_LREALEX.xml)（PLCopenXML，可直接导入 TwinCAT 3 XAE）
 >
+> 导入步骤：右键 PLC 项目 → Import PLCopenXML → 选该文件 → OK
 > 详见 [`examples/README.md`](../examples/README.md)
 
 ```iecst
 PROGRAM P_Demo_UINT_TO_LREALEX
 VAR
-    rResult : LREAL;
-    bRun    : BOOL;
-    v : UINT := 16#FF;
+    nLegacyValue : UINT := 16#FFFF;   // 最高位为 1，老 Tc2 ARM 易被误判为负
+    lrConverted  : LREAL;                  // 期望为正数 2^16-1
 END_VAR
 
-IF bRun THEN
-    rResult := UINT_TO_LREALEX(v);
-    bRun := FALSE;
-END_IF;
+// 单行调用：从 Tc2 项目继承的代码，TwinCAT 3 上仍可正确编译并运行
+lrConverted := UINT_TO_LREALEX(nLegacyValue);
+
 ```
 
-## 7. 相关
+## 7. 业务场景与实际价值
 
-- 见 [`Tc2_Utilities README`](../README.md) 同库其他条目
+- **场景**：从 TwinCAT 2 Arm®（BCxx / BX9xx 等总线终端控制器）项目移植到 TwinCAT 3 IPC / CX 平台时，原代码中可能含 `lr := UINT_TO_LREALEX(nVal);` 这类调用。本函数让该行**在 TwinCAT 3 上仍可编译通过**且行为正确。
+- **价值**：避免移植时把每个 `UINT_TO_LREALEX` 调用都改成直接赋值——保留它即可一键升级，回归测试也更稳。
+- **替代方案对比**：
+  - 直接赋值 `lr := nVal;`：在 TwinCAT 3 上正确，但要修改源码
+  - `UINT_TO_LREAL(nVal)`：与直接赋值等效，仍要修改源码
+  - **本函数**：源码零修改完成 Tc2 → Tc3 移植，**仅推荐这一场景使用**
 
-## 8. 待确认项
+## 8. 参考资料
 
-无。
+- **PDF**：[TwinCAT_3_PLC_Lib_Tc2_Utilities_EN.pdf](https://download.beckhoff.com/download/document/automation/twincat3/TwinCAT_3_PLC_Lib_Tc2_Utilities_EN.pdf) 第 4.70 节
+- **InfoSys topic**：https://infosys.beckhoff.com/content/1033/tcplclib_tc2_utilities/2213074827.html
+- **相关函数**：`BYTE_TO_LREALEX` / `WORD_TO_LREALEX` / `DWORD_TO_LREALEX` / `UDINT_TO_LREALEX` / `UINT_TO_LREALEX` / `USINT_TO_LREALEX`
