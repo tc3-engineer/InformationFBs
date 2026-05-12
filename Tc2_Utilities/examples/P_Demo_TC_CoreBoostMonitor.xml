@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <project xmlns="http://www.plcopen.org/xml/tc6_0200">
-  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-10T13:00:00"/>
-  <contentHeader name="Tc2_Utilities.TC_CoreBoostMonitor Demo" modificationDateTime="2026-05-10T13:00:00">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-12T00:00:00"/>
+  <contentHeader name="Tc2_Utilities.TC_CoreBoostMonitor Demo" modificationDateTime="2026-05-12T00:00:00">
     <coordinateInfo>
       <fbd><scaling x="1" y="1"/></fbd>
       <ld><scaling x="1" y="1"/></ld>
@@ -14,38 +14,82 @@
       <pou name="P_Demo_TC_CoreBoostMonitor" pouType="program">
         <interface>
           <localVars>
-            <variable name="fbCBM">
+            <variable name="fbBoostMonitor">
               <type><derived name="TC_CoreBoostMonitor"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">TC_CoreBoostMonitor 实例（默认 nCoreId=-1）</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">TC_CoreBoostMonitor 实例（默认 nCoreId=-1 自我监视）</xhtml></documentation>
             </variable>
-            <variable name="hrResult">
+            <variable name="hrTempResult">
               <type><derived name="HRESULT"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">方法返回 HRESULT</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">GetCoreTemperature 返回值</xhtml></documentation>
             </variable>
-            <variable name="bThermalAny">
-              <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">任一核因温度限频</xhtml></documentation>
+            <variable name="hrThrottleResult">
+              <type><derived name="HRESULT"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">GetAllRtCoreThrottling 返回值</xhtml></documentation>
             </variable>
-            <variable name="bPowerAny">
+            <variable name="nCurrentTemperatureC">
+              <type><UDINT/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">当前核温（°C），在线 monitor</xhtml></documentation>
+            </variable>
+            <variable name="nMaxObservedTemperatureC">
+              <type><UDINT/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">自实时启动以来观测到的最高温（°C）</xhtml></documentation>
+            </variable>
+            <variable name="nTemperatureLimitC">
+              <type><UDINT/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">硬件温度上限（°C，启动后基本恒定）</xhtml></documentation>
+            </variable>
+            <variable name="bAnyRtCoreThermalThrottle">
               <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">任一核因功率限频</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">任一实时核因温度被限频</xhtml></documentation>
+            </variable>
+            <variable name="bAnyRtCorePowerThrottle">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">任一实时核因功耗被限频</xhtml></documentation>
+            </variable>
+            <variable name="bTemperatureNearLimit">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">逼近温度上限标志（业务侧预警）</xhtml></documentation>
             </variable>
           </localVars>
         </interface>
         <body>
           <ST>
             <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
-// Tc2_Utilities.TC_CoreBoostMonitor 演示程序（FB 实例）
+// Tc2_Utilities.TC_CoreBoostMonitor 演示程序
 // ============================================================
-// 注意：必须 Intel Core i 11 代+ 且 TwinCAT Core Boost 已启用
-// 验证步骤：
-//   1. 引用 Tc2_Utilities
-//   2. Real-time Settings 启用 Core Boost
-//   3. 编译 + 登录
-//   4. 在线监视 fbCBM.bError / fbCBM.hrErrorCode
+// 场景：CX2040 工控机启用了 TwinCAT Core Boost 给运动控制实时核加速。需要在
+//       监视任务里轮询该核的温度与"是否被限频"，逼近上限时给 HMI 报警，避免
+//       在长时间满负载场景下硬件降速影响运动周期稳定性。
+// 价值：不用本 FB 时需要绕 CIPC API 或读 MSR 寄存器——业务工程师没权限也不该
+//       碰。本 FB 把硬件查询封装成一个方法调用，PLC 周期内即可拿到温度 / 限
+//       频状态，配合 HMI 报警可在硬件还没出错前就提示降负载。
+// 验证：硬件前置条件——Intel Core i 第 11 代或以上，且 Real-time Settings 已
+//       启用 Core Boost。否则方法调用返回 FAILED 的 HRESULT。
+//   1. 引用 Tc2_Utilities ≥ 3.7.4.0
+//   2. 编译 + 登录，把 P_Demo_TC_CoreBoostMonitor 加入 PlcTask 调用
+//   3. 在线监视 nCurrentTemperatureC（正常 40-70°C）/ nTemperatureLimitC（通常 100°C）
+//   4. 增加 PLC 负载（在另一任务里跑 1e6 次空循环）→ 观察 nCurrentTemperatureC
+//      上升，bAnyRtCoreThermalThrottle 在逼近上限时翻 TRUE
+//   5. 停止压力 → bAnyRtCoreThermalThrottle 在几秒内回 FALSE
 // ============================================================
 
-hrResult := fbCBM.GetAllRtCoreThrottling(bThermalAny, bPowerAny);
+// 读取本核温度（引用参数回填）
+hrTempResult := fbBoostMonitor.GetCoreTemperature(
+    nCurrentTemp := nCurrentTemperatureC,
+    nMaxTemp     := nMaxObservedTemperatureC,
+    nTempLimit   := nTemperatureLimitC
+);
+
+// 全核聚合视图：是否有任一核正在限频
+hrThrottleResult := fbBoostMonitor.GetAllRtCoreThrottling(
+    bRtInThermalThrottling := bAnyRtCoreThermalThrottle,
+    bRtInPowerThrottling   := bAnyRtCorePowerThrottle
+);
+
+// 业务策略：留 5°C 余量给 HMI 提前报警，不等到硬件自动限频
+IF SUCCEEDED(hrTempResult) AND nTemperatureLimitC &gt; 5 THEN
+    bTemperatureNearLimit := nCurrentTemperatureC &gt;= (nTemperatureLimitC - 5);
+END_IF;
 </xhtml>
           </ST>
         </body>
