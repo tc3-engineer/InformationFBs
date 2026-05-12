@@ -19,6 +19,7 @@
             <variable name="eFmt"><type><derived name="E_TypeFieldParam"/></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">格式类型（枚举）</xhtml></documentation></variable>
             <variable name="nWritten"><type><UDINT/></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">实际写入字节数</xhtml></documentation></variable>
             <variable name="bFmt"><type><BOOL/></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">在线触发</xhtml></documentation></variable>
+            <variable name="sFormattedOutput"><type><derived name="T_MaxString"/></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">格式化结果（VAR_IN_OUT，由 F_FormatArgToStr 写入）</xhtml></documentation></variable>
           </localVars>
         </interface>
         <body>
@@ -43,7 +44,8 @@ IF bFmt THEN
                                  iWidth    := 8,
                                  iPrecision:= 0,
                                  eFmtType  := eFmt,
-                                 arg       := argFmt);
+                                 arg       := argFmt,
+                                 sOut      := sFormattedOutput);
     bFmt := FALSE;
 END_IF;</xhtml></ST>
         </body>

@@ -62,7 +62,7 @@ END_VAR
 - **仅用于兼容旧代码**——新代码用 `ULINT` 即可，不需要本函数。
 - **值范围相同**（均 0..2^64-1）；只是表示方式不同。
 - **反向 `ULARGE_TO_ULINT`** 把 `T_ULARGE_INTEGER` 转回 `ULINT`。
-- **`T_ULARGE_INTEGER` 是 12 字节结构体**（HighPart + LowPart + 一些标签字段 ⚠️），不是 8 字节裸值；移植时注意结构体大小变化。
+- **`T_ULARGE_INTEGER` 是 8 字节 64 位无符号结构体**（HighPart : DWORD + LowPart : DWORD，各 4 字节，合计 8 字节），与 `ULINT` 同样的 64 位值域，只是表示方式不同（结构体 vs 原生标量）。整个 `Tc2_Utilities` 64 位无符号 API 族（`UInt64Add64` 等）都以这一布局为前提。
 - **算术运算请用 `ULINT`**（原生 64 位编译器优化）；`T_ULARGE_INTEGER` 上的 `UInt64Add64` 等是软件模拟，慢。
 
 ## 6. 最小例程
