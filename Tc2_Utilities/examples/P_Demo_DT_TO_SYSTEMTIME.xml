@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <project xmlns="http://www.plcopen.org/xml/tc6_0200">
-  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-10T12:00:00"/>
-  <contentHeader name="Tc2_Utilities.DT_TO_SYSTEMTIME Demo" modificationDateTime="2026-05-10T12:00:00">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-11T12:00:00"/>
+  <contentHeader name="Tc2_Utilities.DT_TO_SYSTEMTIME Demo" modificationDateTime="2026-05-11T12:00:00">
     <coordinateInfo>
       <fbd><scaling x="1" y="1"/></fbd>
       <ld><scaling x="1" y="1"/></ld>
@@ -14,44 +14,38 @@
       <pou name="P_Demo_DT_TO_SYSTEMTIME" pouType="program">
         <interface>
           <localVars>
-            <variable name="rResult">
-              <type><derived name="TIMESTRUCT"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">DT_TO_SYSTEMTIME 的返回值</xhtml></documentation>
-            </variable>
-            <variable name="bRun">
-              <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">触发一次调用</xhtml></documentation>
-            </variable>
-            <variable name="dtIn">
+            <variable name="dtCurrent">
               <type><DATE_AND_TIME/></type>
-              <initialValue><simpleValue value="DT#2024-01-01-12:00:00"/></initialValue>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">测试用本地变量</xhtml></documentation>
+              <initialValue><simpleValue value="DT#2026-05-11-12:34:56"/></initialValue>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">当前 PLC 时间（来自 F_GetActualDateTime）</xhtml></documentation>
+            </variable>
+            <variable name="stCurrent">
+              <type><derived name="TIMESTRUCT"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">转换后的系统时间结构（HMI 绑定字段）</xhtml></documentation>
+            </variable>
+            <variable name="bRunOnce">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">脉冲触发一次执行</xhtml></documentation>
             </variable>
           </localVars>
         </interface>
         <body>
-          <ST>
-            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
-// Tc2_Utilities.DT_TO_SYSTEMTIME 演示程序（FUNCTION）
-// ============================================================
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：HMI 显示当前 PLC 时间需按 年-月-日-时-分-秒 拆分字段
+//
+// 价值：1 行调用拿到 7 个时间字段（自动算 wDayOfWeek），不用手写整除取余
+//
 // 验证步骤：
-//   1. 引用 Tc2_Utilities（及类型所在依赖库 Tc2_System / Tc2_Standard）
-//   2. 编译 + 登录
-//   3. 强制 bRun := TRUE 一个周期
-//   4. 观察 rResult 应为 TIMESTRUCT(wYear=2024, wMonth=1, wDay=1, wHour=12, ...)
-// ============================================================
-
-IF bRun THEN
-    rResult := DT_TO_SYSTEMTIME(dtIn);
-    bRun := FALSE;
-END_IF;
-</xhtml>
-          </ST>
+//   1. 引用 Tc2_Utilities
+//   2. 编译 + 登录 + 运行
+//   3. 强制 bRunOnce := TRUE 一个周期
+//   4. 在线监视 stCurrent.wYear=2026, wMonth=5, wDay=11, wHour=12, wMinute=34, wSecond=56
+//   5. 注意 wMilliseconds 永远为 0（DT 精度只到秒）
+// =============================================================================
+stCurrent := DT_TO_SYSTEMTIME(dtCurrent);</xhtml></ST>
         </body>
       </pou>
     </pous>
   </types>
-  <instances>
-    <configurations/>
-  </instances>
+  <instances><configurations/></instances>
 </project>

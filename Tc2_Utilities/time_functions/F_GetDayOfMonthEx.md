@@ -1,4 +1,5 @@
 # F_GetDayOfMonthEx
+
 ## 元信息
 
 | 字段 | 值 |
@@ -7,19 +8,22 @@
 | Library Version | `2.18.2` |
 | Type | `FUNCTION` |
 | Category | `Time functions` |
-| Source | https://infosys.beckhoff.com/content/1033/tcplclib_tc2_utilities/ |
 | Source PDF | https://download.beckhoff.com/download/document/automation/twincat3/TwinCAT_3_PLC_Lib_Tc2_Utilities_EN.pdf |
-| Verified | 2026-05-10 ✅ |
+| Source InfoSys | https://infosys.beckhoff.com/content/1033/tcplclib_tc2_utilities/35125259.html |
+| Verified | 2026-05-11 ✅ |
+| InfoSys-checked | ✅ 2026-05-11 |
 | Status | `verified` |
 | Example | [`examples/P_Demo_F_GetDayOfMonthEx.xml`](../examples/P_Demo_F_GetDayOfMonthEx.xml) |
 
 ---
+
 ## 1. 功能简述
 
-计算指定年月、第 N 个、星期 X 对应的具体日期（如「2011 年 1 月的第二个周一」）。
+计算指定年月里「第 N 个星期 X」对应的日期。例如：2011 年 8 月第 2 个周一的日期是 8 号。返回 0 表示参数错误，> 0 表示该月的日（DOM）。
+
 ## 2. 接口定义
 
-### VAR_INPUT
+### 函数声明
 
 ```iecst
 FUNCTION F_GetDayOfMonthEx : WORD
@@ -33,14 +37,14 @@ END_VAR
 
 | 名称 | 类型 | 说明 |
 |---|---|---|
-| `wYear` | `WORD(1601..30827)` | 年份（1601..30827） |
-| `wMonth` | `WORD(1..12)` | 月份（1..12） |
-| `wWOM` | `WORD(1..5)` | 本月第几周（1..5；5 = 最后一周即使月不足 5 周） |
-| `wDOW` | `WORD(0..6)` | 星期几（0=周日, 1=周一, ..., 6=周六） |
+| `wYear` | `WORD(1601..30827)` | 年份（1601 ~ 30827） |
+| `wMonth` | `WORD(1..12)` | 月份（1 ~ 12） |
+| `wWOM` | `WORD(1..5)` | 月内第几周（1 ~ 5）；5 表示最后一周（即使该月不足 5 周） |
+| `wDOW` | `WORD(0..6)` | 星期几（0 = 周日，1 = 周一 ... 6 = 周六） |
 
 ### 返回值
 
-`WORD` —— 函数计算结果。
+`WORD` —— 见 §3 行为说明。
 
 ### VAR_IN_OUT
 
@@ -48,18 +52,22 @@ END_VAR
 
 ## 3. 行为说明
 
-- 调用 `F_GetDayOfMonthEx(WORD#2011, WORD#1, WORD#2, WORD#1)`，返回 `WORD`。
-- 期望：`10（2011-01-10 是 1 月第二个周一）`
+函数按公历规则查表 + 计算返回该月第 wWOM 个 wDOW 的日数；wWOM = 5 表示「最后一个 wDOW」——即使该月该星期只出现 4 次也返回最后一次的日期，而不是返回 0。
+
+`wDOW` 用 Windows 约定（0 = Sunday），与 `F_GetDayOfWeek` 的 DIN/ISO 约定（1 = Monday）**不同**，调用前要确认源头。
+
+返回 `WORD`：0 = 错误（年 / 月 / 周 / 星期参数任一越界），≥ 1 = 该月的日（1 ~ 31）。
 
 ## 4. 错误码 / 返回值
 
-返回 `WORD`。无独立错误码（部分函数用 0/全 0 结构表示参数无效）。
+返回类型 `WORD`。函数语义详见 §3。某些 FC（返回 `WORD` / `T_FILETIME64` / `TOD` 的）以 0 作为「参数错误」哨兵值——调用方必须先检查 > 0；具体见 §5 使用注意。
 
 ## 5. 使用注意 / 常见坑
 
-- **返回 WORD**：那一天的日（1..31）；如果当月没有那么多个该星期则返回 0。
-- wWOM = 5 表示「最后一个」，对月份不足 5 周的情况会返回最后一个的日期。
-- wDOW 用美式编号（0=Sun），与 `F_GetDayOfWeek` 的 ISO 编号（1=Mon..7=Sun）不同——容易踩坑。
+- **返回值与错误编码混在同一类型**：必须检查 `result > 0` 才能用，0 表示错误。常见错误是把 0 当成「1 号前一天」。
+- **`wDOW` 用 0-6 而非 1-7**：跨 FC 调用时要做星期编号映射。
+- **wWOM = 5 不是绝对第 5 周**：含义是「最后一周」，月内若有第 5 个该 DOW 就返回它，否则返回第 4 个；不会返回下个月的日期。
+- **典型用例：节假日 / 计划排期**：「每月第 2 个周一开例会」/「每月最后一个周五结算」等公历日期计算。
 
 ## 6. 最小例程
 
@@ -69,22 +77,19 @@ END_VAR
 > 详见 [`examples/README.md`](../examples/README.md)
 
 ```iecst
-PROGRAM P_Demo_F_GetDayOfMonthEx
-VAR
-    rResult : WORD;
-    bRun    : BOOL;
-END_VAR
-
-IF bRun THEN
-    rResult := F_GetDayOfMonthEx(WORD#2011, WORD#1, WORD#2, WORD#1);
-    bRun := FALSE;
-END_IF;
+wDay := F_GetDayOfMonthEx(2011, 8, 2, 1);   // 2011 年 8 月第 2 个周一 = 8 号
 ```
 
-## 7. 相关
+完整可导入例程见上方链接，里面有 场景 / 价值 / 验证步骤 三件套注释。
 
-- 见 [`Tc2_Utilities README`](../README.md) 同库其他条目
+## 7. 业务场景与实际价值
 
-## 8. 待确认项
+- **场景**：排产 / 维护计划：「每月最后一个周日设备深度保养」、「每月第一个周一汇报数据」。机器需要在运行时算出该规则下次触发的具体日期。
+- **价值**：1 行调用拿到日历日，不必手写「循环遍历该月所有日子找匹配星期」。
+- **替代方案对比**：用 `F_GetDayOfWeek` + 循环遍历该月每天找匹配（要 31 次调用）/ 手写公式（容易错）/ 调用本 FC（推荐）。
 
-无。
+## 8. 参考资料
+
+- **PDF**：[TwinCAT_3_PLC_Lib_Tc2_Utilities_EN.pdf](https://download.beckhoff.com/download/document/automation/twincat3/TwinCAT_3_PLC_Lib_Tc2_Utilities_EN.pdf) §4.1.4
+- **InfoSys topic**：https://infosys.beckhoff.com/content/1033/tcplclib_tc2_utilities/35125259.html
+- **相关函数**：见 [`Tc2_Utilities README`](../README.md)（同类 time functions）

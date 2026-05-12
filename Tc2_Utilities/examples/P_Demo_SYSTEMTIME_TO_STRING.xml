@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <project xmlns="http://www.plcopen.org/xml/tc6_0200">
-  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-10T12:00:00"/>
-  <contentHeader name="Tc2_Utilities.SYSTEMTIME_TO_STRING Demo" modificationDateTime="2026-05-10T12:00:00">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-11T12:00:00"/>
+  <contentHeader name="Tc2_Utilities.SYSTEMTIME_TO_STRING Demo" modificationDateTime="2026-05-11T12:00:00">
     <coordinateInfo>
       <fbd><scaling x="1" y="1"/></fbd>
       <ld><scaling x="1" y="1"/></ld>
@@ -14,44 +14,37 @@
       <pou name="P_Demo_SYSTEMTIME_TO_STRING" pouType="program">
         <interface>
           <localVars>
-            <variable name="rResult">
-              <type><string><stringLength><value>24</value></stringLength></string></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">SYSTEMTIME_TO_STRING 的返回值</xhtml></documentation>
-            </variable>
-            <variable name="bRun">
-              <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">触发一次调用</xhtml></documentation>
-            </variable>
-            <variable name="stIn">
+            <variable name="stCurrentTime">
               <type><derived name="TIMESTRUCT"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">测试用本地变量</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">当前时间结构（来自 FB_LocalSystemTime） (初始化通过在线手动赋值; 推荐字段：( wYear := 2026, wMonth := 5, wDay := 11, wHour := 12, wMinute := 34, wSecond := 56, wMilliseconds := 789 ))</xhtml></documentation>
+            </variable>
+            <variable name="sLogPrefix">
+              <type><string><length>24</length></string></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">日志前缀字符串</xhtml></documentation>
+            </variable>
+            <variable name="bRunOnce">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">脉冲触发</xhtml></documentation>
             </variable>
           </localVars>
         </interface>
         <body>
-          <ST>
-            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
-// Tc2_Utilities.SYSTEMTIME_TO_STRING 演示程序（FUNCTION）
-// ============================================================
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：PLC 写本地日志文件，时间戳要稳定可读且字符串可比较排序
+//
+// 价值：1 行完成 8 字段到 23 字符字符串拼接，避免 7 次 WORD_TO_STRING + 补零 + 分隔
+//
 // 验证步骤：
-//   1. 引用 Tc2_Utilities（及类型所在依赖库 Tc2_System / Tc2_Standard）
-//   2. 编译 + 登录
-//   3. 强制 bRun := TRUE 一个周期
-//   4. 观察 rResult 应为 '2024-01-01-12:00:00.000'
-// ============================================================
-
-stIn.wYear := 2024; stIn.wMonth := 1; stIn.wDay := 1; stIn.wHour := 12;
-IF bRun THEN
-    rResult := SYSTEMTIME_TO_STRING(stIn);
-    bRun := FALSE;
-END_IF;
-</xhtml>
-          </ST>
+//   1. 引用 Tc2_Utilities
+//   2. 编译 + 登录 + 运行
+//   3. 强制 bRunOnce := TRUE
+//   4. 在线观察 sLogPrefix = «2026-05-11-12:34:56.789»
+//   5. 注意分隔符是 - 不是 T（这不是 ISO 8601，是 Beckhoff 内部格式）
+// =============================================================================
+sLogPrefix := SYSTEMTIME_TO_STRING(stCurrentTime);</xhtml></ST>
         </body>
       </pou>
     </pous>
   </types>
-  <instances>
-    <configurations/>
-  </instances>
+  <instances><configurations/></instances>
 </project>

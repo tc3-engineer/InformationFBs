@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <project xmlns="http://www.plcopen.org/xml/tc6_0200">
-  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-10T12:00:00"/>
-  <contentHeader name="Tc2_Utilities.FILETIME64_TO_TOD Demo" modificationDateTime="2026-05-10T12:00:00">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-11T12:00:00"/>
+  <contentHeader name="Tc2_Utilities.FILETIME64_TO_TOD Demo" modificationDateTime="2026-05-11T12:00:00">
     <coordinateInfo>
       <fbd><scaling x="1" y="1"/></fbd>
       <ld><scaling x="1" y="1"/></ld>
@@ -14,44 +14,43 @@
       <pou name="P_Demo_FILETIME64_TO_TOD" pouType="program">
         <interface>
           <localVars>
-            <variable name="rResult">
-              <type><TIME_OF_DAY/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">FILETIME64_TO_TOD 的返回值</xhtml></documentation>
-            </variable>
-            <variable name="bRun">
-              <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">触发一次调用</xhtml></documentation>
-            </variable>
-            <variable name="ftIn">
+            <variable name="ftNow">
               <type><derived name="T_FILETIME64"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">测试用本地变量</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">当前 T_FILETIME64（从 F_GetCurDateTime 或 F_GetSystemTime 拿）</xhtml></documentation>
+            </variable>
+            <variable name="todNow">
+              <type><TIME_OF_DAY/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">一天内的时刻（不含日期）</xhtml></documentation>
+            </variable>
+            <variable name="todLightOff">
+              <type><TIME_OF_DAY/></type>
+              <initialValue><simpleValue value="TOD#22:00:00.000"/></initialValue>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">照明关闭阈值</xhtml></documentation>
+            </variable>
+            <variable name="bShouldLightOff">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">TRUE = 该关灯了</xhtml></documentation>
             </variable>
           </localVars>
         </interface>
         <body>
-          <ST>
-            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
-// Tc2_Utilities.FILETIME64_TO_TOD 演示程序（FUNCTION）
-// ============================================================
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：「每天 22:00 自动关闭照明」逻辑：取当前 T_FILETIME64 → TOD → 与 TOD#22:00 比较
+//
+// 价值：1 行调用避免手写「* 3600000 + ... + wMilliseconds」拼装 TOD 公式
+//
 // 验证步骤：
-//   1. 引用 Tc2_Utilities（及类型所在依赖库 Tc2_System / Tc2_Standard）
-//   2. 编译 + 登录
-//   3. 强制 bRun := TRUE 一个周期
-//   4. 观察 rResult 应为 TOD#12:34:56
-// ============================================================
-
-ftIn := DT_TO_FILETIME64(DT#2024-01-01-12:34:56);
-IF bRun THEN
-    rResult := FILETIME64_TO_TOD(ftIn);
-    bRun := FALSE;
-END_IF;
-</xhtml>
-          </ST>
+//   1. 引用 Tc2_Utilities（≥ 3.7.3.0）
+//   2. 编译 + 登录 + 运行
+//   3. 通过 DT_TO_FILETIME64(DT#2026-05-11-22:30:00) 给 ftNow 赋值
+//   4. 在线观察 todNow = TOD#22:30:00.000
+//   5. bShouldLightOff = TRUE
+// =============================================================================
+todNow := FILETIME64_TO_TOD(ftNow);
+bShouldLightOff := todNow &gt;= todLightOff;</xhtml></ST>
         </body>
       </pou>
     </pous>
   </types>
-  <instances>
-    <configurations/>
-  </instances>
+  <instances><configurations/></instances>
 </project>

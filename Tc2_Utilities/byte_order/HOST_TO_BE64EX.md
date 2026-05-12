@@ -1,4 +1,5 @@
 # HOST_TO_BE64EX
+
 ## 元信息
 
 | 字段 | 值 |
@@ -7,19 +8,24 @@
 | Library Version | `2.18.2` |
 | Type | `FUNCTION` |
 | Category | `Byte order converting functions` |
-| Source | https://infosys.beckhoff.com/content/1033/tcplclib_tc2_utilities/ |
 | Source PDF | https://download.beckhoff.com/download/document/automation/twincat3/TwinCAT_3_PLC_Lib_Tc2_Utilities_EN.pdf |
-| Verified | 2026-05-10 ✅ |
+| Source InfoSys | https://infosys.beckhoff.com/content/1033/tcplclib_tc2_utilities/1045651723.html |
+| Verified | 2026-05-11 ✅ |
+| InfoSys-checked | ✅ 2026-05-11 |
 | Status | `verified` |
 | Example | [`examples/P_Demo_HOST_TO_BE64EX.xml`](../examples/P_Demo_HOST_TO_BE64EX.xml) |
 
 ---
+
 ## 1. 功能简述
 
-64-bit 数从主机字节序转大端（**native** LWORD 版本，比 `HOST_TO_BE64` 简洁）。
+把一个 64 位"主机字节序"整数转换为"网络字节序"（大端，Big-Endian）。在 TwinCAT 的 x86/x64/ARM 平台（均为小端）上，函数语义等价于将 8 个字节完整反转。
+
+典型使用场景：PLC 作为以太网协议服务端，把要写出去的 64 位字段转成大端后再 `MEMCPY` 进发送缓冲区。返回类型与输入类型相同（`LWORD`），调用方负责按数据语义再做有符号 / 浮点类型转换。
+
 ## 2. 接口定义
 
-### VAR_INPUT
+### 函数声明
 
 ```iecst
 FUNCTION HOST_TO_BE64EX : LWORD
@@ -30,31 +36,39 @@ END_VAR
 
 | 名称 | 类型 | 说明 |
 |---|---|---|
-| `in` | `LWORD` | 要转换的 64-bit 数（native LWORD） |
+| `in` | `LWORD` | 待转换的 64 位整数 |
 
 ### 返回值
 
-`LWORD` —— 函数计算结果。
+`LWORD` —— 字节序反转后的同值表示。
 
 ### VAR_IN_OUT
 
 无。
+
 ## 3. 行为说明
 
-- 调用 `HOST_TO_BE64EX(16#0123456789ABCDEF)`，返回 `LWORD` 类型结果。
-- 期望：`16#EFCDAB8967452301`
+调用 `HOST_TO_BE64EX(in)` 把 `in` 的 8 字节整体反转后返回。例如：要把数值 V 按大端协议写入帧缓冲区，先调用 `HOST_TO_BE64EX(V)` 拿到字节顺序已被反转的 `LWORD`，再 `MEMCPY` 出去；大端协议接收方读出的就是 V。
+
+本函数是**纯计算函数**（FUNCTION）：无内部状态、无副作用、可重入、可在任意优先级任务中调用。对同一输入多次调用结果完全一致。
+
+与 `BE64EX_TO_HOST` 互为逆操作。在小端主机上两者的位运算实现完全相同（都是 8 字节交换），但代码语义不同——`HOST_TO_BE64EX` 表达"打包方向"。按协议方向选择正确函数有助于代码 review 一眼看懂用途，也便于未来移植到大端平台（在大端平台两个函数都退化为恒等映射）。
 
 ## 4. 错误码 / 返回值
 
-返回 `LWORD`。无错误码。
+返回类型 `LWORD`，无错误码、无 HRESULT。任意 64 位输入都有合法返回结果。
 
 ## 5. 使用注意 / 常见坑
 
-- 新代码优先用本函数（直接 LWORD 类型）。
+- **`LWORD` 是原生 64 位类型**：相比 legacy 版（`HOST_TO_BE64` 接收 `T_ULARGE_INTEGER` 结构体），EX 版直接吃 `LWORD`，与现代 TwinCAT 代码风格统一。
+- **不要写"双重反转"**：错误地连续调用两次本函数会把字节恢复成原样，看起来"什么都没发生"——往往是协议端字节序判断出错的征兆。
+- **在协议解码器里只对单条报文调用一次**：函数本身极快但仍占用 PLC 周期，避免放在每周期都执行的逻辑里反复调。
+- **64 位浮点 / 有符号转换**：先用本函数做字节级反转，再用 `LWORD_TO_REAL` / `_TO_LREAL` 或位重新解释完成；不要把 `LREAL` / `DINT` 直接传给本 FC（类型不匹配）。
+- **协议端的 word/dword 内部顺序**：本函数只处理 byte 内 endian。Modbus 跨 16 位寄存器组成 32/64 位整数时设备厂商对 word 顺序约定不同，先确认 word 顺序再调用本 FC。（工程经验补充）
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_HOST_TO_BE64EX.xml`](../examples/P_Demo_HOST_TO_BE64EX.xml)（PLCopenXML，可直接导入 TwinCAT 3 XAE）
+> 配套可导入文件：[`examples/P_Demo_HOST_TO_BE64EX.xml`](../examples/P_Demo_HOST_TO_BE64EX.xml)
 >
 > 导入步骤：右键 PLC 项目 → Import PLCopenXML → 选该文件 → OK
 > 详见 [`examples/README.md`](../examples/README.md)
@@ -62,21 +76,25 @@ END_VAR
 ```iecst
 PROGRAM P_Demo_HOST_TO_BE64EX
 VAR
-    bResult : LWORD;
-    bRun    : BOOL;
+    inValue  : LWORD;   // 待转换数据
+    outValue : LWORD;   // 字节序反转结果
+    bRun : BOOL;
 END_VAR
 
-
 IF bRun THEN
-    bResult := HOST_TO_BE64EX(16#0123456789ABCDEF);
+    outValue := HOST_TO_BE64EX(inValue);
     bRun := FALSE;
 END_IF;
 ```
 
-## 7. 相关
+## 7. 业务场景与实际价值
 
-- 见 [`Tc2_Utilities README`](../README.md) 同库其他条目
+- **场景**：PLC 作为以太网协议服务端 / Modbus TCP server / OPC UA Pub-Sub publisher，把内部数据按大端字节序发送出去。所有这些协议都规定大端字节序，但 TwinCAT 主机是小端，直接拷贝会得到字节顺序颠倒的乱码。
+- **价值**：1 次调用完成 8 字节反转，比手写多次移位 + 位掩码 + 或运算更短、更可读、避免符号扩展和位运算优先级笔误。代码 review 一眼看出"这里在处理协议字节序"，重构时不会被误删。
+- **替代方案对比**：手写位运算（容易出错、可读性差）/ 用 `MEMCPY` 配合反向索引拷贝（多一个临时缓冲区，写起来啰嗦）/ 调用本函数（Beckhoff 官方实现，最简洁）。
 
-## 8. 待确认项
+## 8. 参考资料
 
-无。
+- **PDF**：[TwinCAT_3_PLC_Lib_Tc2_Utilities_EN.pdf](https://download.beckhoff.com/download/document/automation/twincat3/TwinCAT_3_PLC_Lib_Tc2_Utilities_EN.pdf) §4.3.5
+- **InfoSys topic**：https://infosys.beckhoff.com/content/1033/tcplclib_tc2_utilities/1045651723.html
+- **相关函数**：`BE64EX_TO_HOST`（反向）、`HOST_TO_BE16` / `HOST_TO_BE32` / `HOST_TO_BE128`（其他位宽版本）
