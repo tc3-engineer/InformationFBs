@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <project xmlns="http://www.plcopen.org/xml/tc6_0200">
-  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-10T12:00:00"/>
-  <contentHeader name="Tc2_Utilities.FILETIME64_TO_SYSTEMTIME Demo" modificationDateTime="2026-05-10T12:00:00">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-11T12:00:00"/>
+  <contentHeader name="Tc2_Utilities.FILETIME64_TO_SYSTEMTIME Demo" modificationDateTime="2026-05-11T12:00:00">
     <coordinateInfo>
       <fbd><scaling x="1" y="1"/></fbd>
       <ld><scaling x="1" y="1"/></ld>
@@ -14,44 +14,43 @@
       <pou name="P_Demo_FILETIME64_TO_SYSTEMTIME" pouType="program">
         <interface>
           <localVars>
-            <variable name="rResult">
-              <type><derived name="TIMESTRUCT"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">FILETIME64_TO_SYSTEMTIME 的返回值</xhtml></documentation>
-            </variable>
-            <variable name="bRun">
-              <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">触发一次调用</xhtml></documentation>
-            </variable>
-            <variable name="ftIn">
+            <variable name="ftLogTime">
               <type><derived name="T_FILETIME64"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">测试用本地变量</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">日志时间戳</xhtml></documentation>
+            </variable>
+            <variable name="stLogTime">
+              <type><derived name="TIMESTRUCT"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">按字段展开的系统时间</xhtml></documentation>
+            </variable>
+            <variable name="bValid">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">转换成功（wYear &gt; 0）</xhtml></documentation>
+            </variable>
+            <variable name="bRunOnce">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">脉冲触发</xhtml></documentation>
             </variable>
           </localVars>
         </interface>
         <body>
-          <ST>
-            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
-// Tc2_Utilities.FILETIME64_TO_SYSTEMTIME 演示程序（FUNCTION）
-// ============================================================
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：Windows 日志返回 T_FILETIME64，需按字段（年/月/日/时/分/秒/毫秒）拆出供 HMI 表格显示
+//
+// 价值：1 行拿到 8 字段（含 wDayOfWeek），保留毫秒精度，替代手写 100+ 行日历计算
+//
 // 验证步骤：
-//   1. 引用 Tc2_Utilities（及类型所在依赖库 Tc2_System / Tc2_Standard）
-//   2. 编译 + 登录
-//   3. 强制 bRun := TRUE 一个周期
-//   4. 观察 rResult 应为 TIMESTRUCT(wYear=2024, wMonth=1, wDay=1, wHour=12, ...)
-// ============================================================
-
-ftIn := DT_TO_FILETIME64(DT#2024-01-01-12:00:00);
-IF bRun THEN
-    rResult := FILETIME64_TO_SYSTEMTIME(ftIn);
-    bRun := FALSE;
-END_IF;
-</xhtml>
-          </ST>
+//   1. 引用 Tc2_Utilities（≥ 3.3.44.0）
+//   2. 编译 + 登录 + 运行
+//   3. 用 DT_TO_FILETIME64(DT#2026-05-11-12:34:56) 给 ftLogTime 赋值
+//   4. 强制 bRunOnce := TRUE
+//   5. 在线观察 stLogTime.wYear=2026, wMonth=5, wDay=11, wHour=12 ...
+//   6. bValid 应为 TRUE
+// =============================================================================
+stLogTime := FILETIME64_TO_SYSTEMTIME(ftLogTime);
+bValid := stLogTime.wYear &gt; 0;</xhtml></ST>
         </body>
       </pou>
     </pous>
   </types>
-  <instances>
-    <configurations/>
-  </instances>
+  <instances><configurations/></instances>
 </project>

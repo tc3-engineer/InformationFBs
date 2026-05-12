@@ -1,4 +1,5 @@
 # SYSTEMTIME_TO_ISO8601
+
 ## 元信息
 
 | 字段 | 值 |
@@ -7,40 +8,43 @@
 | Library Version | `2.18.2` |
 | Type | `FUNCTION` |
 | Category | `Time functions` |
-| Source | https://infosys.beckhoff.com/content/1033/tcplclib_tc2_utilities/ |
 | Source PDF | https://download.beckhoff.com/download/document/automation/twincat3/TwinCAT_3_PLC_Lib_Tc2_Utilities_EN.pdf |
-| Verified | 2026-05-10 ✅ |
+| Source InfoSys | https://infosys.beckhoff.com/content/1033/tcplclib_tc2_utilities/10686615819.html |
+| Verified | 2026-05-11 ✅ |
+| InfoSys-checked | ✅ 2026-05-11 |
 | Status | `verified` |
 | Example | [`examples/P_Demo_SYSTEMTIME_TO_ISO8601.xml`](../examples/P_Demo_SYSTEMTIME_TO_ISO8601.xml) |
 
 ---
+
 ## 1. 功能简述
 
-TIMESTRUCT 转 **ISO 8601 字符串** `YYYY-MM-DDThh:mm:ss.xxxTZD`（同 `FILETIME64_TO_ISO8601` 但接受 SYSTEMTIME 输入）。
+把 `TIMESTRUCT` 格式化为 ISO 8601 字符串 `YYYY-MM-DDThh:mm:ss.xxxTZD`。`TZD` 为 `Z`（UTC）或 `±hh:mm`（本地时间的偏移）。本 FC 与 `FILETIME64_TO_ISO8601` 输出格式一致，差别只是输入类型。
+
 ## 2. 接口定义
 
-### VAR_INPUT
+### 函数声明
 
 ```iecst
 FUNCTION SYSTEMTIME_TO_ISO8601 : STRING(39)
 VAR_INPUT
-    systemTime : TIMESTRUCT; (* Input time in system time format (struct) *)
-    nBias : INT; (* Specifies the current bias, in minutes, for local time translation on this computer. The bias is the difference between Coordinated Universal Time (UTC) and local time. UTC = local time + bias *)
-    bUTC : BOOL; (* Specifies whether the systemTime is UTC or local time. *)
-    nPrecision : USINT(0..9); (* Precision. Number of decimal places of seconds. (0..9) *)
+    systemTime : TIMESTRUCT;
+    nBias : INT;
+    bUTC : BOOL;
+    nPrecision : USINT(0..9);
 END_VAR
 ```
 
 | 名称 | 类型 | 说明 |
 |---|---|---|
-| `systemTime` | `TIMESTRUCT` | SYSTEMTIME 结构 |
-| `nBias` | `INT` | 时区偏移（分钟） |
-| `bUTC` | `BOOL` | systemTime 是 UTC 还是本地时 |
-| `nPrecision` | `USINT(0..9)` | 秒小数位精度（0..9） |
+| `systemTime` | `TIMESTRUCT` | 输入时间（系统时间结构体格式） |
+| `nBias` | `INT` | UTC 与本地时间的差值，分钟。`UTC = 本地时间 + nBias` |
+| `bUTC` | `BOOL` | 输入是 UTC 还是本地时间 |
+| `nPrecision` | `USINT(0..9)` | 秒的小数位精度（0 ~ 9 位） |
 
 ### 返回值
 
-`STRING(39)` —— 函数计算结果。
+`STRING(39)` —— 见 §3 行为说明。
 
 ### VAR_IN_OUT
 
@@ -48,17 +52,27 @@ END_VAR
 
 ## 3. 行为说明
 
-- 调用 `SYSTEMTIME_TO_ISO8601(stIn, -60, FALSE, 3)`（输入是本地时，本地是 UTC+1 → bias=-60），返回 `STRING(39)`。
-- 期望：形如 `'2024-01-01T12:00:00.000+01:00'`（输入时间不变，TZD 由 nBias 推出）。
-- ⚠️ **bias 符号约定** 同 `FILETIME64_TO_ISO8601`：Beckhoff/Windows `UTC = local + bias`。
+ISO 8601 格式规则（同 `FILETIME64_TO_ISO8601`）：日期 `YYYY-MM-DD`，T 大写分隔，时间 `hh:mm:ss[.xxx]`，TZD 为 `Z`（bUTC=TRUE 时）或 `±hh:mm`（按 nBias 派生）。
+
+`nPrecision` 控制秒后小数位数：0 不输出小数点，1 ~ 9 输出对应位数（注意 `TIMESTRUCT.wMilliseconds` 精度只到 3 位，更高位会被零填充）。
+
+返回 `STRING(39)`，足够容纳最长形式「YYYY-MM-DDThh:mm:ss.123456789+12:34」。
+
+版本要求：Tc2_Utilities ≥ 3.3.46.0。
+
+
+本 FC 与 `FILETIME64_TO_ISO8601` 的区别只在输入类型——前者吃 `TIMESTRUCT`、后者吃 `T_FILETIME64`，输出格式完全相同。工程中如果数据来源已经是 `TIMESTRUCT`（如从 `FB_LocalSystemTime` 输出），直接用本 FC 更省一次类型转换；如果是 `T_FILETIME64`（如 Windows 日志时间戳）则用 `FILETIME64_TO_ISO8601` 更直接。
 
 ## 4. 错误码 / 返回值
 
-返回 `STRING(39)`。无独立错误码（部分函数用 0/全 0 结构表示参数无效）。
+返回类型 `STRING(39)`。函数无错误码 / 无 HRESULT；任意合法类型输入都有定义良好的返回值。详细边界与失败行为见 §5。
 
 ## 5. 使用注意 / 常见坑
 
-- 参数语义见 `FILETIME64_TO_ISO8601`。
+- **nPrecision > 3 会零填充**：`TIMESTRUCT` 只到毫秒，`nPrecision = 6` 时多余 3 位为 「000」（不是真实纳秒）。
+- **bUTC 与 nBias 关系同 `FILETIME64_TO_ISO8601`**：bUTC = TRUE 时 TZD 固定为 `Z`，nBias 仅在 bUTC = FALSE 时影响 TZD 输出。
+- **中国时区写法**：北京时间（本地时间）+ nBias = -480 + bUTC = FALSE → 输出 「...+08:00」（因为 UTC = 本地 + (-480) → 本地比 UTC 早 480 分钟 = +8 小时）。
+- **与 `SYSTEMTIME_TO_STRING` 区别**：`SYSTEMTIME_TO_STRING` 输出 「YYYY-MM-DD-hh:mm:ss.xxx」（用 `-` 分隔日期和时间，无 TZD），本 FC 输出标准 ISO 8601（用 `T` 分隔，带 TZD）。
 
 ## 6. 最小例程
 
@@ -68,24 +82,19 @@ END_VAR
 > 详见 [`examples/README.md`](../examples/README.md)
 
 ```iecst
-PROGRAM P_Demo_SYSTEMTIME_TO_ISO8601
-VAR
-    rResult : STRING(39);
-    bRun    : BOOL;
-    stIn : TIMESTRUCT;
-END_VAR
-
-stIn.wYear := 2024; stIn.wMonth := 1; stIn.wDay := 1; stIn.wHour := 12;
-IF bRun THEN
-    rResult := SYSTEMTIME_TO_ISO8601(stIn, 60, FALSE, 3);
-    bRun := FALSE;
-END_IF;
+sISO := SYSTEMTIME_TO_ISO8601(systemTime, nBias := 0, bUTC := TRUE, nPrecision := 3);
 ```
 
-## 7. 相关
+完整可导入例程见上方链接，里面有 场景 / 价值 / 验证步骤 三件套注释。
 
-- 见 [`Tc2_Utilities README`](../README.md) 同库其他条目
+## 7. 业务场景与实际价值
 
-## 8. 待确认项
+- **场景**：MQTT / OPC UA / REST API 推送时间字段；或者要求时间戳「按字典序排序就是按时间排序」的日志归档（ISO 8601 是这种特性的标准）。
+- **价值**：1 行调用得到带时区的标准时间字符串；手写要拼字符串 + 处理 TZD 计算 + DST 判定 50+ 行。
+- **替代方案对比**：走 `SYSTEMTIME_TO_FILETIME64` + `FILETIME64_TO_ISO8601`（多 1 步）/ 手写 ISO 拼字符串（容易出错）/ 调用本 FC（推荐）。
 
-无。
+## 8. 参考资料
+
+- **PDF**：[TwinCAT_3_PLC_Lib_Tc2_Utilities_EN.pdf](https://download.beckhoff.com/download/document/automation/twincat3/TwinCAT_3_PLC_Lib_Tc2_Utilities_EN.pdf) §4.1.20
+- **InfoSys topic**：https://infosys.beckhoff.com/content/1033/tcplclib_tc2_utilities/10686615819.html
+- **相关函数**：见 [`Tc2_Utilities README`](../README.md)（同类 time functions）

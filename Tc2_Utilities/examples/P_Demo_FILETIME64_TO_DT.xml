@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <project xmlns="http://www.plcopen.org/xml/tc6_0200">
-  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-10T12:00:00"/>
-  <contentHeader name="Tc2_Utilities.FILETIME64_TO_DT Demo" modificationDateTime="2026-05-10T12:00:00">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-11T12:00:00"/>
+  <contentHeader name="Tc2_Utilities.FILETIME64_TO_DT Demo" modificationDateTime="2026-05-11T12:00:00">
     <coordinateInfo>
       <fbd><scaling x="1" y="1"/></fbd>
       <ld><scaling x="1" y="1"/></ld>
@@ -14,44 +14,37 @@
       <pou name="P_Demo_FILETIME64_TO_DT" pouType="program">
         <interface>
           <localVars>
-            <variable name="rResult">
-              <type><DATE_AND_TIME/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">FILETIME64_TO_DT 的返回值</xhtml></documentation>
-            </variable>
-            <variable name="bRun">
-              <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">触发一次调用</xhtml></documentation>
-            </variable>
-            <variable name="ftIn">
+            <variable name="ftFromOpcUa">
               <type><derived name="T_FILETIME64"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">测试用本地变量</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">OPC UA 收到的时间戳</xhtml></documentation>
+            </variable>
+            <variable name="dtFromOpcUa">
+              <type><DATE_AND_TIME/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">转成 DT 后可与本地时间相减算时延</xhtml></documentation>
+            </variable>
+            <variable name="bRunOnce">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">脉冲触发</xhtml></documentation>
             </variable>
           </localVars>
         </interface>
         <body>
-          <ST>
-            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
-// Tc2_Utilities.FILETIME64_TO_DT 演示程序（FUNCTION）
-// ============================================================
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：OPC UA 节点送回的 T_FILETIME64 时间戳，PLC 内部需要 DT 比较 / 显示
+//
+// 价值：1 行完成基准换算（1601→1970）+ 单位换算（100ns→s），避免手写 19 位常量
+//
 // 验证步骤：
-//   1. 引用 Tc2_Utilities（及类型所在依赖库 Tc2_System / Tc2_Standard）
-//   2. 编译 + 登录
-//   3. 强制 bRun := TRUE 一个周期
-//   4. 观察 rResult 应为 DT#2024-01-01-12:00:00
-// ============================================================
-
-ftIn := DT_TO_FILETIME64(DT#2024-01-01-12:00:00);
-IF bRun THEN
-    rResult := FILETIME64_TO_DT(ftIn);
-    bRun := FALSE;
-END_IF;
-</xhtml>
-          </ST>
+//   1. 引用 Tc2_Utilities（≥ 3.3.44.0）
+//   2. 编译 + 登录 + 运行
+//   3. 用 DT_TO_FILETIME64(DT#2026-05-11-12:00:00) 给 ftFromOpcUa 赋值
+//   4. 强制 bRunOnce := TRUE
+//   5. 在线观察 dtFromOpcUa 应为 DT#2026-05-11-12:00:00（先 DT_TO_FILETIME64 再 FILETIME64_TO_DT 互逆）
+// =============================================================================
+dtFromOpcUa := FILETIME64_TO_DT(ftFromOpcUa);</xhtml></ST>
         </body>
       </pou>
     </pous>
   </types>
-  <instances>
-    <configurations/>
-  </instances>
+  <instances><configurations/></instances>
 </project>

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <project xmlns="http://www.plcopen.org/xml/tc6_0200">
-  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-10T12:00:00"/>
-  <contentHeader name="Tc2_Utilities.F_GetDOYOfYearMonthDay Demo" modificationDateTime="2026-05-10T12:00:00">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-11T12:00:00"/>
+  <contentHeader name="Tc2_Utilities.F_GetDOYOfYearMonthDay Demo" modificationDateTime="2026-05-11T12:00:00">
     <coordinateInfo>
       <fbd><scaling x="1" y="1"/></fbd>
       <ld><scaling x="1" y="1"/></ld>
@@ -14,39 +14,49 @@
       <pou name="P_Demo_F_GetDOYOfYearMonthDay" pouType="program">
         <interface>
           <localVars>
-            <variable name="rResult">
+            <variable name="wYear">
               <type><WORD/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">F_GetDOYOfYearMonthDay 的返回值</xhtml></documentation>
+              <initialValue><simpleValue value="2026"/></initialValue>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">年份</xhtml></documentation>
             </variable>
-            <variable name="bRun">
+            <variable name="wMonth">
+              <type><WORD/></type>
+              <initialValue><simpleValue value="5"/></initialValue>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">月</xhtml></documentation>
+            </variable>
+            <variable name="wDay">
+              <type><WORD/></type>
+              <initialValue><simpleValue value="11"/></initialValue>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">日</xhtml></documentation>
+            </variable>
+            <variable name="wDOY">
+              <type><WORD/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">年内第几天（1~366）</xhtml></documentation>
+            </variable>
+            <variable name="bRunOnce">
               <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">触发一次调用</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">脉冲触发</xhtml></documentation>
             </variable>
           </localVars>
         </interface>
         <body>
-          <ST>
-            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
-// Tc2_Utilities.F_GetDOYOfYearMonthDay 演示程序（FUNCTION）
-// ============================================================
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：太阳能 / 气象模型按「年内第几天」(DOY) 做日辐射强度查表
+//
+// 价值：1 行调用避免手写「累加各月天数 + 闰年判定」，特别是 2 月闰年规则
+//
 // 验证步骤：
-//   1. 引用 Tc2_Utilities（及类型所在依赖库 Tc2_System / Tc2_Standard）
-//   2. 编译 + 登录
-//   3. 强制 bRun := TRUE 一个周期
-//   4. 观察 rResult 应为 61（2024 闰年，3 月 1 日是第 61 天）
-// ============================================================
-
-IF bRun THEN
-    rResult := F_GetDOYOfYearMonthDay(WORD#2024, WORD#3, WORD#1);
-    bRun := FALSE;
-END_IF;
-</xhtml>
-          </ST>
+//   1. 引用 Tc2_Utilities
+//   2. 编译 + 登录 + 运行
+//   3. 强制 bRunOnce := TRUE
+//   4. 在线观察 wDOY 应为 131（2026 年 5 月 11 日是第 131 天）
+//   5. wMonth:=2, wDay:=29; wYear:=2024 → wDOY = 60（闰年 2 月 29 是第 60 天）
+//   6. wYear:=2023 同条件 → wDOY = 0（平年没有 2 月 29 日）
+// =============================================================================
+wDOY := F_GetDOYOfYearMonthDay(wYear, wMonth, wDay);</xhtml></ST>
         </body>
       </pou>
     </pous>
   </types>
-  <instances>
-    <configurations/>
-  </instances>
+  <instances><configurations/></instances>
 </project>
