@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <project xmlns="http://www.plcopen.org/xml/tc6_0200">
-  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-10T13:00:00"/>
-  <contentHeader name="Tc2_Utilities.FB_FileTimeToTzSpecificLocalTime Demo" modificationDateTime="2026-05-10T13:00:00">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-12T00:00:00"/>
+  <contentHeader name="Tc2_Utilities.FB_FileTimeToTzSpecificLocalTime Demo" modificationDateTime="2026-05-12T00:00:00">
     <coordinateInfo>
       <fbd><scaling x="1" y="1"/></fbd>
       <ld><scaling x="1" y="1"/></ld>
@@ -14,52 +14,63 @@
       <pou name="P_Demo_FB_FileTimeToTzSpecificLocalTime" pouType="program">
         <interface>
           <localVars>
-            <variable name="fbFB_FileTimeToTzSpecificLocalTime">
+            <variable name="fbConvertUtcToLocal">
               <type><derived name="FB_FileTimeToTzSpecificLocalTime"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">[obsolete] 实例</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">FB 实例（已弃用；新代码用 FB_FileTime64ToTzSpecificLocalTime）</xhtml></documentation>
             </variable>
-            <variable name="arg_in">
+            <variable name="ftUtcInput">
               <type><derived name="T_FILETIME"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT in: 要转换的 UTC 时间（旧 FILETIME 结构）</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">UTC 输入时间（FILETIME 32 位）</xhtml></documentation>
             </variable>
-            <variable name="arg_tzInfo">
-              <type><derived name="ST_TimeZoneInformation"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT tzInfo: 目标时区信息（含 DST 切换规则）</xhtml></documentation>
-            </variable>
-            <variable name="out_out">
+            <variable name="ftLocalOutput">
               <type><derived name="T_FILETIME"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT out: 转换出的本地时间</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">转换后本地时间</xhtml></documentation>
             </variable>
-            <variable name="out_eTzID">
+            <variable name="eDstStatus">
               <type><derived name="E_TimeZoneID"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT eTzID: 夏令时/标准时标识</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">夏令时 / 标准时 / 未知</xhtml></documentation>
             </variable>
-            <variable name="out_bB">
+            <variable name="bInBTime">
               <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_OUTPUT bB: **B 时刻**标记（DST→标准时回拨期间，重复时段第二次）</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">DST 回退重复区第二次 = TRUE</xhtml></documentation>
+            </variable>
+            <variable name="bDoResetCache">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">时间源跳变后写 TRUE 一次清缓存</xhtml></documentation>
             </variable>
           </localVars>
         </interface>
         <body>
           <ST>
             <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
-// Tc2_Utilities.FB_FileTimeToTzSpecificLocalTime 演示程序（已废弃 FB）
+// Tc2_Utilities.FB_FileTimeToTzSpecificLocalTime 演示程序（已弃用 FB）
 // ============================================================
-// ⚠️ 本 FB 已废弃。新代码请使用 PDF 中提示的替代 FB。
-// 验证步骤：
-//   1. 引用 Tc2_Utilities（及依赖类型所在库）
-//   2. 编译 + 登录
-//   3. 按 doc.md 的输入说明给 arg_* 赋值
-//   4. 监视 out_bError / out_nErrorId
+// 场景：维护一个 TC2 时代的批次报表系统：内部时间戳全部以 UTC FILETIME 存储，
+//       HMI 显示时按西欧时区转成本地时间。本 FB 是这套旧系统转时区的标准工具。
+// 价值：保留旧报表系统的时区转换；新工程请改用 FB_FileTime64ToTzSpecificLocalTime。
+// 验证：
+//   1. 引用 Tc2_Utilities，编译 + 登录
+//   2. 给 ftUtcInput 写一个固定 UTC FILETIME（用 DT_TO_FILETIME 辅助函数）
+//   3. 监视 ftLocalOutput 的小时数 — 夏令时应比 UTC 多 2（CEST=UTC+2），冬令
+//      时多 1（CET=UTC+1）
+//   4. eDstStatus 应反映 Daylight / Standard
+//   5. 时间源跳变后写 bDoResetCache := TRUE 调 A_Reset 清缓存
 // ============================================================
 
-fbFB_FileTimeToTzSpecificLocalTime(
-    in := arg_in,
-    tzInfo := arg_tzInfo,
-    out => out_out,
-    eTzID => out_eTzID,
-    bB => out_bB
+// 用 WEST_EUROPE_TZI 常量做时区数据
+fbConvertUtcToLocal(
+    in     := ftUtcInput,
+    tzInfo := WEST_EUROPE_TZI,
+    out    => ftLocalOutput,
+    eTzID  => eDstStatus,
+    bB     => bInBTime
 );
+
+// 时间源跳变后调 A_Reset() 清缓存（动作方法式调用）
+IF bDoResetCache THEN
+    bDoResetCache := FALSE;
+    fbConvertUtcToLocal.A_Reset();
+END_IF;
 </xhtml>
           </ST>
         </body>
