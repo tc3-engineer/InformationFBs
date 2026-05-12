@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <project xmlns="http://www.plcopen.org/xml/tc6_0200">
-  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-10T08:00:00"/>
-  <contentHeader name="Tc2_Standard.WMID Demo" modificationDateTime="2026-05-10T08:00:00">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-11T08:00:00"/>
+  <contentHeader name="Tc2_Standard.WMID Demo" modificationDateTime="2026-05-11T08:00:00">
     <coordinateInfo>
       <fbd><scaling x="1" y="1"/></fbd>
       <ld><scaling x="1" y="1"/></ld>
@@ -14,40 +14,58 @@
       <pou name="P_Demo_WMID" pouType="program">
         <interface>
           <localVars>
-            <variable name="sResult">
-              <type><wstring><stringLength><value>255</value></stringLength></wstring></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">WMID 的返回值（监视）</xhtml></documentation>
+            <variable name="sConfig">
+              <type><wstring><length>255</length></wstring></type>
+              <initialValue><simpleValue value="&quot;IP：192.168.1.10，端口：502&quot;"/></initialValue>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">中文风格配置串</xhtml></documentation>
             </variable>
-            <variable name="bRun">
+            <variable name="sIP">
+              <type><wstring><length>255</length></wstring></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">提取出的 IP 字段</xhtml></documentation>
+            </variable>
+            <variable name="nStart">
+              <type><INT/></type>
+              <initialValue><simpleValue value="4"/></initialValue>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">IP 起点 = 第 4 字符（&quot;IP：&quot; 占 3 字符）</xhtml></documentation>
+            </variable>
+            <variable name="nLength">
+              <type><INT/></type>
+              <initialValue><simpleValue value="12"/></initialValue>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">IP 字段长度 = 12 字符</xhtml></documentation>
+            </variable>
+            <variable name="bExtract">
               <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">触发一次 WMID 调用</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">触发一次 WMID</xhtml></documentation>
             </variable>
           </localVars>
         </interface>
         <body>
-          <ST>
-            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
-// Tc2_Standard.WMID 演示程序（FUNCTION）
-// ============================================================
-// 场景：对 WSTRING 执行 MID 操作
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：HMI 配置串带中文标签 &quot;IP：xxx，端口：yyy&quot;。要提取中间 IP 字段。
+//       全角冒号 / 全角逗号都按 1 个 UCS-2 字符算，nStart = 4 对应 &quot;192&quot;
+//       开头。STRING + MID 会按字节算，&quot;IP：&quot; 是 5 字节（I, P, 3-byte UTF8 冒号），
+//       要传 nStart = 6 才对，容易算错。
+//
+// 价值：WMID 按字符位置和长度，业务侧看到的"第 4 个字符&quot;就是函数眼里的
+//       第 4 个字符，无需做字节-字符换算。
+//
 // 验证步骤：
-//   1. 编译并登录目标
-//   2. 强制 bRun := TRUE 一个周期
-//   3. 观察 sResult = "US"
-//   4. bRun 自动复位
-// ============================================================
+//   1. 导入本文件、引用 Tc2_Standard、编译、登录、运行
+//   2. 在线 monitor sIP（监视面板选 Unicode）
+//   3. 在线写 bExtract := TRUE
+//   4. 下一周期 sIP = &quot;192.168.1.10&quot;
+//   5. 改 nLength 为 100 + 再触发 → 观察越界行为（PDF 未明确）
+// =============================================================================
 
-IF bRun THEN
-    sResult := WMID("SUSI",2,2);
-    bRun := FALSE;
+// 入参顺序：(STR, LEN, POS) — LEN 在 POS 前，POS 从 1 起，按 UCS-2 字符算
+IF bExtract THEN
+    sIP := WMID(sConfig, nLength, nStart);
+    bExtract := FALSE;
 END_IF;
-</xhtml>
-          </ST>
+</xhtml></ST>
         </body>
       </pou>
     </pous>
   </types>
-  <instances>
-    <configurations/>
-  </instances>
+  <instances><configurations/></instances>
 </project>

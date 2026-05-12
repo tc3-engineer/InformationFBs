@@ -14,68 +14,84 @@
       <pou name="P_Demo_FB_RequestEventText" pouType="program">
         <interface>
           <localVars>
-            <variable name="fbFB_RequestEventText">
+            <variable name="fbReq">
               <type><derived name="FB_RequestEventText"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">Tc3_EventLogger.FB_RequestEventText 实例</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">请求 FB 实例</xhtml></documentation>
             </variable>
-            <variable name="arg_sResult">
-              <type><reference><baseType><derived name="STRING"/></baseType></reference></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT sResult</xhtml></documentation>
+            <variable name="fbAlarm">
+              <type><derived name="FB_TcAlarm"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">提供 fbEventBase 参考的事件源</xhtml></documentation>
             </variable>
-            <variable name="arg_nResult">
-              <type><UDINT/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT nResult</xhtml></documentation>
-            </variable>
-            <variable name="arg_eventClass">
-              <type><derived name="GUID"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT eventClass</xhtml></documentation>
-            </variable>
-            <variable name="arg_nEventId">
-              <type><UDINT/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT nEventId</xhtml></documentation>
-            </variable>
-            <variable name="arg_nLangId">
+            <variable name="nLangId">
+              <initialValue><simpleValue value="2052"/></initialValue>
               <type><DINT/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT nLangId</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">目标 LangId（中文）</xhtml></documentation>
             </variable>
-            <variable name="arg_ipArgs">
-              <type><derived name="I_TcArguments"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT ipArgs</xhtml></documentation>
+            <variable name="bDoReq">
+              <initialValue><simpleValue value="FALSE"/></initialValue>
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">上升沿触发</xhtml></documentation>
             </variable>
-            <variable name="arg_ipRemoteLogger">
-              <type><derived name="I_TcRemoteEventLogger"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT ipRemoteLogger</xhtml></documentation>
+            <variable name="bDoReqPrev">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">边沿检测</xhtml></documentation>
+            </variable>
+            <variable name="bBusy">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">状态</xhtml></documentation>
+            </variable>
+            <variable name="bError">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">错误</xhtml></documentation>
+            </variable>
+            <variable name="hrErrorCode">
+              <type><derived name="HRESULT"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">错误码</xhtml></documentation>
+            </variable>
+            <variable name="hr">
+              <type><derived name="HRESULT"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">Request 返回值</xhtml></documentation>
+            </variable>
+            <variable name="sResult">
+              <type><string><length>255</length></string></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">结果文本</xhtml></documentation>
+            </variable>
+            <variable name="bGot">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">已取到结果</xhtml></documentation>
             </variable>
           </localVars>
         </interface>
         <body>
-          <ST>
-            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
-// Tc3_EventLogger.FB_RequestEventText 演示程序（FB 实例）
-// ============================================================
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：异步取事件本地化文本
+// 价值：异步取本地化资源
+// 验证：登录后写 bDoReq := TRUE 触发；几周期后 bBusy 变 FALSE 且 bError 应为 FALSE；之后取结果
 // 验证步骤：
-//   1. 引用 Tc3_EventLogger（及依赖类型所在库 Tc2_System 等）
-//   2. 编译 + 登录
-//   3. 按 doc.md 给 arg_* 赋值
-//   4. 在线监视 out_* / io_* 输出
-// ============================================================
+//   1. 右键 PLC 项目 → Import PLCopenXML → 选本文件
+//   2. 引用 Tc3_EventLogger（System → References → Add library）
+//   3. 编译 → 登录 → 运行；按 verify 注释里给出的在线写值操作
+// =============================================================================
 
-fbFB_RequestEventText(
-    sResult := arg_sResult,
-    nResult := arg_nResult,
-    eventClass := arg_eventClass,
-    nEventId := arg_nEventId,
-    nLangId := arg_nLangId,
-    ipArgs := arg_ipArgs,
-    ipRemoteLogger := arg_ipRemoteLogger
-);
-</xhtml>
-          </ST>
+IF bDoReq AND NOT bDoReqPrev THEN
+    fbReq.Clear();                            // 清理上次结果
+    hr := fbReq.Request(nLangId := nLangId, fbEventBase := fbAlarm);
+    bGot := FALSE;
+END_IF;
+bDoReqPrev := bDoReq;
+
+bBusy := fbReq.bBusy;
+bError := fbReq.bError;
+hrErrorCode := fbReq.hrErrorCode;
+
+IF NOT bBusy AND NOT bError AND NOT bGot THEN
+    fbReq.GetString(sResult := sResult);
+    bGot := TRUE;
+END_IF;
+</xhtml></ST>
         </body>
       </pou>
     </pous>
   </types>
-  <instances>
-    <configurations/>
-  </instances>
+  <instances><configurations/></instances>
 </project>

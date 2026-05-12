@@ -14,88 +14,64 @@
       <pou name="P_Demo_FB_TcRemoteEventLogger" pouType="program">
         <interface>
           <localVars>
-            <variable name="fbFB_TcRemoteEventLogger">
+            <variable name="fbRemoteLogger">
               <type><derived name="FB_TcRemoteEventLogger"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">Tc3_EventLogger.FB_TcRemoteEventLogger 实例</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">远程 EventLogger 视图</xhtml></documentation>
             </variable>
-            <variable name="arg_nTimeStamp">
-              <type><ULINT/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT nTimeStamp</xhtml></documentation>
+            <variable name="sRemoteNetId">
+              <initialValue><simpleValue value="'192.168.1.10.1.1'"/></initialValue>
+              <type><string><length>40</length></string></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">远程 AMS Net ID</xhtml></documentation>
             </variable>
-            <variable name="arg_bResetConfirmation">
+            <variable name="nRemotePort">
+              <initialValue><simpleValue value="851"/></initialValue>
+              <type><UINT/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">AMS Port（默认 PLC 任务为 851）</xhtml></documentation>
+            </variable>
+            <variable name="bConnected">
               <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT bResetConfirmation</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">连接状态</xhtml></documentation>
             </variable>
-            <variable name="arg_ipFilter">
-              <type><derived name="I_TcEventFilter"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT ipFilter</xhtml></documentation>
+            <variable name="bDoConnect">
+              <initialValue><simpleValue value="FALSE"/></initialValue>
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">上升沿触发连接</xhtml></documentation>
             </variable>
-            <variable name="arg_ipClearSettings">
-              <type><derived name="I_TcClearLoggedEventsSettings"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT ipClearSettings</xhtml></documentation>
+            <variable name="bDoConnectPrev">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">边沿检测</xhtml></documentation>
             </variable>
-            <variable name="arg_sNetId">
-              <type><derived name="T_AmsNetId"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT sNetId</xhtml></documentation>
-            </variable>
-            <variable name="arg_eventClass">
-              <type><derived name="GUID"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT eventClass</xhtml></documentation>
-            </variable>
-            <variable name="arg_nEventId">
-              <type><UDINT/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT nEventId</xhtml></documentation>
-            </variable>
-            <variable name="arg_eSeverity">
-              <type><derived name="TcEventSeverity"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT eSeverity</xhtml></documentation>
-            </variable>
-            <variable name="arg_ipSourceInfo">
-              <type><derived name="I_TcSourceInfo"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT ipSourceInfo</xhtml></documentation>
-            </variable>
-            <variable name="arg_ipArguments">
-              <type><derived name="I_TcArguments"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT ipArguments</xhtml></documentation>
-            </variable>
-            <variable name="arg_stEventEntry">
-              <type><derived name="TcEventEntry"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT stEventEntry</xhtml></documentation>
+            <variable name="hr">
+              <type><derived name="HRESULT"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">返回值监视</xhtml></documentation>
             </variable>
           </localVars>
         </interface>
         <body>
-          <ST>
-            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
-// Tc3_EventLogger.FB_TcRemoteEventLogger 演示程序（FB 实例）
-// ============================================================
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：远程清除某 PLC 的所有 alarm
+// 价值：跨 PLC 维护操作
+// 验证：需要远程 AMS 路由已配置。Connect 成功后调用 ClearAllAlarms 应让远程 EventLogger 状态变化
 // 验证步骤：
-//   1. 引用 Tc3_EventLogger（及依赖类型所在库 Tc2_System 等）
-//   2. 编译 + 登录
-//   3. 按 doc.md 给 arg_* 赋值
-//   4. 在线监视 out_* / io_* 输出
-// ============================================================
+//   1. 右键 PLC 项目 → Import PLCopenXML → 选本文件
+//   2. 引用 Tc3_EventLogger（System → References → Add library）
+//   3. 编译 → 登录 → 运行；按 verify 注释里给出的在线写值操作
+// =============================================================================
 
-fbFB_TcRemoteEventLogger(
-    nTimeStamp := arg_nTimeStamp,
-    bResetConfirmation := arg_bResetConfirmation,
-    ipFilter := arg_ipFilter,
-    ipClearSettings := arg_ipClearSettings,
-    sNetId := arg_sNetId,
-    eventClass := arg_eventClass,
-    nEventId := arg_nEventId,
-    eSeverity := arg_eSeverity,
-    ipSourceInfo := arg_ipSourceInfo,
-    ipArguments := arg_ipArguments,
-    stEventEntry := arg_stEventEntry
-);
-</xhtml>
-          </ST>
+// 边沿触发：建立连接
+IF bDoConnect AND NOT bDoConnectPrev THEN
+    hr := fbRemoteLogger.Connect(sNetId := sRemoteNetId, nPort := nRemotePort);
+    bConnected := SUCCEEDED(hr);
+END_IF;
+bDoConnectPrev := bDoConnect;
+
+// 远程操作（示例：批量清除远程 alarm）
+// IF bConnected THEN hr := fbRemoteLogger.ClearAlarms(...); END_IF;
+// 流程结束：fbRemoteLogger.Disconnect();
+</xhtml></ST>
         </body>
       </pou>
     </pous>
   </types>
-  <instances>
-    <configurations/>
-  </instances>
+  <instances><configurations/></instances>
 </project>

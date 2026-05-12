@@ -14,34 +14,46 @@
       <pou name="P_Demo_Release" pouType="program">
         <interface>
           <localVars>
-            <variable name="fbRelease">
-              <type><derived name="Release"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">Tc3_EventLogger.Release 实例</xhtml></documentation>
+            <variable name="pfbAlarm">
+              <type><pointer><baseType><derived name="FB_TcAlarm"/></baseType></pointer></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">动态分配的 alarm 实例指针（在本例外申请）</xhtml></documentation>
+            </variable>
+            <variable name="bReleaseReq">
+              <initialValue><simpleValue value="FALSE"/></initialValue>
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">在线置 TRUE 触发一次释放</xhtml></documentation>
+            </variable>
+            <variable name="bReleaseReqPrev">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">边沿检测</xhtml></documentation>
+            </variable>
+            <variable name="hr">
+              <type><derived name="HRESULT"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">Release 返回值监视</xhtml></documentation>
             </variable>
           </localVars>
         </interface>
         <body>
-          <ST>
-            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
-// Tc3_EventLogger.Release 演示程序（FB 实例）
-// ============================================================
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：动态分配的临时报警实例在用完后释放
+// 价值：防止 EventLogger 槽位泄露
+// 验证：登录后写 bReleaseReq := TRUE，hr 应该是 S_OK；再次 Release 会得到错误码（槽位已释放）
 // 验证步骤：
-//   1. 引用 Tc3_EventLogger（及依赖类型所在库 Tc2_System 等）
-//   2. 编译 + 登录
-//   3. 按 doc.md 给 arg_* 赋值
-//   4. 在线监视 out_* / io_* 输出
-// ============================================================
+//   1. 右键 PLC 项目 → Import PLCopenXML → 选本文件
+//   2. 引用 Tc3_EventLogger（System → References → Add library）
+//   3. 编译 → 登录 → 运行；按 verify 注释里给出的在线写值操作
+// =============================================================================
 
-fbRelease(
-
-);
-</xhtml>
-          </ST>
+// 假设 pfbAlarm 已通过 __NEW(FB_TcAlarm) 分配并 Create() 完成
+IF bReleaseReq AND NOT bReleaseReqPrev AND pfbAlarm &amp;lt;&amp;gt; 0 THEN
+    hr := pfbAlarm^.Release();
+    // 释放后建议立即把指针清零或随后 __DELETE
+END_IF;
+bReleaseReqPrev := bReleaseReq;
+</xhtml></ST>
         </body>
       </pou>
     </pous>
   </types>
-  <instances>
-    <configurations/>
-  </instances>
+  <instances><configurations/></instances>
 </project>

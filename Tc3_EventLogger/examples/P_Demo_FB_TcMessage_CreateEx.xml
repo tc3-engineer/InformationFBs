@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <project xmlns="http://www.plcopen.org/xml/tc6_0200">
   <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-11T01:00:00"/>
-  <contentHeader name="Tc3_EventLogger.FB_TcMessage_CreateEx Demo" modificationDateTime="2026-05-11T01:00:00">
+  <contentHeader name="Tc3_EventLogger.CreateEx Demo" modificationDateTime="2026-05-11T01:00:00">
     <coordinateInfo>
       <fbd><scaling x="1" y="1"/></fbd>
       <ld><scaling x="1" y="1"/></ld>
@@ -14,43 +14,45 @@
       <pou name="P_Demo_FB_TcMessage_CreateEx" pouType="program">
         <interface>
           <localVars>
-            <variable name="fbTcMessage">
+            <variable name="fbMessage">
               <type><derived name="FB_TcMessage"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">Tc3_EventLogger.FB_TcMessage 实例</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">message 实例</xhtml></documentation>
             </variable>
-            <variable name="arg_stEventEntry">
+            <variable name="bCreated">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">Create latch</xhtml></documentation>
+            </variable>
+            <variable name="hr">
+              <type><derived name="HRESULT"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">返回值监视</xhtml></documentation>
+            </variable>
+            <variable name="stEventEntry">
               <type><derived name="TcEventEntry"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT stEventEntry</xhtml></documentation>
-            </variable>
-            <variable name="arg_ipSourceInfo">
-              <type><derived name="I_TcSourceInfo"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT ipSourceInfo</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">在线写入事件定义</xhtml></documentation>
             </variable>
           </localVars>
         </interface>
         <body>
-          <ST>
-            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
-// Tc3_EventLogger.FB_TcMessage.CreateEx 演示程序（OO 方法）
-// ============================================================
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：从结构体一次性注册一个 message
+// 价值：结构体形式更适合循环批量注册
+// 验证：登录后第一周期 hr = S_OK；第二次手动 bCreated := FALSE 再触发会得到 ERROR_ALREADY_EXISTS
 // 验证步骤：
-//   1. 引用 Tc3_EventLogger（及依赖类型所在库 Tc2_System 等）
-//   2. 编译 + 登录
-//   3. 按 doc.md 给 arg_* 赋值
-//   4. 在线监视 out_* / io_* 输出
-// ============================================================
+//   1. 右键 PLC 项目 → Import PLCopenXML → 选本文件
+//   2. 引用 Tc3_EventLogger（System → References → Add library）
+//   3. 编译 → 登录 → 运行；按 verify 注释里给出的在线写值操作
+// =============================================================================
 
-fbTcMessage.CreateEx(
-    stEventEntry := arg_stEventEntry,
-    ipSourceInfo := arg_ipSourceInfo
-);
-</xhtml>
-          </ST>
+IF NOT bCreated THEN
+    hr := fbMessage.CreateEx(
+        stEventEntry := stEventEntry,
+        ipSourceInfo := 0);
+    bCreated := SUCCEEDED(hr);
+END_IF;
+</xhtml></ST>
         </body>
       </pou>
     </pous>
   </types>
-  <instances>
-    <configurations/>
-  </instances>
+  <instances><configurations/></instances>
 </project>

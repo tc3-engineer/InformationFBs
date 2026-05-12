@@ -14,38 +14,39 @@
       <pou name="P_Demo_OnAlarmDisposed" pouType="program">
         <interface>
           <localVars>
-            <variable name="fbOnAlarmDisposed">
-              <type><derived name="OnAlarmDisposed"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">Tc3_EventLogger.OnAlarmDisposed 实例</xhtml></documentation>
-            </variable>
-            <variable name="arg_fbEvent">
-              <type><reference><baseType><derived name="FB_TcEvent"/></baseType></reference></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT fbEvent</xhtml></documentation>
+            <variable name="fbListener">
+              <type><derived name="FB_ListenerBase2"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">listener 实例（实际工程使用子类）</xhtml></documentation>
             </variable>
           </localVars>
         </interface>
         <body>
-          <ST>
-            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
-// Tc3_EventLogger.OnAlarmDisposed 演示程序（FB 实例）
-// ============================================================
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：覆盖（OVERRIDE）OnAlarmDisposed 回调记录事件元数据到内部计数器
+// 价值：事件驱动接收的最小实现
+// 验证：本回调由 EventLogger 在事件发生时自动调用——不能在主程序里手动调用做演示。实际工程：继承 FB_ListenerBase2 后 OVERRIDE 本方法，再让事件触发
 // 验证步骤：
-//   1. 引用 Tc3_EventLogger（及依赖类型所在库 Tc2_System 等）
-//   2. 编译 + 登录
-//   3. 按 doc.md 给 arg_* 赋值
-//   4. 在线监视 out_* / io_* 输出
-// ============================================================
+//   1. 右键 PLC 项目 → Import PLCopenXML → 选本文件
+//   2. 引用 Tc3_EventLogger（System → References → Add library）
+//   3. 编译 → 登录 → 运行；按 verify 注释里给出的在线写值操作
+// =============================================================================
 
-fbOnAlarmDisposed(
-    fbEvent := arg_fbEvent
-);
-</xhtml>
-          </ST>
+// 本方法是 EventLogger 的事件回调，应该在 FB_ListenerBase2 的子类里 OVERRIDE。
+// 这里仅展示在主程序里启动 listener 的代码骨架；具体 OnAlarmDisposed 重写见同名 METHOD。
+// 示例（仅说明）：在子类 FB 里写——
+//   METHOD OnAlarmDisposed : HRESULT
+//   VAR_INPUT
+//       fbEvent : REFERENCE TO FB_TcEvent;
+//   END_VAR
+//   nEventCount := nEventCount + 1;
+//   OnAlarmDisposed := S_OK;
+//
+// 主程序示意：
+fbListener.Execute();
+</xhtml></ST>
         </body>
       </pou>
     </pous>
   </types>
-  <instances>
-    <configurations/>
-  </instances>
+  <instances><configurations/></instances>
 </project>

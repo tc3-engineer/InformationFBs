@@ -1,22 +1,27 @@
 # F_GetEventText
+
 ## 元信息
 
 | 字段 | 值 |
 |---|---|
 | Library | `Tc3_EventLogger` |
 | Library Version | `1.6.2` |
-| Type | `FUNCTION_BLOCK` |
-| Category | `Function blocks` |
-| Source | https://infosys.beckhoff.com/content/1033/tcplclib_tc3_eventlogger/ |
+| Type | `FUNCTION` |
+| Category | `Function` |
 | Source PDF | https://download.beckhoff.com/download/document/automation/twincat3/TwinCAT_3_PLC_Lib_Tc3_EventLogger_EN.pdf |
-| Verified | 2026-05-10 ✅ |
+| Source InfoSys | https://infosys.beckhoff.com/content/1033/tcplclib_tc3_eventlogger/5001474059.html |
+| Verified | 2026-05-11 ✅ |
+| InfoSys-checked | ✅ 2026-05-11 |
 | Status | `verified` |
 | Example | [`examples/P_Demo_F_GetEventText.xml`](../examples/P_Demo_F_GetEventText.xml) |
 
 ---
+
 ## 1. 功能简述
 
-The function triggers the asynchronous request for an event text. Syntax Definition: FUNCTION F_GetEventText : HRESULT
+`F_GetEventText` 是函数形式的便捷调用——把「为某事件异步查询本地化事件文本」封装为一个 `FUNCTION`。
+
+等价于 `FB_TcEventBase.RequestEventText()`，区别在函数形式更适合临时一次性调用。
 
 ## 2. 接口定义
 
@@ -31,12 +36,13 @@ END_VAR
 
 | 名称 | 类型 | 说明 |
 |---|---|---|
-| `nLangId` | `DINT` | （详见 PDF） |
-| `fbEventBase` | `REFERENCE TO FB_TcEventBase` | （详见 PDF） |
+| `nLangId` | `DINT` | 目标 LangId（Windows LCID） |
+| `fbEventBase` | `REFERENCE TO FB_TcEventBase` | 事件实例引用（继承自 FB_TcEventBase） |
+
 
 ### VAR_OUTPUT
 
-无 VAR_OUTPUT。
+无。
 
 ### VAR_IN_OUT
 
@@ -48,48 +54,55 @@ END_VAR
 
 | 名称 | 类型 | 说明 |
 |---|---|---|
-| `fbResult` | `FB_AsyncStrResult` | （详见 PDF） |
+| `fbResult` | `FB_AsyncStrResult` | 用于承载异步结果的 FB_AsyncStrResult 实例 |
+
 
 ## 3. 行为说明
 
-- 见上方功能简述。
-- 详细行为（时序、错误码、状态机）请对照 PDF 第 3.1.11 节。
+本函数发起一次异步请求并立即返回 HRESULT：S_OK 表示请求已成功提交（不代表已完成）。调用方持有 fbResult : FB_AsyncStrResult 实例，之后周期检查 `bBusy` 直到 FALSE，再调 `GetString` 取结果。文本里的占位符 `{0}` `{1}` `{2}` 由 EventLogger 按事件 Arguments 列表里的参数自动填充。
+
+**与 FB 形式的区别**：FB 形式 `FB_RequestEventText` 适合「同一查询模板复用」（如循环遍历事件清单批量取文本）；本函数形式适合「临时一次性查询」，代码更简洁。
 
 ## 4. 错误码 / 返回值
 
-本函数返回 `HRESULT`（`S_OK` = 成功；其他错误码请见对应 InfoSys 页面，⚠️ 待人工补全）。
+本方法返回 `HRESULT`（32 位有符号整数）。`SUCCEEDED(hr)` 为 TRUE 表示调用成功。
+
+| HRESULT | 含义 | 处理建议 |
+|---|---|---|
+| `S_OK` | 请求已成功提交 | 周期检查 fbResult.bBusy |
+| `其他错误` | 事件未注册 / 文本资源缺失 ⚠️ PDF 未列详细码 | 查 ADS Return Codes / 检查 EventClass 配置 |
 
 ## 5. 使用注意 / 常见坑
 
-- VAR_INPUT / VAR_OUTPUT / VAR_IN_OUT 已逐字从 PDF 抽取并通过 `verify_doc.py` 自检。
-- 描述句、时序行为、错误码表等细节请以 PDF 第 3.1.11 节为准（⚠️ 待人工细化）。
+- **异步**：发起 Request 后必须周期检查 `bBusy` 直到 FALSE，再读结果——不能立即用。
+- 失败要检查 `bError` 与 `hrErrorCode`——`bBusy = FALSE` 不等于成功。
+- 发起多次 Request 之间要 `Clear()` 清理上次结果，否则可能读到旧数据。（工程经验补充）
+- LangId 必须是 Windows LCID（如 1033=英文、2052=简体中文、1031=德文）；事件类未配置对应语言会回退默认。
+- STRING 输出缓冲必须足够长（建议 STRING(255)+），否则文本被截断。（工程经验补充）
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_F_GetEventText.xml`](../examples/P_Demo_F_GetEventText.xml)
+> 配套可导入文件：[`examples/P_Demo_F_GetEventText.xml`](../examples/P_Demo_F_GetEventText.xml)（PLCopenXML，可直接导入 TwinCAT 3 XAE）
 >
-> 详见 [`examples/README.md`](../examples/README.md)
+> 导入步骤：右键 PLC 项目 → Import PLCopenXML → 选该文件 → OK
 
 ```iecst
-PROGRAM P_Demo_F_GetEventText
-VAR
-    fbF_GetEventText : F_GetEventText;
-    arg_nLangId : DINT;
-    arg_fbEventBase : REFERENCE TO FB_TcEventBase;
-    io_fbResult : FB_AsyncStrResult;
-END_VAR
-
-fbF_GetEventText(
-    nLangId := arg_nLangId,
-    fbEventBase := arg_fbEventBase,
-    fbResult := io_fbResult
-);
+// 详见 examples 目录下的 .xml 文件
 ```
 
-## 7. 相关
+## 7. 业务场景与实际价值
 
-- 见 [`Tc3_EventLogger README`](../README.md) 同库其他条目
+HMI 一次性取某 alarm 的本地化文本
 
-## 8. 待确认项
 
-- 详细描述/时序/错误码表待人工细化（auto-gen 阶段只确保 VAR 区与 PDF 一致）。
+函数式接口比 FB 形式更简洁
+
+
+`FB_RequestEventText` FB 形式 → 适合复用；本函数适合一次性
+
+
+## 8. 参考资料
+
+- **PDF**：[TwinCAT_3_PLC_Lib_Tc3_EventLogger_EN.pdf](https://download.beckhoff.com/download/document/automation/twincat3/TwinCAT_3_PLC_Lib_Tc3_EventLogger_EN.pdf) §3.1.11
+- **InfoSys topic**：https://infosys.beckhoff.com/content/1033/tcplclib_tc3_eventlogger/5001474059.html
+- **相关**：`FB_TcEventBase.RequestEventText`, `FB_RequestEventText`, `FB_AsyncStrResult`, `F_GetEventClassName`

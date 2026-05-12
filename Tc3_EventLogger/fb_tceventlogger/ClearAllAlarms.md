@@ -1,22 +1,27 @@
 # ClearAllAlarms
+
 ## 元信息
 
 | 字段 | 值 |
 |---|---|
 | Library | `Tc3_EventLogger` |
 | Library Version | `1.6.2` |
-| Type | `FUNCTION_BLOCK` |
-| Category | `Function blocks` |
-| Source | https://infosys.beckhoff.com/content/1033/tcplclib_tc3_eventlogger/ |
+| Type | `METHOD` |
+| Category | `FB_TcEventLogger` |
 | Source PDF | https://download.beckhoff.com/download/document/automation/twincat3/TwinCAT_3_PLC_Lib_Tc3_EventLogger_EN.pdf |
-| Verified | 2026-05-10 ✅ |
+| Source InfoSys | https://infosys.beckhoff.com/content/1033/tcplclib_tc3_eventlogger/5050746891.html |
+| Verified | 2026-05-11 ✅ |
+| InfoSys-checked | ✅ 2026-05-11 |
 | Status | `verified` |
 | Example | [`examples/P_Demo_ClearAllAlarms.xml`](../examples/P_Demo_ClearAllAlarms.xml) |
 
 ---
+
 ## 1. 功能简述
 
-This method calls the Clear() method for all alarms in the alarm state Raised. Syntax METHOD ClearAllAlarms : HRESULT
+`FB_TcEventLogger.ClearAllAlarms()` 是 `ClearAlarms()` 的便捷版本——无过滤器参数，对所有处于 Raised 状态的 alarm 调用 Clear。
+
+适合"全部一次清空"场景，无需构造 `I_TcEventFilter` 实例。
 
 ## 2. 接口定义
 
@@ -29,14 +34,15 @@ VAR_INPUT
 END_VAR
 ```
 
-| 名称 | 类型 | 说明 |
-|---|---|---|
-| `nTimeStamp` | `ULINT` | （详见 PDF） |
-| `bResetConfirmation` | `BOOL` | （详见 PDF） |
+| 名称 | 类型 | 默认值 | 说明 |
+|---|---|---|---|
+| `nTimeStamp` | `ULINT` | `0` | 清除事件时间戳：0 = 用当前系统时间 |
+| `bResetConfirmation` | `BOOL` | `FALSE` | TRUE = 同时把确认状态置为 Reset |
+
 
 ### VAR_OUTPUT
 
-无 VAR_OUTPUT。
+无。
 
 ### VAR_IN_OUT
 
@@ -44,42 +50,48 @@ END_VAR
 
 ## 3. 行为说明
 
-- 见上方功能简述。
-- 详细行为（时序、错误码、状态机）请对照 PDF 第 3.10.2 节。
+调用本方法时 EventLogger 即对所有处于 Raised 状态的 alarm 同步执行 Clear，状态从 Raised 切换到 Cleared。`bResetConfirmation := TRUE` 时同时把处于 `WaitForConfirmation` 状态的 alarm 确认状态置为 `Reset`。`nTimeStamp = 0` 用当前系统时间记录清除时刻——这个时间在事后审计里就是"批量清除动作"的发生时刻。
+
+**与 ClearAlarms 的区别**：本方法少一个 ipFilter 参数，行为完全等价于 `ClearAlarms(ipFilter := 0)`。选哪个看代码可读性偏好——"全清"场景用 ClearAllAlarms 语义更直观；需要按规则筛选则用 ClearAlarms 加过滤器。
 
 ## 4. 错误码 / 返回值
 
-本方法返回 `HRESULT`（`S_OK` = 成功；其他错误码请见对应 InfoSys 页面，⚠️ 待人工补全）。
+本方法返回 `HRESULT`（32 位有符号整数）。`SUCCEEDED(hr)` 为 TRUE 表示调用成功。
+
+| HRESULT | 含义 | 处理建议 |
+|---|---|---|
+| `S_OK` | 全部 Raised alarm 已清除 | 继续业务 |
+| `其他错误` | ⚠️ PDF 未列详细码 | 查 ADS Return Codes |
 
 ## 5. 使用注意 / 常见坑
 
-- VAR_INPUT / VAR_OUTPUT / VAR_IN_OUT 已逐字从 PDF 抽取并通过 `verify_doc.py` 自检。
-- 描述句、时序行为、错误码表等细节请以 PDF 第 3.10.2 节为准（⚠️ 待人工细化）。
+- `bResetConfirmation := TRUE` 绕过操作员审计——慎用。
+- "全清"不可撤销：清完后操作员看不到原 Raised 状态。（工程经验补充）
+- Clear 不等于 Remove——alarm 实例仍在 EventLogger 活动表里。
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_ClearAllAlarms.xml`](../examples/P_Demo_ClearAllAlarms.xml)
+> 配套可导入文件：[`examples/P_Demo_ClearAllAlarms.xml`](../examples/P_Demo_ClearAllAlarms.xml)（PLCopenXML，可直接导入 TwinCAT 3 XAE）
 >
-> 详见 [`examples/README.md`](../examples/README.md)
+> 导入步骤：右键 PLC 项目 → Import PLCopenXML → 选该文件 → OK
 
 ```iecst
-PROGRAM P_Demo_ClearAllAlarms
-VAR
-    fbClearAllAlarms : ClearAllAlarms;
-    arg_nTimeStamp : ULINT;
-    arg_bResetConfirmation : BOOL;
-END_VAR
-
-fbClearAllAlarms(
-    nTimeStamp := arg_nTimeStamp,
-    bResetConfirmation := arg_bResetConfirmation
-);
+// 详见 examples 目录下的 .xml 文件
 ```
 
-## 7. 相关
+## 7. 业务场景与实际价值
 
-- 见 [`Tc3_EventLogger README`](../README.md) 同库其他条目
+设备维护模式下，运维人员先确认所有故障已物理处理，再用本方法"一键全清"准备复产
 
-## 8. 待确认项
 
-- 详细描述/时序/错误码表待人工细化（auto-gen 阶段只确保 VAR 区与 PDF 一致）。
+单方法调用 vs 自己写循环遍历——少错少漏
+
+
+`ClearAlarms` 带过滤器 → 精细控制；本方法适合"全清"按钮
+
+
+## 8. 参考资料
+
+- **PDF**：[TwinCAT_3_PLC_Lib_Tc3_EventLogger_EN.pdf](https://download.beckhoff.com/download/document/automation/twincat3/TwinCAT_3_PLC_Lib_Tc3_EventLogger_EN.pdf) §3.10.2
+- **InfoSys topic**：https://infosys.beckhoff.com/content/1033/tcplclib_tc3_eventlogger/5050746891.html
+- **相关**：`FB_TcEventLogger.ClearAlarms`, `FB_TcEventLogger.ConfirmAllAlarms`

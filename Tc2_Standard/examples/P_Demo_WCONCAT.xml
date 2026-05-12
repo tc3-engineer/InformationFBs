@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <project xmlns="http://www.plcopen.org/xml/tc6_0200">
-  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-10T08:00:00"/>
-  <contentHeader name="Tc2_Standard.WCONCAT Demo" modificationDateTime="2026-05-10T08:00:00">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-11T08:00:00"/>
+  <contentHeader name="Tc2_Standard.WCONCAT Demo" modificationDateTime="2026-05-11T08:00:00">
     <coordinateInfo>
       <fbd><scaling x="1" y="1"/></fbd>
       <ld><scaling x="1" y="1"/></ld>
@@ -14,40 +14,53 @@
       <pou name="P_Demo_WCONCAT" pouType="program">
         <interface>
           <localVars>
-            <variable name="sResult">
-              <type><wstring><stringLength><value>255</value></stringLength></wstring></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">WCONCAT 的返回值（监视）</xhtml></documentation>
+            <variable name="sAlarmPrefix">
+              <type><wstring><length>255</length></wstring></type>
+              <initialValue><simpleValue value="&quot;报警：&quot;"/></initialValue>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">中文报警前缀（UCS-2 编码）</xhtml></documentation>
             </variable>
-            <variable name="bRun">
+            <variable name="sAlarmReason">
+              <type><wstring><length>255</length></wstring></type>
+              <initialValue><simpleValue value="&quot;1 号电机过流&quot;"/></initialValue>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">报警原因（来自上游中文检测模块）</xhtml></documentation>
+            </variable>
+            <variable name="sAlarmText">
+              <type><wstring><length>255</length></wstring></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">拼好的完整中文报警文本，直接发往 HMI 报警栏</xhtml></documentation>
+            </variable>
+            <variable name="bGenerate">
               <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">触发一次 WCONCAT 调用</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">触发一次 WCONCAT</xhtml></documentation>
             </variable>
           </localVars>
         </interface>
         <body>
-          <ST>
-            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
-// Tc2_Standard.WCONCAT 演示程序（FUNCTION）
-// ============================================================
-// 场景：对 WSTRING 执行 CONCAT 操作
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：HMI 报警栏显示中文报警。报警前缀（等级/编号）和原因文本来自不同
+//       模块，需要在 PLC 拼好再发给 HMI。如果用 STRING + CONCAT，按字节算
+//       中文会乱码；WSTRING + WCONCAT 用 UCS-2，中文 1 字符 = 1 字符。
+//
+// 价值：WCONCAT 与 CONCAT 语义一致但 Unicode 安全。HMI 默认 UCS-2 编码，
+//       PLC 侧用 WSTRING 与 HMI 编码完全匹配，无须运行时转码。
+//
 // 验证步骤：
-//   1. 编译并登录目标
-//   2. 强制 bRun := TRUE 一个周期
-//   3. 观察 sResult = "SUSWILLI"
-//   4. bRun 自动复位
-// ============================================================
+//   1. 导入本文件、引用 Tc2_Standard、编译、登录、运行
+//   2. 在线 monitor sAlarmText（注意监视面板要选 Unicode 显示）
+//   3. 在线写 bGenerate := TRUE
+//   4. 下一周期 sAlarmText = &quot;报警：1 号电机过流&quot;
+//   5. 把 sAlarmReason 改为 &quot;紧急停机&quot; + 再触发 → sAlarmText 立即更新
+//   6. WLEN(sAlarmText) 应等于字符数（中文每字符 1 个 WCHAR）而不是字节数
+// =============================================================================
 
-IF bRun THEN
-    sResult := WCONCAT("SUS","WILLI");
-    bRun := FALSE;
+// WSTRING 字面量用双引号，单引号是 STRING 字面量
+IF bGenerate THEN
+    sAlarmText := WCONCAT(sAlarmPrefix, sAlarmReason);
+    bGenerate := FALSE;
 END_IF;
-</xhtml>
-          </ST>
+</xhtml></ST>
         </body>
       </pou>
     </pous>
   </types>
-  <instances>
-    <configurations/>
-  </instances>
+  <instances><configurations/></instances>
 </project>

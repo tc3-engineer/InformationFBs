@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <project xmlns="http://www.plcopen.org/xml/tc6_0200">
-  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-11T00:00:00"/>
-  <contentHeader name="Tc2_Utilities.FB_FileTime64ToTzSpecificLocalTime Demo" modificationDateTime="2026-05-11T00:00:00">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-11T13:00:00"/>
+  <contentHeader name="Tc2_Utilities.FB_FileTime64ToTzSpecificLocalTime Demo" modificationDateTime="2026-05-11T13:00:00">
     <coordinateInfo>
       <fbd><scaling x="1" y="1"/></fbd>
       <ld><scaling x="1" y="1"/></ld>
@@ -18,35 +18,47 @@
               <type><derived name="FB_FileTime64ToTzSpecificLocalTime"/></type>
               <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">FB_FileTime64ToTzSpecificLocalTime 实例</xhtml></documentation>
             </variable>
-            <variable name="bConv">
-              <initialValue><simpleValue value="FALSE"/></initialValue>
+            <variable name="in">
+              
+              <type><derived name="T_FILETIME64"/></type>
+            </variable>
+            <variable name="tzInfo">
+              
+              <type><derived name="ST_TimeZoneInformation"/></type>
+            </variable>
+            <variable name="out">
+              <type><derived name="T_FILETIME64"/></type>
+            </variable>
+            <variable name="eTzID">
+              <type><derived name="E_TimeZoneID"/></type>
+            </variable>
+            <variable name="bB">
               <type><BOOL/></type>
-            </variable>
-            <variable name="stTz">
-              <type><derived name="TIME_ZONE_INFORMATION"/></type>
-            </variable>
-            <variable name="stFt">
-              <type><derived name="T_ULARGE_INTEGER"/></type>
-            </variable>
-            <variable name="stLocalOut">
-              <type><derived name="TIMESTRUCT"/></type>
             </variable>
           </localVars>
         </interface>
         <body>
           <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
-// 场景：读文件修改 FileTime 转本地。
-// 价值：封装 epoch + 时区计算。
-// 验证：给 stFt 填一个典型 FileTime（如 130428000000000000，约 2014 年），转换后 stLocalOut 应为合理本地时间。
+// 场景：FB_FileTime64ToTzSpecificLocalTime 的最小可编译演示——所有 VAR_INPUT 均以 doc/PDF 中真实引脚名调用。
+//       业务侧请在线 monitor / 在线写值触发对应输入，看输出端 monitor 结果。
+//
+// 价值：保证示例 ST 代码所有引脚名与 FB_FileTime64ToTzSpecificLocalTime 的 VAR_INPUT/VAR_OUTPUT 一致，
+//       Import PLCopenXML → 编译 → 登录 流程能跑通，作为 hand-curated 例程
+//       的脚手架。
+//
 // 验证步骤：
-//   1. 右键 PLC 项目 → Import PLCopenXML → 选本文件
-//   2. 引用 Tc2_Utilities（References → Add library）
-//   3. 编译 → 登录 → 运行；按上方『验证』行的指示在线写值观察
+//   1. 引用 Tc2_Utilities（及其依赖 Tc2_System）
+//   2. 右键 PLC 项目 → Import PLCopenXML → 选本文件 → OK → 编译、登录
+//   3. 在线对 VAR_INPUT 写入合适触发值（典型 bExecute / RUN / START 上升沿）
+//   4. 在线 monitor VAR_OUTPUT 观察 FB 反应
 // =============================================================================
 
 fbFB_FileTime64ToTzSpecificLocalTime(
-    tzInfo := stTz, bExecute := bConv, stFileTime := stFt,
-    stLocal =&gt; stLocalOut
+    in := in,
+    tzInfo := tzInfo,
+    out =&gt; out,
+    eTzID =&gt; eTzID,
+    bB =&gt; bB
 );
 </xhtml></ST>
         </body>

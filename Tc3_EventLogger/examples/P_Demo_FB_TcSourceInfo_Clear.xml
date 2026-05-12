@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <project xmlns="http://www.plcopen.org/xml/tc6_0200">
   <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-11T01:00:00"/>
-  <contentHeader name="Tc3_EventLogger.FB_TcSourceInfo_Clear Demo" modificationDateTime="2026-05-11T01:00:00">
+  <contentHeader name="Tc3_EventLogger.Clear Demo" modificationDateTime="2026-05-11T01:00:00">
     <coordinateInfo>
       <fbd><scaling x="1" y="1"/></fbd>
       <ld><scaling x="1" y="1"/></ld>
@@ -14,34 +14,44 @@
       <pou name="P_Demo_FB_TcSourceInfo_Clear" pouType="program">
         <interface>
           <localVars>
-            <variable name="fbTcSourceInfo">
+            <variable name="fbSrc">
               <type><derived name="FB_TcSourceInfo"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">Tc3_EventLogger.FB_TcSourceInfo 实例</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">源信息实例</xhtml></documentation>
+            </variable>
+            <variable name="bDoClear">
+              <initialValue><simpleValue value="FALSE"/></initialValue>
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">上升沿触发</xhtml></documentation>
+            </variable>
+            <variable name="bDoClearPrev">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">边沿检测</xhtml></documentation>
+            </variable>
+            <variable name="hr">
+              <type><derived name="HRESULT"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">返回值监视</xhtml></documentation>
             </variable>
           </localVars>
         </interface>
         <body>
-          <ST>
-            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
-// Tc3_EventLogger.FB_TcSourceInfo.Clear 演示程序（OO 方法）
-// ============================================================
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：清空 SourceInfo 字段以便重新填写
+// 价值：一次调用让字段回到初始状态
+// 验证：登录后调用 Clear；之后 fbSrc 的字段应为空/0/全 0 GUID
 // 验证步骤：
-//   1. 引用 Tc3_EventLogger（及依赖类型所在库 Tc2_System 等）
-//   2. 编译 + 登录
-//   3. 按 doc.md 给 arg_* 赋值
-//   4. 在线监视 out_* / io_* 输出
-// ============================================================
+//   1. 右键 PLC 项目 → Import PLCopenXML → 选本文件
+//   2. 引用 Tc3_EventLogger（System → References → Add library）
+//   3. 编译 → 登录 → 运行；按 verify 注释里给出的在线写值操作
+// =============================================================================
 
-fbTcSourceInfo.Clear(
-
-);
-</xhtml>
-          </ST>
+IF bDoClear AND NOT bDoClearPrev THEN
+    hr := fbSrc.Clear();
+END_IF;
+bDoClearPrev := bDoClear;
+</xhtml></ST>
         </body>
       </pou>
     </pous>
   </types>
-  <instances>
-    <configurations/>
-  </instances>
+  <instances><configurations/></instances>
 </project>

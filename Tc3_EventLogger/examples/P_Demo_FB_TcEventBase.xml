@@ -14,34 +14,52 @@
       <pou name="P_Demo_FB_TcEventBase" pouType="program">
         <interface>
           <localVars>
-            <variable name="fbFB_TcEventBase">
-              <type><derived name="FB_TcEventBase"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">Tc3_EventLogger.FB_TcEventBase 实例</xhtml></documentation>
+            <variable name="fbAlarm1">
+              <type><derived name="FB_TcAlarm"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">事件 1（举例：用 FB_TcAlarm 持有）</xhtml></documentation>
+            </variable>
+            <variable name="fbAlarm2">
+              <type><derived name="FB_TcAlarm"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">事件 2</xhtml></documentation>
+            </variable>
+            <variable name="ipBase1">
+              <type><derived name="I_TcEvent"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">通过接口拿到 base 视图</xhtml></documentation>
+            </variable>
+            <variable name="ipBase2">
+              <type><derived name="I_TcEvent"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">通过接口拿到 base 视图</xhtml></documentation>
+            </variable>
+            <variable name="bEqual">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">比较结果</xhtml></documentation>
             </variable>
           </localVars>
         </interface>
         <body>
-          <ST>
-            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
-// Tc3_EventLogger.FB_TcEventBase 演示程序（FB 实例）
-// ============================================================
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：演示如何通过基类接口比较两个事件是否相同
+// 价值：一份代码同时支持 alarm 和 message 的比较，无需类型分支
+// 验证：无法直接独立运行——本例需在已有事件实例的工程里搭配 FB_TcAlarm / FB_TcMessage 才能演示效果
 // 验证步骤：
-//   1. 引用 Tc3_EventLogger（及依赖类型所在库 Tc2_System 等）
-//   2. 编译 + 登录
-//   3. 按 doc.md 给 arg_* 赋值
-//   4. 在线监视 out_* / io_* 输出
-// ============================================================
+//   1. 右键 PLC 项目 → Import PLCopenXML → 选本文件
+//   2. 引用 Tc3_EventLogger（System → References → Add library）
+//   3. 编译 → 登录 → 运行；按 verify 注释里给出的在线写值操作
+// =============================================================================
 
-fbFB_TcEventBase(
+// FB_TcEventBase 是基类——业务里很少直接实例化，更常见的做法是声明子类 FB_TcAlarm / FB_TcMessage，
+// 然后通过 I_TcEvent 接口拿到 FB_TcEventBase 视图调用通用 API（EqualsToEventEntry / RequestEventText 等）。
+ipBase1 := fbAlarm1;
+ipBase2 := fbAlarm2;
 
-);
-</xhtml>
-          </ST>
+// 比较两事件定义是否相同（最粗粒度：仅看 EventClass + EventID + Severity）
+IF ipBase1 &amp;lt;&amp;gt; 0 AND ipBase2 &amp;lt;&amp;gt; 0 THEN
+    bEqual := ipBase1.EqualsToEventEntry(ipBase2);
+END_IF;
+</xhtml></ST>
         </body>
       </pou>
     </pous>
   </types>
-  <instances>
-    <configurations/>
-  </instances>
+  <instances><configurations/></instances>
 </project>

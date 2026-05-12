@@ -14,34 +14,44 @@
       <pou name="P_Demo_Unsubscribe" pouType="program">
         <interface>
           <localVars>
-            <variable name="fbUnsubscribe">
-              <type><derived name="Unsubscribe"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">Tc3_EventLogger.Unsubscribe 实例</xhtml></documentation>
+            <variable name="fbListener">
+              <type><derived name="FB_ListenerBase2"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">listener 实例</xhtml></documentation>
+            </variable>
+            <variable name="bDoUnsubscribe">
+              <initialValue><simpleValue value="FALSE"/></initialValue>
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">上升沿触发</xhtml></documentation>
+            </variable>
+            <variable name="bDoUnsubscribePrev">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">边沿检测</xhtml></documentation>
+            </variable>
+            <variable name="hr">
+              <type><derived name="HRESULT"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">返回值监视</xhtml></documentation>
             </variable>
           </localVars>
         </interface>
         <body>
-          <ST>
-            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
-// Tc3_EventLogger.Unsubscribe 演示程序（FB 实例）
-// ============================================================
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：模块下线前取消 listener 订阅
+// 价值：规范的资源释放
+// 验证：先 Subscribe；再写 bDoUnsubscribe := TRUE 触发 Unsubscribe；hr 应为 S_OK
 // 验证步骤：
-//   1. 引用 Tc3_EventLogger（及依赖类型所在库 Tc2_System 等）
-//   2. 编译 + 登录
-//   3. 按 doc.md 给 arg_* 赋值
-//   4. 在线监视 out_* / io_* 输出
-// ============================================================
+//   1. 右键 PLC 项目 → Import PLCopenXML → 选本文件
+//   2. 引用 Tc3_EventLogger（System → References → Add library）
+//   3. 编译 → 登录 → 运行；按 verify 注释里给出的在线写值操作
+// =============================================================================
 
-fbUnsubscribe(
-
-);
-</xhtml>
-          </ST>
+IF bDoUnsubscribe AND NOT bDoUnsubscribePrev THEN
+    hr := fbListener.Unsubscribe();
+END_IF;
+bDoUnsubscribePrev := bDoUnsubscribe;
+</xhtml></ST>
         </body>
       </pou>
     </pous>
   </types>
-  <instances>
-    <configurations/>
-  </instances>
+  <instances><configurations/></instances>
 </project>

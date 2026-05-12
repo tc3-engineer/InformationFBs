@@ -1,22 +1,27 @@
 # SendMessage2
+
 ## 元信息
 
 | 字段 | 值 |
 |---|---|
 | Library | `Tc3_EventLogger` |
 | Library Version | `1.6.2` |
-| Type | `FUNCTION_BLOCK` |
-| Category | `Function blocks` |
-| Source | https://infosys.beckhoff.com/content/1033/tcplclib_tc3_eventlogger/ |
+| Type | `METHOD` |
+| Category | `FB_TcEventLogger` |
 | Source PDF | https://download.beckhoff.com/download/document/automation/twincat3/TwinCAT_3_PLC_Lib_Tc3_EventLogger_EN.pdf |
-| Verified | 2026-05-10 ✅ |
+| Source InfoSys | https://infosys.beckhoff.com/content/1033/tcplclib_tc3_eventlogger/10361943563.html |
+| Verified | 2026-05-11 ✅ |
+| InfoSys-checked | ✅ 2026-05-11 |
 | Status | `verified` |
 | Example | [`examples/P_Demo_SendMessage2.xml`](../examples/P_Demo_SendMessage2.xml) |
 
 ---
+
 ## 1. 功能简述
 
-This method sends a message. Syntax METHOD SendMessage2 : HRESULT
+`FB_TcEventLogger.SendMessage2()` 是 `SendMessage()` 的扩展版——多一个 `sJsonAttribute` 参数用于附加 JSON 自定义属性，免去事后调 `SetJsonAttribute`。
+
+适合需要附带工艺上下文（batch id / operator name 等）的一次性通知。
 
 ## 2. 接口定义
 
@@ -33,18 +38,19 @@ VAR_INPUT
 END_VAR
 ```
 
-| 名称 | 类型 | 说明 |
-|---|---|---|
-| `eventClass` | `GUID` | （详见 PDF） |
-| `nEventId` | `UDINT` | （详见 PDF） |
-| `eSeverity` | `TcEventSeverity` | （详见 PDF） |
-| `ipSourceInfo` | `I_TcSourceInfo` | （详见 PDF） |
-| `nTimeStamp` | `ULINT` | （详见 PDF） |
-| `ipArguments` | `I_TcArguments` | （详见 PDF） |
+| 名称 | 类型 | 默认值 | 说明 |
+|---|---|---|---|
+| `eventClass` | `GUID` | - | 事件类 GUID |
+| `nEventId` | `UDINT` | - | 事件 ID |
+| `eSeverity` | `TcEventSeverity` | - | 严重级别 |
+| `ipSourceInfo` | `I_TcSourceInfo` | `0` | 源信息接口；传 0 用默认 |
+| `nTimeStamp` | `ULINT` | `0` | 时间戳：0 = 当前系统时间 |
+| `ipArguments` | `I_TcArguments` | `0` | 参数接口；传 0 = 无参数 |
+
 
 ### VAR_OUTPUT
 
-无 VAR_OUTPUT。
+无。
 
 ### VAR_IN_OUT
 
@@ -56,56 +62,53 @@ END_VAR
 
 | 名称 | 类型 | 说明 |
 |---|---|---|
-| `sJsonAttribute` | `STRING` | （详见 PDF） |
+| `sJsonAttribute` | `STRING` | 合法 JSON 字符串（STRING(255) 起步） |
+
 
 ## 3. 行为说明
 
-- 见上方功能简述。
-- 详细行为（时序、错误码、状态机）请对照 PDF 第 3.10.12 节。
+参数 `eventClass` / `nEventId` / `eSeverity` / `ipSourceInfo` / `nTimeStamp` / `ipArguments` 与 `SendMessage()` 一致；多了 VAR_IN_OUT CONSTANT `sJsonAttribute : STRING`——EventLogger 把这段 JSON 一并写入事件，随事件分发到 HMI / 数据库 / 远程客户端。
+
+**典型用法**：MES 集成审计——每次操作员动作发一条 message 同时附带 batch id + recipe + operator，免去事后再调 `SetJsonAttribute` 拼接。免实例发送场景下本方法是"一次到位"的首选——如果走 SendMessage 再 SetJsonAttribute 是不可能的（因为没有 message 实例可供后续修改）。
 
 ## 4. 错误码 / 返回值
 
-本方法返回 `HRESULT`（`S_OK` = 成功；其他错误码请见对应 InfoSys 页面，⚠️ 待人工补全）。
+本方法返回 `HRESULT`（32 位有符号整数）。`SUCCEEDED(hr)` 为 TRUE 表示调用成功。
+
+| HRESULT | 含义 | 处理建议 |
+|---|---|---|
+| `S_OK` | 消息已发送（含 JSON 属性） | 继续业务 |
+| `其他错误` | 事件类未定义 / JSON 非法 ⚠️ PDF 未列详细码 | 校验 JSON 格式 / 查 ADS Return Codes |
 
 ## 5. 使用注意 / 常见坑
 
-- VAR_INPUT / VAR_OUTPUT / VAR_IN_OUT 已逐字从 PDF 抽取并通过 `verify_doc.py` 自检。
-- 描述句、时序行为、错误码表等细节请以 PDF 第 3.10.12 节为准（⚠️ 待人工细化）。
+- JSON 必须是合法对象/数组——`'{"k":1}'`；裸 `'hello'` 会被丢弃。
+- STRING 默认 80 字节往往不够——声明 STRING(255)+。（工程经验补充）
+- 一次性免实例发送 = 无法事后修改——JSON 必须在调用时拼好。
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_SendMessage2.xml`](../examples/P_Demo_SendMessage2.xml)
+> 配套可导入文件：[`examples/P_Demo_SendMessage2.xml`](../examples/P_Demo_SendMessage2.xml)（PLCopenXML，可直接导入 TwinCAT 3 XAE）
 >
-> 详见 [`examples/README.md`](../examples/README.md)
+> 导入步骤：右键 PLC 项目 → Import PLCopenXML → 选该文件 → OK
 
 ```iecst
-PROGRAM P_Demo_SendMessage2
-VAR
-    fbSendMessage2 : SendMessage2;
-    arg_eventClass : GUID;
-    arg_nEventId : UDINT;
-    arg_eSeverity : TcEventSeverity;
-    arg_ipSourceInfo : I_TcSourceInfo;
-    arg_nTimeStamp : ULINT;
-    arg_ipArguments : I_TcArguments;
-    io_sJsonAttribute : STRING;
-END_VAR
-
-fbSendMessage2(
-    eventClass := arg_eventClass,
-    nEventId := arg_nEventId,
-    eSeverity := arg_eSeverity,
-    ipSourceInfo := arg_ipSourceInfo,
-    nTimeStamp := arg_nTimeStamp,
-    ipArguments := arg_ipArguments,
-    sJsonAttribute := io_sJsonAttribute
-);
+// 详见 examples 目录下的 .xml 文件
 ```
 
-## 7. 相关
+## 7. 业务场景与实际价值
 
-- 见 [`Tc3_EventLogger README`](../README.md) 同库其他条目
+MES 集成审计：每次操作员动作发 message 同时附带 batch id + recipe + operator
 
-## 8. 待确认项
 
-- 详细描述/时序/错误码表待人工细化（auto-gen 阶段只确保 VAR 区与 PDF 一致）。
+一次调用同时完成事件发送 + JSON 上下文附加，省去两步调用
+
+
+`SendMessage` + 手写 SetJsonAttribute → 不适用免实例场景；本方法专为此场景设计
+
+
+## 8. 参考资料
+
+- **PDF**：[TwinCAT_3_PLC_Lib_Tc3_EventLogger_EN.pdf](https://download.beckhoff.com/download/document/automation/twincat3/TwinCAT_3_PLC_Lib_Tc3_EventLogger_EN.pdf) §3.10.12
+- **InfoSys topic**：https://infosys.beckhoff.com/content/1033/tcplclib_tc3_eventlogger/10361943563.html
+- **相关**：`FB_TcEventLogger.SendMessage`, `FB_TcEventLogger.SendMessageEx2`

@@ -14,38 +14,46 @@
       <pou name="P_Demo_Confirm" pouType="program">
         <interface>
           <localVars>
-            <variable name="fbConfirm">
-              <type><derived name="Confirm"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">Tc3_EventLogger.Confirm 实例</xhtml></documentation>
+            <variable name="fbAlarm">
+              <type><derived name="FB_TcAlarm"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">已 Create 且 Raised 的 alarm 实例</xhtml></documentation>
             </variable>
-            <variable name="arg_nTimeStamp">
-              <type><ULINT/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">VAR_INPUT nTimeStamp</xhtml></documentation>
+            <variable name="bConfirmReq">
+              <initialValue><simpleValue value="FALSE"/></initialValue>
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">操作员确认按钮（在线置 TRUE 模拟）</xhtml></documentation>
+            </variable>
+            <variable name="bConfirmReqPrev">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">边沿检测</xhtml></documentation>
+            </variable>
+            <variable name="hr">
+              <type><derived name="HRESULT"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">Confirm 返回值监视</xhtml></documentation>
             </variable>
           </localVars>
         </interface>
         <body>
-          <ST>
-            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
-// Tc3_EventLogger.Confirm 演示程序（FB 实例）
-// ============================================================
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：操作员在 HMI 上单点确认包装机封口温度异常报警
+// 价值：一次 Confirm() 完成确认 + 时间戳写入 + 监听器分发；HMI 上该条报警从"等待确认"变"已处理"
+// 验证：需要先有一条 bWithConfirmation = TRUE 的 alarm 处于 Raised 状态；在线写 bConfirmReq := TRUE 模拟点击确认按钮，下一周期看 HMI 上 ConfirmationState 变 Confirmed
 // 验证步骤：
-//   1. 引用 Tc3_EventLogger（及依赖类型所在库 Tc2_System 等）
-//   2. 编译 + 登录
-//   3. 按 doc.md 给 arg_* 赋值
-//   4. 在线监视 out_* / io_* 输出
-// ============================================================
+//   1. 右键 PLC 项目 → Import PLCopenXML → 选本文件
+//   2. 引用 Tc3_EventLogger（System → References → Add library）
+//   3. 编译 → 登录 → 运行；按 verify 注释里给出的在线写值操作
+// =============================================================================
 
-fbConfirm(
-    nTimeStamp := arg_nTimeStamp
-);
-</xhtml>
-          </ST>
+// 假定 fbAlarm 已在前面某处 Create()+Raise()，本片段只演示确认动作
+// 上升沿触发：HMI 按钮按下瞬间调一次 Confirm（不要每周期都调）
+IF bConfirmReq AND NOT bConfirmReqPrev THEN
+    hr := fbAlarm.Confirm(nTimeStamp := 0);   // 0 = 当前时间
+END_IF;
+bConfirmReqPrev := bConfirmReq;
+</xhtml></ST>
         </body>
       </pou>
     </pous>
   </types>
-  <instances>
-    <configurations/>
-  </instances>
+  <instances><configurations/></instances>
 </project>
