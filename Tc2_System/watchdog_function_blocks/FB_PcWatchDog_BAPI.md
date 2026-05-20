@@ -82,16 +82,17 @@ END_VAR
 - `bError = FALSE` 且 `nErrId = 0`：调用成功。
 - `bError = TRUE`：调用失败，错误号在 `nErrId`（**ADS Return Codes**）。
 
-常见错误号（部分）：
+常见错误号（看门狗 / BIOS-API 相关）：
 
 | 错误号（十六进制） | 含义 |
 |---|---|
-| `0x06` | 目标端口未找到（ADSERR_DEVICE_NOTFOUND） |
-| `0x70C` | 文件不存在 / 路径无效（ADSERR_DEVICE_NOTFOUND_FILE） |
-| `0x70D` | 文件已存在（创建模式时） |
-| `0x745` | ADS 通讯超时（ADSERR_CLIENT_SYNCTIMEOUT） |
-| `0x1804` | 路径错误（FOPEN_MODEAPPEND 时常见，需路径已知） |
-| 其他 | 见 Beckhoff ADS Return Codes 在线表 |
+| `0x06` | 目标端口未找到（ADSERR_DEVICE_NOTFOUND）——RTime 子系统未启用或 NetID 错 |
+| `0x07` | 目标机器未找到——AMS 路由不通 |
+| `0x701` | 设备服务未就绪——RTime 看门狗子系统暂不可用 |
+| `0x745` | ADS 通讯超时（ADSERR_CLIENT_SYNCTIMEOUT）——硬件或路由阻塞 |
+| 其他 | 见 Beckhoff ADS Return Codes 在线表（⚠️ PDF 未列 BAPI 特定的码） |
+
+**注意**：本 FB 不操作文件系统，所以**不会**返回 `0x70C / 0x70D / 0x1804` 等文件错误码——遇到那类码请检查是不是另一个文件 FB 输出被错挂到这里。
 
 ## 5. 使用注意 / 常见坑
 

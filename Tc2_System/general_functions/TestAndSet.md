@@ -25,27 +25,11 @@ TestAndSet 是一个原子操作：检查 BOOL 标志 `Flag` 是否为 FALSE；�
 
 ### VAR_INPUT
 
-```iecst
-VAR_INPUT
-    bLock : BOOL;
-END_VAR
-```
-
-| 名称 | 类型 | 说明 |
-|---|---|---|
-| `bLock` | `BOOL` | 布尔标志：`bLock`。具体语义见 §3 行为说明。 |
+无（本函数仅一个 `VAR_IN_OUT` 参数）。
 
 ### VAR_OUTPUT
 
-```iecst
-VAR_OUTPUT
-    bLocked : BOOL;
-END_VAR
-```
-
-| 名称 | 类型 | 说明 |
-|---|---|---|
-| `bLocked` | `BOOL` | 布尔标志：`bLocked`。具体语义见 §3 行为说明。 |
+无（结果通过 `BOOL` 返回值传出，见 §4）。
 
 ### VAR_IN_OUT
 
@@ -57,7 +41,7 @@ END_VAR
 
 | 名称 | 类型 | 说明 |
 |---|---|---|
-| `Flag` | `BOOL` | 要测试并置位的 BOOL 标志（`VAR_IN_OUT`）。TRUE → 已被占，FALSE → 空闲。 |
+| `Flag` | `BOOL` | 要原子测试并置位的 BOOL 标志（必须是变量引用，不能是表达式）。`FALSE` = 空闲、可被占；`TRUE` = 已被占。调用后若返回 `TRUE`，本函数已将 `Flag` 由 `FALSE` 置为 `TRUE`（拿到锁）；若返回 `FALSE`，`Flag` 已是 `TRUE` 保持不变（锁已被别人持有）。 |
 
 ## 3. 行为说明
 
@@ -73,12 +57,12 @@ END_VAR
 
 ## 4. 错误码 / 返回值
 
-本函数返回 `BOOL`：
+本函数返回 `BOOL`，**两个返回值都是正常控制流，没有"调用失败"语义**——业务侧必须把 `FALSE` 当成"锁被别人占了，本周期跳过"而不是错误：
 
 | 返回值 | 含义 |
 |---|---|
-| `TRUE` | 调用成功 |
-| `FALSE` | 调用失败（参数错误或硬件故障） |
+| `TRUE` | 调用前 `Flag = FALSE`（空闲），本函数已原子地把 `Flag` 置为 `TRUE`——**拿到锁**，可以进入临界区 |
+| `FALSE` | 调用前 `Flag = TRUE`（已被别人占），`Flag` 保持不变——**没拿到锁**，本周期请跳过临界区，下次再试（典型 mutex 竞争路径，**非错误**） |
 
 ## 5. 使用注意 / 常见坑
 
