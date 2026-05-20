@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <project xmlns="http://www.plcopen.org/xml/tc6_0200">
-  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-10T19:00:00"/>
-  <contentHeader name="Tc2_Utilities.HEXASCNIBBLE_TO_BYTE Demo" modificationDateTime="2026-05-10T19:00:00">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-12T10:00:00"/>
+  <contentHeader name="Tc2_Utilities.HEXASCNIBBLE_TO_BYTE Demo" modificationDateTime="2026-05-12T10:00:00">
     <coordinateInfo>
       <fbd><scaling x="1" y="1"/></fbd>
       <ld><scaling x="1" y="1"/></ld>
@@ -14,39 +14,74 @@
       <pou name="P_Demo_HEXASCNIBBLE_TO_BYTE" pouType="program">
         <interface>
           <localVars>
-            <variable name="rResult">
+            <variable name="bHexHighChar">
+              <initialValue><simpleValue value="16#31"/></initialValue>
               <type><BYTE/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">HEXASCNIBBLE_TO_BYTE 返回值</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">高 nibble 字符 ASCII 码（如 '1' = 16#31）</xhtml></documentation>
             </variable>
-            <variable name="bRun">
+            <variable name="bHexLowChar">
+              <initialValue><simpleValue value="16#41"/></initialValue>
+              <type><BYTE/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">低 nibble 字符 ASCII 码（如 'A' = 16#41）</xhtml></documentation>
+            </variable>
+            <variable name="bHighNibValue">
+              <type><BYTE/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">高 nibble 数值（期望 1）</xhtml></documentation>
+            </variable>
+            <variable name="bLowNibValue">
+              <type><BYTE/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">低 nibble 数值（期望 10）</xhtml></documentation>
+            </variable>
+            <variable name="bAssembledByte">
+              <type><BYTE/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">两 nibble 合成的字节值（期望 0x1A = 26）</xhtml></documentation>
+            </variable>
+            <variable name="bParseError">
               <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">触发一次调用</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">解析错误（任一 nibble = 255 即失败）</xhtml></documentation>
+            </variable>
+            <variable name="bParseRequest">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">在线置 TRUE 触发一次解析</xhtml></documentation>
             </variable>
           </localVars>
         </interface>
         <body>
-          <ST>
-            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
-// Tc2_Utilities.HEXASCNIBBLE_TO_BYTE 演示程序（FUNCTION）
-// ============================================================
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：自定义协议帧字节 buffer 含 hex 字符（如 '1A' 表示寄存器值 0x1A）。
+//       PLC 端逐字节读 buffer，把两个相邻 hex 字符（高/低 nibble）合成字节
+//       值，写入控制变量。
+// 价值：替代手写 'IF asc &gt;= 30 AND asc &lt;= 39 THEN ...' 五分支判断；单调
+//       用、识别大小写、出错统一返回 255 便于判错。
 // 验证步骤：
-//   1. 引用 Tc2_Utilities
-//   2. 编译 + 登录
-//   3. 强制 bRun := TRUE 一个周期
-//   4. 在线监视 rResult / 各 demo 变量
-// ============================================================
+//   1. 登录后 bHexHighChar = 0x31 ('1')，bHexLowChar = 0x41 ('A')。
+//   2. 写 bParseRequest := TRUE 触发一次。
+//   3. 观察 bHighNibValue = 1，bLowNibValue = 10，bAssembledByte = 0x1A = 26，
+//      bParseError = FALSE。
+//   4. 把 bHexHighChar 改成 0x47（'G'，非 hex），再触发：bHighNibValue = 255，
+//      bParseError = TRUE——印证 §3 错误码 255。
+//   5. 大小写不敏感：把 bHexLowChar 从 0x41 改成 0x61（'a'），结果一致。
+// =============================================================================
 
-IF bRun THEN
-    rResult := HEXASCNIBBLE_TO_BYTE(16#41);
-    bRun := FALSE;
+IF bParseRequest THEN
+    // 单次调用：两次拆 nibble 再合成
+    bHighNibValue := HEXASCNIBBLE_TO_BYTE(asc := bHexHighChar);
+    bLowNibValue  := HEXASCNIBBLE_TO_BYTE(asc := bHexLowChar);
+
+    // 判错：任一 nibble = 255 即失败
+    bParseError := (bHighNibValue = 255) OR (bLowNibValue = 255);
+
+    IF NOT bParseError THEN
+        // 高 nibble 左移 4 位 + 低 nibble = 完整字节
+        bAssembledByte := SHL(bHighNibValue, 4) OR bLowNibValue;
+    END_IF;
+
+    bParseRequest := FALSE;
 END_IF;
-</xhtml>
-          </ST>
+</xhtml></ST>
         </body>
       </pou>
     </pous>
   </types>
-  <instances>
-    <configurations/>
-  </instances>
+  <instances><configurations/></instances>
 </project>

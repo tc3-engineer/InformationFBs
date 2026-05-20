@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <project xmlns="http://www.plcopen.org/xml/tc6_0200">
-  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-10T19:00:00"/>
-  <contentHeader name="Tc2_Utilities.F_FormatArgToStr Demo" modificationDateTime="2026-05-10T19:00:00">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-12T10:00:00"/>
+  <contentHeader name="Tc2_Utilities.F_FormatArgToStr Demo" modificationDateTime="2026-05-12T10:00:00">
     <coordinateInfo>
       <fbd><scaling x="1" y="1"/></fbd>
       <ld><scaling x="1" y="1"/></ld>
@@ -14,48 +14,63 @@
       <pou name="P_Demo_F_FormatArgToStr" pouType="program">
         <interface>
           <localVars>
-            <variable name="rResult">
-              <type><UDINT/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">F_FormatArgToStr 返回值</xhtml></documentation>
+            <variable name="rChannelTemperature">
+              <initialValue><simpleValue value="25.376"/></initialValue>
+              <type><LREAL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">通道温度读数（°C）</xhtml></documentation>
             </variable>
-            <variable name="bRun">
-              <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">触发一次调用</xhtml></documentation>
-            </variable>
-            <variable name="n">
-              <type><DINT/></type>
-              <initialValue><simpleValue value="42"/></initialValue>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">测试用本地变量</xhtml></documentation>
-            </variable>
-            <variable name="sOut">
+            <variable name="sFormattedLog">
               <type><derived name="T_MaxString"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">测试用本地变量</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">格式化后的对齐日志片段（宽 8，2 位小数）</xhtml></documentation>
+            </variable>
+            <variable name="nFormatErrorCode">
+              <type><UDINT/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">F_FormatArgToStr 返回的错误码；0 表示成功</xhtml></documentation>
+            </variable>
+            <variable name="bFormatRequest">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">在线置 TRUE 触发一次格式化</xhtml></documentation>
             </variable>
           </localVars>
         </interface>
         <body>
-          <ST>
-            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
-// Tc2_Utilities.F_FormatArgToStr 演示程序（FUNCTION）
-// ============================================================
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：多通道温度日志需要等宽对齐显示（操作员眼睛对齐查异常），每条
+//       温度字段固定宽度 8 字符 + 2 位小数。手写 LREAL_TO_FMTSTR 只能控
+//       精度不能控宽度，得手动补空格——本函数一步完成。
+// 价值：相比 LREAL_TO_FMTSTR + CONCAT 空格补齐两步，本函数单调用搞定
+//       宽度 + 精度 + 对齐三件事；FB_FormatString 更适合多字段模板，
+//       本函数适合精细控制单字段。
 // 验证步骤：
-//   1. 引用 Tc2_Utilities
-//   2. 编译 + 登录
-//   3. 强制 bRun := TRUE 一个周期
-//   4. 在线监视 rResult / 各 demo 变量
-// ============================================================
+//   1. 登录后 sFormattedLog = ''，nFormatErrorCode = 0。
+//   2. 在线写 bFormatRequest := TRUE。
+//   3. 观察 sFormattedLog 类似 '   25.38'（右对齐、空格补齐到宽 8、2 位小数四舍五入）。
+//      nFormatErrorCode 应为 0（成功）。
+//   4. 把 rChannelTemperature 改成 -3.5 再触发：观察输出会含负号且仍宽 8。
+//   5. 把 bLAlign 在 F_FormatArgToStr 调用中改为 TRUE 验证左对齐——这是本
+//      函数相对 LREAL_TO_FMTSTR 的核心增量价值。
+// =============================================================================
 
-IF bRun THEN
-    rResult := F_FormatArgToStr(FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, 0, 0, E_TypeFieldParam.eTypeFieldParam_d, F_DINT(n), sOut := sOut);
-    bRun := FALSE;
+// 单次格式化：固定宽度 8，2 位小数，右对齐，浮点 'f' 格式
+IF bFormatRequest THEN
+    nFormatErrorCode := F_FormatArgToStr(
+        bSign      := FALSE,
+        bBlank     := FALSE,
+        bNull      := FALSE,
+        bHash      := FALSE,
+        bLAlign    := FALSE,
+        bWidth     := TRUE,
+        iWidth     := 8,
+        iPrecision := 2,
+        eFmtType   := E_TypeFieldParam.fix_e,
+        arg        := F_LREAL(rChannelTemperature),
+        sOut       := sFormattedLog);
+    bFormatRequest := FALSE;
 END_IF;
-</xhtml>
-          </ST>
+</xhtml></ST>
         </body>
       </pou>
     </pous>
   </types>
-  <instances>
-    <configurations/>
-  </instances>
+  <instances><configurations/></instances>
 </project>

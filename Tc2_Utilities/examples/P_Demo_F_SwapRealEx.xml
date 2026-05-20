@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <project xmlns="http://www.plcopen.org/xml/tc6_0200">
-  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-10T19:00:00"/>
-  <contentHeader name="Tc2_Utilities.F_SwapRealEx Demo" modificationDateTime="2026-05-10T19:00:00">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-12T10:00:00"/>
+  <contentHeader name="Tc2_Utilities.F_SwapRealEx Demo" modificationDateTime="2026-05-12T10:00:00">
     <coordinateInfo>
       <fbd><scaling x="1" y="1"/></fbd>
       <ld><scaling x="1" y="1"/></ld>
@@ -14,44 +14,49 @@
       <pou name="P_Demo_F_SwapRealEx" pouType="program">
         <interface>
           <localVars>
-            <variable name="rResult">
-              <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">F_SwapRealEx 返回值</xhtml></documentation>
-            </variable>
-            <variable name="bRun">
-              <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">触发一次调用</xhtml></documentation>
-            </variable>
-            <variable name="fVal">
+            <variable name="rTemperatureFromBc9000">
+              <initialValue><simpleValue value="1.5"/></initialValue>
               <type><REAL/></type>
-              <initialValue><simpleValue value="3.14"/></initialValue>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">测试用本地变量</xhtml></documentation>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">通过 ADS 从 BC9000 读到的温度（带 BC 字节序）</xhtml></documentation>
+            </variable>
+            <variable name="bSwapSucceeded">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">交换成功标志（PDF 罕见返回 FALSE）</xhtml></documentation>
+            </variable>
+            <variable name="bSwapRequest">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">在线置 TRUE 触发一次字节序交换</xhtml></documentation>
             </variable>
           </localVars>
         </interface>
         <body>
-          <ST>
-            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
-// Tc2_Utilities.F_SwapRealEx 演示程序（FUNCTION）
-// ============================================================
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：老工程改造——CX 控制器通过 ADS 从产线 BC9000 总线终端控制器读取
+//       温度（REAL）数据上传 SCADA。BC9000 内存以"Hi-word 在前"存 REAL，
+//       CX (x86/x64/Arm) 以"Lo-word 在前"存，直接读会得到完全错误的浮点值。
+// 价值：手写 MEMCPY + WORD 交换 5 行容易在指针类型转换写错；本函数一次
+//       调用、Beckhoff 验证、和 LREAL 版 F_SwapLRealEx 成套。
 // 验证步骤：
-//   1. 引用 Tc2_Utilities
-//   2. 编译 + 登录
-//   3. 强制 bRun := TRUE 一个周期
-//   4. 在线监视 rResult / 各 demo 变量
-// ============================================================
+//   1. 登录后 rTemperatureFromBc9000 = 1.5（4 字节内存 00 00 C0 3F，小端展示）。
+//   2. 在线写 bSwapRequest := TRUE 触发交换。
+//   3. 观察 rTemperatureFromBc9000 变为另一个值（约 -1.8e+38，因为按 BC
+//      字节序解读 1.5 的内存是无意义浮点）；bSwapSucceeded = TRUE。
+//   4. 重要：本函数是 INVOLUTION（双重交换=不交换）。再次触发，rTemperature
+//      ...回到 1.5——印证 §3 的"两端各调一次会回到原值"。
+//   5. 实际工程中：从 BC 读数据后只调一次，得到 PC 端正确值；写数据回 BC
+//      前调一次，让 BC 收到的字节序对。
+//   6. 注：新工程用 EtherCAT + IPC 不需要本函数，本例仅维护老项目时用。
+// =============================================================================
 
-IF bRun THEN
-    rResult := F_SwapRealEx(fVal := fVal);
-    bRun := FALSE;
+IF bSwapRequest THEN
+    // 单次调用：fVal 是 VAR_IN_OUT，原地修改
+    bSwapSucceeded := F_SwapRealEx(fVal := rTemperatureFromBc9000);
+    bSwapRequest := FALSE;
 END_IF;
-</xhtml>
-          </ST>
+</xhtml></ST>
         </body>
       </pou>
     </pous>
   </types>
-  <instances>
-    <configurations/>
-  </instances>
+  <instances><configurations/></instances>
 </project>
