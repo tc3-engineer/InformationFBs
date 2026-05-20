@@ -42,6 +42,9 @@
 //   3. 编译 → 登录 → 运行；按上方『验证』指引在线写值观察
 // ============================================================
 
+// 取首字符 ASCII 码：F_ToASC 返回 str 的第 1 个字符；空串返回 0
+byFirstCharCode := F_ToASC(sCommand);
+
 // 命令派发示例
 CASE byFirstCharCode OF
     16#52: eCommand := 1; // 'R' reset

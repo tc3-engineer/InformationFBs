@@ -14,6 +14,11 @@
       <pou name="P_Demo_F_GetTaskTotalTime" pouType="program">
         <interface>
           <localVars>
+            <variable name="nMonitoredTaskIndex">
+              <initialValue><simpleValue value="1"/></initialValue>
+              <type><DINT/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">被监视任务索引（TwinCAT System Manager 任务列表序号，1=PlcTask）</xhtml></documentation>
+            </variable>
             <variable name="udwTaskExecTime_100ns">
               <type><UDINT/></type>
               <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">上一周期任务执行总时长（100ns）</xhtml></documentation>
@@ -36,6 +41,9 @@
 //   2. 引用 Tc2_System（References → Add library）
 //   3. 编译 → 登录 → 运行；按上方『验证』指引在线写值观察
 // ============================================================
+
+// 取指定任务上一周期累计执行时长（100ns 单位）
+udwTaskExecTime_100ns := F_GetTaskTotalTime(nMonitoredTaskIndex);
 
 // 基于 1ms 任务周期估算利用率（10000 = 1ms）
 rTaskLoadPercent := TO_REAL(udwTaskExecTime_100ns) / 100.0;

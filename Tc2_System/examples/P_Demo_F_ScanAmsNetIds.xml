@@ -42,6 +42,9 @@
 //   3. 编译 → 登录 → 运行；按上方『验证』指引在线写值观察
 // ============================================================
 
+// 解析 NetID 字符串为 6 字节数组
+arrParsedNetId := F_ScanAmsNetIds(sNetIdInput);
+
 // PDF 明确：若输入非空且非 '0.0.0.0.0.0' 但返回全 0，说明格式错误
 bParseError := (sNetIdInput &lt;&gt; '') AND (sNetIdInput &lt;&gt; '0.0.0.0.0.0')
     AND (arrParsedNetId[0] = 0) AND (arrParsedNetId[1] = 0) AND (arrParsedNetId[2] = 0)
