@@ -6,6 +6,7 @@
 |---|---|
 | Library | `Tc2_Utilities` |
 | Library Version | `2.18.2` |
+| Min Lib Version | `3.3.51.0` |
 | Type | `FUNCTION` |
 | Category | `Functions` |
 | Source PDF | https://download.beckhoff.com/download/document/automation/twincat3/TwinCAT_3_PLC_Lib_Tc2_Utilities_EN.pdf |

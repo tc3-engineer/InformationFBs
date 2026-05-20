@@ -29,8 +29,8 @@
 
 ```iecst
 VAR_INPUT
-    pData : POINTER TO BYTE;
-    cbData : UDINT(0..85);
+    pData   : POINTER TO BYTE;
+    cbData  : UDINT(0..85);
     bLoCase : BOOL := FALSE;
 END_VAR
 ```
@@ -50,6 +50,16 @@ END_VAR
 ### VAR_OUTPUT
 
 无（本符号是 `FUNCTION`，结果通过返回值传出）。
+
+### 返回值
+
+| 类型 | 说明（中文） |
+|---|---|
+| `T_MaxString` | 空格分隔的两位十六进制字符串。如 `'34 12 CF BE'`。超长截断追加 `'.'`，无效参数返回 `''`。 |
+
+### VAR_OUTPUT
+
+无。
 
 ## 3. 行为说明
 

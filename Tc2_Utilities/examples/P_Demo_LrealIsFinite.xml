@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <project xmlns="http://www.plcopen.org/xml/tc6_0200">
-  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-10T11:00:00"/>
-  <contentHeader name="Tc2_Utilities.LrealIsFinite Demo" modificationDateTime="2026-05-10T11:00:00">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-12T12:00:00"/>
+  <contentHeader name="Tc2_Utilities.LrealIsFinite Demo" modificationDateTime="2026-05-12T12:00:00">
     <coordinateInfo>
       <fbd><scaling x="1" y="1"/></fbd>
       <ld><scaling x="1" y="1"/></ld>
@@ -14,36 +14,37 @@
       <pou name="P_Demo_LrealIsFinite" pouType="program">
         <interface>
           <localVars>
-            <variable name="bResult">
-              <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">LrealIsFinite 的返回值</xhtml></documentation>
+            <variable name="lrPidOut">
+              <type><derived name="LREAL;"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">PID 输出</xhtml></documentation>
             </variable>
-            <variable name="bRun">
-              <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">触发一次调用</xhtml></documentation>
+            <variable name="bFinite">
+              <type><derived name="BOOL;"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">是否安全使用</xhtml></documentation>
             </variable>
-            <variable name="rX">
-              <type><LREAL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">测试用本地变量</xhtml></documentation>
+            <variable name="bCheck">
+              <type><BOOL/></type>
             </variable>
           </localVars>
         </interface>
         <body>
           <ST>
             <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
-// Tc2_Utilities.LrealIsFinite 演示程序（FUNCTION）
+// Tc2_Utilities.LrealIsFinite 演示程序（FUNCTION，单周期触发）
 // ============================================================
+// 场景：PID 输出做电机命令前必须先 finite 校验，否则下游 LREAL_TO_INT64 命中 PDF 未定义。
+// 价值：替代手写 IEEE 754 位检测；一次调用语义清晰。
 // 验证步骤：
-//   1. 引用 Tc2_Utilities（及依赖类型所在的库）
+//   1. 把本 PROGRAM 加到 PlcTask 调用列表
 //   2. 编译 + 登录
-//   3. 强制 bRun := TRUE 一个周期
-//   4. 观察 bResult 应为 TRUE
+//   3. 在线把 b... 触发位置 TRUE 一个周期
+//   4. 观察输出变量是否符合期望
 // ============================================================
 
-rX := 3.14;
-IF bRun THEN
-    bResult := LrealIsFinite(rX);
-    bRun := FALSE;
+IF bCheck THEN
+    // 必须用变量传址 —— REFERENCE TO 不接表达式
+    bFinite := LrealIsFinite(lrPidOut);
+    bCheck := FALSE;
 END_IF;
 </xhtml>
           </ST>

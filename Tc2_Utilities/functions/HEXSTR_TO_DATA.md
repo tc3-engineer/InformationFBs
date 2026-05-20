@@ -29,8 +29,8 @@
 
 ```iecst
 VAR_INPUT
-    sHex : T_MaxString;
-    pData : POINTER TO BYTE;
+    sHex   : T_MaxString;
+    pData  : POINTER TO BYTE;
     cbData : UDINT;
 END_VAR
 ```
@@ -50,6 +50,16 @@ END_VAR
 ### VAR_OUTPUT
 
 无（本符号是 `FUNCTION`，结果通过返回值传出）。
+
+### 返回值
+
+| 类型 | 说明（中文） |
+|---|---|
+| `UDINT` | 成功写入字节数；出错返回 0。 |
+
+### VAR_OUTPUT
+
+无。
 
 ## 3. 行为说明
 

@@ -29,10 +29,10 @@
 
 ```iecst
 VAR_INPUT
-    pInput : POINTER TO BYTE;
-    cbInput : UDINT;
-    bQM : BOOL;
-    out : T_Arg;
+    pInput   : POINTER TO BYTE;
+    cbInput  : UDINT;
+    bQM      : BOOL;
+    out      : T_Arg;
 END_VAR
 ```
 

@@ -41,7 +41,7 @@ VAR_INPUT
     arg : T_Arg;
 END_VAR
 VAR_IN_OUT
-    sOut : T_MaxString;
+   sOut     : T_MaxString;
 END_VAR
 ```
 

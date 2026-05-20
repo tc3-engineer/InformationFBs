@@ -29,11 +29,11 @@
 
 ```iecst
 VAR_INPUT
-    pEntries : POINTER TO T_LinkedListEntry := 0;
+    pEntries  : POINTER TO T_LinkedListEntry := 0;
     cbEntries : UDINT := 0;
 END_VAR
 VAR_IN_OUT
-    hList : T_HLINKEDLIST;
+    hList  : T_HLINKEDLIST;
 END_VAR
 ```
 

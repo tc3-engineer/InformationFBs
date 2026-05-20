@@ -47,6 +47,16 @@ END_VAR
 
 无（本符号是 `FUNCTION`，结果通过返回值传出）。
 
+### 返回值
+
+| 类型 | 说明（中文） |
+|---|---|
+| `T_MaxString` | 拼接得到的字符串（`STRING(255)`），不含末尾 `16#00`。 |
+
+### VAR_OUTPUT
+
+无（本符号是 `FUNCTION`，结果通过返回值传出）。
+
 ## 3. 行为说明
 
 函数无状态、立即返回。逐字节从 `in[0]` 起复制到目标 STRING 缓冲，直到遇到 null 字节（0x00）或扫满数组长度 `MAX_STRING_LENGTH`。null 字节作为 STRING 终结符；遇 null 后即使数组未扫完也立即停止。**这意味着含 0x00 的二进制字节数组不能完整复制——前缀部分被当成 STRING 解读、后半丢失**。配套反向函数 `MAXSTRING_TO_BYTEARR` 把 STRING 写回字节数组（不含 null 之后内容）。生产环境用此函数把 EtherCAT / ModBus 字节缓冲的 ASCII 部分拿出来做日志显示。

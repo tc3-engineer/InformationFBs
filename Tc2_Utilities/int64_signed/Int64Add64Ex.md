@@ -1,4 +1,5 @@
 # Int64Add64Ex
+
 ## 元信息
 
 | 字段 | 值 |
@@ -7,16 +8,18 @@
 | Library Version | `2.18.2` |
 | Type | `FUNCTION` |
 | Category | `64 bit functions (signed)` |
-| Source | https://infosys.beckhoff.com/content/1033/tcplclib_tc2_utilities/ |
 | Source PDF | https://download.beckhoff.com/download/document/automation/twincat3/TwinCAT_3_PLC_Lib_Tc2_Utilities_EN.pdf |
-| Verified | 2026-05-10 ✅ |
+| Source InfoSys | https://infosys.beckhoff.com/content/1033/tcplclib_tc2_utilities/35207947.html |
+| Verified | 2026-05-12 ✅ |
+| InfoSys-checked | ✅ 2026-05-12 |
 | Status | `verified` |
 | Example | [`examples/P_Demo_Int64Add64Ex.xml`](../examples/P_Demo_Int64Add64Ex.xml) |
 
 ---
+
 ## 1. 功能简述
 
-**带溢出检测的 Int64Add64**：返回 a + b 并通过 `bOV` 报告是否溢出。
+带溢出检测的有符号 64 位加法。`bOV` 在和超出 [−2⁶³, 2⁶³−1] 时置 TRUE。
 
 ## 2. 接口定义
 
@@ -28,68 +31,81 @@ VAR_INPUT
     augend : T_LARGE_INTEGER;
     addend : T_LARGE_INTEGER;
 END_VAR
-```
-
-| 名称 | 类型 | 说明 |
-|---|---|---|
-| `augend` | `T_LARGE_INTEGER` | 加数 a |
-| `addend` | `T_LARGE_INTEGER` | 加数 b |
-
-### 返回值
-
-`T_LARGE_INTEGER` —— 函数计算结果。
-
-### VAR_IN_OUT
-
-```iecst
 VAR_IN_OUT
-    bOV : BOOL; (* TRUE => arithmetic overflow, FALSE => no overflow *)
+    bOV : BOOL;
 END_VAR
 ```
 
-| 名称 | 类型 | 说明 |
-|---|---|---|
-| `bOV` | `BOOL` | 溢出标志（出参） |
+| 名称 | 类型 | 默认值 | 说明（中文） |
+|---|---|---|---|
+| `augend` | `T_LARGE_INTEGER` | - | 被加数 |
+| `addend` | `T_LARGE_INTEGER` | - | 加数 |
+
+### VAR_OUTPUT
+
+无（FUNCTION 仅有返回值）。
+
+### VAR_IN_OUT
+
+| 名称 | 类型 | 默认值 | 说明（中文） |
+|---|---|---|---|
+| `bOV` | `BOOL` | - | 算术溢出标志：TRUE = 溢出（每周期需先清零） |
+
+### 返回值
+
+`T_LARGE_INTEGER` —— 低 64 位和；`bOV` 反映有符号溢出。
 
 ## 3. 行为说明
 
-- 见上方功能简述。
+检测有符号溢出（与无符号不同：两正相加变负、或两负相加变正都算溢出）。返回值仍是 wrap-around 的低 64 位。`bOV` 是 VAR_IN_OUT，每周期开始处清零。
+
+**工程视角补充**：本函数是 `Tc2_Utilities` 库 `64 bit functions (signed)` 一组里的成员，被设计为无内部状态、无副作用、单 PLC 周期完成的纯函数。调用方需要在调用前完成参数合法性检查（如除数非零、移位位数不越界、`REFERENCE TO` 引用为真实左值等），并把返回值缓存到稳定的工业语义变量名（例如 `uliRuntime` 而非 `tmp1`），以便后续在线监视和故障追溯。对于结构体返回类型（`T_ULARGE_INTEGER` / `T_LARGE_INTEGER` / `T_FIX16`），切勿用 IEC `=` 运算符直接比较，需使用本库的 `*Cmp64` 或 `*isZero` 等同类函数。在多人协作或与外部库混用时，建议在仓库的 README 中固定记录本函数的"返回值含义 / 错误码语义 / 边界假设"，避免后续维护时再翻 PDF。
 
 ## 4. 错误码 / 返回值
 
-返回 `T_LARGE_INTEGER`。无独立错误码。
+`T_LARGE_INTEGER` —— 低 64 位和；`bOV` 反映有符号溢出。
+
+PDF 与 InfoSys 均未为本 FUNCTION 列独立的错误码字段。调用层需通过参数范围预校验（除零、NaN、移位位数、有符号溢出等）来保证安全。
 
 ## 5. 使用注意 / 常见坑
 
-- `bOV` 是 VAR_IN_OUT——必须传变量（不能传字面量）。
-- 溢出后结果未定义；调用方应在使用结果前检查 bOV。
+- **有符号溢出**：两正变负、两负变正
+- `bOV` 每周期清零
+- 饱和需手写：`IF bOV THEN result := <正/负 MAX>; END_IF;`
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_Int64Add64Ex.xml`](../examples/P_Demo_Int64Add64Ex.xml)
+> 配套可导入文件：[`examples/P_Demo_Int64Add64Ex.xml`](../examples/P_Demo_Int64Add64Ex.xml)（PLCopenXML，可直接导入 TwinCAT 3 XAE）
 >
-> 详见 [`examples/README.md`](../examples/README.md)
+> 导入步骤：右键 PLC 项目 → Import PLCopenXML → 选该文件 → OK
 
 ```iecst
 PROGRAM P_Demo_Int64Add64Ex
 VAR
-    rResult : T_LARGE_INTEGER;
-    bRun    : BOOL;
-    a, b : T_LARGE_INTEGER;
-    bOV : BOOL;
+    liAccum      : T_LARGE_INTEGER;
+    liDelta      : T_LARGE_INTEGER;
+    bOverflow    : BOOL;
+    bAdd         : BOOL;
 END_VAR
 
-a := LARGE_INTEGER(16#7FFFFFFF, 16#FFFFFFFF); b := LARGE_INTEGER(0, 1);
-IF bRun THEN
-    rResult := Int64Add64Ex(augend := a, addend := b, bOV := bOV);
-    bRun := FALSE;
+bOverflow := FALSE;                                    // 每周期先清
+IF bAdd THEN
+    liAccum := Int64Add64Ex(liAccum, liDelta, bOverflow);
+    IF bOverflow THEN
+        ;   // 业务层报警与饱和
+    END_IF;
+    bAdd := FALSE;
 END_IF;
 ```
 
-## 7. 相关
+## 7. 业务场景与实际价值
 
-- 见 [`Tc2_Utilities README`](../README.md) 同库其他条目
+- **场景**：工业计量场景里有符号差值累加，溢出代表传感器故障要报警。
+- **价值**：替代手写符号位检测；一次调用同时拿和与溢出位。
+- **替代方案对比**：调用方可手写等价的双倍长 / 位运算 / IEEE 754 检测，但代码量大、易错；本函数封装好硬件指令或位级判断，单次调用即完成，与库内其它同类函数（如 `64 bit functions (signed)` 同组的其他成员）风格统一，便于代码审阅与维护。
 
-## 8. 待确认项
+## 8. 参考资料
 
-无。
+- **PDF**：[TwinCAT_3_PLC_Lib_Tc2_Utilities_EN.pdf](https://download.beckhoff.com/download/document/automation/twincat3/TwinCAT_3_PLC_Lib_Tc2_Utilities_EN.pdf) §4.8.3
+- **InfoSys topic**：https://infosys.beckhoff.com/content/1033/tcplclib_tc2_utilities/35207947.html
+- **同组相关 FC**：见库分类 `64 bit functions (signed)`，覆盖加 / 减 / 乘 / 除 / 比较 / 位运算 / 类型转换的完整接口

@@ -29,7 +29,7 @@
 
 ```iecst
 VAR_INPUT
-    in : T_MaxString;
+    in  : T_MaxString;
     bQM : BOOL;
 END_VAR
 ```
@@ -48,6 +48,16 @@ END_VAR
 ### VAR_OUTPUT
 
 无（本符号是 `FUNCTION`，结果通过返回值传出）。
+
+### 返回值
+
+| 类型 | 说明（中文） |
+|---|---|
+| `T_MaxString` | 去转义后的字符串。`'"A""""B"'`（`bQM=TRUE`）→ `'A""B'`；`'A""""B'`（`bQM=FALSE`）→ `'A""B'`。 |
+
+### VAR_OUTPUT
+
+无。
 
 ## 3. 行为说明
 

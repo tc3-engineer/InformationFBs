@@ -6,6 +6,7 @@
 |---|---|
 | Library | `Tc2_Utilities` |
 | Library Version | `2.18.2` |
+| Min Lib Version | `3.3.51.0` |
 | Type | `FUNCTION` |
 | Category | `Functions` |
 | Source PDF | https://download.beckhoff.com/download/document/automation/twincat3/TwinCAT_3_PLC_Lib_Tc2_Utilities_EN.pdf |
@@ -54,6 +55,16 @@ END_VAR
 ### VAR_OUTPUT
 
 无（本符号是 `FUNCTION`，结果通过返回值传出）。
+
+### 返回值
+
+| 类型 | 说明（中文） |
+|---|---|
+| `BOOL` | `TRUE` = 哈希算成功，已写入 `pHash`；`FALSE` = 参数错误（`nHash` 与算法长度不符 / 空指针 / 不支持的算法）。 |
+
+### VAR_OUTPUT
+
+无。
 
 ## 3. 行为说明
 

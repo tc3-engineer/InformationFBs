@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <project xmlns="http://www.plcopen.org/xml/tc6_0200">
-  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-10T17:00:00"/>
-  <contentHeader name="Tc2_Utilities.LARGE_INTEGER Demo" modificationDateTime="2026-05-10T17:00:00">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-12T12:00:00"/>
+  <contentHeader name="Tc2_Utilities.LARGE_INTEGER Demo" modificationDateTime="2026-05-12T12:00:00">
     <coordinateInfo>
       <fbd><scaling x="1" y="1"/></fbd>
       <ld><scaling x="1" y="1"/></ld>
@@ -14,35 +14,33 @@
       <pou name="P_Demo_LARGE_INTEGER" pouType="program">
         <interface>
           <localVars>
-            <variable name="rResult">
-              <type><derived name="T_LARGE_INTEGER"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">LARGE_INTEGER 返回值</xhtml></documentation>
+            <variable name="liSentinel">
+              <type><derived name="T_LARGE_INTEGER;"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">未设定哨兵 = INT64_MIN</xhtml></documentation>
             </variable>
-            <variable name="bRun">
+            <variable name="bInit">
               <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">触发一次调用</xhtml></documentation>
-            </variable>
-            <variable name="result">
-              <type><derived name="T_LARGE_INTEGER"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">测试用本地变量</xhtml></documentation>
+              <initialValue><simpleValue value="TRUE"/></initialValue>
             </variable>
           </localVars>
         </interface>
         <body>
           <ST>
             <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
-// Tc2_Utilities.LARGE_INTEGER 演示程序（FUNCTION）
+// Tc2_Utilities.LARGE_INTEGER 演示程序（FUNCTION，单周期触发）
 // ============================================================
+// 场景：初始化'未设定'哨兵值 = INT64_MIN。
+// 价值：替代字段逐字段赋值。
 // 验证步骤：
-//   1. 引用 Tc2_Utilities
+//   1. 把本 PROGRAM 加到 PlcTask 调用列表
 //   2. 编译 + 登录
-//   3. 强制 bRun := TRUE 一个周期
-//   4. 在线监视 rResult
+//   3. 在线把 b... 触发位置 TRUE 一个周期
+//   4. 观察输出变量是否符合期望
 // ============================================================
 
-IF bRun THEN
-    rResult := LARGE_INTEGER(0, 16#12345678);
-    bRun := FALSE;
+IF bInit THEN
+    liSentinel := LARGE_INTEGER(16#80000000, 16#00000000);   // INT64_MIN
+    bInit := FALSE;
 END_IF;
 </xhtml>
           </ST>

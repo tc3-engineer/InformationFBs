@@ -29,9 +29,9 @@
 
 ```iecst
 VAR_INPUT
-    dwSrcAddr : POINTER TO BYTE;
-    cbLen : UDINT;
-    wChkSum : WORD;
+    dwSrcAddr  : POINTER TO BYTE;
+    cbLen      : UDINT;
+    wChkSum    : WORD;
 END_VAR
 ```
 
@@ -50,6 +50,16 @@ END_VAR
 ### VAR_OUTPUT
 
 无（本符号是 `FUNCTION`，结果通过返回值传出）。
+
+### 返回值
+
+| 类型 | 说明（中文） |
+|---|---|
+| `WORD` | 16 位累加和；后续段可作为下次 `wChkSum` 入参。 |
+
+### VAR_OUTPUT
+
+无。
 
 ## 3. 行为说明
 
