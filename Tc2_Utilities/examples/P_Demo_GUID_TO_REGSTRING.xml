@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <project xmlns="http://www.plcopen.org/xml/tc6_0200">
-  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-12T10:00:00"/>
-  <contentHeader name="Tc2_Utilities.GUID_TO_REGSTRING Demo" modificationDateTime="2026-05-12T10:00:00">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-12T00:00:00"/>
+  <contentHeader name="Tc2_Utilities.GUID_TO_REGSTRING Demo" modificationDateTime="2026-05-12T00:00:00">
     <coordinateInfo>
       <fbd><scaling x="1" y="1"/></fbd>
       <ld><scaling x="1" y="1"/></ld>
@@ -14,44 +14,25 @@
       <pou name="P_Demo_GUID_TO_REGSTRING" pouType="program">
         <interface>
           <localVars>
-            <variable name="gMachineUniqueId">
-              <type><derived name="GUID"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">从 BIOS / dongle 读到的机器唯一 ID</xhtml></documentation>
-            </variable>
-            <variable name="sRegistryFormatId">
-              <type><string><length>38</length></string></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">写到 Windows 注册表的带花括号 GUID 串</xhtml></documentation>
-            </variable>
-            <variable name="bFormatRequest">
-              <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">在线置 TRUE 触发一次格式化</xhtml></documentation>
-            </variable>
+            <variable name="stGuid"><type><derived name="GUID"/></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">工业语义：OPC UA App ID（GUID）</xhtml></documentation></variable>
+            <variable name="sRegStr"><type><string><length>38</length></string></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">格式化后注册表字符串</xhtml></documentation></variable>
+            <variable name="bFormat"><type><BOOL/></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">在线触发</xhtml></documentation></variable>
           </localVars>
         </interface>
         <body>
           <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
-// 场景：工业 PC 启动时把 BIOS / dongle 读到的机器唯一 ID 写到 Windows
-//       注册表项 HKLM\SOFTWARE\Plant\MachineId，便于其他 Windows 服务
-//       （如 OPC UA Server）通过 RegEdit 读到统一标识。
-// 价值：注册表 / WMI 习惯用 '{...}' 包裹 GUID；本函数一行得到，免去
-//       CONCAT('{', GUID_TO_STRING(g), '}') 三步拼接。
+// 场景：把 PLC 内的 OPC UA Application URI（GUID 形式）格式化为日志可读字符串；记入审计表。
+// 价值：替代手写 16 字节 → hex 字符串 + 拼接连字符 + 加大括号的 30 行代码；本函数 1 调用。
 // 验证步骤：
-//   1. 登录后 gMachineUniqueId 各字段全 0，sRegistryFormatId = ''。
-//   2. 在线设置 gMachineUniqueId.Data1 := 16#12345678; .Data2 := 16#1234;
-//      .Data3 := 16#5678; .Data4 := [16#9A,16#BC,16#DE,16#F0,16#12,16#34,16#56,16#78];
-//   3. 写 bFormatRequest := TRUE。
-//   4. 观察 sRegistryFormatId = '{12345678-1234-5678-9ABC-DEF012345678}'
-//      （长度 38，含花括号，hex 大写）。
-//   5. 把 gMachineUniqueId 各字段重置为 0 再触发，结果是
-//      '{00000000-0000-0000-0000-000000000000}'——印证 §3 全零形态。
+//   1. 引用 Tc2_Utilities
+//   2. 编译 + 登录 + 运行
+//   3. 在线写触发位 TRUE，monitor 输出变量
 // =============================================================================
 
-IF bFormatRequest THEN
-    // 单次调用：永远成功，无错误码
-    sRegistryFormatId := GUID_TO_REGSTRING(in := gMachineUniqueId);
-    bFormatRequest := FALSE;
-END_IF;
-</xhtml></ST>
+IF bFormat THEN
+    sRegStr := GUID_TO_REGSTRING(in := stGuid);
+    bFormat := FALSE;
+END_IF;</xhtml></ST>
         </body>
       </pou>
     </pous>

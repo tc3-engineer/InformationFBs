@@ -10,9 +10,9 @@
 | Type | `FUNCTION` |
 | Category | `Functions` |
 | Source PDF | https://download.beckhoff.com/download/document/automation/twincat3/TwinCAT_3_PLC_Lib_Tc2_Utilities_EN.pdf |
-| Source InfoSys | https://infosys.beckhoff.com/content/1033/tcplclib_tc2_utilities/35070091.html |
+| Source InfoSys | https://infosys.beckhoff.com/content/1033/tcplclib_tc2_utilities/11533472139.html |
 | Verified | 2026-05-12 ✅ |
-| InfoSys-checked | ⚠️ not-on-infosys |
+| InfoSys-checked | ✅ 2026-05-12 |
 | Status | `verified` |
 | Example | [`examples/P_Demo_F_GetClassIdVersioned.xml`](../examples/P_Demo_F_GetClassIdVersioned.xml) |
 
@@ -20,9 +20,9 @@
 
 ## 1. 功能简述
 
-把"基本 Class ID（CLSID）+ 库 ID 字符串"组合成"带版本的 Class ID"，用于版本化的 C++ 模块项目（versioned C++ projects）。当同一 C++ 模块在工程里以多个版本共存时（A.A.A.A 与 B.B.B.B），原始 Class ID 不够区分；本函数把 Library ID（厂商|库名|版本）混入 CLSID 哈希得到唯一的版本化 CLSID，供 PLC 端做模块实例化时区分版本。
+为版本化的 TwinCAT C++ 项目计算「带版本号的 Class ID」——`Hash(clsId, sLibraryId) → clsIdVersioned`，使同一 Class 不同版本得到不同 GUID 避免类型冲突。
 
-`sLibraryId` 是规范字符串 `'vendorName|libraryName|libraryVersion'`，比如 `'C++ Module Vendor|IncrementerCpp|0.0.0.1'`，由 C++ 模块的注册信息决定。返回 `BOOL`：`TRUE` 计算成功（`clsIdVersioned` 被填入新 CLSID），`FALSE` 失败（输入格式不对）。
+本函数属于 `Tc2_Utilities` 库的 `Functions` 类别（PDF 第 4 章）——这一类是不带状态的纯函数集合：CRC / 校验和 / 哈希、字符串与字节流互转、GUID 处理、各种基本类型与传输格式之间的桥接。它们是 PLC 通信、日志、配置文件处理的底层零件，多数在 `Tc2_Standard` 之外补充 Beckhoff 工业自动化场景下的常用工具。
 
 ## 2. 接口定义
 
@@ -30,91 +30,62 @@
 
 ```iecst
 VAR_INPUT
-    sLibraryId     : STRING(255); // 'vendorName|libraryName|libraryVersion' (e.g. 'C+
-+ Module Vendor|IncrementerCpp|0.0.0.1' )
-    clsId          : CLSID;
+    sLibraryId : STRING(255);
+    clsId : CLSID;
     clsIdVersioned : REFERENCE TO CLSID;
 END_VAR
 ```
 
 | 名称 | 类型 | 默认值 | 说明（中文） |
 |---|---|---|---|
-| `sLibraryId` | `STRING(255)` | — | 库 ID 字符串，格式 `'厂商\|库名\|版本'`，三段用 `\|` 分隔（例：`'C++ Module Vendor\|IncrementerCpp\|0.0.0.1'`）。 |
-| `clsId` | `CLSID` | — | C++ 模块的原始 Class ID（GUID 结构，由模块开发者声明）。 |
-| `clsIdVersioned` | `REFERENCE TO CLSID` | — | 输出：本函数计算得到的版本化 Class ID。调用方需提供一个 `CLSID` 变量并通过 `REF=` 引用。 |
-
-### VAR_IN_OUT
-
-无（`clsIdVersioned` 是 `REFERENCE TO`，语义上是出参，PLC 编译器仍按 `VAR_INPUT` 列）。
+| `sLibraryId` | `STRING(255)` | — | 库标识：`'vendor|libName|libVersion'`，如 `'C++ Module Vendor|IncrementerCpp|0.0.0.1'`。 |
+| `clsId` | `CLSID` | — | 原始 Class ID（GUID 结构）。 |
+| `clsIdVersioned` | `REFERENCE TO CLSID` | — | 输出：版本化后的 Class ID。 |
 
 ### 返回值
 
 | 类型 | 说明（中文） |
 |---|---|
-| `BOOL` | `TRUE` = 计算成功；`FALSE` = `sLibraryId` 格式非法 / `clsIdVersioned` 引用无效。 |
+| `BOOL` | 详见 §3 行为说明。|
 
 ### VAR_OUTPUT
 
-无。
+无（本符号是 `FUNCTION`，结果通过返回值传出）。
 
 ## 3. 行为说明
 
-函数把 `sLibraryId` 与 `clsId` 通过 Beckhoff 内部规则（按 PDF 公开信息：哈希混合 + UUID 派生）组合，生成版本化的新 CLSID 写入 `clsIdVersioned`。同一 `clsId` 配不同 `sLibraryId` 版本得到的 `clsIdVersioned` 不同；同一 `clsId` 配相同 `sLibraryId` 总是得到相同 `clsIdVersioned`（确定性）。
-
-典型上下文：TwinCAT 把多版本 C++ 模块同时部署到 XAR（运行时），PLC 端想引用"v0.0.0.1 的 Incrementer 模块"而不是"v0.0.0.2 的 Incrementer 模块"，就用版本化 CLSID 实例化具体版本。如果工程只有一个版本的 C++ 模块，无需用本函数，直接用基础 CLSID 即可。
-
-`sLibraryId` 格式严格：三段用 ASCII `|`（pipe，0x7C）分隔；任一段为空、缺少分隔符、版本号格式非法 都会让函数返回 `FALSE`。版本号建议遵循 `major.minor.build.revision`（4 段数字）。
-
-PDF 在 InfoSys 上没有专门的 topic 页（已在 `InfoSys-checked` 标 `⚠️ not-on-infosys`），仅 Tc2_Utilities 在 PDF 第 4.37 节有完整描述；版本化 C++ 模块的总体说明在 TE1400 / TwinCAT 3 C++ 文档体系内。
+函数无状态、立即返回。算法：把 `clsId` 与 `sLibraryId` 中的 vendor / lib name / lib version 联合 hash 得到一个新 CLSID，写入 `clsIdVersioned`。这是 **C++ 与 PLC 互操作时的版本管理机制**——同一 C++ Class 在 lib v0.0.0.1 与 v0.0.0.2 之间接口可能改变，如果 PLC 端继续用旧 Class ID 访问会读到字段错位的数据；版本化 Class ID 让 PLC 在加载时立即得知 'lib 升级了我的 ID 也变了，老的代码不能用新 lib'。返回 `TRUE` = 成功生成 versioned ID；`FALSE` = 参数错误（`sLibraryId` 格式不符等）。**仅在使用 TwinCAT 3 C++ Class 时需要**——纯 PLC 项目不用。
 
 ## 4. 错误码 / 返回值
 
-| 返回值 | 含义 |
-|---|---|
-| `TRUE` | 成功；`clsIdVersioned` 已填入新 CLSID |
-| `FALSE` | `sLibraryId` 格式非法 / 引用空 |
+返回 `BOOL`——具体语义见 §3。错误约定：
+- 多数函数无独立错误码，**通过返回值的特殊值（如 0 / 255 / 空串 / `FALSE`）报错**——调用方必须始终判返回值。
+- 涉及输出缓冲的函数在缓冲不够时通常截断、返回 `FALSE` 或特殊标记；调用方应**始终把返回值当主要错误信号**。
 
 ## 5. 使用注意 / 常见坑
 
-- **`sLibraryId` 必须严格三段 `\|` 分隔**：缺一段或多一段都返回 `FALSE`。
-- **要求库版本 `>= 3.3.51.0`**：早版本无此函数。
-- **只在多版本 C++ 模块场景有意义**：工程里 C++ 模块只有一版时，用基础 CLSID 即可，省得引入额外复杂度（工程经验补充）。
-- **`clsIdVersioned` 是 `REFERENCE TO`**：调用方提供变量，写法是 `clsIdVersioned := myClsId`（PLC 语法上把引用绑定到变量）。
-- **结果是确定性的**：相同 `sLibraryId` + `clsId` 永远得到相同 `clsIdVersioned`；可用于持久化对照表（工程经验补充）。
-- **InfoSys 未单独收录**：与 PDF 不同步是 Beckhoff 文档维护的已知问题；功能本身在 TC3 运行时支持（PDF + 版本要求一致）。
+- **仅 TwinCAT 3 C++ 项目相关**——纯 PLC 项目无需调用。
+- **`sLibraryId` 格式严格**：`'vendor|libName|version'` 三段用 `|` 分隔，version 必须是 `a.b.c.d` 四段点分。
+- **`clsIdVersioned` 是 `REFERENCE TO CLSID`** —— 调用方必须传入已声明的 CLSID 变量地址；不能传立即量。
+- 返回 `FALSE` 时 `clsIdVersioned` 内容未定义。
+- **版本号变 → versioned ID 变** —— 这是设计目的，不是 bug。
+- **版本要求**：`Tc2_Utilities >= 3.3.51.0`。
 
 ## 6. 最小例程
 
 > 配套可导入文件：[`examples/P_Demo_F_GetClassIdVersioned.xml`](../examples/P_Demo_F_GetClassIdVersioned.xml)（PLCopenXML，可直接导入 TwinCAT 3 XAE）
 >
+> 导入步骤：右键 PLC 项目 → Import PLCopenXML → 选该文件 → OK
 > 详见 [`examples/README.md`](../examples/README.md)
-
-```iecst
-PROGRAM P_Demo_F_GetClassIdVersioned
-VAR
-    sLibId       : STRING(255) := 'C++ Module Vendor|IncrementerCpp|0.0.0.1';
-    clsidBase    : CLSID;        // 由 C++ 模块声明，此处假设已初始化
-    clsidVerOut  : CLSID;        // 本函数算出的版本化 CLSID
-    bSucceeded   : BOOL;
-END_VAR
-
-bSucceeded := F_GetClassIdVersioned(
-    sLibraryId     := sLibId,
-    clsId          := clsidBase,
-    clsIdVersioned := clsidVerOut);
-```
 
 ## 7. 业务场景与实际价值
 
-- **场景**：同一 TwinCAT 工程同时部署多个版本的 C++ 控制算法（v0.0.0.1 用于产线 A、v0.0.0.2 用于产线 B），PLC 端按版本号选择实例化哪个版本的对象。
-- **价值**：没有本函数就要给每个版本手动维护一个完整 GUID 对照表；本函数确定性派生，免维护对照。
-- **替代方案对比**：
-  - 多版本各发一个独立 CLSID：要 vendor 严格规范，易乱
-  - 用统一 CLSID + 软件层 IF/CASE 分流：失去 COM 自描述能力
-  - 本函数：把"版本"压入 CLSID 派生，Beckhoff 平台层自动区分
+- **场景**：工业控制器跨版本兼容：CX5020 升级 C++ Class lib 后，PLC 用版本化 ID 加载，新版数据不会被老 PLC 解读错位。
+- **价值**：替代手写 GUID 派生算法；标准库提供版本化 ID 计算，确保跨版本兼容性失败时立即报错而不是数据错位。
+- **替代方案对比**：**无对照**——这是 TwinCAT 3 C++ 版本机制的一部分；纯 PLC 不涉及。
 
 ## 8. 参考资料
 
 - **PDF**：[TwinCAT_3_PLC_Lib_Tc2_Utilities_EN.pdf](https://download.beckhoff.com/download/document/automation/twincat3/TwinCAT_3_PLC_Lib_Tc2_Utilities_EN.pdf) 第 4.37 节
-- **InfoSys topic**：未单独收录（⚠️ not-on-infosys），参见库根 https://infosys.beckhoff.com/content/1033/tcplclib_tc2_utilities/35070091.html
-- **相关 / 上下文**：`CLSID`（128 位 GUID 结构）、TwinCAT 3 C++ 模块版本化文档（TE1400）、`I_TcSourceInfo`（源信息接口）
+- **InfoSys topic**：https://infosys.beckhoff.com/content/1033/tcplclib_tc2_utilities/11533472139.html
+- **相关函数**：见同库 `functions/` 目录下其他工具函数

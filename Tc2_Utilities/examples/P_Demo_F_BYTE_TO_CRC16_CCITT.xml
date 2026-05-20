@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <project xmlns="http://www.plcopen.org/xml/tc6_0200">
-  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-12T10:00:00"/>
-  <contentHeader name="Tc2_Utilities.F_BYTE_TO_CRC16_CCITT Demo" modificationDateTime="2026-05-12T10:00:00">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-12T00:00:00"/>
+  <contentHeader name="Tc2_Utilities.F_BYTE_TO_CRC16_CCITT Demo" modificationDateTime="2026-05-12T00:00:00">
     <coordinateInfo>
       <fbd><scaling x="1" y="1"/></fbd>
       <ld><scaling x="1" y="1"/></ld>
@@ -14,55 +14,27 @@
       <pou name="P_Demo_F_BYTE_TO_CRC16_CCITT" pouType="program">
         <interface>
           <localVars>
-            <variable name="arRxFrame">
-              <type><array><dimension lower="0" upper="3"/><baseType><BYTE/></baseType></array></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">4 字节自定义串行协议帧（不含 CRC 尾两字节）</xhtml></documentation>
-            </variable>
-            <variable name="wAccCrc">
-              <type><WORD/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">逐字节累积的 CRC 结果（最终与帧尾 CRC 比对）</xhtml></documentation>
-            </variable>
-            <variable name="iByteIdx">
-              <type><INT/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">FOR 循环游标</xhtml></documentation>
-            </variable>
-            <variable name="bComputeRequest">
-              <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">在线置 TRUE 触发一次 CRC 计算</xhtml></documentation>
-            </variable>
+            <variable name="nByteIn"><type><BYTE/></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">工业语义：串口刚到一个数据字节</xhtml></documentation></variable>
+            <variable name="wCrc"><initialValue><simpleValue value="16#FFFF"/></initialValue><type><WORD/></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">运行中的 CRC 值（初值 16#FFFF）</xhtml></documentation></variable>
+            <variable name="bFeed"><type><BOOL/></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">在线触发一次喂入</xhtml></documentation></variable>
           </localVars>
         </interface>
         <body>
           <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
-// 场景：通过 EL6022 串口模块接收自定义协议帧，协议规范要求 CRC-16/CCITT
-//       校验（初值 0xFFFF，X.25/HDLC 标准）。每次串口收到 4 字节载荷后，
-//       PLC 端逐字节累积 CRC，最后和帧尾 CRC 比对判断帧完整性。
-// 价值：手写 CRC 表 + 位移要 30+ 行代码且容易在位序上写错；本函数封装好的
-//       0x1021 多项式 + 单字节迭代，逐字节累积或整帧一次都能用。
+// 场景：串口协议（如 RDM / HART / DLMS）实时校验：收到每个字节立即喂入 CRC 计算器，到帧尾比对收到的 CRC 字段。
+// 价值：替代手写位移 XOR 循环或维护 256 字节查找表——本函数封装好的 CRC-16 CCITT 实现。
 // 验证步骤：
-//   1. 登录后 wAccCrc = 0。
-//   2. 在线把 arRxFrame 写入 [16#01, 16#02, 16#03, 16#04]。
-//   3. 写 bComputeRequest := TRUE。
-//   4. 观察 wAccCrc 变为 0x89C3（X.25/HDLC 初值 0xFFFF 对 01 02 03 04 的标准 CRC）。
-//   5. 修改任一字节后重新触发，wAccCrc 应明显不同——这就是 CRC 用来检测篡改 / 丢包的作用。
+//   1. 引用 Tc2_Utilities
+//   2. 编译 + 登录 + 运行
+//   3. 在线写触发位 TRUE，monitor 输出变量
 // =============================================================================
 
-// 准备测试帧字节（也可在线直接写 arRxFrame[i] 改）
-arRxFrame[0] := 16#01;
-arRxFrame[1] := 16#02;
-arRxFrame[2] := 16#03;
-arRxFrame[3] := 16#04;
-
-// 触发一次完整计算：必须先把初值置为 X.25/HDLC 标准 0xFFFF
-IF bComputeRequest THEN
-    wAccCrc := 16#FFFF;
-    // 逐字节累积——流式协议（边收边算）就是这个模式
-    FOR iByteIdx := 0 TO 3 DO
-        wAccCrc := F_BYTE_TO_CRC16_CCITT(value := arRxFrame[iByteIdx], crc := wAccCrc);
-    END_FOR;
-    bComputeRequest := FALSE;
-END_IF;
-</xhtml></ST>
+// 模拟串口字节到达：在线写 nByteIn，触发一次 CRC 更新
+IF bFeed THEN
+    wCrc := F_BYTE_TO_CRC16_CCITT(value := nByteIn, crc := wCrc);
+    // 帧尾时比较 wCrc 与协议字段；不一致 -&gt; 报警
+    bFeed := FALSE;
+END_IF;</xhtml></ST>
         </body>
       </pou>
     </pous>

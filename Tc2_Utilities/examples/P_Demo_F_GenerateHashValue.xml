@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <project xmlns="http://www.plcopen.org/xml/tc6_0200">
-  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-12T10:00:00"/>
-  <contentHeader name="Tc2_Utilities.F_GenerateHashValue Demo" modificationDateTime="2026-05-12T10:00:00">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-12T00:00:00"/>
+  <contentHeader name="Tc2_Utilities.F_GenerateHashValue Demo" modificationDateTime="2026-05-12T00:00:00">
     <coordinateInfo>
       <fbd><scaling x="1" y="1"/></fbd>
       <ld><scaling x="1" y="1"/></ld>
@@ -14,56 +14,32 @@
       <pou name="P_Demo_F_GenerateHashValue" pouType="program">
         <interface>
           <localVars>
-            <variable name="sFirmwareIdentity">
-              <initialValue><simpleValue value="firmware_v2.1.0_release"/></initialValue>
-              <type><derived name="T_MaxString"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">固件标识字符串（模拟下发的固件包内容）</xhtml></documentation>
-            </variable>
-            <variable name="arFirmwareSha256">
-              <type><array><dimension lower="0" upper="31"/><baseType><BYTE/></baseType></array></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">SHA-256 输出固定 32 字节</xhtml></documentation>
-            </variable>
-            <variable name="bHashSucceeded">
-              <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">哈希成功标志；FALSE 时检查 nHash 与算法是否匹配</xhtml></documentation>
-            </variable>
-            <variable name="bHashRequest">
-              <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">在线置 TRUE 触发一次哈希</xhtml></documentation>
-            </variable>
+            <variable name="aFirmware"><type><array><dimension lower="0" upper="1023"/><baseType><BYTE/></baseType></array></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">工业语义：1 KB 固件区</xhtml></documentation></variable>
+            <variable name="aSha256"><type><array><dimension lower="0" upper="31"/><baseType><BYTE/></baseType></array></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">32 字节 SHA-256 输出</xhtml></documentation></variable>
+            <variable name="eMode"><type><derived name="E_HashMode"/></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">哈希模式</xhtml></documentation></variable>
+            <variable name="bOk"><type><BOOL/></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">成功</xhtml></documentation></variable>
+            <variable name="bHash"><type><BOOL/></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">在线触发</xhtml></documentation></variable>
           </localVars>
         </interface>
         <body>
           <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
-// 场景：固件包下发到 PLC 后做完整性自检——本端按已知算法（SHA-256）算
-//       固件哈希，与厂商签名内嵌的预期哈希比对，不一致拒绝运行新固件。
-// 价值：手写 SHA-256 200+ 行几乎不可能调对；本函数封装 CryptoAPI，单调
-//       用得到 32 字节哈希。比 F_CheckSum16 / CRC 强度高一个量级，能抗
-//       篡改。
+// 场景：OTA 固件升级：算 SHA-256 比对厂家签名，确认固件包未被篡改。
+// 价值：替代手动实现 SHA 算法（数百行 C 移植）；本函数提供库级密码学哈希。
 // 验证步骤：
-//   1. 登录后 arFirmwareSha256 全 0，bHashSucceeded = FALSE。
-//   2. 写 bHashRequest := TRUE 触发一次。
-//   3. 观察 bHashSucceeded = TRUE，arFirmwareSha256 各字节填上 32 字节哈希值。
-//   4. 验证算法正确：用 PowerShell `Get-FileHash -Algorithm SHA256` 或
-//      Python `hashlib.sha256(b'firmware_v2.1.0_release').hexdigest()`
-//      算出预期哈希，与 arFirmwareSha256 字节对齐应一致。
-//   5. 把 sFirmwareIdentity 末尾加一个空格，重新触发——arFirmwareSha256
-//      会完全不同，印证 SHA 的"雪崩效应"。
-//   6. 错误演示：把 SIZEOF(arFirmwareSha256) 改成 16（不够 SHA-256 的 32），
-//      bHashSucceeded 会变 FALSE——印证 §5 nHash 必须匹配算法。
+//   1. 引用 Tc2_Utilities
+//   2. 编译 + 登录 + 运行
+//   3. 在线写触发位 TRUE，monitor 输出变量
 // =============================================================================
 
-IF bHashRequest THEN
-    // 单次调用：SHA-256 需要 32 字节目标 buffer
-    bHashSucceeded := F_GenerateHashValue(
-        hashMode := E_HashMode.SHA256,
-        pData    := ADR(sFirmwareIdentity),
-        nData    := LEN(sFirmwareIdentity),
-        pHash    := ADR(arFirmwareSha256),
-        nHash    := SIZEOF(arFirmwareSha256));
-    bHashRequest := FALSE;
-END_IF;
-</xhtml></ST>
+IF bHash THEN
+    // eMode := E_HashMode.SHA256;  // 示意，具体见 E_HashMode 文档
+    bOk := F_GenerateHashValue(hashMode := eMode,
+                               pData    := ADR(aFirmware),
+                               nData    := SIZEOF(aFirmware),
+                               pHash    := ADR(aSha256),
+                               nHash    := SIZEOF(aSha256));
+    bHash := FALSE;
+END_IF;</xhtml></ST>
         </body>
       </pou>
     </pous>

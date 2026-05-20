@@ -9,7 +9,7 @@
 | Type | `FUNCTION` |
 | Category | `Functions` |
 | Source PDF | https://download.beckhoff.com/download/document/automation/twincat3/TwinCAT_3_PLC_Lib_Tc2_Utilities_EN.pdf |
-| Source InfoSys | https://infosys.beckhoff.com/content/1033/tcplclib_tc2_utilities/934084875.html |
+| Source InfoSys | https://infosys.beckhoff.com/content/1033/tcplclib_tc2_utilities/11500193035.html |
 | Verified | 2026-05-12 ✅ |
 | InfoSys-checked | ✅ 2026-05-12 |
 | Status | `verified` |
@@ -19,9 +19,9 @@
 
 ## 1. 功能简述
 
-按值比较两个 GUID 结构是否相等。`TRUE` = 完全相同（128 位全等），`FALSE` = 任一位不同。
+按值比较两个 GUID 是否相等；`TRUE` = 相等，`FALSE` = 不等。
 
-虽然结构体也能用 `=` 语法比较（PLC 编译器对结构体重载了等于运算符），但 `GUID` 内部有数组字段 `Data4[0..7]`，部分老编译器对含数组的结构体 `=` 行为不一致；本函数保证按字节逐位比较，跨编译器版本结果一致。
+本函数属于 `Tc2_Utilities` 库的 `Functions` 类别（PDF 第 4 章）——这一类是不带状态的纯函数集合：CRC / 校验和 / 哈希、字符串与字节流互转、GUID 处理、各种基本类型与传输格式之间的桥接。它们是 PLC 通信、日志、配置文件处理的底层零件，多数在 `Tc2_Standard` 之外补充 Beckhoff 工业自动化场景下的常用工具。
 
 ## 2. 接口定义
 
@@ -39,9 +39,15 @@ END_VAR
 | `guidA` | `GUID` | — | 第一个 GUID。 |
 | `guidB` | `GUID` | — | 第二个 GUID。 |
 
-### VAR_IN_OUT
+### 返回值
 
-无。
+| 类型 | 说明（中文） |
+|---|---|
+| `BOOL` | 详见 §3 行为说明。|
+
+### VAR_OUTPUT
+
+无（本符号是 `FUNCTION`，结果通过返回值传出）。
 
 ### 返回值
 
@@ -55,53 +61,37 @@ END_VAR
 
 ## 3. 行为说明
 
-函数对 `guidA.Data1`、`guidA.Data2`、`guidA.Data3` 与 `guidB` 对应字段做整数相等比较，并对 `guidA.Data4[0..7]` 与 `guidB.Data4[0..7]` 8 字节做逐字节比较，全部相等才返回 `TRUE`。整个比较过程是按值进行，16 字节固定开销，与具体 GUID 内容无关。
-
-典型用途：一是空 GUID 检测，建一个常量 `cZeroGuid : GUID;`（默认全零）后用 `GuidsEqualByVal(gMaybeUnset, cZeroGuid)` 判断 GUID 是否已被分配；二是会话或实例标识比较，确定收到的消息是否属于当前会话；三是 C++ 模块版本对照，与 `F_GetClassIdVersioned` 算出的 CLSID 列表逐个比对来选版本。性能上 `GUID` 仅 16 字节，整体比较是 O(1) 常数时间，可放在主循环里高频调用而无明显开销，也不涉及共享状态，跨任务调用安全。
+函数无状态、立即返回。算法：逐字节比较 `guidA` 与 `guidB` 的 16 字节内存内容。全 16 字节相同 → `TRUE`；任一字节不同 → 立即返回 `FALSE`（短路求值）。**关键提示**：直接 `guidA = guidB` 在 IEC 61131-3 中**不能比较结构体**——必须用本函数（这是 IEC / TwinCAT 的强制限制）。`stA = stB` 编译错误；`GuidsEqualByVal(stA, stB)` 才合法。**值语义比较，不按引用**——即使两个 GUID 变量在不同内存地址，只要值相同也判等。无错误处理：始终返回 `TRUE` / `FALSE`，没有第三种结果。
 
 ## 4. 错误码 / 返回值
 
-| 返回值 | 含义 |
-|---|---|
-| `TRUE` | 两 GUID 完全相同 |
-| `FALSE` | 至少一字段不同 |
+返回 `BOOL`——具体语义见 §3。错误约定：
+- 多数函数无独立错误码，**通过返回值的特殊值（如 0 / 255 / 空串 / `FALSE`）报错**——调用方必须始终判返回值。
+- 涉及输出缓冲的函数在缓冲不够时通常截断、返回 `FALSE` 或特殊标记；调用方应**始终把返回值当主要错误信号**。
 
 ## 5. 使用注意 / 常见坑
 
-- **不用 `gA = gB`**：编译器对含数组结构体的 `=` 行为不一定可靠（按版本），用本函数最稳。
-- **结构体顺序无关**：因为按值比较，不论字段在内存中的字节序，只要逻辑值相等即等。
-- **常量比较**：可建 `cZeroGuid` / `cExpectedGuid` 等 `VAR CONSTANT GUID` 常量做对比，HMI 直接展示常量名（工程经验补充）。
-- **大小写无关**：本函数不涉及字符串，纯数值比较；`GUID_TO_STRING` 后用 `EQ` 字符串比较则需注意大小写（工程经验补充）。
-- **跨任务安全**：纯值比较，不涉及共享状态，跨任务调用安全。
+- **IEC 61131-3 不能直接比较结构体**（含 GUID）—— 必须用 `GuidsEqualByVal`，写 `g1 = g2` 是编译错。
+- 按内存逐字节比较——`UUID v4` 等任何变种都按字节相等判定。
+- 未初始化的 GUID（全 0）之间相等：`GuidsEqualByVal(全0, 全0) = TRUE`。业务侧检查 GUID 有效性需用此函数对照全零 GUID 常量。
+- 无错误处理：始终返回 `TRUE` / `FALSE`。
+- **性能**：16 字节比较是 O(1)；高频比较场景无忧。
 
 ## 6. 最小例程
 
 > 配套可导入文件：[`examples/P_Demo_GuidsEqualByVal.xml`](../examples/P_Demo_GuidsEqualByVal.xml)（PLCopenXML，可直接导入 TwinCAT 3 XAE）
 >
+> 导入步骤：右键 PLC 项目 → Import PLCopenXML → 选该文件 → OK
 > 详见 [`examples/README.md`](../examples/README.md)
-
-```iecst
-PROGRAM P_Demo_GuidsEqualByVal
-VAR
-    gIncomingMessageId : GUID;
-    gExpectedMessageId : GUID;
-    bMatch             : BOOL;
-END_VAR
-
-bMatch := GuidsEqualByVal(guidA := gIncomingMessageId, guidB := gExpectedMessageId);
-```
 
 ## 7. 业务场景与实际价值
 
-- **场景**：MES 下发的指令消息含 `MessageId : GUID`，PLC 端把已处理消息 ID 缓存到环形 buffer；新消息到达时用本函数遍历 buffer 检测是否已处理（去重），防止 MES 重发导致一个动作执行两次。
-- **价值**：可靠的 GUID 等值比较；跨编译器版本结果一致。
-- **替代方案对比**：
-  - `gA = gB`：依赖编译器对含数组结构体的 `=` 实现，老版本可能不行
-  - `MEMCMP(ADR(gA), ADR(gB), SIZEOF(GUID)) = 0`：可行，但要包指针；语义不如本函数清晰
-  - 本函数：语义清晰、跨版本稳定
+- **场景**：OPC UA Session ID 验证：每次客户端请求带 GUID Session ID，PLC 服务端比对预先生成的 Session ID 决定是否拒绝。
+- **价值**：**IEC 强制要求**——不能用 `=` 比较结构体；本函数是 GUID 比较的唯一标准方式。
+- **替代方案对比**：**无替代**——`MEMCMP` 可以但不推荐（破坏类型安全）。
 
 ## 8. 参考资料
 
 - **PDF**：[TwinCAT_3_PLC_Lib_Tc2_Utilities_EN.pdf](https://download.beckhoff.com/download/document/automation/twincat3/TwinCAT_3_PLC_Lib_Tc2_Utilities_EN.pdf) 第 4.46 节
-- **InfoSys topic**：https://infosys.beckhoff.com/content/1033/tcplclib_tc2_utilities/934084875.html
-- **相关函数 / 类型**：`GUID_TO_STRING`、`GUID_TO_REGSTRING`、`STRING_TO_GUID`、`REGSTRING_TO_GUID`、`GUID`（128 位结构）
+- **InfoSys topic**：https://infosys.beckhoff.com/content/1033/tcplclib_tc2_utilities/11500193035.html
+- **相关函数**：见同库 `functions/` 目录下其他工具函数

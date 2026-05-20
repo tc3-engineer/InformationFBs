@@ -19,9 +19,9 @@
 
 ## 1. 功能简述
 
-对一段任意长度的数据 buffer（`pData` + `cbData`）一次性计算 CRC-16/CCITT 校验值。内部循环调用 `F_BYTE_TO_CRC16_CCITT`，对每个字节按多项式 `0x1021` 累积。
+批量数据 CRC-16 CCITT 计算——内部循环调用 `F_BYTE_TO_CRC16_CCITT`；一次计算整段数据的 CRC。
 
-适用于"整帧到达"后整体校验的场景；如果数据是流式（边收边算）则用 `F_BYTE_TO_CRC16_CCITT` 逐字节累积更合适。`crc` 初值由协议规范决定，X.25/HDLC 用 `16#FFFF`，XMODEM 用 `16#0000`。
+本函数属于 `Tc2_Utilities` 库的 `Functions` 类别（PDF 第 4 章）——这一类是不带状态的纯函数集合：CRC / 校验和 / 哈希、字符串与字节流互转、GUID 处理、各种基本类型与传输格式之间的桥接。它们是 PLC 通信、日志、配置文件处理的底层零件，多数在 `Tc2_Standard` 之外补充 Beckhoff 工业自动化场景下的常用工具。
 
 ## 2. 接口定义
 
@@ -29,21 +29,27 @@
 
 ```iecst
 VAR_INPUT
-    pData  : POINTER TO BYTE;(* Pointer to first data byte *)
-    cbData : UDINT;(* Length of data *)
-    crc    : WORD;(* Initial value (16#FFFF or 16#0000) or previous CRC-16 result *)
+    pData : POINTER TO BYTE;
+    cbData : UDINT;
+    crc : WORD;
 END_VAR
 ```
 
 | 名称 | 类型 | 默认值 | 说明（中文） |
 |---|---|---|---|
-| `pData` | `POINTER TO BYTE` | — | 数据 buffer 起始地址（`ADR()`）。 |
-| `cbData` | `UDINT` | — | 数据长度（字节，`SIZEOF()`）。 |
-| `crc` | `WORD` | — | 初值（按协议：`16#FFFF` 或 `16#0000`）或上一段的 CRC 结果（支持分段累积）。 |
+| `pData` | `POINTER TO BYTE` | — | 数据缓冲起始地址。 |
+| `cbData` | `UDINT` | — | 数据长度（字节）。 |
+| `crc` | `WORD` | — | 初值 = `16#FFFF` 或 `16#0000`（按协议要求）或上一次 CRC（链式块计算）。 |
 
-### VAR_IN_OUT
+### 返回值
 
-无。
+| 类型 | 说明（中文） |
+|---|---|
+| `WORD` | 详见 §3 行为说明。|
+
+### VAR_OUTPUT
+
+无（本符号是 `FUNCTION`，结果通过返回值传出）。
 
 ### 返回值
 
@@ -57,74 +63,38 @@ END_VAR
 
 ## 3. 行为说明
 
-函数遍历 `pData` 起的 `cbData` 个字节，对每个字节按多项式 `0x1021` 做一轮 CRC-16/CCITT 累积，等价于内部循环调用 `F_BYTE_TO_CRC16_CCITT`：先把当前 `crc` 与新字节做异或，再连续 8 次右移并按多项式异或，最终更新累积值；遍历完后返回最后一次累积结果。
-
-```iecst
-FOR i := 0 TO cbData - 1 DO
-    crc := F_BYTE_TO_CRC16_CCITT(pData^[i], crc);
-END_FOR;
-RETURN crc;
-```
-
-关键算法属性：
-- **多项式**：`0x1021`（CRC-16-CCITT 国际标准）
-- **不做终值反转 / 求反**：与 `F_BYTE_TO_CRC16_CCITT` 一致；协议需求由调用方在帧尾处理
-- **支持分段累积**：传上次返回值作 `crc` 入参可接着算
-- **`cbData = 0`**：直接返回入参 `crc`（一字节都没算）
-- **`pData = 0` 与 `cbData > 0`**：访问空指针，PLC 异常；调用前必须保证 `pData <> 0`
-
-典型用法：
-```iecst
-wFrameCrc := F_DATA_TO_CRC16_CCITT(ADR(arFrame), SIZEOF(arFrame), 16#FFFF);
-IF wFrameCrc = wExpectedCrc THEN
-    // 帧完整，处理 payload
-ELSE
-    // 校验失败，丢弃
-END_IF
-```
-
-与对端的 CRC 字段比对前注意：对端可能要求按特定字节序（大端 / 小端）写帧尾两字节，PLC 端要按协议规范 `SWAP` 后再比对或装帧。
+函数无状态、立即返回。算法：对 `[pData, pData + cbData)` 范围内每个字节执行 `F_BYTE_TO_CRC16_CCITT(byte, crc)`，把累计结果作为返回值。**等价于手动 FOR 循环 + 单字节函数**，但 1 调用 + 内部优化（可能用 256 项查找表加速）。**链式块计算**：把大数据分块，每块调用本函数时把上块返回值作 `crc` 入参——结果与一次性计算整段相同。**适用于网络帧 / 大文件块的 CRC 校验**。
 
 ## 4. 错误码 / 返回值
 
-返回 `WORD`，无错误码。`cbData = 0` 时返回入参 `crc`；`pData = 0` 而 `cbData > 0` 触发空指针访问，由调用方保证。
+返回 `WORD`——具体语义见 §3。错误约定：
+- 多数函数无独立错误码，**通过返回值的特殊值（如 0 / 255 / 空串 / `FALSE`）报错**——调用方必须始终判返回值。
+- 涉及输出缓冲的函数在缓冲不够时通常截断、返回 `FALSE` 或特殊标记；调用方应**始终把返回值当主要错误信号**。
 
 ## 5. 使用注意 / 常见坑
 
-- **初值按协议**：X.25/HDLC 用 `16#FFFF`，XMODEM 用 `16#0000`；选错与对端永远对不上。
-- **空指针不做检查**：本函数内部循环假设 `pData` 有效；调用前自查（工程经验补充）。
-- **跨段累积要传上次结果**：分多段计算时如忘传 → 每段从初值重算 → 最终是最后一段的 CRC。
-- **CRC 字段大小端**：本函数返回 `WORD` 是 PLC 原生字节序（小端）；协议如规定帧尾 CRC 大端要 `SWAP`。
-- **不要用 `F_CheckSum16` 当 CRC**：checksum 强度低，能对得上字节但不能对得上"相同字节不同顺序"——CRC 才能检出顺序错。
+- **初值与协议一致**——ITU 用 `0xFFFF`、XMODEM 用 `0x0000`。
+- **等价的单字节循环**：`crc := 16#FFFF; FOR i := 0 TO cbData-1 DO crc := F_BYTE_TO_CRC16_CCITT(...); END_FOR;`
+- **分块计算**：把大数据按块分批喂，传上次返回值作下次初值——结果与一次性算等价。
+- 结果字节序：协议可能规定 big-endian 或 little-endian 传输——`SWAP` 后写入帧尾。
+- **生成多项式 `0x1021` 固定**——其他 CRC 不可用此函数。
+- **`F_CheckSum16` 是简单 checksum 不是 CRC**——两者强度差异大。
 
 ## 6. 最小例程
 
 > 配套可导入文件：[`examples/P_Demo_F_DATA_TO_CRC16_CCITT.xml`](../examples/P_Demo_F_DATA_TO_CRC16_CCITT.xml)（PLCopenXML，可直接导入 TwinCAT 3 XAE）
 >
+> 导入步骤：右键 PLC 项目 → Import PLCopenXML → 选该文件 → OK
 > 详见 [`examples/README.md`](../examples/README.md)
-
-```iecst
-PROGRAM P_Demo_F_DATA_TO_CRC16_CCITT
-VAR
-    arFrame : ARRAY[0..3] OF BYTE := [16#01, 16#02, 16#03, 16#04];
-    wCrc    : WORD;
-END_VAR
-
-wCrc := F_DATA_TO_CRC16_CCITT(pData := ADR(arFrame), cbData := SIZEOF(arFrame), crc := 16#FFFF);
-// 等价于循环调 F_BYTE_TO_CRC16_CCITT，但一行搞定
-```
 
 ## 7. 业务场景与实际价值
 
-- **场景**：通过 EL6022 / Modbus RTU 接收完整帧后整体校验；帧尾 2 字节是 CRC-16/CCITT。
-- **价值**：单调用 = 一个循环 + 多项式 + 位移；性能稳定，避免手写易错。
-- **替代方案对比**：
-  - 手写循环 + `F_BYTE_TO_CRC16_CCITT`：可，但每次都要写一遍
-  - 自己实现 0x1021 算法：30+ 行代码，易在位序写错
-  - 本函数：一行；流式需求时用 `F_BYTE_TO_CRC16_CCITT`
+- **场景**：EtherCAT / Modbus-RTU 帧 CRC 校验：收到完整帧后调用本函数计算 CRC，与帧尾 CRC 字段比较。
+- **价值**：比手写 256 字节查找表 + 位移 XOR 算法更省事；O(N) 但带库级优化。
+- **替代方案对比**：`F_BYTE_TO_CRC16_CCITT`：单字节版本（用于流式喂入）；`F_CheckSum16`：弱 checksum。
 
 ## 8. 参考资料
 
 - **PDF**：[TwinCAT_3_PLC_Lib_Tc2_Utilities_EN.pdf](https://download.beckhoff.com/download/document/automation/twincat3/TwinCAT_3_PLC_Lib_Tc2_Utilities_EN.pdf) 第 4.34 节
 - **InfoSys topic**：https://infosys.beckhoff.com/content/1033/tcplclib_tc2_utilities/35114507.html
-- **相关函数**：`F_BYTE_TO_CRC16_CCITT`（单字节迭代版）、`F_CheckSum16`（弱校验，更快但不抗顺序错）
+- **相关函数**：见同库 `functions/` 目录下其他工具函数

@@ -19,9 +19,9 @@
 
 ## 1. 功能简述
 
-把 hex 字符串（如 `'AB CD 01 23'`）解析成字节数组，写入 `pData` 指向的目标 buffer。每两个 hex 字符表示一字节，字节之间允许用一个或多个空格作分隔符。返回成功写入的字节数；解析中遇到非法字符（非 hex 非空格）或目标 buffer 容量不足，转换中止并返回 0。
+把 hex 字符串解析为字节流——`HEXSTR_TO_DATA2` 的旧版（无显式 nDstSize 内部检查较弱）；只允许空格作分隔；遇错返回 0。
 
-是 `DATA_TO_HEXSTR` 的反向：先把字节 dump 成 hex 文本日志，需要时再用本函数解析回字节。识别大小写 hex（`'ab cd' == 'AB CD'`）。整段一次性解析、单调用，比手写 `HEXASCNIBBLE_TO_BYTE` 循环更高效。
+本函数属于 `Tc2_Utilities` 库的 `Functions` 类别（PDF 第 4 章）——这一类是不带状态的纯函数集合：CRC / 校验和 / 哈希、字符串与字节流互转、GUID 处理、各种基本类型与传输格式之间的桥接。它们是 PLC 通信、日志、配置文件处理的底层零件，多数在 `Tc2_Standard` 之外补充 Beckhoff 工业自动化场景下的常用工具。
 
 ## 2. 接口定义
 
@@ -37,13 +37,19 @@ END_VAR
 
 | 名称 | 类型 | 默认值 | 说明（中文） |
 |---|---|---|---|
-| `sHex` | `T_MaxString` | — | 待解析的 hex 字符串（如 `'AB CD EF 01 23'`）。 |
-| `pData` | `POINTER TO BYTE` | — | 目标 buffer 起始地址（`ADR()`）。 |
-| `cbData` | `UDINT` | — | 目标 buffer 容量（字节，`SIZEOF()`）。 |
+| `sHex` | `T_MaxString` | — | 源 hex 字符串（例 `'AB CD 01 23'`）。 |
+| `pData` | `POINTER TO BYTE` | — | 目标缓冲首地址（`ADR(buf)`）。 |
+| `cbData` | `UDINT` | — | 目标缓冲字节数（`SIZEOF(buf)`）。 |
 
-### VAR_IN_OUT
+### 返回值
 
-无。
+| 类型 | 说明（中文） |
+|---|---|
+| `UDINT` | 详见 §3 行为说明。|
+
+### VAR_OUTPUT
+
+无（本符号是 `FUNCTION`，结果通过返回值传出）。
 
 ### 返回值
 
@@ -57,66 +63,38 @@ END_VAR
 
 ## 3. 行为说明
 
-函数按以下规则扫描 `sHex` 并写入 `pData`：
-
-1. **跳过分隔空格**：连续多个 `' '`（0x20）被吸收，等同一个分隔
-2. **取两个 hex 字符合成一字节**：调用 `HEXASCNIBBLE_TO_BYTE` 把每个字符转 nibble，高 nibble 左移 4 位 OR 低 nibble
-3. **写入字节**：写到 `pData^[i]`，`i` 递增
-4. **检测容量**：每写一字节前判 `i < cbData`，否则中止
-5. **检测错误**：任一 nibble 出错（非 hex、单个 nibble 而非成对）即中止，返回 0
-6. **正常结束**：扫完 `sHex` 全部字符返回 `i`（写入字节数）
-
-特性：
-- 大小写不敏感
-- 只允许空格作分隔；逗号 / 连字符 / `0x` 前缀会触发错误
-- 字符必须成对（`'A'` 单独出现报错）
-- 目标 buffer 不足时中止；不会越界写
-
-边界：`sHex` 可达 255 字符（`T_MaxString` 上限）即约 85 字节有效数据（含 84 个空格）；要解长 hex 流用 `HEXSTR_TO_DATA2`。
+函数无状态、立即返回。算法：扫描 `sHex`，每对 hex 字符（带或不带单空格分隔）解码为 1 字节写入 `pData`。**只允许空格作分隔符**——其它字符（制表、连字符、逗号）视为错误。**遇错立即返 0**，不返回部分结果。`cbData` 是目标缓冲容量上限；扫满即停。**生产新代码建议用 `HEXSTR_TO_DATA2`**——后者错误处理一致、有显式 `nDstSize` 保护。
 
 ## 4. 错误码 / 返回值
 
-| 返回值 | 含义 |
-|---|---|
-| `> 0` | 成功写入字节数 |
-| `0` | 解析错误（非法字符、奇数 nibble、目标容量不足） |
+返回 `UDINT`——具体语义见 §3。错误约定：
+- 多数函数无独立错误码，**通过返回值的特殊值（如 0 / 255 / 空串 / `FALSE`）报错**——调用方必须始终判返回值。
+- 涉及输出缓冲的函数在缓冲不够时通常截断、返回 `FALSE` 或特殊标记；调用方应**始终把返回值当主要错误信号**。
 
 ## 5. 使用注意 / 常见坑
 
-- **只允许空格作分隔**：不接受 `','` `'-'` `':'`；解析协议 hex 串时可能要先 `REPLACE` 转空格。
-- **不接受 `'0x'` / `'16#'` 前缀**：`'0xAB 0xCD'` 失败。
-- **目标 buffer 容量不足返回 0**：不部分写入；这是好事，避免脏数据。
-- **错误时无法区分原因**：都返回 0；调用方按 `LEN(sHex)` 估算预期字节数，比对实际返回值判错（工程经验补充）。
-- **`HEXSTR_TO_DATA2` 处理超长字符串**：本函数受 `T_MaxString` 255 字符上限；大段数据用扩展版。
+- **只接受空格作分隔符**；其他字符 → 错。预处理用 `FindAndReplaceChar` 把别的字符换为空格。
+- **遇错返 0**——业务侧 `nLen > 0` 判合法。
+- **生产新代码用 `HEXSTR_TO_DATA2`**（PDF 4.2.13）——新版语义更清晰。
+- **大小写都接受**（`'af'` / `'AF'` / `'aF'`）。
+- **对称函数 `DATA_TO_HEXSTR`**（PDF 4.22）。
+- **`sHex` 是 STRING——上限 255 字符**；更长 hex 串用 `HEXSTR_TO_DATA2`（POINTER 输入）。
 
 ## 6. 最小例程
 
 > 配套可导入文件：[`examples/P_Demo_HEXSTR_TO_DATA.xml`](../examples/P_Demo_HEXSTR_TO_DATA.xml)（PLCopenXML，可直接导入 TwinCAT 3 XAE）
 >
+> 导入步骤：右键 PLC 项目 → Import PLCopenXML → 选该文件 → OK
 > 详见 [`examples/README.md`](../examples/README.md)
-
-```iecst
-PROGRAM P_Demo_HEXSTR_TO_DATA
-VAR
-    sHex   : STRING := 'AB CD EF 01 23 45 67 89';
-    arData : ARRAY[0..10] OF BYTE;
-    nWrote : UDINT;
-END_VAR
-
-nWrote := HEXSTR_TO_DATA(sHex := sHex, pData := ADR(arData), cbData := SIZEOF(arData));
-```
 
 ## 7. 业务场景与实际价值
 
-- **场景**：从日志文件读出昨天保存的 `DATA_TO_HEXSTR` 结果，重新还原成字节数组做事故复盘。
-- **价值**：和 `DATA_TO_HEXSTR` 配套；单调用解析整段 hex，识别大小写。
-- **替代方案对比**：
-  - 手写 `HEXASCNIBBLE_TO_BYTE` 循环：可，但要自己管空格 / 容量
-  - `HEXSTR_TO_DATA2`：超长字符串用
-  - 本函数：常规场景首选
+- **场景**：从配置文件 / HMI 输入读出的 hex 字符串写入 EtherCAT 配置区。
+- **价值**：基础 hex 解析；新代码迁移到 `HEXSTR_TO_DATA2`。
+- **替代方案对比**：`HEXSTR_TO_DATA2`：新版无 255 限制；手写循环 + `HEXCHRNIBBLE_TO_BYTE`：细粒度控制但繁琐。
 
 ## 8. 参考资料
 
 - **PDF**：[TwinCAT_3_PLC_Lib_Tc2_Utilities_EN.pdf](https://download.beckhoff.com/download/document/automation/twincat3/TwinCAT_3_PLC_Lib_Tc2_Utilities_EN.pdf) 第 4.49 节
 - **InfoSys topic**：https://infosys.beckhoff.com/content/1033/tcplclib_tc2_utilities/35140619.html
-- **相关函数**：`DATA_TO_HEXSTR`（反向）、`HEXSTR_TO_DATA2`（长字符串版）、`HEXASCNIBBLE_TO_BYTE`（单 nibble 版）
+- **相关函数**：见同库 `functions/` 目录下其他工具函数

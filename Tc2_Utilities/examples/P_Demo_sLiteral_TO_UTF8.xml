@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <project xmlns="http://www.plcopen.org/xml/tc6_0200">
-  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-10T16:00:00"/>
-  <contentHeader name="Tc2_Utilities.sLiteral_TO_UTF8 Demo" modificationDateTime="2026-05-10T16:00:00">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-12T00:00:00"/>
+  <contentHeader name="Tc2_Utilities.sLiteral_TO_UTF8 Demo" modificationDateTime="2026-05-12T00:00:00">
     <coordinateInfo>
       <fbd><scaling x="1" y="1"/></fbd>
       <ld><scaling x="1" y="1"/></ld>
@@ -14,43 +14,26 @@
       <pou name="P_Demo_sLiteral_TO_UTF8" pouType="program">
         <interface>
           <localVars>
-            <variable name="rResult">
-              <type><string><stringLength><value>511</value></stringLength></string></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">sLiteral_TO_UTF8 返回值</xhtml></documentation>
-            </variable>
-            <variable name="bRun">
-              <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">触发一次调用</xhtml></documentation>
-            </variable>
-            <variable name="sUtf8">
-              <type><string><stringLength><value>511</value></stringLength></string></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">测试用本地变量</xhtml></documentation>
-            </variable>
+            <variable name="sUtf8Init"><initialValue><simpleValue value="sLiteral_TO_UTF8('Hühner legen Eier.')"/></initialValue><type><string><length>255</length></string></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">工业语义：UTF-8 初值字面量（编译期编码）</xhtml></documentation></variable>
           </localVars>
         </interface>
         <body>
-          <ST>
-            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
-// Tc2_Utilities.sLiteral_TO_UTF8 演示程序（FUNCTION）
-// ============================================================
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：OPC UA 服务器发布的字符串变量含德语 Umlaut（Hühner / Größe）；用 `sLiteral_TO_UTF8` 编初值，配 TcEncoding 让 UA 客户端正确显示。
+// 价值：替代手动 UTF-8 字节序列（如 `STRING := '$48$C3$BC...'`）的不可读 hex 转义；可读字面量 + 编译期编码。
 // 验证步骤：
 //   1. 引用 Tc2_Utilities
-//   2. 编译 + 登录
-//   3. 强制 bRun := TRUE 一个周期
-//   4. 在线监视 rResult / 各 demo 变量
-// ============================================================
-
-IF bRun THEN
-    rResult := sLiteral_TO_UTF8(sLiteral := 'café');
-    bRun := FALSE;
-END_IF;
-</xhtml>
-          </ST>
+//   2. 编译 + 登录 + 运行
+//   3. 在线写触发位 TRUE，monitor 输出变量
+// =============================================================================
+// 本函数主要用于编译期字面量初始化
+// sUtf8Init 的初值在编译时已经被编码为 UTF-8 字节序列
+// 运行时无需再调用——直接用 sUtf8Init 即可送入 UTF-8 API（如 OPC UA Publisher）
+// 配合 {attribute 'TcEncoding' := 'UTF-8'} 注解使用更稳妥
+;</xhtml></ST>
         </body>
       </pou>
     </pous>
   </types>
-  <instances>
-    <configurations/>
-  </instances>
+  <instances><configurations/></instances>
 </project>

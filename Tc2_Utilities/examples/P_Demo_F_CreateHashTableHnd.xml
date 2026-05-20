@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <project xmlns="http://www.plcopen.org/xml/tc6_0200">
-  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-12T10:00:00"/>
-  <contentHeader name="Tc2_Utilities.F_CreateHashTableHnd Demo" modificationDateTime="2026-05-12T10:00:00">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-12T00:00:00"/>
+  <contentHeader name="Tc2_Utilities.F_CreateHashTableHnd Demo" modificationDateTime="2026-05-12T00:00:00">
     <coordinateInfo>
       <fbd><scaling x="1" y="1"/></fbd>
       <ld><scaling x="1" y="1"/></ld>
@@ -14,48 +14,30 @@
       <pou name="P_Demo_F_CreateHashTableHnd" pouType="program">
         <interface>
           <localVars>
-            <variable name="arRecipeIndexEntries">
-              <type><array><dimension lower="0" upper="127"/><baseType><derived name="T_HashTableEntry"/></baseType></array></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">128 条配方索引哈希表条目（按物料 ID 索引到工艺参数行）</xhtml></documentation>
-            </variable>
-            <variable name="hRecipeIndex">
-              <type><derived name="T_HHASHTABLE"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">配方索引哈希表句柄；交给 FB_HashTableCtrl 使用</xhtml></documentation>
-            </variable>
-            <variable name="bInitSucceeded">
-              <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">初始化结果；FALSE 时 §3 列出常见原因</xhtml></documentation>
-            </variable>
-            <variable name="bInitDone">
-              <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">上电首扫初始化标志；防止周期性重 init 丢条目</xhtml></documentation>
-            </variable>
+            <variable name="aEntries"><type><array><dimension lower="0" upper="63"/><baseType><derived name="T_HashTableEntry"/></baseType></array></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">工业语义：64 槽位静态哈希表</xhtml></documentation></variable>
+            <variable name="hTable"><type><derived name="T_HHASHTABLE"/></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">哈希表句柄</xhtml></documentation></variable>
+            <variable name="bOk"><type><BOOL/></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">初始化成功</xhtml></documentation></variable>
+            <variable name="bInit"><type><BOOL/></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">在线触发（实际工程在启动 OB / Init 阶段调用一次）</xhtml></documentation></variable>
           </localVars>
         </interface>
         <body>
           <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
-// 场景：MES 启动时把 100+ 个物料 ID -> 工艺参数行号映射下发到 PLC。运行
-//       时按扫码枪扫到的物料 ID 在哈希表查工艺参数行；线性扫数组 100 条
-//       O(N) 单次找一个 ID 可能 50us，哈希 O(1) 是 1-2us，多次叠加差别大。
-// 价值：本函数是上电一次性 init 的关键；不调直接用 FB_HashTableCtrl 会
-//       句柄无效报错。容量预留 128 条覆盖未来扩展。
+// 场景：工业 OPC 标签字典：~1000 个 OPC 节点名 → 内部地址的映射；启动时一次 `F_CreateHashTableHnd`，运行时 O(1) 查找。
+// 价值：替代线性扫描 / 自写哈希函数；标准库提供哈希查找语义（平均 O(1)），用于大 dict 替代 `ARRAY OF STRUCT` 的 O(N) 顺序查找。
 // 验证步骤：
-//   1. 登录后 bInitDone = FALSE，hRecipeIndex 各字段为 0。
-//   2. 切到 Run（或单步首扫描）→ IF NOT bInitDone 分支执行一次。
-//   3. 观察 bInitSucceeded = TRUE，bInitDone = TRUE，hRecipeIndex 内部字段被填。
-//   4. 多周期后 bInitDone 保持 TRUE，IF 分支不再进入——印证 §5 的"不能重 init"陷阱。
-//   5. 后续如果再加 FB_HashTableCtrl 实例引用 hRecipeIndex，即可做 add/search/delete。
+//   1. 引用 Tc2_Utilities
+//   2. 编译 + 登录 + 运行
+//   3. 在线写触发位 TRUE，monitor 输出变量
 // =============================================================================
 
-// 单次 init：上电只调一次，bInitDone 锁住后续周期
-IF NOT bInitDone THEN
-    bInitSucceeded := F_CreateHashTableHnd(
-        pEntries  := ADR(arRecipeIndexEntries),
-        cbEntries := SIZEOF(arRecipeIndexEntries),
-        hTable    := hRecipeIndex);
-    bInitDone := TRUE;
-END_IF;
-</xhtml></ST>
+// 启动时一次性初始化哈希表句柄
+IF bInit THEN
+    bOk := F_CreateHashTableHnd(pEntries  := ADR(aEntries),
+                                cbEntries := SIZEOF(aEntries),
+                                hTable    := hTable);
+    // bOk = TRUE -&gt; 后续可用 FB_HashTableCtrl 操作 hTable
+    bInit := FALSE;
+END_IF;</xhtml></ST>
         </body>
       </pou>
     </pous>

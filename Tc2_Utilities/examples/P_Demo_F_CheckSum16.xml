@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <project xmlns="http://www.plcopen.org/xml/tc6_0200">
-  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-12T10:00:00"/>
-  <contentHeader name="Tc2_Utilities.F_CheckSum16 Demo" modificationDateTime="2026-05-12T10:00:00">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-12T00:00:00"/>
+  <contentHeader name="Tc2_Utilities.F_CheckSum16 Demo" modificationDateTime="2026-05-12T00:00:00">
     <coordinateInfo>
       <fbd><scaling x="1" y="1"/></fbd>
       <ld><scaling x="1" y="1"/></ld>
@@ -14,46 +14,27 @@
       <pou name="P_Demo_F_CheckSum16" pouType="program">
         <interface>
           <localVars>
-            <variable name="arRetainSnapshot">
-              <type><array><dimension lower="0" upper="15"/><baseType><BYTE/></baseType></array></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">16 字节 retain 数据快照（模拟产线配方）</xhtml></documentation>
-            </variable>
-            <variable name="wRecipeFingerprint">
-              <type><WORD/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">配方指纹；HMI 周期比对此值检测配方是否被修改</xhtml></documentation>
-            </variable>
-            <variable name="bComputeRequest">
-              <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">在线置 TRUE 触发一次 checksum 计算</xhtml></documentation>
-            </variable>
+            <variable name="aBuf"><type><array><dimension lower="0" upper="63"/><baseType><BYTE/></baseType></array></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">工业语义：64 字节配方区</xhtml></documentation></variable>
+            <variable name="wSum"><type><WORD/></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">16 位 checksum 结果</xhtml></documentation></variable>
+            <variable name="bCalc"><type><BOOL/></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">在线触发</xhtml></documentation></variable>
           </localVars>
         </interface>
         <body>
           <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
-// 场景：HMI 想知道用户是否改过配方区。每周期由 PLC 算一次配方 checksum，
-//       HMI 读后与本地缓存的 checksum 比对；不一致就刷新配方表显示。
-// 价值：手写累加循环要 5+ 行 + 处理 16 位溢出；本函数单行得到 checksum，
-//       性能稳定。注意：checksum 是弱校验，仅用于无敌意环境的指纹比对，
-//       涉及篡改检测必须改用 F_DATA_TO_CRC16_CCITT。
+// 场景：PLC 启动时校验非易失存储中的配方表完整性：算 checksum 并与存储的预期 checksum 比对，不一致则报警。
+// 价值：替代手写累加循环；O(N) 时间但码量最小。
 // 验证步骤：
-//   1. 登录后 arRetainSnapshot 全 0，wRecipeFingerprint = 0。
-//   2. 在线写 arRetainSnapshot[0] := 16#11; arRetainSnapshot[5] := 16#22;
-//      arRetainSnapshot[15] := 16#33; （模拟配方有内容）
-//   3. 写 bComputeRequest := TRUE 触发一次计算。
-//   4. 观察 wRecipeFingerprint 变为 0x0066（= 0x11 + 0x22 + 0x33）。
-//   5. 把 arRetainSnapshot[0] 和 arRetainSnapshot[5] 内容对调（值 11 22 互换），
-//      重新触发——会发现 checksum 仍是 0x0066，印证 §5 的"弱校验"陷阱。
+//   1. 引用 Tc2_Utilities
+//   2. 编译 + 登录 + 运行
+//   3. 在线写触发位 TRUE，monitor 输出变量
 // =============================================================================
 
-IF bComputeRequest THEN
-    // 单次调用：wChkSum 初值 0；如果是分段累加，第二次传上次返回值
-    wRecipeFingerprint := F_CheckSum16(
-        dwSrcAddr := ADR(arRetainSnapshot),
-        cbLen     := SIZEOF(arRetainSnapshot),
-        wChkSum   := 0);
-    bComputeRequest := FALSE;
-END_IF;
-</xhtml></ST>
+IF bCalc THEN
+    wSum := F_CheckSum16(dwSrcAddr := ADR(aBuf),
+                        cbLen     := SIZEOF(aBuf),
+                        wChkSum   := 0);
+    bCalc := FALSE;
+END_IF;</xhtml></ST>
         </body>
       </pou>
     </pous>

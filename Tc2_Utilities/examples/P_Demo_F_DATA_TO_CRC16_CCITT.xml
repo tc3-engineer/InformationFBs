@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <project xmlns="http://www.plcopen.org/xml/tc6_0200">
-  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-12T10:00:00"/>
-  <contentHeader name="Tc2_Utilities.F_DATA_TO_CRC16_CCITT Demo" modificationDateTime="2026-05-12T10:00:00">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-12T00:00:00"/>
+  <contentHeader name="Tc2_Utilities.F_DATA_TO_CRC16_CCITT Demo" modificationDateTime="2026-05-12T00:00:00">
     <coordinateInfo>
       <fbd><scaling x="1" y="1"/></fbd>
       <ld><scaling x="1" y="1"/></ld>
@@ -14,61 +14,29 @@
       <pou name="P_Demo_F_DATA_TO_CRC16_CCITT" pouType="program">
         <interface>
           <localVars>
-            <variable name="arPayloadFrame">
-              <type><array><dimension lower="0" upper="3"/><baseType><BYTE/></baseType></array></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">已接收完整的 4 字节协议帧载荷</xhtml></documentation>
-            </variable>
-            <variable name="wComputedCrc">
-              <type><WORD/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">本端计算的 CRC，与帧尾 wExpectedCrc 比对</xhtml></documentation>
-            </variable>
-            <variable name="wExpectedCrc">
-              <type><WORD/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">从帧尾抽出的对端发来的 CRC（在线写值模拟）</xhtml></documentation>
-            </variable>
-            <variable name="bFrameValid">
-              <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">CRC 校验通过；FALSE 时丢弃帧</xhtml></documentation>
-            </variable>
-            <variable name="bVerifyRequest">
-              <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">在线置 TRUE 触发一次帧校验</xhtml></documentation>
-            </variable>
+            <variable name="aFrame"><type><array><dimension lower="0" upper="63"/><baseType><BYTE/></baseType></array></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">工业语义：收到的 64 字节帧</xhtml></documentation></variable>
+            <variable name="wFrameCrc"><type><WORD/></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">算出的 CRC</xhtml></documentation></variable>
+            <variable name="bVerify"><type><BOOL/></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">在线触发</xhtml></documentation></variable>
           </localVars>
         </interface>
         <body>
           <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
-// 场景：EL6022 串口或第三方网关已收到完整 4 字节协议帧（含 CRC 字段在尾部
-//       但本例已剥离），需要本端计算 CRC 与帧尾 CRC 比对决定是否接受。
-// 价值：相比 F_BYTE_TO_CRC16_CCITT 流式累积，整帧一次调用更简洁，性能
-//       由 Beckhoff 优化好；初值 0xFFFF 是 X.25/HDLC 标准。
+// 场景：EtherCAT / Modbus-RTU 帧 CRC 校验：收到完整帧后调用本函数计算 CRC，与帧尾 CRC 字段比较。
+// 价值：比手写 256 字节查找表 + 位移 XOR 算法更省事；O(N) 但带库级优化。
 // 验证步骤：
-//   1. 登录后写 arPayloadFrame := [16#01, 16#02, 16#03, 16#04]。
-//   2. 写 wExpectedCrc := 16#89C3（这就是 0x01020304 在 0xFFFF 初值下的 CRC）。
-//   3. 写 bVerifyRequest := TRUE。
-//   4. 观察 wComputedCrc 变为 0x89C3，bFrameValid = TRUE。
-//   5. 把 wExpectedCrc 改成 0x0000 重新触发：bFrameValid = FALSE——印证 CRC 校验作用。
-//   6. 把 arPayloadFrame[2] 从 16#03 改成 16#13，wComputedCrc 完全不同，
-//      bFrameValid = FALSE——印证"1 bit 翻转能被 CRC 检出"。
+//   1. 引用 Tc2_Utilities
+//   2. 编译 + 登录 + 运行
+//   3. 在线写触发位 TRUE，monitor 输出变量
 // =============================================================================
 
-// 准备测试帧
-arPayloadFrame[0] := 16#01;
-arPayloadFrame[1] := 16#02;
-arPayloadFrame[2] := 16#03;
-arPayloadFrame[3] := 16#04;
-wExpectedCrc := 16#89C3;   // 预期 CRC（对应初值 0xFFFF + 上述 4 字节）
-
-IF bVerifyRequest THEN
-    // 单次调用整帧 CRC：crc 初值用 X.25/HDLC 标准 0xFFFF
-    wComputedCrc := F_DATA_TO_CRC16_CCITT(
-        pData  := ADR(arPayloadFrame),
-        cbData := SIZEOF(arPayloadFrame),
-        crc    := 16#FFFF);
-    bFrameValid := (wComputedCrc = wExpectedCrc);
-    bVerifyRequest := FALSE;
-END_IF;
-</xhtml></ST>
+IF bVerify THEN
+    aFrame[0] := 16#01; aFrame[1] := 16#03; aFrame[2] := 16#00;
+    wFrameCrc := F_DATA_TO_CRC16_CCITT(pData  := ADR(aFrame),
+                                       cbData := SIZEOF(aFrame),
+                                       crc    := 16#FFFF);
+    // 把 wFrameCrc 与协议帧尾的 CRC 比较 -&gt; 不等则丢帧
+    bVerify := FALSE;
+END_IF;</xhtml></ST>
         </body>
       </pou>
     </pous>

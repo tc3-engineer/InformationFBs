@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <project xmlns="http://www.plcopen.org/xml/tc6_0200">
-  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-12T10:00:00"/>
-  <contentHeader name="Tc2_Utilities.GUID_TO_STRING Demo" modificationDateTime="2026-05-12T10:00:00">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-12T00:00:00"/>
+  <contentHeader name="Tc2_Utilities.GUID_TO_STRING Demo" modificationDateTime="2026-05-12T00:00:00">
     <coordinateInfo>
       <fbd><scaling x="1" y="1"/></fbd>
       <ld><scaling x="1" y="1"/></ld>
@@ -14,41 +14,25 @@
       <pou name="P_Demo_GUID_TO_STRING" pouType="program">
         <interface>
           <localVars>
-            <variable name="gBatchSessionId">
-              <type><derived name="GUID"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">本次生产批次的 session GUID（写入 MES 报告）</xhtml></documentation>
-            </variable>
-            <variable name="sBatchSessionId">
-              <type><string><length>36</length></string></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">标准 36 字符 GUID 文本（RFC 4122）</xhtml></documentation>
-            </variable>
-            <variable name="bFormatRequest">
-              <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">在线置 TRUE 触发一次格式化</xhtml></documentation>
-            </variable>
+            <variable name="stGuid"><type><derived name="GUID"/></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">工业语义：UA App ID</xhtml></documentation></variable>
+            <variable name="sStr"><type><string><length>36</length></string></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">格式化字符串</xhtml></documentation></variable>
+            <variable name="bFormat"><type><BOOL/></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">在线触发</xhtml></documentation></variable>
           </localVars>
         </interface>
         <body>
           <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
-// 场景：每次产线启动生成新 batch session GUID，写入 MES 数据库 UNIQUEIDENTIFIER
-//       字段；MES 用此 ID 关联本批次的所有工序记录。数据库期望无花括号格式。
-// 价值：RFC 4122 标准格式开箱兼容 MES / 数据库；不必自创格式或写转换器。
+// 场景：OPC UA Application URI 写入数据库——数据库习惯无大括号 UUID；本函数直接输出可入库格式。
+// 价值：替代手写 16 字节 → hex + 连字符拼接。
 // 验证步骤：
-//   1. 登录后 gBatchSessionId 各字段全 0，sBatchSessionId = ''。
-//   2. 在线设置 gBatchSessionId.Data1 := 16#ABCDEF01; .Data2 := 16#2345;
-//      .Data3 := 16#6789; .Data4 := [16#AB,16#CD,16#EF,16#01,16#23,16#45,16#67,16#89];
-//   3. 写 bFormatRequest := TRUE。
-//   4. 观察 sBatchSessionId = 'ABCDEF01-2345-6789-ABCD-EF0123456789'，长度 36。
-//   5. 把 g 重置全 0，触发，得 '00000000-0000-0000-0000-000000000000'——空 GUID 特殊形态。
-//   6. 数据库导入：可直接 INSERT INTO BatchLog (BatchId, ...) VALUES (sBatchSessionId, ...)。
+//   1. 引用 Tc2_Utilities
+//   2. 编译 + 登录 + 运行
+//   3. 在线写触发位 TRUE，monitor 输出变量
 // =============================================================================
 
-IF bFormatRequest THEN
-    // 单次调用：永远成功；目标至少 STRING(36)
-    sBatchSessionId := GUID_TO_STRING(stIn := gBatchSessionId);
-    bFormatRequest := FALSE;
-END_IF;
-</xhtml></ST>
+IF bFormat THEN
+    sStr := GUID_TO_STRING(stIn := stGuid);
+    bFormat := FALSE;
+END_IF;</xhtml></ST>
         </body>
       </pou>
     </pous>

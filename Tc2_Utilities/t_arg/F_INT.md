@@ -1,4 +1,5 @@
 # F_INT
+
 ## 元信息
 
 | 字段 | 值 |
@@ -7,80 +8,131 @@
 | Library Version | `2.18.2` |
 | Type | `FUNCTION` |
 | Category | `T_Arg help functions` |
-| Source | https://infosys.beckhoff.com/content/1033/tcplclib_tc2_utilities/ |
 | Source PDF | https://download.beckhoff.com/download/document/automation/twincat3/TwinCAT_3_PLC_Lib_Tc2_Utilities_EN.pdf |
-| Verified | 2026-05-10 ✅ |
+| Source InfoSys | https://infosys.beckhoff.com/content/1033/tcplclib_tc2_utilities/35250699.html |
+| Verified | 2026-05-11 ✅ |
+| InfoSys-checked | ✅ 2026-05-11 |
 | Status | `verified` |
 | Example | [`examples/P_Demo_F_INT.xml`](../examples/P_Demo_F_INT.xml) |
 
 ---
+
 ## 1. 功能简述
 
-**typed wrapper**：把一个 `INT` 变量包装成 `T_Arg` 结构（含 type/length/value 三元组），供 `F_ARGCMP`/`F_ARGCPY`/`IsFinite` 等通用工具消费。
+`F_INT` 是 `T_Arg`（参数描述结构体）的**辅助打包函数**。给定一个 `INT` 类型的变量，返回一个 `T_Arg` 结构体，里面记录了该变量的**类型枚举**（`eType`，本函数固定为 `INT` 对应的常量）、**字节长度**（`cbLen`，本类型 = 2 字节）以及**指向原始数据的指针**（`pData = ADR(in)`）。
+
+为什么 `Tc2_Utilities` 给每个基本类型都准备了一只 `F_<TYPE>`：IEC 61131-3 结构化文本（ST）**没有可变参数（variadic args）**，所以 Beckhoff 把"把一组任意类型变量打包成可变参数"的工程问题用 `T_Arg` + `F_<TYPE>` 系列解决。典型链路是：业务侧用 `F_BOOL(x) / F_INT(n) / F_LREAL(f) / ...` 把每个实参打包成 `T_Arg`，再用 `F_PutInArg` 把若干 `T_Arg` 串成 `T_ArgList`，最后传给 `EventLogger`、`ADS Message`、`FB_FormatString2` 等下游消费者。下游通过 `T_Arg.eType` 知道每个槽位的类型、通过 `pData + cbLen` 直接读到原始字节，避免 ST 不支持变长参数的痛点。
+
+本函数对应 `INT` 类型（有符号 16 位）。
 
 ## 2. 接口定义
 
 ### VAR_INPUT
 
-```iecst
-FUNCTION F_INT : T_Arg
-```
-
-无 VAR_INPUT。
-
-### 返回值
-
-`T_Arg` —— 函数计算结果。
+无（本函数没有传值输入）。
 
 ### VAR_IN_OUT
 
 ```iecst
+FUNCTION F_INT : T_Arg
 VAR_IN_OUT
     in : INT;
 END_VAR
 ```
 
-| 名称 | 类型 | 说明 |
-|---|---|---|
-| `in` | `INT` | 待包装的 INT 变量 |
+| 名称 | 类型 | 方向 | 说明（中文） |
+|---|---|---|---|
+| `in` | `INT` | `VAR_IN_OUT` | 待打包的原始变量。函数会取该变量的地址 `ADR(in)` 写入返回 `T_Arg.pData`，所以**必须**通过引用传递（VAR_IN_OUT），不能传字面量 |
+
+### VAR_OUTPUT
+
+无。
+
+### 返回值
+
+`T_Arg` —— 描述输入变量的 `T_Arg` 结构体（包含 `eType`、`cbLen`、`pData` 三个核心字段）。
 
 ## 3. 行为说明
 
-- 调用 `F_INT(v)`，返回 `T_Arg`。
+**触发**：每次调用即同步求值，无内部状态，无副作用，单 PLC 周期内完成。
+
+**算法**（伪代码）：
+
+```
+F_INT.eType  := eValueType_INT     /* 在 E_ArgType 枚举中对应 INT 的常量 */
+F_INT.cbLen  := SIZEOF(INT)        /* 本类型 = 2 字节 */
+F_INT.pData  := ADR(in)                  /* 指向原变量内存 */
+```
+
+返回的 `T_Arg` 是一个**轻量级描述符**，本身**不复制**原变量数据，只持有指针。因此返回的 `T_Arg` 在原变量 `in` 仍存活的时间内有效；一旦 `in` 走出作用域（例如本调用所在的 POU 实例的扫描周期结束、或者 `in` 是其他 FB 的临时局部变量），`T_Arg.pData` 就**悬空**，下游再读到的内容就是垃圾。
+
+**典型使用链路**：
+
+```
+nTempC : INT;
+argList : T_ArgList;
+...
+F_PutInArg(arg := F_INT(nTempC), nIdx := 0, putState := PUTARG_INIT, args := argList);
+F_PutInArg(arg := F_DINT(nOther),                 nIdx := 1, putState := PUTARG_ADD,  args := argList);
+// 然后把 argList 喂给 EventLogger / ADS 消息 / 格式化字符串
+```
+
+**与 `P<TYPE>_TO_<TYPE>` 的对称性**：`P<TYPE>_TO_<TYPE>` 把"指针 → 值"（解引用），`F_<TYPE>` 把"值 → T_Arg 描述符"（含指针），两者一起构成 wire 解包/打包的对称工具集。
 
 ## 4. 错误码 / 返回值
 
-返回 `T_Arg`。无独立错误码。
+无独立错误码，无 `bError` / `nErrorId`。返回的 `T_Arg` 总是**合法填充**（三个字段都被赋值），无失败分支。
+
+如果下游消费者（`F_PutInArg`、`EventLogger`、`FB_FormatString2` 等）报错，常见根因是 `T_Arg.pData` 指向的变量已经失效，**不是**本函数本身的错误。
 
 ## 5. 使用注意 / 常见坑
 
-- **VAR_IN_OUT** 风格：传变量本身（不是值），FB 不复制，只读出地址/长度。
-- 返回 `T_Arg` 结构（见 Tc2_Utilities Data types）。
+- **不能传字面量**。`F_INT(-30)` 之类的写法编译报错——VAR_IN_OUT 必须传可寻址左值。要传常量，先赋给一个临时变量再传。
+- **生命期陷阱**。返回的 `T_Arg.pData` 是原变量地址。如果在一个函数里返回 `F_INT(localVar)`，离开函数后 `localVar` 已被回收，下游再用就读到栈垃圾。安全做法：在 POU 实例的稳定变量（VAR）上调用，不要在 FUNCTION 的临时局部变量上调用。
+- **不复制数据**。`T_Arg` 是描述符不是拷贝。如果业务侧在调用后改了 `in`，下游下次读 `T_Arg.pData^` 会读到**新值**——这有时是想要的（监控量），有时不是（参数快照）。要快照请显式 `F_ARGCPY` 到另一个 `T_Arg`。
+- **类型必须严格匹配**。`F_BOOL` 不能用来打包 `BYTE` 即使大小一样：下游会按 `eType = BOOL` 解读语义，错配会让 EventLogger / 格式化串拿到错误的渲染结果。
+- **`F_PVOID` 特别注意**：传入的是 `PVOID`（指针本身），下游拿到的是"指向指针的指针"，需要二次解引用；用得不准容易理解成"指针指向的对象"。
+- **不要在循环里高频构造然后丢弃**。虽然 `T_Arg` 很小，但如果用 `T_ArgList` 配合，丢弃的 `T_Arg` 实例可能让 `pData` 突然失效。最佳实践是建一组持久的 `T_Arg` 槽位、按需重新填充。
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_F_INT.xml`](../examples/P_Demo_F_INT.xml)
+> 配套可导入文件：[`examples/P_Demo_F_INT.xml`](../examples/P_Demo_F_INT.xml)（PLCopenXML，可直接导入 TwinCAT 3 XAE）
 >
+> 导入步骤：右键 PLC 项目 → Import PLCopenXML → 选该文件 → OK
 > 详见 [`examples/README.md`](../examples/README.md)
 
 ```iecst
+// 场景：在事件日志/格式化字符串中把一个 INT 业务量打包成 T_Arg，
+//       再用 F_PutInArg 串入参数列表，供下游 EventLogger 渲染消息。
+// 价值：替代手写填 T_Arg.eType / cbLen / pData 三个字段；
+//       配合 F_PutInArg 形成"变长参数"机制，绕过 ST 无 variadic 的限制。
+// 验证：在线写 nTempC 为示例值，bPackArg := TRUE，
+//       观察 argDescriptor.cbLen 等于 SIZEOF(INT)、argDescriptor.pData 非 0。
 PROGRAM P_Demo_F_INT
 VAR
-    rResult : T_Arg;
-    bRun    : BOOL;
-    v : INT;
+    nTempC                          : INT := -30;  // 业务量
+    bPackArg                        : BOOL;       // 在线置 TRUE 触发一次打包
+    argDescriptor                   : T_Arg;      // 打包后的描述符
 END_VAR
 
-IF bRun THEN
-    rResult := F_INT(in := v);
-    bRun := FALSE;
+IF bPackArg THEN
+    // 单次调用：返回的 T_Arg 含 eType / cbLen / pData，可立即喂给 F_PutInArg
+    argDescriptor := F_INT(nTempC);
+    bPackArg := FALSE;
 END_IF;
 ```
 
-## 7. 相关
+## 7. 业务场景与实际价值
 
-- 见 [`Tc2_Utilities README`](../README.md) 同库其他条目
+- **场景**：把 `INT` 业务量（有符号 16 位）作为可变参数喂给 `Tc3_EventLogger`、`Tc2_System.FB_FormatString2`、`Tc2_System.ADSWRITE` 等下游消费者；或者用作 ADS Notification 自定义消息的字段打包。
+- **价值**：ST 无 variadic args 的"原罪"由 `T_Arg` + `F_<TYPE>` 系列彻底掩盖。调用方写 `F_PutInArg(F_INT(n), ...)` 就像写 C 的 `printf("%d", n)`；不用自己维护类型标签 / 长度 / 指针三件套。
+- **替代方案对比**：
+  - 手写 `arg.eType := ...; arg.cbLen := SIZEOF(...); arg.pData := ADR(...);`：能用，三行写三遍容易错（cbLen 漏改、eType 选错）。
+  - 直接传指针 `ADR(x)` 给下游：下游不知道类型 / 长度，需要额外通道告知，破坏了 `T_Arg` 抽象。
+  - **本函数**：一行调用、类型枚举自动选对、长度自动填、与 `F_PutInArg` 链式调用最干净。
 
-## 8. 待确认项
+## 8. 参考资料
 
-无。
+- **PDF**：[TwinCAT_3_PLC_Lib_Tc2_Utilities_EN.pdf](https://download.beckhoff.com/download/document/automation/twincat3/TwinCAT_3_PLC_Lib_Tc2_Utilities_EN.pdf) §4.10.10
+- **InfoSys topic**：https://infosys.beckhoff.com/content/1033/tcplclib_tc2_utilities/35250699.html
+- **相关 FC**：`F_PutInArg`（把 `T_Arg` 串入 `T_ArgList`）、`F_ARGCPY`（拷贝 `T_Arg` 含数据快照）、`F_ARGCMP`（两个 `T_Arg` 比较）、`F_ARGISZERO`（检查 `T_Arg` 是否被初始化）、`P<TYPE>_TO_<TYPE>`（反向，指针→值）

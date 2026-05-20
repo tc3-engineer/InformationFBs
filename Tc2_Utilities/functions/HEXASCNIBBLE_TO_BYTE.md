@@ -19,9 +19,9 @@
 
 ## 1. 功能简述
 
-把一个表示十六进制 nibble（半字节）字符的 ASCII 码（`BYTE` 类型）转成其十进制数值（0..15）。例如 `asc = 16#41`（即 `'A'`）返回 10；`asc = 16#39`（即 `'9'`）返回 9。识别范围：`'0'..'9'`、`'a'..'f'`、`'A'..'F'`；不在此范围内的输入返回 `255`（错误标志）。
+把 hex 字符的 ASCII 码（如 0x41 即字符 `'A'`）转为 0-15 的十进制 nibble 值；非法字符返回 255 表错误。
 
-与 `HEXCHRNIBBLE_TO_BYTE` 的区别仅在入参类型：本函数接受 `BYTE`（ASCII 数值），后者接受 `STRING(1)`（单字符字符串）。性能本函数更优，从字节 buffer 逐字节解析 hex 时首选本函数。
+本函数属于 `Tc2_Utilities` 库的 `Functions` 类别（PDF 第 4 章）——这一类是不带状态的纯函数集合：CRC / 校验和 / 哈希、字符串与字节流互转、GUID 处理、各种基本类型与传输格式之间的桥接。它们是 PLC 通信、日志、配置文件处理的底层零件，多数在 `Tc2_Standard` 之外补充 Beckhoff 工业自动化场景下的常用工具。
 
 ## 2. 接口定义
 
@@ -35,11 +35,17 @@ END_VAR
 
 | 名称 | 类型 | 默认值 | 说明（中文） |
 |---|---|---|---|
-| `asc` | `BYTE` | — | 待转换的 ASCII 码，必须在 `16#30`-`16#39`（`'0'`-`'9'`）或 `16#41`-`16#46`（`'A'`-`'F'`）或 `16#61`-`16#66`（`'a'`-`'f'`）范围内。 |
+| `asc` | `BYTE` | — | hex 字符的 ASCII 码：`'0'..'9'`（0x30~0x39）、`'a'..'f'`（0x61~0x66）、`'A'..'F'`（0x41~0x46）。 |
 
-### VAR_IN_OUT
+### 返回值
 
-无。
+| 类型 | 说明（中文） |
+|---|---|
+| `BYTE` | 详见 §3 行为说明。|
+
+### VAR_OUTPUT
+
+无（本符号是 `FUNCTION`，结果通过返回值传出）。
 
 ### 返回值
 
@@ -53,64 +59,38 @@ END_VAR
 
 ## 3. 行为说明
 
-函数按 ASCII 表逐区段判断：
-
-- `'0'`(16#30) - `'9'`(16#39) → 返回 `asc - 16#30`，得 0..9
-- `'A'`(16#41) - `'F'`(16#46) → 返回 `asc - 16#41 + 10`，得 10..15
-- `'a'`(16#61) - `'f'`(16#66) → 返回 `asc - 16#61 + 10`，得 10..15
-- 其他 → 返回 `255`（错误）
-
-`255` 作为错误码而不是 `0`，是为了和合法输出 0 区分开（输入 `'0'` 也返回 0，调用方不能用 0 判错）。
-
-性能特性：常数时间、无内存分配，可放在高频解析循环里。常用于把 hex 字符串拆成字节数组（如 IPv6 地址、MAC 地址、协议帧解析）。
-
-边界：
-- 大写 / 小写都支持，结果一致
-- 不识别 `'#'`、`' '`、`'\0'`：均返回 255
-- 不接受 unicode / 多字节字符
+函数无状态、立即返回。算法：`'0'..'9'` (0x30..0x39) → 0..9；`'A'..'F'` (0x41..0x46) → 10..15；`'a'..'f'` (0x61..0x66) → 10..15；其他任何字节 → 255 表错。**返回值 0..15 是合法 nibble；255 是错误码**（255 不能误判为合法 nibble 因为合法范围 0-15）。本函数适合**输入是 ASCII 码字节**的场景，例如从串口收到的 hex 字符流的逐字节解码。对应字符版（`STRING(1)` 输入）的姐妹函数是 `HEXCHRNIBBLE_TO_BYTE`。
 
 ## 4. 错误码 / 返回值
 
-| 返回值 | 含义 |
-|---|---|
-| `0` - `15` | 成功，为对应 nibble 值 |
-| `255` | 输入非 hex 字符 |
+返回 `BYTE`——具体语义见 §3。错误约定：
+- 多数函数无独立错误码，**通过返回值的特殊值（如 0 / 255 / 空串 / `FALSE`）报错**——调用方必须始终判返回值。
+- 涉及输出缓冲的函数在缓冲不够时通常截断、返回 `FALSE` 或特殊标记；调用方应**始终把返回值当主要错误信号**。
 
 ## 5. 使用注意 / 常见坑
 
-- **错误码是 255 不是 0**：用 `IF result = 255 THEN error` 判错，不能用 `> 15`（虽然实际只有 0..15 与 255 两种取值）。
-- **接收 ASCII 数值不是字符串**：`asc := BYTE#(STRING_TO_BYTE('A'))` 错；应该 `asc := 16#41` 或 `asc := arBuffer[i]`。
-- **解析 hex 字符串通常先把 STRING 当字节数组**：`arHex : ARRAY[0..N] OF BYTE; MEMCPY(ADR(arHex), ADR(sHex), LEN(sHex));` 后逐字节调本函数。
-- **整段 hex 串到字节数组用 `HEXSTR_TO_DATA`**：本函数是单 nibble 版；整段转换用 `HEXSTR_TO_DATA` 更便利（支持空格分隔）。
-- **拼字节需要两个 nibble**：高 nibble + 低 nibble；`byte := SHL(highNib, 4) OR lowNib`。
+- **返回 255 表错**——0..15 合法、其它都是错。`IF F_NbReturned <= 15 THEN ... ELSE error END_IF;`
+- **大小写都接受**（`'a'` 和 `'A'` 都给 10）。
+- **输入是 ASCII 码（BYTE）**——传字符变量本身需 `BYTE(sChar[0])` 转换。
+- **`HEXCHRNIBBLE_TO_BYTE` 接受 `STRING(1)`**——直接传字符常量 `'A'` 更方便。
+- **Nibble = 半字节**（4 位）；2 个 nibble 组成 1 字节。
+- **典型组合**：高 nibble + 低 nibble → 一个完整 BYTE：`b := SHL(F_NbReturned1, 4) OR F_NbReturned2;`
 
 ## 6. 最小例程
 
 > 配套可导入文件：[`examples/P_Demo_HEXASCNIBBLE_TO_BYTE.xml`](../examples/P_Demo_HEXASCNIBBLE_TO_BYTE.xml)（PLCopenXML，可直接导入 TwinCAT 3 XAE）
 >
+> 导入步骤：右键 PLC 项目 → Import PLCopenXML → 选该文件 → OK
 > 详见 [`examples/README.md`](../examples/README.md)
-
-```iecst
-PROGRAM P_Demo_HEXASCNIBBLE_TO_BYTE
-VAR
-    bAsciiA : BYTE := 16#41;     // ASCII 'A'
-    bValue  : BYTE;              // 期望 10
-END_VAR
-
-bValue := HEXASCNIBBLE_TO_BYTE(asc := bAsciiA);
-```
 
 ## 7. 业务场景与实际价值
 
-- **场景**：自定义协议帧的 hex 字符串字段（如 `'1A2B3C'`）需要逐 nibble 解析成字节数组，再写入控制寄存器。
-- **价值**：单调用、常数时间、识别大小写；比手写 `CASE` 分支快、对错误统一返回 255。
-- **替代方案对比**：
-  - 手写 `IF asc >= '0' AND asc <= '9' THEN ... ELSIF ...`：5+ 行
-  - 用 `STRING_TO_BYTE` 把单字符转换：不识别 hex，要先 `'$16'` 加前缀
-  - 本函数：单调用、专为 hex nibble 优化
+- **场景**：串口收 hex 字符流：每个字节是一个 hex 字符的 ASCII 码；逐字节调用本函数得到 nibble，每两个拼成 1 BYTE。
+- **价值**：替代手写 ASCII → nibble 映射（条件分支或查找表）；本函数 1 调用。
+- **替代方案对比**：`HEXCHRNIBBLE_TO_BYTE`：STRING(1) 输入版本；`HEXSTR_TO_DATA`：整串版本（推荐用于大数据）。
 
 ## 8. 参考资料
 
 - **PDF**：[TwinCAT_3_PLC_Lib_Tc2_Utilities_EN.pdf](https://download.beckhoff.com/download/document/automation/twincat3/TwinCAT_3_PLC_Lib_Tc2_Utilities_EN.pdf) 第 4.47 节
 - **InfoSys topic**：https://infosys.beckhoff.com/content/1033/tcplclib_tc2_utilities/934086795.html
-- **相关函数**：`HEXCHRNIBBLE_TO_BYTE`（接受 `STRING(1)` 版）、`HEXSTR_TO_DATA`（整段 hex 串转字节数组）、`DATA_TO_HEXSTR`（反向）
+- **相关函数**：见同库 `functions/` 目录下其他工具函数

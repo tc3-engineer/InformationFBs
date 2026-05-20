@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <project xmlns="http://www.plcopen.org/xml/tc6_0200">
-  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-12T10:00:00"/>
-  <contentHeader name="Tc2_Utilities.CSVFIELD_TO_ARG Demo" modificationDateTime="2026-05-12T10:00:00">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-12T00:00:00"/>
+  <contentHeader name="Tc2_Utilities.CSVFIELD_TO_ARG Demo" modificationDateTime="2026-05-12T00:00:00">
     <coordinateInfo>
       <fbd><scaling x="1" y="1"/></fbd>
       <ld><scaling x="1" y="1"/></ld>
@@ -14,50 +14,33 @@
       <pou name="P_Demo_CSVFIELD_TO_ARG" pouType="program">
         <interface>
           <localVars>
-            <variable name="sCsvFieldRaw">
-              <initialValue><simpleValue value="&quot;42&quot;"/></initialValue>
-              <type><string><length>255</length></string></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">来自 CSV 内存缓冲的一段字段（带外层引号）</xhtml></documentation>
-            </variable>
-            <variable name="nTorqueSetpoint">
-              <type><INT/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">解析得到的扭矩设定值（产线下发的工艺参数）</xhtml></documentation>
-            </variable>
-            <variable name="nBytesWritten">
-              <type><UDINT/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">本次写入目标变量的字节数（&gt;0 表示成功）</xhtml></documentation>
-            </variable>
-            <variable name="bParseRequest">
-              <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">在线置 TRUE 触发一次解析</xhtml></documentation>
-            </variable>
+            <variable name="aCsvField"><type><array><dimension lower="0" upper="31"/><baseType><BYTE/></baseType></array></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">工业语义：CSV 字段字节缓冲</xhtml></documentation></variable>
+            <variable name="nTargetVal"><type><UDINT/></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">解析目标 PLC 变量</xhtml></documentation></variable>
+            <variable name="argTarget"><type><derived name="T_Arg"/></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">T_Arg 描述符（指向 nTargetVal）</xhtml></documentation></variable>
+            <variable name="nConverted"><type><UDINT/></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">转换字节数（0 = 失败）</xhtml></documentation></variable>
+            <variable name="bParse"><type><BOOL/></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">在线触发</xhtml></documentation></variable>
           </localVars>
         </interface>
         <body>
           <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
-// 场景：MES 下发的 CSV 工艺单中，"扭矩设定" 字段是带外层引号的数值
-//       （'"42"'）。PLC 需要把该字段解析成 INT 写入控制器变量。
-// 价值：单调用同时完成"剥引号"+"INT 转换"两步；如果遇到二进制字段（如
-//       时间戳含 0x00 字节）本函数仍可用，CSVFIELD_TO_STRING 会被截断。
+// 场景：读 CSV 配方文件：每行 `name, batch_id, recipe_id, target_temp` 四字段；用本函数把 batch_id (UDINT)、target_temp (LREAL) 等二进制字段直接解析进 PLC 变量。
+// 价值：替代手写 `STRTOK` + `STRING_TO_INT/LREAL` 链；本函数 1 行解析任意类型 + 自带 CSV 引号 / 转义处理。
 // 验证步骤：
-//   1. 登录后 nTorqueSetpoint = 0、nBytesWritten = 0。
-//   2. 在线写 bParseRequest := TRUE。
-//   3. 观察 nTorqueSetpoint 变为 42（剥去外层引号后按 INT 解析）。
-//   4. 观察 nBytesWritten = 2（SIZEOF(INT) = 2 字节）。
-//   5. 把 sCsvFieldRaw 改成 '42'（无外层引号），保持 bQM := TRUE，
-//      会发现首末字符被当成引号丢掉——印证 §5 中 bQM 错配的陷阱。
+//   1. 引用 Tc2_Utilities
+//   2. 编译 + 登录 + 运行
+//   3. 在线写触发位 TRUE，monitor 输出变量
 // =============================================================================
 
-// 单次调用：F_INT 把局部 INT 变量包装成 T_Arg 描述子，函数内通过指针写回
-IF bParseRequest THEN
-    nBytesWritten := CSVFIELD_TO_ARG(
-        pInput  := ADR(sCsvFieldRaw),
-        cbInput := LEN(sCsvFieldRaw),
-        bQM     := TRUE,
-        out     := F_INT(nTorqueSetpoint));
-    bParseRequest := FALSE;
-END_IF;
-</xhtml></ST>
+IF bParse THEN
+    // 模拟收到 CSV 字段 '42'
+    aCsvField[0] := 16#34; aCsvField[1] := 16#32; aCsvField[2] := 0;
+    argTarget := F_UDINT(nTargetVal);
+    nConverted := CSVFIELD_TO_ARG(pInput  := ADR(aCsvField),
+                                  cbInput := 2,
+                                  bQM     := FALSE,
+                                  out     := argTarget);
+    bParse := FALSE;
+END_IF;</xhtml></ST>
         </body>
       </pou>
     </pous>

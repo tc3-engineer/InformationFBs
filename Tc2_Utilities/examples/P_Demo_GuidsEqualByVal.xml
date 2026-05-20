@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <project xmlns="http://www.plcopen.org/xml/tc6_0200">
-  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-12T10:00:00"/>
-  <contentHeader name="Tc2_Utilities.GuidsEqualByVal Demo" modificationDateTime="2026-05-12T10:00:00">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-12T00:00:00"/>
+  <contentHeader name="Tc2_Utilities.GuidsEqualByVal Demo" modificationDateTime="2026-05-12T00:00:00">
     <coordinateInfo>
       <fbd><scaling x="1" y="1"/></fbd>
       <ld><scaling x="1" y="1"/></ld>
@@ -14,48 +14,27 @@
       <pou name="P_Demo_GuidsEqualByVal" pouType="program">
         <interface>
           <localVars>
-            <variable name="gIncomingMesMsgId">
-              <type><derived name="GUID"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">MES 刚下发的消息 ID</xhtml></documentation>
-            </variable>
-            <variable name="gLastProcessedMsgId">
-              <type><derived name="GUID"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">上一条已处理的消息 ID（用于去重判断）</xhtml></documentation>
-            </variable>
-            <variable name="bIsDuplicate">
-              <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">TRUE = 是重复消息，应跳过；FALSE = 新消息</xhtml></documentation>
-            </variable>
-            <variable name="bCheckRequest">
-              <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">在线置 TRUE 触发一次判重</xhtml></documentation>
-            </variable>
+            <variable name="stExpected"><type><derived name="GUID"/></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">工业语义：预先记录的 Session GUID</xhtml></documentation></variable>
+            <variable name="stReceived"><type><derived name="GUID"/></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">客户端传来的 GUID</xhtml></documentation></variable>
+            <variable name="bMatch"><type><BOOL/></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">是否匹配</xhtml></documentation></variable>
+            <variable name="bCheck"><type><BOOL/></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">在线触发</xhtml></documentation></variable>
           </localVars>
         </interface>
         <body>
           <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
-// 场景：MES 网络抖动时可能重发同一条指令（如 "启动模具 7 号"），PLC 端
-//       根据消息 GUID 去重，避免一个动作执行两次。
-// 价值：跨编译器版本可靠的 GUID 等值比较；语义比 MEMCMP / 直接 = 都清晰。
+// 场景：OPC UA Session ID 验证：每次客户端请求带 GUID Session ID，PLC 服务端比对预先生成的 Session ID 决定是否拒绝。
+// 价值：**IEC 强制要求**——不能用 `=` 比较结构体；本函数是 GUID 比较的唯一标准方式。
 // 验证步骤：
-//   1. 登录后两 GUID 全 0，bIsDuplicate = FALSE。
-//   2. 设置两 GUID 字段完全相同（在线写 gIncomingMesMsgId.Data1 := 16#100;
-//      .Data4[0] := 16#AA; 然后同样写到 gLastProcessedMsgId）。
-//   3. 写 bCheckRequest := TRUE。
-//   4. 观察 bIsDuplicate = TRUE（确认是重复消息，跳过处理）。
-//   5. 把 gIncomingMesMsgId.Data4[0] 改成 16#BB（其他字段不变），再触发：
-//      bIsDuplicate = FALSE——印证"任何一位不同即不等"。
-//   6. 把 gIncomingMesMsgId 全部清零再触发：bIsDuplicate = FALSE（因 .Data1 不同）。
+//   1. 引用 Tc2_Utilities
+//   2. 编译 + 登录 + 运行
+//   3. 在线写触发位 TRUE，monitor 输出变量
 // =============================================================================
 
-IF bCheckRequest THEN
-    // 单次调用：按 128 位逐字段比较
-    bIsDuplicate := GuidsEqualByVal(
-        guidA := gIncomingMesMsgId,
-        guidB := gLastProcessedMsgId);
-    bCheckRequest := FALSE;
-END_IF;
-</xhtml></ST>
+IF bCheck THEN
+    bMatch := GuidsEqualByVal(guidA := stExpected, guidB := stReceived);
+    // bMatch = FALSE -&gt; 拒绝该客户端连接
+    bCheck := FALSE;
+END_IF;</xhtml></ST>
         </body>
       </pou>
     </pous>

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <project xmlns="http://www.plcopen.org/xml/tc6_0200">
-  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-10T16:00:00"/>
-  <contentHeader name="Tc2_Utilities.CONCAT2 Demo" modificationDateTime="2026-05-10T16:00:00">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-12T00:00:00"/>
+  <contentHeader name="Tc2_Utilities.CONCAT2 Demo" modificationDateTime="2026-05-12T00:00:00">
     <coordinateInfo>
       <fbd><scaling x="1" y="1"/></fbd>
       <ld><scaling x="1" y="1"/></ld>
@@ -14,52 +14,34 @@
       <pou name="P_Demo_CONCAT2" pouType="program">
         <interface>
           <localVars>
-            <variable name="rResult">
-              <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">CONCAT2 返回值</xhtml></documentation>
-            </variable>
-            <variable name="bRun">
-              <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">触发一次调用</xhtml></documentation>
-            </variable>
-            <variable name="sA">
-              <type><string><length>255</length></string></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">测试用本地变量</xhtml></documentation>
-            </variable>
-            <variable name="sB">
-              <type><string><length>255</length></string></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">测试用本地变量</xhtml></documentation>
-            </variable>
-            <variable name="sC">
-              <type><string><length>255</length></string></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">测试用本地变量</xhtml></documentation>
-            </variable>
+            <variable name="sModuleName"><initialValue><simpleValue value="'PumpCtrl'"/></initialValue><type><string><length>255</length></string></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">工业语义：模块名（来源）</xhtml></documentation></variable>
+            <variable name="sMessage"><initialValue><simpleValue value="'Tank level below threshold'"/></initialValue><type><string><length>255</length></string></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">工业语义：日志正文</xhtml></documentation></variable>
+            <variable name="sLogLine"><type><string><length>512</length></string></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">工业语义：拼接后完整日志行（&gt;255 字符）</xhtml></documentation></variable>
+            <variable name="bCheckLog"><type><BOOL/></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">在线置 TRUE 触发一次拼接</xhtml></documentation></variable>
+            <variable name="bConcatOk"><type><BOOL/></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">本次拼接是否完整</xhtml></documentation></variable>
           </localVars>
         </interface>
         <body>
-          <ST>
-            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
-// Tc2_Utilities.CONCAT2 演示程序（FUNCTION）
-// ============================================================
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：日志聚合：把模块名 ("PumpCtrl") + ': ' + 详细错误描述 + ' @ ' + 时间戳拼成完整日志行。完整日志 &gt; 255 字符时 `Tc2_Standard.CONCAT` 直接溢出，必须用 `CONCAT2`。
+// 价值：替代 `Tc2_Standard.CONCAT` + 长度检查 + 多次声明 `STRING(80)`/`STRING(255)`/`STRING(1024)` 的混乱体系，统一用 `STRING` + `CONCAT2` 即可。返回值 `BOOL` 提供超长检测，比裸 `CONCAT` 更安全。
 // 验证步骤：
 //   1. 引用 Tc2_Utilities
-//   2. 编译 + 登录
-//   3. 强制 bRun := TRUE 一个周期
-//   4. 在线监视 rResult / 各 demo 变量
-// ============================================================
-
-sA := 'Hello, '; sB := 'World!';
-IF bRun THEN
-    rResult := CONCAT2(ADR(sA), ADR(sB), ADR(sC), SIZEOF(sC));
-    bRun := FALSE;
-END_IF;
-</xhtml>
-          </ST>
+//   2. 编译 + 登录 + 运行
+//   3. 在线写触发位 TRUE，monitor 输出变量
+// =============================================================================
+// 仅在 bCheckLog 上升沿做一次拼接，避免每周期占用 CPU
+IF bCheckLog THEN
+    bConcatOk := CONCAT2(pSrcString1 := ADR(sModuleName),
+                         pSrcString2 := ADR(sMessage),
+                         pDstString  := ADR(sLogLine),
+                         nDstSize    := SIZEOF(sLogLine));
+    // bConcatOk = FALSE 时 sLogLine 已被截断，业务侧应丢弃或转错误处理
+    bCheckLog := FALSE;
+END_IF;</xhtml></ST>
         </body>
       </pou>
     </pous>
   </types>
-  <instances>
-    <configurations/>
-  </instances>
+  <instances><configurations/></instances>
 </project>

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <project xmlns="http://www.plcopen.org/xml/tc6_0200">
-  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-10T16:00:00"/>
-  <contentHeader name="Tc2_Utilities.WCONCAT2 Demo" modificationDateTime="2026-05-10T16:00:00">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-12T00:00:00"/>
+  <contentHeader name="Tc2_Utilities.WCONCAT2 Demo" modificationDateTime="2026-05-12T00:00:00">
     <coordinateInfo>
       <fbd><scaling x="1" y="1"/></fbd>
       <ld><scaling x="1" y="1"/></ld>
@@ -14,52 +14,32 @@
       <pou name="P_Demo_WCONCAT2" pouType="program">
         <interface>
           <localVars>
-            <variable name="rResult">
-              <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">WCONCAT2 返回值</xhtml></documentation>
-            </variable>
-            <variable name="bRun">
-              <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">触发一次调用</xhtml></documentation>
-            </variable>
-            <variable name="ws1">
-              <type><wstring><length>255</length></wstring></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">测试用本地变量</xhtml></documentation>
-            </variable>
-            <variable name="ws2">
-              <type><wstring><length>255</length></wstring></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">测试用本地变量</xhtml></documentation>
-            </variable>
-            <variable name="ws3">
-              <type><wstring><length>255</length></wstring></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">测试用本地变量</xhtml></documentation>
-            </variable>
+            <variable name="wsPrefix"><initialValue><simpleValue value="&quot;Pump Status: &quot;"/></initialValue><type><wstring><length>255</length></wstring></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">工业语义：HMI 多语言消息前缀</xhtml></documentation></variable>
+            <variable name="wsStateMsg"><initialValue><simpleValue value="&quot;Running&quot;"/></initialValue><type><wstring><length>255</length></wstring></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">工业语义：HMI 状态文字</xhtml></documentation></variable>
+            <variable name="wsLogLine"><type><wstring><length>512</length></wstring></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">工业语义：拼接后完整消息</xhtml></documentation></variable>
+            <variable name="bCheckLog"><type><BOOL/></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">在线置 TRUE 触发一次拼接</xhtml></documentation></variable>
+            <variable name="bConcatOk"><type><BOOL/></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">拼接成功</xhtml></documentation></variable>
           </localVars>
         </interface>
         <body>
-          <ST>
-            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
-// Tc2_Utilities.WCONCAT2 演示程序（FUNCTION）
-// ============================================================
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：HMI 多语言消息拼装：`'Pump '` + `'Status: '` + `'Running'`（WSTRING）。
+// 价值：`Tc2_Standard.WCONCAT` 限 255 字符；本函数无限制。
 // 验证步骤：
 //   1. 引用 Tc2_Utilities
-//   2. 编译 + 登录
-//   3. 强制 bRun := TRUE 一个周期
-//   4. 在线监视 rResult / 各 demo 变量
-// ============================================================
-
-ws1 := "Hello, "; ws2 := "World!";
-IF bRun THEN
-    rResult := WCONCAT2(ADR(ws1), ADR(ws2), ADR(ws3), SIZEOF(ws3));
-    bRun := FALSE;
-END_IF;
-</xhtml>
-          </ST>
+//   2. 编译 + 登录 + 运行
+//   3. 在线写触发位 TRUE，monitor 输出变量
+// =============================================================================
+IF bCheckLog THEN
+    bConcatOk := WCONCAT2(pSrcWString1 := ADR(wsPrefix),
+                          pSrcWString2 := ADR(wsStateMsg),
+                          pDstWString  := ADR(wsLogLine),
+                          nDstSize     := SIZEOF(wsLogLine));
+    bCheckLog := FALSE;
+END_IF;</xhtml></ST>
         </body>
       </pou>
     </pous>
   </types>
-  <instances>
-    <configurations/>
-  </instances>
+  <instances><configurations/></instances>
 </project>

@@ -9,9 +9,9 @@
 | Type | `FUNCTION` |
 | Category | `Functions` |
 | Source PDF | https://download.beckhoff.com/download/document/automation/twincat3/TwinCAT_3_PLC_Lib_Tc2_Utilities_EN.pdf |
-| Source InfoSys | https://infosys.beckhoff.com/content/1033/tcplclib_tc2_utilities/35070091.html |
+| Source InfoSys | https://infosys.beckhoff.com/content/1033/tcplclib_tc2_utilities/35119115.html |
 | Verified | 2026-05-12 ✅ |
-| InfoSys-checked | ⚠️ not-on-infosys |
+| InfoSys-checked | ✅ 2026-05-12 |
 | Status | `verified` |
 | Example | [`examples/P_Demo_F_SwapRealEx.xml`](../examples/P_Demo_F_SwapRealEx.xml) |
 
@@ -19,17 +19,13 @@
 
 ## 1. 功能简述
 
-把一个 `REAL`（32 位单精度浮点）变量的高/低 16 位字（Hi-word、Lo-word）对换。用于 PC/CX（x86/x64/Arm）与 BC/BX 总线终端控制器（BC2000/BC3100/BC9000 等）通过 ADS 交换 REAL 数据时的字节序对齐——BC 系列控制器的内存中 REAL 字段以"Hi-word 在前"存放，而 PC/CX 系列是"Lo-word 在前"；如果不交换，两端读到的 REAL 数值会完全不同（甚至变成 NaN / 极端值）。
+把 REAL 的 Hi-Lo word 交换字节序——用于 BC2000/BC3100/BC9000 等总线终端控制器（基于 ARM 大端）与 IPC / 嵌入式 PC（x86/x64 小端）之间通信时的浮点数转换。
 
-在线 / 仿真模式由开发环境自动处理这个差异；但通过 ADS-DLL / AdsOcx / VB 客户端 / Scope View 读 BC 端 REAL 时差异暴露，需要手动调本函数。
+本函数属于 `Tc2_Utilities` 库的 `Functions` 类别（PDF 第 4 章）——这一类是不带状态的纯函数集合：CRC / 校验和 / 哈希、字符串与字节流互转、GUID 处理、各种基本类型与传输格式之间的桥接。它们是 PLC 通信、日志、配置文件处理的底层零件，多数在 `Tc2_Standard` 之外补充 Beckhoff 工业自动化场景下的常用工具。
 
 ## 2. 接口定义
 
 ### VAR_INPUT
-
-无（数据通过 `VAR_IN_OUT` 原地交换）。
-
-### VAR_IN_OUT
 
 ```iecst
 VAR_IN_OUT
@@ -37,77 +33,57 @@ VAR_IN_OUT
 END_VAR
 ```
 
+
+### VAR_IN_OUT
+
 | 名称 | 类型 | 说明（中文） |
 |---|---|---|
-| `fVal` | `REAL` | 待交换的 REAL 值；原地修改（输入也是输出）。 |
+| `fVal` | `REAL` | 要交换字节序的 REAL 变量（修改实参）。 |
 
 ### 返回值
 
 | 类型 | 说明（中文） |
 |---|---|
-| `BOOL` | `TRUE` = 交换执行成功；`FALSE` = 执行时发生错误（按 PDF，少见，例如内部异常）。 |
+| `BOOL` | 详见 §3 行为说明。|
 
 ### VAR_OUTPUT
 
-无。
+无（本符号是 `FUNCTION`，结果通过返回值传出，部分参数同时被 VAR_IN_OUT 修改）。
 
 ## 3. 行为说明
 
-函数原地修改 `fVal`：把它的 4 字节内存表示拆成两个 16 位 word，再把 Hi-word 与 Lo-word 对换。例如内存 `34 12 CF BE`（小端展示）经函数变为 `CF BE 34 12`，对应的 IEEE 754 解释会变成完全不同的浮点值。
-
-典型用法：
-- **从 BC 读 REAL 到 PC**：读取后立即 `F_SwapRealEx(rValueFromBc)`，得到 PC 端正确数值。
-- **从 PC 写 REAL 到 BC**：写出前先 `F_SwapRealEx(rValueToBc)`，得到 BC 期望的字节序。
-- **TwinCAT Scope View 记录 BC 数据**：在线读取后用本函数转换，否则录到的波形是"乱码"REAL。
-
-注意"双重交换"等于"不交换"：两端各调一次会回到原值；某些链路（如本地仿真）已自动转换，再手动调反而错。判断需不需要调的标准：**只要数据出/入 BC/BX 系列控制器、且不是在线开发模式下，就调；其他情况不调**。
-
-新工程几乎都用 EtherCAT 总线 + IPC/CX 控制器，不再用 BC/BX 系列，所以本函数主要在维护老项目时用到。
+函数立即返回，**直接修改 `fVal` 实参的内存表示**（VAR_IN_OUT 语义）。算法：把 REAL（4 字节）的高 2 字节与低 2 字节交换（不是单字节翻转）——`[B0 B1 B2 B3]` 变为 `[B2 B3 B0 B1]`。这是因为 Beckhoff 老总线终端 BC2000/BC3100/BC9000 内部用 16 位字为单位存储 REAL，高低字顺序与 x86 IPC 相反。**调用前后业务必须知道当前数据来源是哪种格式**——只在跨平台 ADS 通信场景使用；同平台数据不要调用，否则会破坏 REAL 值。返回 `TRUE` 表示成功；`FALSE` 表示函数执行错误（PDF 未明示触发条件）。
 
 ## 4. 错误码 / 返回值
 
-| 返回值 | 含义 |
-|---|---|
-| `TRUE` | 交换成功 |
-| `FALSE` | 内部错误（PDF 仅说"Error during function execution"，未列具体场景） |
+返回 `BOOL`——具体语义见 §3。错误约定：
+- 多数函数无独立错误码，**通过返回值的特殊值（如 0 / 255 / 空串 / `FALSE`）报错**——调用方必须始终判返回值。
+- 涉及输出缓冲的函数在缓冲不够时通常截断、返回 `FALSE` 或特殊标记；调用方应**始终把返回值当主要错误信号**。
 
 ## 5. 使用注意 / 常见坑
 
-- **只在 BC/BX 系列控制器交换时调用**：IPC ↔ CX 之间字节序一致，调了反而搞错。
-- **在线 / 仿真自动处理**：本地仿真不必调；通过外部 ADS 客户端（VB、AdsOcx、Scope）读 BC REAL 才需要。
-- **REAL 数组要逐个调**：本函数只处理一个 REAL；数组用 FOR 循环。
-- **`LREAL`（64 位）需要 `F_SwapLRealEx`**：本函数是 32 位 REAL 专用；同库另有 LREAL 版（工程经验补充）。
-- **InfoSys 未单独收录**：与 PDF 不一致是 Beckhoff 文档维护问题；功能本身在 TC3 运行时支持。
-- **新工程几乎用不上**：BC/BX 控制器停产，EtherCAT + IPC 不需要 swap；本函数主要供维护老项目（工程经验补充）。
+- **同平台数据不要调用**——会破坏 REAL 值。仅在 BC/BX <-> PC/CX 通信时使用。
+- **修改实参**——VAR_IN_OUT 直接改 `fVal`；不要在不影响业务的中间变量上用。
+- **Hi-Lo word 交换不是字节翻转**——`[B0 B1 B2 B3]` → `[B2 B3 B0 B1]`，不是 `[B3 B2 B1 B0]`。
+- **目标平台已用 little-endian 的 REAL** 标准格式时：BX 控制器是 big-endian / hi-lo-word 倒置；IPC 是 little-endian / 标准；本函数仅处理这两者的差异。
+- **只针对 REAL（32 位）**；LREAL（64 位）需要不同处理，本函数不支持。
+- **`F_SwapReal`（旧版无 Ex 后缀）也存在**，参数语义稍异，参考 PDF 区分。
 
 ## 6. 最小例程
 
 > 配套可导入文件：[`examples/P_Demo_F_SwapRealEx.xml`](../examples/P_Demo_F_SwapRealEx.xml)（PLCopenXML，可直接导入 TwinCAT 3 XAE）
 >
+> 导入步骤：右键 PLC 项目 → Import PLCopenXML → 选该文件 → OK
 > 详见 [`examples/README.md`](../examples/README.md)
-
-```iecst
-PROGRAM P_Demo_F_SwapRealEx
-VAR
-    rValueFromBc : REAL := 1.5;
-    bOk          : BOOL;
-END_VAR
-
-bOk := F_SwapRealEx(fVal := rValueFromBc);
-// rValueFromBc 现在是按 PC 字节序解读的结果（与原 1.5 完全不同）
-```
 
 ## 7. 业务场景与实际价值
 
-- **场景**：老工程改造——把现场 BC9000 控制器的运行数据通过 ADS 上传到中心 CX 控制器做 SCADA 显示；REAL 数据（温度、扭矩）需要在 CX 端 swap 后才能正确解释。
-- **价值**：替代手写 `MEMCPY` + WORD 交换的 5 行代码；语义清晰、Beckhoff 验证。
-- **替代方案对比**：
-  - 手写 WORD 交换：5 行，易在指针类型转换写错
-  - 在 BC 端调整数据格式：BC 上不开发，做不到
-  - 本函数：单调用、与 LREAL 版（`F_SwapLRealEx`）成套
+- **场景**：老产线 CX5020 IPC 通过 ADS 从 BC9000 总线终端读取 REAL 类型的温度变量；从网络收到的字节流必须经 `F_SwapRealEx` 才能正确解读。
+- **价值**：替代手写 `MEMCPY` + 字节位运算交换；本函数对调用方透明。
+- **替代方案对比**：新设备直接用 EtherCAT / EAP（兼容字节序）；旧 BC/BX 必须调本函数。
 
 ## 8. 参考资料
 
 - **PDF**：[TwinCAT_3_PLC_Lib_Tc2_Utilities_EN.pdf](https://download.beckhoff.com/download/document/automation/twincat3/TwinCAT_3_PLC_Lib_Tc2_Utilities_EN.pdf) 第 4.41 节
-- **InfoSys topic**：未单独收录函数页（⚠️ not-on-infosys）；BC/BX 互通示例参见 https://infosys.beckhoff.com/content/1033/tcplclib_tc2_utilities/35409035.html
-- **相关函数**：`F_SwapLRealEx`（64 位 LREAL 版）、`F_SwapWordEx` 等其它字节序工具
+- **InfoSys topic**：https://infosys.beckhoff.com/content/1033/tcplclib_tc2_utilities/35119115.html
+- **相关函数**：见同库 `functions/` 目录下其他工具函数

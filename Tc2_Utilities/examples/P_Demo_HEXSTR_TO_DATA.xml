@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <project xmlns="http://www.plcopen.org/xml/tc6_0200">
-  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-12T10:00:00"/>
-  <contentHeader name="Tc2_Utilities.HEXSTR_TO_DATA Demo" modificationDateTime="2026-05-12T10:00:00">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-12T00:00:00"/>
+  <contentHeader name="Tc2_Utilities.HEXSTR_TO_DATA Demo" modificationDateTime="2026-05-12T00:00:00">
     <coordinateInfo>
       <fbd><scaling x="1" y="1"/></fbd>
       <ld><scaling x="1" y="1"/></ld>
@@ -14,52 +14,28 @@
       <pou name="P_Demo_HEXSTR_TO_DATA" pouType="program">
         <interface>
           <localVars>
-            <variable name="sLoggedHexFrame">
-              <initialValue><simpleValue value="AB CD EF 01 23 45 67 89"/></initialValue>
-              <type><string><length>255</length></string></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">日志里保存的 hex dump（8 字节，空格分隔）</xhtml></documentation>
-            </variable>
-            <variable name="arRestoredBytes">
-              <type><array><dimension lower="0" upper="10"/><baseType><BYTE/></baseType></array></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">还原后的字节数组（用于事故复盘）</xhtml></documentation>
-            </variable>
-            <variable name="nBytesRestored">
-              <type><UDINT/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">实际写入字节数（&gt;0 成功，0 解析错）</xhtml></documentation>
-            </variable>
-            <variable name="bRestoreRequest">
-              <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">在线置 TRUE 触发一次还原</xhtml></documentation>
-            </variable>
+            <variable name="sHexIn"><initialValue><simpleValue value="'01 23 AB CD'"/></initialValue><type><string><length>64</length></string></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">工业语义：配置 hex 串</xhtml></documentation></variable>
+            <variable name="aBytes"><type><array><dimension lower="0" upper="15"/><baseType><BYTE/></baseType></array></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">解析输出缓冲</xhtml></documentation></variable>
+            <variable name="nParsed"><type><UDINT/></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">解析字节数（0 = 失败）</xhtml></documentation></variable>
+            <variable name="bParse"><type><BOOL/></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">在线触发</xhtml></documentation></variable>
           </localVars>
         </interface>
         <body>
           <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
-// 场景：昨天事故时用 DATA_TO_HEXSTR 把 EtherCAT 寄存器快照 dump 到日志文件，
-//       今天复盘需要把日志里的 hex 串解析回字节数组，喂给离线分析脚本。
-// 价值：单调用解析整段 hex 串，识别大小写、自动处理空格分隔、目标容量不
-//       足自动中止。比手写 HEXASCNIBBLE 循环 + 容量检查 20 行代码省事。
+// 场景：从配置文件 / HMI 输入读出的 hex 字符串写入 EtherCAT 配置区。
+// 价值：基础 hex 解析；新代码迁移到 `HEXSTR_TO_DATA2`。
 // 验证步骤：
-//   1. 登录后 sLoggedHexFrame = 'AB CD EF 01 23 45 67 89'，arRestoredBytes 全 0。
-//   2. 写 bRestoreRequest := TRUE 触发还原。
-//   3. 观察 nBytesRestored = 8，arRestoredBytes = [0xAB, 0xCD, 0xEF, 0x01,
-//      0x23, 0x45, 0x67, 0x89, 0, 0, 0]。
-//   4. 把 sLoggedHexFrame 改成 'ab cd' （小写）：结果仍正确，印证大小写不敏感。
-//   5. 把 sLoggedHexFrame 改成 'AB-CD'（用连字符分隔）：nBytesRestored = 0，
-//      arRestoredBytes 不被写入——印证 §5 只识别空格分隔。
-//   6. 把 sLoggedHexFrame 改成 'AB CD EF 01 23 45 67 89 AB CD EF 01'（12 字节，
-//      超过容量 11）：nBytesRestored = 0 表示出错——印证目标容量不足处理。
+//   1. 引用 Tc2_Utilities
+//   2. 编译 + 登录 + 运行
+//   3. 在线写触发位 TRUE，monitor 输出变量
 // =============================================================================
 
-IF bRestoreRequest THEN
-    // 单次调用：sHex 整段解析；目标 buffer 通过指针写入
-    nBytesRestored := HEXSTR_TO_DATA(
-        sHex   := sLoggedHexFrame,
-        pData  := ADR(arRestoredBytes),
-        cbData := SIZEOF(arRestoredBytes));
-    bRestoreRequest := FALSE;
-END_IF;
-</xhtml></ST>
+IF bParse THEN
+    nParsed := HEXSTR_TO_DATA(sHex   := sHexIn,
+                              pData  := ADR(aBytes),
+                              cbData := SIZEOF(aBytes));
+    bParse := FALSE;
+END_IF;</xhtml></ST>
         </body>
       </pou>
     </pous>

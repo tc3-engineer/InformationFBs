@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <project xmlns="http://www.plcopen.org/xml/tc6_0200">
-  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-12T10:00:00"/>
-  <contentHeader name="Tc2_Utilities.BYTEARR_TO_MAXSTRING Demo" modificationDateTime="2026-05-12T10:00:00">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-12T00:00:00"/>
+  <contentHeader name="Tc2_Utilities.BYTEARR_TO_MAXSTRING Demo" modificationDateTime="2026-05-12T00:00:00">
     <coordinateInfo>
       <fbd><scaling x="1" y="1"/></fbd>
       <ld><scaling x="1" y="1"/></ld>
@@ -14,48 +14,27 @@
       <pou name="P_Demo_BYTEARR_TO_MAXSTRING" pouType="program">
         <interface>
           <localVars>
-            <variable name="arRxBuffer">
-              <type><array><dimension lower="0" upper="MAX_STRING_LENGTH"/><baseType><BYTE/></baseType></array></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">EL6022 串口模块的接收缓冲镜像；含 0x00 结束的 ASCII 应答</xhtml></documentation>
-            </variable>
-            <variable name="sDeviceTag">
-              <type><derived name="T_MaxString"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">解析得到的设备标签字符串（如 'SN:0421'）</xhtml></documentation>
-            </variable>
-            <variable name="bParseRequest">
-              <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">在线置 TRUE 触发一次解析（边沿语义靠下面 IF 自动清零）</xhtml></documentation>
-            </variable>
+            <variable name="aSerialBuf"><type><array><dimension lower="0" upper="255"/><baseType><BYTE/></baseType></array></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">串口接收缓冲</xhtml></documentation></variable>
+            <variable name="sLabel"><type><string><length>255</length></string></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">提取的 ASCII 标签</xhtml></documentation></variable>
+            <variable name="bExtract"><type><BOOL/></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">在线触发</xhtml></documentation></variable>
           </localVars>
         </interface>
         <body>
           <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
-// 场景：EL6022 串口模块或 ADS 读到设备 ASCII 应答（如 'SN:0421' + 0x00），
-//       缓冲是 256 字节固定数组；需要转成 PLC STRING 后用 FIND 提取序列号。
-// 价值：手写循环要 10+ 行处理 0x00 终止符和越界；本函数一行搞定，返回值
-//       直接是 T_MaxString，可立即送 FIND / MID / 写入数据库字段。
+// 场景：从串口收到的 256 字节缓冲含 EtherNet/IP 设备 SCSI 标签——前部 ASCII 标签 + 后部二进制数据。本函数把前部 ASCII 提取为可读日志。
+// 价值：替代 FOR + 字节复制 + null 终结的 8 行手写循环；本函数 1 调用。
 // 验证步骤：
-//   1. 登录后初始 arRxBuffer 是全 0，sDeviceTag = '' （空串）。
-//   2. 写 arRxBuffer[0]:=16#53; arRxBuffer[1]:=16#4E; arRxBuffer[2]:=16#3A;
-//      arRxBuffer[3]:=16#30; arRxBuffer[4]:=16#34; arRxBuffer[5]:=16#32;
-//      arRxBuffer[6]:=16#31; arRxBuffer[7]:=16#00; （ASCII 'SN:0421' + 0x00）
-//   3. 写 bParseRequest := TRUE 触发一次解析。
-//   4. 在线 monitor sDeviceTag 应为 'SN:0421'，且 bParseRequest 自动复位为 FALSE。
-//   5. 把 arRxBuffer[7] 改成 16#00 之外的值（去掉终止符），重置 bParseRequest，
-//      会发现 sDeviceTag 把后续未清零的字节也拼进来——印证 §5 的"无终止符就读满"陷阱。
+//   1. 引用 Tc2_Utilities
+//   2. 编译 + 登录 + 运行
+//   3. 在线写触发位 TRUE，monitor 输出变量
 // =============================================================================
 
-// 上电默认值演示：模拟 EL6022 接收 'Hi' (0x48 0x69) 后跟 0x00 终止
-arRxBuffer[0] := 16#48;
-arRxBuffer[1] := 16#69;
-arRxBuffer[2] := 16#00;
-
-// 单次调用形式：完成转换后立即复位请求位，避免每周期重复执行浪费
-IF bParseRequest THEN
-    sDeviceTag := BYTEARR_TO_MAXSTRING(arRxBuffer);
-    bParseRequest := FALSE;
-END_IF;
-</xhtml></ST>
+IF bExtract THEN
+    aSerialBuf[0] := 16#52; aSerialBuf[1] := 16#41; aSerialBuf[2] := 16#43; aSerialBuf[3] := 16#4B; // 'RACK'
+    aSerialBuf[4] := 0;  // null 终结
+    sLabel := BYTEARR_TO_MAXSTRING(aSerialBuf);
+    bExtract := FALSE;
+END_IF;</xhtml></ST>
         </body>
       </pou>
     </pous>

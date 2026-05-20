@@ -19,9 +19,9 @@
 
 ## 1. 功能简述
 
-把表示 hex nibble（半字节）的单字符字符串（`STRING(1)`）转成其十进制数值（0..15）。例如 `'A'` 返回 10、`'9'` 返回 9。识别范围：`'0'..'9'`、`'a'..'f'`、`'A'..'F'`；其他输入返回 `255`。
+`HEXASCNIBBLE_TO_BYTE` 的字符版本——输入 `STRING(1)` 而非 BYTE ASCII 码；返回 0..15 或 255 表错。
 
-与 `HEXASCNIBBLE_TO_BYTE` 的区别仅在入参类型：本函数接受 `STRING(1)`（字符串字面量），后者接受 `BYTE`（ASCII 数值）。从 `STRING` 字面拆字符解析时本函数语义更直观；从字节 buffer 逐字节解析用 `HEXASCNIBBLE_TO_BYTE` 性能更好。
+本函数属于 `Tc2_Utilities` 库的 `Functions` 类别（PDF 第 4 章）——这一类是不带状态的纯函数集合：CRC / 校验和 / 哈希、字符串与字节流互转、GUID 处理、各种基本类型与传输格式之间的桥接。它们是 PLC 通信、日志、配置文件处理的底层零件，多数在 `Tc2_Standard` 之外补充 Beckhoff 工业自动化场景下的常用工具。
 
 ## 2. 接口定义
 
@@ -35,11 +35,17 @@ END_VAR
 
 | 名称 | 类型 | 默认值 | 说明（中文） |
 |---|---|---|---|
-| `chr` | `STRING(1)` | — | 单字符字符串，应是 `'0'-'9'` / `'a'-'f'` / `'A'-'F'` 中之一。 |
+| `chr` | `STRING(1)` | — | hex 字符（`'0'..'9'` / `'a'..'f'` / `'A'..'F'`）。 |
 
-### VAR_IN_OUT
+### 返回值
 
-无。
+| 类型 | 说明（中文） |
+|---|---|
+| `BYTE` | 详见 §3 行为说明。|
+
+### VAR_OUTPUT
+
+无（本符号是 `FUNCTION`，结果通过返回值传出）。
 
 ### 返回值
 
@@ -53,54 +59,37 @@ END_VAR
 
 ## 3. 行为说明
 
-函数对 `chr` 的首字符按 ASCII 表区段判断：`'0'-'9'` 减 `'0'` 得 0..9；`'A'-'F'` 减 `'A'` 加 10 得 10..15；`'a'-'f'` 减 `'a'` 加 10 得 10..15；其他返回 `255`。
-
-接受的 `STRING(1)` 通常是 `MID(sHex, 1, i)` 抽出的子串或字面量 `'A'`。本函数比 `HEXASCNIBBLE_TO_BYTE` 多一层"字符串到字节"的开销（PLC 字符串首字节就是 ASCII 码，理论上等价，但语义层多一层），所以从大段字节 buffer 解析时优先用 `HEXASCNIBBLE_TO_BYTE`；从 `STRING` 字面或 `MID` 子串解析时本函数更易读，不必显式取 `arHex[0]`。
-
-边界：大小写不敏感；多字符 `STRING(N>1)` 只看首字符；空串 `''` 触发"非 hex" → 255。
+函数无状态、立即返回。算法语义与 `HEXASCNIBBLE_TO_BYTE` 相同——`'0'..'9'` → 0..9、`'A'..'F'` / `'a'..'f'` → 10..15、其他 → 255 表错——区别在于输入类型 `STRING(1)`（单字符 STRING）而不是 BYTE ASCII 码。**适合直接传字符常量或单字符变量**——`HEXCHRNIBBLE_TO_BYTE('A')` 比 `HEXASCNIBBLE_TO_BYTE(16#41)` 可读得多。内部实现可能直接取 `STRING(1)` 的首字节再转 BYTE 调用 ASCII 版本，性能差异可忽略。**返回 255 是错误标识**——0..15 合法，调用方判 `result <= 15` 区分。
 
 ## 4. 错误码 / 返回值
 
-| 返回值 | 含义 |
-|---|---|
-| `0` - `15` | 成功，对应 nibble 值 |
-| `255` | 输入非 hex 字符（含空串） |
+返回 `BYTE`——具体语义见 §3。错误约定：
+- 多数函数无独立错误码，**通过返回值的特殊值（如 0 / 255 / 空串 / `FALSE`）报错**——调用方必须始终判返回值。
+- 涉及输出缓冲的函数在缓冲不够时通常截断、返回 `FALSE` 或特殊标记；调用方应**始终把返回值当主要错误信号**。
 
 ## 5. 使用注意 / 常见坑
 
-- **错误码 255 不是 0**：合法 `'0'` 也返回 0；用 255 判错。
-- **`STRING(N>1)` 只看首字符**：传整段 `'1A'` 只解析 `'1'`，调用方要自己 `MID`。
-- **`HEXASCNIBBLE_TO_BYTE` 性能更优**：批量解析字节 buffer 用 ASCII 版。
-- **`STRING(1)` 字面量要单引号**：`HEXCHRNIBBLE_TO_BYTE('A')` 合法；用双引号 `"A"` 会编译错。
-- **整段 hex 用 `HEXSTR_TO_DATA`**：本函数是单 nibble 版。
+- **返回 255 表错**——0..15 合法。
+- **大小写都接受**。
+- **`HEXASCNIBBLE_TO_BYTE` 接受 BYTE**——串口收到的 ASCII 字节直接用 ASC 版本省一次转换。
+- **`STRING(1)` = 1 字符 + null 终结**（2 字节）—— 多字符串只看第一个字符。
+- **典型组合**：把 hex 字符串的每两个字符拼成 BYTE：`b := SHL(HEXCHRNIBBLE_TO_BYTE(s[0]), 4) OR HEXCHRNIBBLE_TO_BYTE(s[1]);`
 
 ## 6. 最小例程
 
 > 配套可导入文件：[`examples/P_Demo_HEXCHRNIBBLE_TO_BYTE.xml`](../examples/P_Demo_HEXCHRNIBBLE_TO_BYTE.xml)（PLCopenXML，可直接导入 TwinCAT 3 XAE）
 >
+> 导入步骤：右键 PLC 项目 → Import PLCopenXML → 选该文件 → OK
 > 详见 [`examples/README.md`](../examples/README.md)
-
-```iecst
-PROGRAM P_Demo_HEXCHRNIBBLE_TO_BYTE
-VAR
-    sChar : STRING(1) := 'A';
-    bVal  : BYTE;                  // 期望 10
-END_VAR
-
-bVal := HEXCHRNIBBLE_TO_BYTE(chr := sChar);
-```
 
 ## 7. 业务场景与实际价值
 
-- **场景**：MES 下发以字符串形式表达的 hex 配置（如 `'FF01'`），PLC 用 `MID` 拆字符再调本函数解析。
-- **价值**：从 `STRING` 字面解析时语义更直观（不必显式转字节数组）；大小写不敏感、错误统一返回 255。
-- **替代方案对比**：
-  - 手写 `IF chr = '0' THEN bVal := 0; ELSIF ...`：16 分支
-  - `HEXASCNIBBLE_TO_BYTE` + `arBuffer[i]`：性能更好但代码层多一层
-  - 本函数：从 `STRING` 字面解析的首选
+- **场景**：手工解码 hex 配置串（如 `'AB'` → 0xAB 字节）；小量数据场景，避免引入 `HEXSTR_TO_DATA` 的完整 API。
+- **价值**：比 `HEXASCNIBBLE_TO_BYTE` 直观——字符常量直接传。
+- **替代方案对比**：`HEXASCNIBBLE_TO_BYTE`：BYTE 输入；`HEXSTR_TO_DATA`：整串版本（推荐大数据）。
 
 ## 8. 参考资料
 
 - **PDF**：[TwinCAT_3_PLC_Lib_Tc2_Utilities_EN.pdf](https://download.beckhoff.com/download/document/automation/twincat3/TwinCAT_3_PLC_Lib_Tc2_Utilities_EN.pdf) 第 4.48 节
 - **InfoSys topic**：https://infosys.beckhoff.com/content/1033/tcplclib_tc2_utilities/934088715.html
-- **相关函数**：`HEXASCNIBBLE_TO_BYTE`（接受 `BYTE` 版）、`HEXSTR_TO_DATA`（整段 hex 串转字节数组）
+- **相关函数**：见同库 `functions/` 目录下其他工具函数

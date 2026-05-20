@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <project xmlns="http://www.plcopen.org/xml/tc6_0200">
-  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-10T19:00:00"/>
-  <contentHeader name="Tc2_Utilities.REGSTRING_TO_GUID Demo" modificationDateTime="2026-05-10T19:00:00">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-12T00:00:00"/>
+  <contentHeader name="Tc2_Utilities.REGSTRING_TO_GUID Demo" modificationDateTime="2026-05-12T00:00:00">
     <coordinateInfo>
       <fbd><scaling x="1" y="1"/></fbd>
       <ld><scaling x="1" y="1"/></ld>
@@ -14,44 +14,28 @@
       <pou name="P_Demo_REGSTRING_TO_GUID" pouType="program">
         <interface>
           <localVars>
-            <variable name="rResult">
-              <type><derived name="GUID"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">REGSTRING_TO_GUID 返回值</xhtml></documentation>
-            </variable>
-            <variable name="bRun">
-              <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">触发一次调用</xhtml></documentation>
-            </variable>
-            <variable name="s">
-              <type><string><stringLength><value>38</value></stringLength></string></type>
-              <initialValue><simpleValue value="'{12345678-1234-1234-1234-123456789ABC}'"/></initialValue>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">测试用本地变量</xhtml></documentation>
-            </variable>
+            <variable name="sRegStr"><initialValue><simpleValue value="'{12345678-1234-5678-9ABC-123456789ABC}'"/></initialValue><type><string><length>38</length></string></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">工业语义：注册表 GUID 串</xhtml></documentation></variable>
+            <variable name="stGuid"><type><derived name="GUID"/></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">解析输出</xhtml></documentation></variable>
+            <variable name="bParse"><type><BOOL/></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">在线触发</xhtml></documentation></variable>
           </localVars>
         </interface>
         <body>
-          <ST>
-            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
-// Tc2_Utilities.REGSTRING_TO_GUID 演示程序（FUNCTION）
-// ============================================================
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：从 Windows 注册表读出 `'{CLSID-string}'` → 解析为 PLC GUID 结构 → 用于 COM API 调用。
+// 价值：替代手写 hex 解析 + 段切分代码。
 // 验证步骤：
 //   1. 引用 Tc2_Utilities
-//   2. 编译 + 登录
-//   3. 强制 bRun := TRUE 一个周期
-//   4. 在线监视 rResult / 各 demo 变量
-// ============================================================
+//   2. 编译 + 登录 + 运行
+//   3. 在线写触发位 TRUE，monitor 输出变量
+// =============================================================================
 
-IF bRun THEN
-    rResult := REGSTRING_TO_GUID(s);
-    bRun := FALSE;
-END_IF;
-</xhtml>
-          </ST>
+IF bParse THEN
+    stGuid := REGSTRING_TO_GUID(in := sRegStr);
+    bParse := FALSE;
+END_IF;</xhtml></ST>
         </body>
       </pou>
     </pous>
   </types>
-  <instances>
-    <configurations/>
-  </instances>
+  <instances><configurations/></instances>
 </project>

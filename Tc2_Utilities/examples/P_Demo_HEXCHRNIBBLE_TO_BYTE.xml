@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <project xmlns="http://www.plcopen.org/xml/tc6_0200">
-  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-12T10:00:00"/>
-  <contentHeader name="Tc2_Utilities.HEXCHRNIBBLE_TO_BYTE Demo" modificationDateTime="2026-05-12T10:00:00">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-12T00:00:00"/>
+  <contentHeader name="Tc2_Utilities.HEXCHRNIBBLE_TO_BYTE Demo" modificationDateTime="2026-05-12T00:00:00">
     <coordinateInfo>
       <fbd><scaling x="1" y="1"/></fbd>
       <ld><scaling x="1" y="1"/></ld>
@@ -14,52 +14,26 @@
       <pou name="P_Demo_HEXCHRNIBBLE_TO_BYTE" pouType="program">
         <interface>
           <localVars>
-            <variable name="sMesHexConfig">
-              <initialValue><simpleValue value="FF01"/></initialValue>
-              <type><string><length>4</length></string></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">MES 下发的 hex 字面配置（4 字符 = 2 字节）</xhtml></documentation>
-            </variable>
-            <variable name="bConfigByte0">
-              <type><BYTE/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">解析得到的第一字节（期望 0xFF）</xhtml></documentation>
-            </variable>
-            <variable name="bConfigByte1">
-              <type><BYTE/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">解析得到的第二字节（期望 0x01）</xhtml></documentation>
-            </variable>
-            <variable name="bParseRequest">
-              <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">在线置 TRUE 触发一次解析</xhtml></documentation>
-            </variable>
+            <variable name="sHexChar"><initialValue><simpleValue value="'F'"/></initialValue><type><string><length>1</length></string></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">工业语义：要解码的 hex 字符</xhtml></documentation></variable>
+            <variable name="nNibble"><type><BYTE/></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">解码 nibble</xhtml></documentation></variable>
+            <variable name="bDecode"><type><BOOL/></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">在线触发</xhtml></documentation></variable>
           </localVars>
         </interface>
         <body>
           <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
-// 场景：MES 配方表里"通信配置"字段是 hex 字面量字符串（'FF01' 表示寄存器
-//       高字节 0xFF 低字节 0x01）。PLC 端按 nibble 解析后写入控制寄存器。
-// 价值：从 STRING 字面解析时本函数语义比 HEXASCNIBBLE_TO_BYTE 更直观，
-//       不必先做 STRING -&gt; 字节数组转换；大小写不敏感、错误统一返回 255。
+// 场景：手工解码 hex 配置串（如 `'AB'` → 0xAB 字节）；小量数据场景，避免引入 `HEXSTR_TO_DATA` 的完整 API。
+// 价值：比 `HEXASCNIBBLE_TO_BYTE` 直观——字符常量直接传。
 // 验证步骤：
-//   1. 登录后 sMesHexConfig = 'FF01'。
-//   2. 写 bParseRequest := TRUE 触发解析。
-//   3. 观察 bConfigByte0 = 0xFF = 255，bConfigByte1 = 0x01 = 1。
-//   4. 把 sMesHexConfig 改成 'ff01'（小写），重新触发：结果完全一致，
-//      印证 §3 大小写不敏感。
-//   5. 把 sMesHexConfig 改成 'FG01'（含非 hex 字符 G），观察 bConfigByte0
-//      变为 0xF5 = SHL(15,4) OR 255 = ... 即检测到非法字符（实际是合成出错）；
-//      工程上需检 nibble = 255 判错（见 HEXASCNIBBLE 例程）。
+//   1. 引用 Tc2_Utilities
+//   2. 编译 + 登录 + 运行
+//   3. 在线写触发位 TRUE，monitor 输出变量
 // =============================================================================
 
-IF bParseRequest THEN
-    // 用 MID 抽四个单字符再调本函数得到 4 个 nibble
-    // 再两两 SHL+OR 合成两个字节
-    bConfigByte0 := SHL(HEXCHRNIBBLE_TO_BYTE(MID(sMesHexConfig, 1, 1)), 4)
-                  OR HEXCHRNIBBLE_TO_BYTE(MID(sMesHexConfig, 1, 2));
-    bConfigByte1 := SHL(HEXCHRNIBBLE_TO_BYTE(MID(sMesHexConfig, 1, 3)), 4)
-                  OR HEXCHRNIBBLE_TO_BYTE(MID(sMesHexConfig, 1, 4));
-    bParseRequest := FALSE;
-END_IF;
-</xhtml></ST>
+IF bDecode THEN
+    nNibble := HEXCHRNIBBLE_TO_BYTE(chr := sHexChar);
+    // 'F' -&gt; 15
+    bDecode := FALSE;
+END_IF;</xhtml></ST>
         </body>
       </pou>
     </pous>

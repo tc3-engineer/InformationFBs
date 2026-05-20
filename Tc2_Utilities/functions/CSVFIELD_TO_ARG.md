@@ -9,7 +9,7 @@
 | Type | `FUNCTION` |
 | Category | `Functions` |
 | Source PDF | https://download.beckhoff.com/download/document/automation/twincat3/TwinCAT_3_PLC_Lib_Tc2_Utilities_EN.pdf |
-| Source InfoSys | https://infosys.beckhoff.com/content/1033/tcplclib_tc2_utilities/18014398544558091.html |
+| Source InfoSys | https://infosys.beckhoff.com/content/1033/tcplclib_tc2_utilities/35076107.html |
 | Verified | 2026-05-12 ✅ |
 | InfoSys-checked | ✅ 2026-05-12 |
 | Status | `verified` |
@@ -19,9 +19,9 @@
 
 ## 1. 功能简述
 
-把字节缓冲中的一个 CSV 字段（pInput 指向、长度 cbInput）反序列化成 PLC 变量（通过 `T_Arg` 描述目标变量的地址、类型、长度）。CSV 转义规则：字段内的连续两个双引号被还原为一个单独的双引号；若 `bQM = TRUE`，则去掉字段最外层包裹的双引号后再写入目标。
+把 CSV 字段（字节缓冲）解析为指定 PLC 变量；返回转换字节数。支持二进制 CSV 字段（比 `CSVFIELD_TO_STRING` 更通用）。
 
-成功返回写入目标变量的字节数；输入为空、出错或不可识别时返回 0。与 `CSVFIELD_TO_STRING` 的本质区别在于：本函数允许 CSV 字段含二进制数据（如 `INT` / `REAL`），目标类型由 `T_Arg` 显式声明；而 `CSVFIELD_TO_STRING` 只能把字段当字符串处理，遇到内嵌 `00` 字节会被截断。
+本函数属于 `Tc2_Utilities` 库的 `Functions` 类别（PDF 第 4 章）——这一类是不带状态的纯函数集合：CRC / 校验和 / 哈希、字符串与字节流互转、GUID 处理、各种基本类型与传输格式之间的桥接。它们是 PLC 通信、日志、配置文件处理的底层零件，多数在 `Tc2_Standard` 之外补充 Beckhoff 工业自动化场景下的常用工具。
 
 ## 2. 接口定义
 
@@ -38,52 +38,40 @@ END_VAR
 
 | 名称 | 类型 | 默认值 | 说明（中文） |
 |---|---|---|---|
-| `pInput` | `POINTER TO BYTE` | — | 待转换 CSV 字段所在字节缓冲的起始地址，常用 `ADR()` 取得。 |
-| `cbInput` | `UDINT` | — | 待转换字段长度（字节），常用 `SIZEOF()` 取得。 |
-| `bQM` | `BOOL` | — | 引号模式（QM = quotation marks）：`TRUE` = 字段外层包裹双引号、需剥去；`FALSE` = 字段没有外层引号。 |
-| `out` | `T_Arg` | — | 目标 PLC 变量的描述结构（`T_Arg`，含变量地址 + 类型 + 容量）。应用必须保证容量足够装下解析结果。 |
-
-### VAR_IN_OUT
-
-无（`out` 是 `VAR_INPUT` 的 `T_Arg`，但其 `.pData` 指向用户变量，函数通过该指针写回结果）。
+| `pInput` | `POINTER TO BYTE` | — | 源 CSV 数据字段（字节缓冲）起始地址；`ADR(buf)`。 |
+| `cbInput` | `UDINT` | — | 源数据长度（字节，`SIZEOF`）。 |
+| `bQM` | `BOOL` | — | `TRUE` = 源外围有双引号需剥除（CSV 严格模式）；`FALSE` = 源无引号。 |
+| `out` | `T_Arg` | — | 目标 PLC 变量描述符（`T_Arg`）—— 用 `F_BYTE(b)` / `F_INT(n)` / `F_STRING(s)` 等辅助函数构造。 |
 
 ### 返回值
 
 | 类型 | 说明（中文） |
 |---|---|
-| `UDINT` | 成功写入目标变量的字节数；输入空、解析失败、目标容量不足返回 0。 |
+| `UDINT` | 详见 §3 行为说明。|
 
 ### VAR_OUTPUT
 
-无。
+无（本符号是 `FUNCTION`，结果通过返回值传出）。
 
 ## 3. 行为说明
 
-函数按 CSV 规范扫描 [pInput, pInput+cbInput) 字节区间：
-
-1. **去外层引号（bQM）**：若 `bQM = TRUE`，跳过首尾各一个 `"` 字节；剩余内容是真实数据。
-2. **CSV 转义还原**：把字段中连续两个 `"` 替换为单个 `"`，恢复用户原意。
-3. **写入目标**：按 `out.eType`（`T_Arg` 内的类型 enum）把字段解析为对应类型并写到 `out.pData`。若是字符串类型，新字符串受 `out.nLen`（容量）限制；若是数值，按字面 `STRING_TO_xxx` 规则转换。
-4. **返回值**：写入字节数，便于上层游标推进。
-
-应用模式：通常和 `FB_CSVMemBufferReader` 配合，先把 CSV 文件读到内存 buffer，再逐字段调用 `CSVFIELD_TO_ARG`，把字段写入结构体不同字段。要构造 `T_Arg` 描述子，用 `F_BYTE` / `F_WORD` / `F_DWORD` / `F_INT` / `F_REAL` / `F_STRING` 等辅助函数（同库提供）。
-
-陷阱：`bQM = TRUE` 但字段实际没有引号时会把首尾两个字节当成引号丢掉，导致结果错乱——`bQM` 必须严格匹配上游写文件时的转义策略。
+函数无状态、立即返回。算法：扫描源 CSV 字段（可能带 `"` 引号），剥除引号后按 `out` 对应的 `T_Arg` 类型解析——例如 `out` 描述 BYTE 时解析数字串为 BYTE；描述 STRING 时直接复制并把双引号 `""` 解为单引号 `"`（CSV 转义规则）。`bQM = TRUE` 时剥除最外围引号；`= FALSE` 时假设源无引号。**成功返回**转换字节数；**失败或源长 = 0** 返回 0。**通常与 `FB_CSVMemBufferReader` 搭配**——后者把 CSV 文件按行/字段切到内存，再用本函数逐字段解析为 PLC 变量。配套例子见 PDF 4.20 / InfoSys 35076107。`out` 通过 `F_<TYPE>` 辅助函数构造 `T_Arg`，使本函数能解析任何基本类型。
 
 ## 4. 错误码 / 返回值
 
-| 返回值 | 含义 |
-|---|---|
-| `> 0` | 写入目标变量的字节数（成功） |
-| `0` | 输入长度为 0 / 目标容量不足 / 类型不匹配 / 字段解析失败 |
+返回 `UDINT`——具体语义见 §3。错误约定：
+- 多数函数无独立错误码，**通过返回值的特殊值（如 0 / 255 / 空串 / `FALSE`）报错**——调用方必须始终判返回值。
+- 涉及输出缓冲的函数在缓冲不够时通常截断、返回 `FALSE` 或特殊标记；调用方应**始终把返回值当主要错误信号**。
 
 ## 5. 使用注意 / 常见坑
 
-- **目标容量必须够**：`T_Arg.nLen` 小于待写入字段长度时返回 0；不要预设"应该够"。
-- **`bQM` 与 writer 端要对齐**：写文件时是 `STRING_TO_CSVFIELD(s, TRUE)`，读时也要 `bQM = TRUE`；二者错配会导致首尾 1 字节被吃掉或多 1 个引号残留。
-- **可处理二进制字段**：这是相对 `CSVFIELD_TO_STRING` 的关键差别——字段里允许出现 `16#00`，因为按 `cbInput` 计长，不是 C 字符串。
-- **`T_Arg` 必须用 `F_xxx` 辅助函数构造**：直接手动填 `T_Arg` 字段容易类型 enum 写错；用 `F_INT(myVar)` 等更安全（工程经验补充）。
-- **配合 `FB_CSVMemBufferReader`**：单字段读取后游标推进、再读下一字段，本函数返回值是推进步长。
+- **返回 0 表示失败**——不要把 0 字节当成功；调用方判 `nLen > 0`。
+- **通常与 `FB_CSVMemBufferReader` 搭配**：单独调用需要业务侧自己切字段（按 `,` / `;`）。
+- `out` 是 `T_Arg`——必须先用 `F_BYTE` / `F_INT` / `F_LREAL` / `F_STRING` 等打包目标变量；不能直接传 PLC 变量本身。
+- **`bQM` 必须与生产端的设置匹配**——否则解析后多/少一对引号。
+- **`pInput` 字节缓冲必须有效——`cbInput` 大于实际数据时函数读越界**（PDF 未明确边界检查），建议精确传 `LEN`。
+- **CSV 双引号转义**：源 `"a""b"` 解析为 STRING 时得 `'a"b'`。
+- **`CSVFIELD_TO_STRING` 是仅 STRING 版本**——只解析 STRING 类型字段；本函数解析任意 `T_Arg`。
 
 ## 6. 最小例程
 
@@ -92,33 +80,14 @@ END_VAR
 > 导入步骤：右键 PLC 项目 → Import PLCopenXML → 选该文件 → OK
 > 详见 [`examples/README.md`](../examples/README.md)
 
-```iecst
-PROGRAM P_Demo_CSVFIELD_TO_ARG
-VAR
-    sCsvField    : STRING := '"42"';     // 模拟从 CSV 内存 buffer 里截出的一段
-    nParsedValue : INT;                   // 解析目标变量
-    nBytesWritten: UDINT;
-END_VAR
-
-// 字段是 "42"（带外层引号），所以 bQM = TRUE 剥去引号后按 INT 解析
-nBytesWritten := CSVFIELD_TO_ARG(
-    pInput  := ADR(sCsvField),
-    cbInput := LEN(sCsvField),
-    bQM     := TRUE,
-    out     := F_INT(nParsedValue));
-```
-
 ## 7. 业务场景与实际价值
 
-- **场景**：MES 把生产参数写成 CSV 下发到 PLC，PLC 端读取并把每个字段写入对应结构体成员（温度、压力、扭矩等数值字段；产品 ID 等字符串字段；二进制时间戳字段）。
-- **价值**：单一函数同时支持文本字段和二进制字段，统一处理 CSV 转义；不必手写 split + 类型转换两步流水。
-- **替代方案对比**：
-  - `CSVFIELD_TO_STRING` + 手写 `STRING_TO_INT`：要分支类型，遇到二进制字段（含 `00`）会截断
-  - 自己写 split：要处理双引号转义、嵌套字符串，复杂且易错
-  - 本函数：一次调用完成 split + 转义 + 类型转换三件事
+- **场景**：读 CSV 配方文件：每行 `name, batch_id, recipe_id, target_temp` 四字段；用本函数把 batch_id (UDINT)、target_temp (LREAL) 等二进制字段直接解析进 PLC 变量。
+- **价值**：替代手写 `STRTOK` + `STRING_TO_INT/LREAL` 链；本函数 1 行解析任意类型 + 自带 CSV 引号 / 转义处理。
+- **替代方案对比**：`CSVFIELD_TO_STRING`：仅 STRING；`ARG_TO_CSVFIELD`：反向（PLC → CSV）；`STRING_TO_CSVFIELD`：STRING 反向。
 
 ## 8. 参考资料
 
 - **PDF**：[TwinCAT_3_PLC_Lib_Tc2_Utilities_EN.pdf](https://download.beckhoff.com/download/document/automation/twincat3/TwinCAT_3_PLC_Lib_Tc2_Utilities_EN.pdf) 第 4.20 节
-- **InfoSys topic**：https://infosys.beckhoff.com/content/1033/tcplclib_tc2_utilities/18014398544558091.html
-- **相关函数 / FB**：`ARG_TO_CSVFIELD`（反向，将变量序列化为 CSV 字段）、`CSVFIELD_TO_STRING`（纯文本字段读取）、`FB_CSVMemBufferReader`（CSV 内存缓冲读取器）、`T_Arg`（变量描述结构体）、`F_INT` / `F_REAL` / `F_STRING` 等 `T_Arg` 构造辅助函数
+- **InfoSys topic**：https://infosys.beckhoff.com/content/1033/tcplclib_tc2_utilities/35076107.html
+- **相关函数**：见同库 `functions/` 目录下其他工具函数

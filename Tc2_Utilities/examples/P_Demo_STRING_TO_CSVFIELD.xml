@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <project xmlns="http://www.plcopen.org/xml/tc6_0200">
-  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-10T19:00:00"/>
-  <contentHeader name="Tc2_Utilities.STRING_TO_CSVFIELD Demo" modificationDateTime="2026-05-10T19:00:00">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-12T00:00:00"/>
+  <contentHeader name="Tc2_Utilities.STRING_TO_CSVFIELD Demo" modificationDateTime="2026-05-12T00:00:00">
     <coordinateInfo>
       <fbd><scaling x="1" y="1"/></fbd>
       <ld><scaling x="1" y="1"/></ld>
@@ -14,44 +14,28 @@
       <pou name="P_Demo_STRING_TO_CSVFIELD" pouType="program">
         <interface>
           <localVars>
-            <variable name="rResult">
-              <type><derived name="T_MaxString"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">STRING_TO_CSVFIELD 返回值</xhtml></documentation>
-            </variable>
-            <variable name="bRun">
-              <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">触发一次调用</xhtml></documentation>
-            </variable>
-            <variable name="s">
-              <type><derived name="T_MaxString"/></type>
-              <initialValue><simpleValue value="'a,b,c'"/></initialValue>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">测试用本地变量</xhtml></documentation>
-            </variable>
+            <variable name="sOperName"><initialValue><simpleValue value="&quot;O'Brien&quot;"/></initialValue><type><string><length>64</length></string></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">工业语义：操作员名（可能含引号）</xhtml></documentation></variable>
+            <variable name="sCsvField"><type><string><length>128</length></string></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">CSV 转义后字段</xhtml></documentation></variable>
+            <variable name="bFormat"><type><BOOL/></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">在线触发</xhtml></documentation></variable>
           </localVars>
         </interface>
         <body>
-          <ST>
-            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
-// Tc2_Utilities.STRING_TO_CSVFIELD 演示程序（FUNCTION）
-// ============================================================
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：把 PLC 设备名 / 操作员名等 STRING 字段写入 CSV 报表文件。
+// 价值：替代手写引号转义代码——CSV 规范严格，自写易出 bug。
 // 验证步骤：
 //   1. 引用 Tc2_Utilities
-//   2. 编译 + 登录
-//   3. 强制 bRun := TRUE 一个周期
-//   4. 在线监视 rResult / 各 demo 变量
-// ============================================================
+//   2. 编译 + 登录 + 运行
+//   3. 在线写触发位 TRUE，monitor 输出变量
+// =============================================================================
 
-IF bRun THEN
-    rResult := STRING_TO_CSVFIELD(s, TRUE);
-    bRun := FALSE;
-END_IF;
-</xhtml>
-          </ST>
+IF bFormat THEN
+    sCsvField := STRING_TO_CSVFIELD(in := sOperName, bQM := TRUE);
+    bFormat := FALSE;
+END_IF;</xhtml></ST>
         </body>
       </pou>
     </pous>
   </types>
-  <instances>
-    <configurations/>
-  </instances>
+  <instances><configurations/></instances>
 </project>

@@ -19,16 +19,15 @@
 
 ## 1. 功能简述
 
-把一个含 ASCII 编码的字节数组拼接成 `T_MaxString`（即 `STRING(255)`）字符串。函数遍历 `in` 数组的每个字节，把字节值当作 ASCII 字符（`16#48` → `'H'`，`16#69` → `'i'`），直到遇到 `16#00` 结束符或抵达数组末端为止。
+把字节数组的 ASCII 码逐字节复制成 `T_MaxString`（默认 STRING(255)）；与 `MAXSTRING_TO_BYTEARR` 构成可逆对。
 
-`MAX_STRING_LENGTH` 是 `Tc2_Utilities` 的常量（默认 255），所以数组维度固定为 `[0..255]`，覆盖一个完整的 `STRING(255)`。反向操作由 `MAXSTRING_TO_BYTEARR` 完成。
+本函数属于 `Tc2_Utilities` 库的 `Functions` 类别（PDF 第 4 章）——这一类是不带状态的纯函数集合：CRC / 校验和 / 哈希、字符串与字节流互转、GUID 处理、各种基本类型与传输格式之间的桥接。它们是 PLC 通信、日志、配置文件处理的底层零件，多数在 `Tc2_Standard` 之外补充 Beckhoff 工业自动化场景下的常用工具。
 
 ## 2. 接口定义
 
 ### VAR_INPUT
 
 ```iecst
-FUNCTION BYTEARR_TO_MAXSTRING : T_MaxString
 VAR_INPUT
     in : ARRAY[0..MAX_STRING_LENGTH] OF BYTE;
 END_VAR
@@ -36,11 +35,17 @@ END_VAR
 
 | 名称 | 类型 | 默认值 | 说明（中文） |
 |---|---|---|---|
-| `in` | `ARRAY[0..MAX_STRING_LENGTH] OF BYTE` | — | 待转换的字节数组（`MAX_STRING_LENGTH` 默认 255）。数组每个字节解释为一个 ASCII 字符；`16#00` 视为字符串结束。 |
+| `in` | `ARRAY[0..MAX_STRING_LENGTH] OF BYTE` | — | 源字节数组（默认大小为 STRING(255) 对应 256 字节）。 |
 
-### VAR_IN_OUT
+### 返回值
 
-无。
+| 类型 | 说明（中文） |
+|---|---|
+| `T_MaxString` | 详见 §3 行为说明。|
+
+### VAR_OUTPUT
+
+无（本符号是 `FUNCTION`，结果通过返回值传出）。
 
 ### 返回值
 
@@ -54,23 +59,21 @@ END_VAR
 
 ## 3. 行为说明
 
-调用即返回，无状态。函数把 `in` 中的字节序列从 `in[0]` 开始按 ASCII 解释，遇到第一个 `16#00` 字节即停止拼接（不把该字节计入返回串），返回值长度等于截止前的非零字节数。
-
-边界行为：若 `in[0]` 就是 `16#00`，返回空串；若数组前 255 字节全部非零，则返回 255 字符的字符串（`T_MaxString` 的最大容量）。函数本身不做字符校验，控制字符（如 `16#0D`、`16#0A`）原样落到字符串中，调用方在写日志或 CSV 时需自行考虑这些不可打印字节带来的影响。
-
-典型用途：以 ADS 或 EtherCAT 邮箱读到的固定长度字节缓冲（设备序列号、MAC 字符串、ASCII 应答帧）转成 PLC 字符串，便于后续 `FIND` / `MID` / `CONCAT` 处理。
+函数无状态、立即返回。逐字节从 `in[0]` 起复制到目标 STRING 缓冲，直到遇到 null 字节（0x00）或扫满数组长度 `MAX_STRING_LENGTH`。null 字节作为 STRING 终结符；遇 null 后即使数组未扫完也立即停止。**这意味着含 0x00 的二进制字节数组不能完整复制——前缀部分被当成 STRING 解读、后半丢失**。配套反向函数 `MAXSTRING_TO_BYTEARR` 把 STRING 写回字节数组（不含 null 之后内容）。生产环境用此函数把 EtherCAT / ModBus 字节缓冲的 ASCII 部分拿出来做日志显示。
 
 ## 4. 错误码 / 返回值
 
-无错误码。返回 `T_MaxString`，最大 255 个 ASCII 字符。无效输入（数组全 0）返回空串。
+返回 `T_MaxString`——具体语义见 §3。错误约定：
+- 多数函数无独立错误码，**通过返回值的特殊值（如 0 / 255 / 空串 / `FALSE`）报错**——调用方必须始终判返回值。
+- 涉及输出缓冲的函数在缓冲不够时通常截断、返回 `FALSE` 或特殊标记；调用方应**始终把返回值当主要错误信号**。
 
 ## 5. 使用注意 / 常见坑
 
-- **找不到 0 结束符就拼满 255 字节**：来源是二进制 buffer（不是 C 字符串）时，结果会被截断到 255；前置务必清零或显式追加 `ar[n] := 16#00`。
-- **非可打印字符不会被过滤**：含 `16#0D` / `16#0A` / `16#1B` 的协议帧转成字符串后无法直接打印到日志，按需 `REPLACE` 替换。
-- **大小写不变换**：函数只搬字节，不做 ASCII 大小写处理。需要统一大小写时再调 `F_ToUCase` / `F_ToLCase`。
-- **入参是值传递的整个数组**：每次调用复制 256 字节，循环里高频调用会占用扫描时间；如能用指针更好。
-- **`MAX_STRING_LENGTH` 不能改**：它是 `Tc2_Utilities` 内部常量；自定义长度的字节缓冲先 `MEMCPY` 到 256 字节数组再调本函数（工程经验补充）。
+- **数组中 0x00 视为 STRING 终结**——含 0x00 的二进制数据会被截断。要保留完整二进制请直接按 BYTE 数组传递或用 `MEMCPY`。
+- `MAX_STRING_LENGTH` 是 `Tc2_Utilities` 的常量（默认 255）；类型不可改。需要更长串请用 `Extended STRING functions`。
+- 返回类型 `T_MaxString` 实际是 `STRING(255)`；超长源数组中后续字节直接丢弃。
+- ASCII 直接复制：源字节 0x80~0xFF 也会被复制，但 STRING 的 Codepage 语义可能不同。
+- **对称函数 `MAXSTRING_TO_BYTEARR`** 把 STRING 转回 BYTE 数组（不含 null）。
 
 ## 6. 最小例程
 
@@ -79,32 +82,14 @@ END_VAR
 > 导入步骤：右键 PLC 项目 → Import PLCopenXML → 选该文件 → OK
 > 详见 [`examples/README.md`](../examples/README.md)
 
-```iecst
-PROGRAM P_Demo_BYTEARR_TO_MAXSTRING
-VAR
-    arBuf      : ARRAY[0..MAX_STRING_LENGTH] OF BYTE;   // 来自 EL6022 串口模块的 RX buffer 镜像
-    sDeviceTag : T_MaxString;                            // 拼成可打印 PLC 字符串
-END_VAR
-
-// 模拟串口 buffer 里收到 "Hi"（0x48 0x69）后被 0x00 结束
-arBuf[0] := 16#48;
-arBuf[1] := 16#69;
-arBuf[2] := 16#00;
-
-sDeviceTag := BYTEARR_TO_MAXSTRING(arBuf);
-```
-
 ## 7. 业务场景与实际价值
 
-- **场景**：从 EL6022 / EL6001 串口模块或 ADS 读到的固定 256 字节 RX 缓冲，需要解析其中以 0x00 结束的 ASCII 应答（设备 ID、固件版本字符串）。
-- **价值**：避免手写 `WHILE` 循环逐字节拼接；一行调用拿到 PLC `STRING` 后立即能 `FIND` / `MID` / 日志输出。
-- **替代方案对比**：
-  - 手写循环：10~15 行代码，需自己处理 0x00 终止符与数组越界
-  - `MEMCPY` 到 `STRING` 变量：要先确定真实长度，多一次 SIZEOF 计算
-  - 本函数：单调用、自动处理终止符、返回类型直接是 `T_MaxString`
+- **场景**：从串口收到的 256 字节缓冲含 EtherNet/IP 设备 SCSI 标签——前部 ASCII 标签 + 后部二进制数据。本函数把前部 ASCII 提取为可读日志。
+- **价值**：替代 FOR + 字节复制 + null 终结的 8 行手写循环；本函数 1 调用。
+- **替代方案对比**：`MAXSTRING_TO_BYTEARR`：反向；`MEMCPY`：手动版本无 null 处理。
 
 ## 8. 参考资料
 
 - **PDF**：[TwinCAT_3_PLC_Lib_Tc2_Utilities_EN.pdf](https://download.beckhoff.com/download/document/automation/twincat3/TwinCAT_3_PLC_Lib_Tc2_Utilities_EN.pdf) 第 4.19 节
 - **InfoSys topic**：https://infosys.beckhoff.com/content/1033/tcplclib_tc2_utilities/35073035.html
-- **相关函数**：`MAXSTRING_TO_BYTEARR`（反向操作）、`HEXSTR_TO_DATA`（带空格的 hex 串 → 字节）、`DATA_TO_HEXSTR`（字节 → hex 串）
+- **相关函数**：见同库 `functions/` 目录下其他工具函数

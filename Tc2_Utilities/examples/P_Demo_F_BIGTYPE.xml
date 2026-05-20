@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <project xmlns="http://www.plcopen.org/xml/tc6_0200">
-  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-10T14:00:00"/>
-  <contentHeader name="Tc2_Utilities.F_BIGTYPE Demo" modificationDateTime="2026-05-10T14:00:00">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-11T00:00:00"/>
+  <contentHeader name="Tc2_Utilities.F_BIGTYPE Demo" modificationDateTime="2026-05-11T00:00:00">
     <coordinateInfo>
       <fbd><scaling x="1" y="1"/></fbd>
       <ld><scaling x="1" y="1"/></ld>
@@ -9,36 +9,49 @@
     </coordinateInfo>
   </contentHeader>
   <types>
-    <dataTypes/>
+    <dataTypes>
+      <dataType name="ST_Recipe">
+        <baseType>
+          <struct>
+            <variable name="nRecipeId"><type><UDINT/></type></variable>
+            <variable name="fTargetTempC"><type><LREAL/></type></variable>
+            <variable name="tHoldDuration"><type><TIME/></type></variable>
+            <variable name="bIsActive"><type><BOOL/></type></variable>
+          </struct>
+        </baseType>
+      </dataType>
+    </dataTypes>
     <pous>
       <pou name="P_Demo_F_BIGTYPE" pouType="program">
         <interface>
           <localVars>
-            <variable name="rResult">
-              <type><derived name="T_Arg"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">F_BIGTYPE 返回值</xhtml></documentation>
+            <variable name="stCurrentRecipe"><type><derived name="ST_Recipe"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">当前配方</xhtml></documentation>
             </variable>
-            <variable name="bRun">
-              <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">触发一次调用</xhtml></documentation>
+            <variable name="argRecipe"><type><derived name="T_Arg"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">配方打包后的 T_Arg</xhtml></documentation>
+            </variable>
+            <variable name="bPackRecipe"><type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">在线置 TRUE 触发一次打包</xhtml></documentation>
             </variable>
           </localVars>
         </interface>
         <body>
           <ST>
             <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
-// Tc2_Utilities.F_BIGTYPE 演示程序（FUNCTION）
+// Tc2_Utilities.F_BIGTYPE 演示程序
 // ============================================================
-// 验证步骤：
-//   1. 引用 Tc2_Utilities
-//   2. 编译 + 登录
-//   3. 强制 bRun := TRUE 一个周期
-//   4. 观察 rResult 应为 T_Arg{pData, len, type=BIG}
+// 场景：把整段配方结构体作为一个 T_Arg 送给 EventLogger 当报警上下文。
+// 价值：结构体没有专用 F_&lt;TYPE&gt;，本函数按字节打包；下游靠 cbLen 取整段。
+// 验证：在线写 stCurrentRecipe.nRecipeId := 7、bPackRecipe := TRUE；
+//       下一周期 argRecipe.cbLen 应等于 SIZEOF(stCurrentRecipe)，argRecipe.pData &lt;&gt; 0。
 // ============================================================
 
-IF bRun THEN
-    rResult := F_BIGTYPE(ADR(stData), SIZEOF(stData));
-    bRun := FALSE;
+IF bPackRecipe THEN
+    // 用 ADR + SIZEOF 把整个结构体打包，eType 自动选 BIGTYPE 枚举
+    argRecipe := F_BIGTYPE(pData := ADR(stCurrentRecipe),
+                           cbLen := SIZEOF(stCurrentRecipe));
+    bPackRecipe := FALSE;
 END_IF;
 </xhtml>
           </ST>
