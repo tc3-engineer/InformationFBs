@@ -833,3 +833,489 @@ _add(
     ),
     related=["FB_CreateDir", "FB_FileDelete"],
 )
+
+
+# =================== Watchdog function blocks (2) ===================
+
+_add(
+    "FB_PcWatchdog",
+    summary=(
+        "FB_PcWatchdog 启用 IPC 主板上的硬件看门狗（仅限特定主板：IP-4GVI63、CB1050、CB2050、CB3050、CB1051、CB2051、CB3051）。"
+        "`bEnable = TRUE` 后必须以**短于** `tTimeOut` 的周期持续调用本 FB；一旦超时未喂狗，硬件强制重启整台 PC。"
+        "用于在 PLC / Windows 死循环或卡死时自动恢复系统。"
+    ),
+    behavior=(
+        "**调用方式**：必须在循环任务里每个周期调用一次。`bEnable = TRUE` 且 `tTimeOut ≥ 1s` 时启用；后续每次调用相当于『喂狗』重置超时计数。\n\n"
+        "**超时窗口**：`tTimeOut` 范围 1–255 秒。一旦超过该时长无新的 FB 调用，硬件触发整机重启（**不是** PLC 重启，是整台 PC 立即冷启动）。\n\n"
+        "**禁用方式**：`bEnable = FALSE` 或 `tTimeOut = 0` 关闭看门狗。在断点调试、PLC Reset、TwinCAT Stop、切换 Config 模式、激活配置前**必须**显式禁用，否则在调试中超时将导致 PC 重启（PDF NOTICE 明确警告）。\n\n"
+        "**硬件依赖**：本 FB 直接读写主板看门狗芯片，只在 PDF 列出的主板型号上生效；其他主板调用无实际效果。\n\n"
+        "**用途**：典型用法是在 PLC MAIN 程序末尾调用一次，超时定为 5–10 秒。PLC 程序一旦卡死（死循环、外部 ADS 死锁），看门狗 5 秒后强制 PC 重启，配合开机自启动 TwinCAT 即可实现无人值守自动恢复。"
+    ),
+    pitfalls=[
+        ("**调试时务必禁用**：断点停 PLC 立即触发超时重启 PC，会丢失整个调试现场。建议加 `IF NOT bDebugMode THEN bEnable := TRUE; END_IF;`。", False),
+        ("**`tTimeOut` 不能太短**：< 2 秒在 Windows 任务繁忙时容易误触发；建议 5–10 秒。", True),
+        ("**仅限指定主板**：列表外的主板调用本 FB 无效，系统仍可能卡死。要更广兼容性用 `FB_PcWatchDog_BAPI`。", False),
+        ("**不能停 PLC 不喂狗**：PLC Stop / Reset / 配置激活前必须显式禁用，否则停 PLC 后看门狗仍跑，超时即重启。", False),
+        ("**重启不可逆**：硬件复位等同断电，所有未持久化数据丢失；要保数据建议配 `FB_S_UPS_*`（Tc2_SUPS 库）。", True),
+    ],
+    var_desc={
+        "tTimeOut": "看门狗超时时长（1–255 秒）。范围外行为未定义。",
+        "bEnable": "TRUE 启用看门狗；FALSE 禁用。每周期保持 TRUE 即每周期喂狗。",
+    },
+    scenario="生产线 7×24 无人值守，PLC 主程序末尾启用 8 秒看门狗。一旦 PLC 任务卡死（外部 ADS 死锁或第三方 DLL 异常），8 秒后整机自动重启恢复。",
+    value="替代外置硬件看门狗模块（需额外接线 + IO 资源），用主板内置芯片实现相同功能。不用本 FB 时只能依赖外部 watchdog timer 或人工巡检。",
+    alt=(
+        "- 外置看门狗模块（接 DI/DO）：需额外接线，但兼容性广。\n"
+        "- `FB_PcWatchDog_BAPI`：基于 BIOS-API，主板支持面更广，超时上限 15300 秒。\n"
+        "- 软件看门狗（PLC 内部计时）：能检测部分卡死，但无法处理 PLC 自身崩溃。"
+    ),
+    xml_scen="生产线 7×24 无人值守：PLC 主任务末尾启用 8 秒硬件看门狗。PLC 一旦卡死 8 秒，主板自动冷启动恢复。",
+    xml_val="替代外置看门狗硬件 + 接线 + IO；省一组 DO 通道。",
+    xml_verify="正常运行 → bEnableWatchdog := TRUE 后持续每周期调用 → PC 正常；故意让 PLC 死循环 8 秒（在线 IF bForceHang THEN WHILE TRUE DO ; END_WHILE; END_IF）→ PC 自动重启。注意：调试时务必先 bEnableWatchdog := FALSE！",
+    xml_vars=[
+        ("fbPcWatchdog", "FB_PcWatchdog", None, "FB_PcWatchdog 实例"),
+        ("bEnableWatchdog", "BOOL", "FALSE", "在线置 TRUE 启用；调试前先置 FALSE"),
+        ("tWatchdogTimeout", "TIME", "T#8S", "8 秒超时窗口"),
+    ],
+    xml_call=(
+        "// 单次完整调用：必须每个 PLC 周期都跑到这一行才算喂狗\n"
+        "fbPcWatchdog(\n"
+        "    tTimeOut := tWatchdogTimeout,\n"
+        "    bEnable  := bEnableWatchdog\n"
+        ");\n"
+    ),
+    related=["FB_PcWatchDog_BAPI", "FB_S_UPS_CB3011"],
+)
+
+_add(
+    "FB_PcWatchDog_BAPI",
+    summary=(
+        "FB_PcWatchDog_BAPI 通过 BIOS-API 启用 IPC 或 Embedded PC 的硬件看门狗，兼容所有支持 BIOS-API 的 Beckhoff 工控机。"
+        "相比 `FB_PcWatchdog` 上限只能 255 秒，本 FB 的 `nWatchdogTimeS` 可达 15300 秒（255 分钟），适用于慢周期任务的恢复场景。"
+        "通过 `bExecute` 上升沿启用，`nWatchdogTimeS ≥ 1` 才生效。"
+    ),
+    behavior=(
+        "**调用方式**：必须在循环任务里周期调用，调用周期需短于 `nWatchdogTimeS`。`bExecute = TRUE` 触发设置 + 喂狗动作。\n\n"
+        "**超时窗口**：`nWatchdogTimeS` 范围 1–15300 秒（约 4.25 小时）。超时后整机硬件复位。\n\n"
+        "**ADS 调用本质**：本 FB 通过 ADS 向 BIOS-API 设备发送写命令实现，所以有 `sNetID` / `tTimeout` 参数；本机用空 NetID。\n\n"
+        "**禁用方式**：`bExecute = FALSE` 或 `nWatchdogTimeS = 0`。在调试 / PLC Stop / 切换配置前同样**必须**显式禁用，否则会触发重启（PDF NOTICE 警告）。\n\n"
+        "**与 `FB_PcWatchdog` 区别**：本 FB 走 BIOS-API，主板支持更广；`FB_PcWatchdog` 直接读写芯片寄存器，只在特定主板生效。新工程优先选本 FB。"
+    ),
+    pitfalls=[
+        ("**调试务必禁用**：与 `FB_PcWatchdog` 一致——断点 / Reset 前 `bExecute := FALSE`。", False),
+        ("**`nWatchdogTimeS` 上限 15300 秒**：超出范围行为未定义，建议留 ≥ 10% 余量。", False),
+        ("**BIOS 不支持时静默失败**：老主板没有 BIOS-API 调用返回错误但不实际启用看门狗，需要在测试台先验证有效性。", True),
+        ("**调用周期必须短于超时**：每分钟一次的慢任务用 60 秒超时是边缘情况，建议至少 2 倍冗余（设 120 秒）。", True),
+    ],
+    var_desc={
+        "sNetID": "目标系统 AMS Net ID。本机用空串 `''`；远端填对端 AMS Net ID。",
+        "nWatchdogTimeS": "看门狗超时时长，单位**秒**。范围 1–15300。",
+        "bExecute": "TRUE 启用并喂狗；FALSE 禁用。",
+        "tTimeout": "ADS 调用超时（不同于看门狗超时），默认 `DEFAULT_ADS_TIMEOUT`。",
+    },
+    scenario="慢工艺循环（如长达 10 分钟的烘干 / 热处理）的安全监护：超时 20 分钟，一旦工艺循环卡死自动重启。",
+    value="比 `FB_PcWatchdog` 兼容主板更广 + 超时上限大 60 倍；现代工程的首选看门狗。",
+    alt=(
+        "- `FB_PcWatchdog`：限定主板，超时 ≤ 255 秒。\n"
+        "- 外置硬件看门狗：接线复杂但与 BIOS / OS 无关。"
+    ),
+    xml_scen="慢工艺循环监护：超时设 600 秒（10 分钟），主循环每秒喂一次狗。卡死 10 分钟后 PC 自动重启。",
+    xml_val="兼容主板更广，超时上限远超 FB_PcWatchdog。",
+    xml_verify="bEnableSlowWatchdog := TRUE → PC 正常；故意让 PLC 卡死超过 600 秒 → PC 自动重启。调试前务必 FALSE。",
+    xml_vars=[
+        ("fbPcWatchdogBapi", "FB_PcWatchDog_BAPI", None, "FB_PcWatchDog_BAPI 实例"),
+        ("bEnableSlowWatchdog", "BOOL", "FALSE", "在线置 TRUE 启用看门狗"),
+        ("nSlowWatchdogTimeSec", "UDINT", "600", "看门狗超时 600 秒（10 分钟）"),
+        ("bBapiError", "BOOL", None, "TRUE = ADS 调用失败（BIOS 可能不支持）"),
+    ],
+    xml_call=(
+        "fbPcWatchdogBapi(\n"
+        "    sNetID         := '',\n"
+        "    nWatchdogTimeS := nSlowWatchdogTimeSec,\n"
+        "    bExecute       := bEnableSlowWatchdog,\n"
+        "    tTimeout       := T#5S\n"
+        ");\n"
+    ),
+    related=["FB_PcWatchdog"],
+)
+
+
+# =================== Memory functions (4) ===================
+
+_add(
+    "MEMCPY",
+    summary=(
+        "MEMCPY 把源内存地址 `srcAddr` 开始的 `n` 个字节复制到目的地址 `destAddr`。"
+        "**直接操作物理内存**：参数错误（地址非法、越界、源 / 目标重叠）可能导致系统崩溃或破坏其他变量，PDF NOTICE 段明确警告。"
+        "返回值是实际复制的字节数（成功 = `n`，参数非法 = 0）。\n\n"
+        "**重叠未定义**：源和目的重叠时行为未定义；要安全复制重叠区域必须用 `MEMMOVE`。"
+    ),
+    ftype="FUNCTION",
+    behavior=(
+        "**调用方式**：同步函数，返回时复制已完成。无任何状态机或异步等待。\n\n"
+        "**参数语义**：`destAddr` / `srcAddr` 通常用 `ADR(myVar)` 取得；`n` 通常用 `SIZEOF(myVar)` 取得。如果两者类型不一致（如 `ADR(stA)` 与 `SIZEOF(stB)`），编译器无法检测错误，会导致越界。\n\n"
+        "**返回值**：返回实际复制字节数；若 `destAddr == 0` 或 `srcAddr == 0` 或 `n == 0`，返回 0 表示未做任何操作。\n\n"
+        "**性能**：底层是 C `memcpy`，速度接近内存带宽峰值；远快于自己写 `FOR i := 0 TO n-1 DO dst[i] := src[i]; END_FOR;` 循环（后者每字节有边界检查）。\n\n"
+        "**重叠时**：源和目的内存区域重叠时行为未定义（PDF 明确）；典型例子是数组元素整体前移 / 后移，必须改用 `MEMMOVE`。"
+    ),
+    pitfalls=[
+        ("**重叠区域未定义**：要前 / 后移数组元素必须用 `MEMMOVE`，不能用 MEMCPY。", False),
+        ("**不查边界**：参数错可能写坏邻近变量或崩 PLC。永远 `destAddr := ADR(dst); n := SIZEOF(dst)` 并确保 `SIZEOF(src) >= n`。", False),
+        ("**`destAddr == 0`**：地址为 0 返回 0；不要把未初始化的指针传入，建议先 `IF p <> 0 THEN MEMCPY(...); END_IF;`。", False),
+        ("**绕过类型安全**：MEMCPY 抹平所有类型信息，写错结构布局不会被编译器发现。建议优先 `:=` 赋值（同类型）或用 `__VARIANT` 接口。", True),
+        ("**对齐**：在 Arm 平台上对非对齐地址的 MEMCPY 可能比 x86 慢；对齐对齐到 4 / 8 字节边界。", True),
+    ],
+    var_desc={
+        "destAddr": "目标内存区域起始地址（`PVOID`）。用 `ADR(dstVar)`；不可为 0。",
+        "srcAddr": "源内存区域起始地址（`PVOID`）。用 `ADR(srcVar)`；不可为 0。",
+        "n": "要复制的字节数。常用 `SIZEOF(dstVar)`，并确保源至少有这么多字节。",
+    },
+    return_kind="NONE",
+    return_text=(
+        "本函数返回 `UDINT`：\n\n"
+        "| 返回值 | 含义 |\n|---|---|\n"
+        "| `0` | 参数非法（`destAddr == 0` 或 `srcAddr == 0` 或 `n == 0`），未复制任何字节 |\n"
+        "| `> 0` | 实际复制的字节数（成功时 = `n`） |\n"
+    ),
+    scenario="把刚 `FB_FileRead` 读到的 256 字节缓冲区一次性拷贝到工艺参数结构体里，避免逐字段赋值的繁琐。",
+    value="一行代码替代手写 256 次 BYTE 赋值循环；速度快、代码短。",
+    alt=(
+        "- 手写 FOR 循环：可读但慢 5–10 倍且容易写错下标。\n"
+        "- `MEMMOVE`：支持重叠区域，慢约 10%。\n"
+        "- `:=` 整体赋值（同类型）：编译器自动展开，更类型安全，但跨类型不行。"
+    ),
+    xml_scen="把 FB_FileRead 读到的 256 字节 ARRAY 整块拷到工艺参数结构体；避免逐字段赋值。",
+    xml_val="一行调用替代 256 次手写赋值；约快 5-10 倍。",
+    xml_verify="在线触发 bCopyRequest := TRUE → 观察 nBytesCopied = SIZEOF(stProcessParams)；故意把 pSrc 设 0 → nBytesCopied = 0。",
+    xml_vars=[
+        ("aRawBuffer", "ARRAY[0..255] OF BYTE", None, "FB_FileRead 已填充的源缓冲区"),
+        ("stProcessParams", "ARRAY[0..255] OF BYTE", None, "目标缓冲区（业务上是工艺参数结构体）"),
+        ("bCopyRequest", "BOOL", None, "在线写 TRUE 触发一次拷贝"),
+        ("nBytesCopied", "UDINT", None, "实际复制字节数；与 SIZEOF 一致才算成功"),
+        ("rtCopy", "R_TRIG", None, "上升沿检测，避免每周期都拷"),
+    ],
+    xml_call=(
+        "// 用 R_TRIG 限定为上升沿触发一次，避免每个 PLC 周期都做无效拷贝\n"
+        "rtCopy(CLK := bCopyRequest);\n"
+        "IF rtCopy.Q THEN\n"
+        "    nBytesCopied := MEMCPY(\n"
+        "        destAddr := ADR(stProcessParams),\n"
+        "        srcAddr  := ADR(aRawBuffer),\n"
+        "        n        := SIZEOF(stProcessParams)\n"
+        "    );\n"
+        "END_IF;\n"
+    ),
+    related=["MEMMOVE", "MEMSET", "MEMCMP"],
+)
+
+_add(
+    "MEMMOVE",
+    summary=(
+        "MEMMOVE 把源内存地址开始的 `n` 个字节复制到目的地址。"
+        "与 `MEMCPY` 的唯一区别是**支持源 / 目的重叠**：典型用途是把数组元素整体前移或后移。"
+        "代价是内部多一层缓冲拷贝，速度比 MEMCPY 慢约 5–15%；不重叠时优先用 MEMCPY。"
+    ),
+    ftype="FUNCTION",
+    behavior=(
+        "**调用方式**：同步函数，返回时复制完成。\n\n"
+        "**重叠区域处理**：内部检测 `srcAddr` 与 `destAddr` 的位置关系，若 `dst > src`（向右移）则**从尾向头**复制，反之**从头向尾**复制，保证不会覆盖未读的字节。\n\n"
+        "**返回值**：返回实际复制字节数；参数非法（任一地址为 0 或 `n == 0`）返回 0。\n\n"
+        "**典型用法**：数组左移一位 `MEMMOVE(ADR(arr[0]), ADR(arr[1]), (SIZEOF(arr) - SIZEOF(arr[0])));`——把 `arr[1..N]` 拷到 `arr[0..N-1]`，此时源和目的明显重叠，MEMCPY 不能用。\n\n"
+        "**性能折损**：不重叠时也能用，但每次调用都做一次方向检测，比 MEMCPY 略慢。"
+    ),
+    pitfalls=[
+        ("**不重叠用 MEMCPY 更快**：MEMMOVE 永远做方向检测；明确知道不重叠时用 MEMCPY 省 5–15% 时间。", False),
+        ("**仍不查边界**：和 MEMCPY 一样越界会写坏邻近变量，永远用 `SIZEOF` + 确认源足够大。", False),
+        ("**`destAddr / srcAddr == 0`**：返回 0 不复制；调用方应先做指针非空检查。", False),
+        ("**对齐 / Arm**：与 MEMCPY 一致，对齐到 4 / 8 字节边界可提速。", True),
+    ],
+    var_desc={
+        "destAddr": "目标内存区域起始地址（`PVOID`）。允许与 `srcAddr` 重叠。",
+        "srcAddr": "源内存区域起始地址（`PVOID`）。允许与 `destAddr` 重叠。",
+        "n": "要复制的字节数。",
+    },
+    return_kind="NONE",
+    return_text=(
+        "本函数返回 `UDINT`：\n\n"
+        "| 返回值 | 含义 |\n|---|---|\n"
+        "| `0` | 参数非法（地址为 0 或 `n == 0`），未复制任何字节 |\n"
+        "| `> 0` | 实际复制的字节数（成功时 = `n`） |\n"
+    ),
+    scenario="环形缓冲区移位：把样本数组的最新一个元素挤到末尾，前面元素整体左移一格。",
+    value="MEMCPY 在重叠区域行为未定义；MEMMOVE 保证正确移位，替代 5–10 行手写 FOR 循环。",
+    alt=(
+        "- 手写 FOR 循环：可读但慢且容易写错方向。\n"
+        "- MEMCPY：不重叠时更快，重叠时**不能**用。"
+    ),
+    xml_scen="环形采样缓冲区左移：每次新采样到来时，把 aSamples[1..9] 整体左移到 aSamples[0..8]，aSamples[9] 留给新值。",
+    xml_val="MEMCPY 在重叠区行为未定义；MEMMOVE 保证正确。",
+    xml_verify="在线 bShiftRequest := TRUE 触发一次 → 观察 aSamples[0] 等于之前的 aSamples[1] 值。",
+    xml_vars=[
+        ("aSamples", "ARRAY[0..9] OF LREAL", None, "环形采样缓冲（10 个）"),
+        ("lrNewSample", "LREAL", "0.0", "新采样值（在线写入）"),
+        ("bShiftRequest", "BOOL", None, "在线写 TRUE 触发一次移位"),
+        ("nBytesShifted", "UDINT", None, "实际移位字节数"),
+        ("rtShift", "R_TRIG", None, "上升沿检测"),
+    ],
+    xml_call=(
+        "// 上升沿检测，避免周期性误触发\n"
+        "rtShift(CLK := bShiftRequest);\n"
+        "IF rtShift.Q THEN\n"
+        "    // 把 aSamples[1..9] 整体左移到 aSamples[0..8]；源和目的重叠，必须 MEMMOVE\n"
+        "    nBytesShifted := MEMMOVE(\n"
+        "        destAddr := ADR(aSamples[0]),\n"
+        "        srcAddr  := ADR(aSamples[1]),\n"
+        "        n        := SIZEOF(aSamples) - SIZEOF(aSamples[0])\n"
+        "    );\n"
+        "    // 末尾位置填新采样\n"
+        "    aSamples[9] := lrNewSample;\n"
+        "END_IF;\n"
+    ),
+    related=["MEMCPY", "MEMSET", "MEMCMP"],
+)
+
+_add(
+    "MEMSET",
+    summary=(
+        "MEMSET 把目的地址开始的 `n` 个字节全部填充为 `fillByte` 的值。"
+        "典型用法是清零（`fillByte := 0`）一个结构体或缓冲区；速度远快于手写 FOR 循环逐字段赋零。"
+        "**直接操作物理内存**，参数错误可能崩溃，PDF NOTICE 明确警告。"
+    ),
+    ftype="FUNCTION",
+    behavior=(
+        "**调用方式**：同步函数，返回时填充完成。\n\n"
+        "**参数语义**：`destAddr` 通常 `ADR(myVar)`；`n` 通常 `SIZEOF(myVar)`。`fillByte` 是单字节值（`USINT`），每个字节都被写为该值——清零用 `0`，清成全 1 用 `16#FF`。\n\n"
+        "**返回值**：返回实际写入字节数；`destAddr == 0` 或 `n == 0` 时返回 0。\n\n"
+        "**性能**：底层是 C `memset`，速度接近内存带宽峰值；远快于手写循环。"
+    ),
+    pitfalls=[
+        ("**只能填充 1 字节模式**：不能直接用 MEMSET 把 `WORD` 数组填充为某个 16 位值；要填 `0xAAAA` 这种 pattern 必须循环填或自己实现。", False),
+        ("**不查边界**：`n > SIZEOF(buf)` 会写坏邻近变量。永远 `n := SIZEOF(buf)`。", False),
+        ("**清零结构体陷阱**：结构体里有 STRING / 类对象时，MEMSET 0 会破坏其内部状态（null terminator 被覆盖到中间）。结构体清零优先用 `myStruct := DEFAULT_VALUE_OF_TYPE;` 整体赋值。", True),
+        ("**浮点数清零是 0.0**：把 LREAL 数组用 MEMSET 0 填充结果是 +0.0（IEEE 754 全 0 字节）；要填 NaN / Inf 必须用循环或 MEMCPY 一个预制 pattern。", True),
+    ],
+    var_desc={
+        "destAddr": "要填充的内存起始地址（`PVOID`）。用 `ADR(buf)`。",
+        "fillByte": "填充字节值（`USINT` 范围 0–255）。清零用 0；全 1 用 `16#FF`。",
+        "n": "要填充的字节数。常用 `SIZEOF(buf)`。",
+    },
+    return_kind="NONE",
+    return_text=(
+        "本函数返回 `UDINT`：\n\n"
+        "| 返回值 | 含义 |\n|---|---|\n"
+        "| `0` | 参数非法（`destAddr == 0` 或 `n == 0`），未填充任何字节 |\n"
+        "| `> 0` | 实际填充的字节数（成功时 = `n`） |\n"
+    ),
+    scenario="设备启动时把一个 1 KB 的工艺数据缓冲区一次性清零，避免冷启动残留旧数据污染逻辑。",
+    value="一行代码替代 1024 次 BYTE 赋零循环；速度快约 5–10 倍。",
+    alt=(
+        "- 手写 FOR 循环逐字节赋零：慢且代码冗长。\n"
+        "- 结构体整体赋值 `myStruct := (default)`：编译器自动展开，更类型安全。"
+    ),
+    xml_scen="设备启动时一次性清零 1 KB 工艺缓冲区，避免冷启动残留旧数据。",
+    xml_val="一行调用替代 1024 次 FOR 赋零；快 5-10 倍。",
+    xml_verify="bClearRequest := TRUE → 观察 aBigBuffer 全部归零；nBytesCleared = 1024。",
+    xml_vars=[
+        ("aBigBuffer", "ARRAY[0..1023] OF BYTE", None, "1 KB 工艺缓冲区"),
+        ("bClearRequest", "BOOL", None, "在线写 TRUE 触发一次清零"),
+        ("nBytesCleared", "UDINT", None, "实际清零字节数"),
+        ("rtClear", "R_TRIG", None, "上升沿检测"),
+    ],
+    xml_call=(
+        "rtClear(CLK := bClearRequest);\n"
+        "IF rtClear.Q THEN\n"
+        "    nBytesCleared := MEMSET(\n"
+        "        destAddr := ADR(aBigBuffer),\n"
+        "        fillByte := 0,\n"
+        "        n        := SIZEOF(aBigBuffer)\n"
+        "    );\n"
+        "END_IF;\n"
+    ),
+    related=["MEMCPY", "MEMMOVE", "MEMCMP"],
+)
+
+_add(
+    "MEMCMP",
+    summary=(
+        "MEMCMP 比较两个内存区域的前 `n` 字节，返回 `-1` / `0` / `1` 三态表示大小关系。"
+        "比较方式与 C `memcmp` 一致：逐字节无符号比较，遇到第一个不同字节即返回结果。"
+        "适用于结构体批量相等性检查、二进制数据 diff 等场景。"
+    ),
+    ftype="FUNCTION",
+    behavior=(
+        "**调用方式**：同步函数，返回三态值。\n\n"
+        "**返回值语义**：\n\n"
+        "- `-1`：在第一个不同字节处，`pBuf1` 的值**小于** `pBuf2`；\n"
+        "- ` 0`：前 `n` 字节完全相同；\n"
+        "- ` 1`：在第一个不同字节处，`pBuf1` 的值**大于** `pBuf2`。\n\n"
+        "**逐字节无符号比较**：把字节当作 `USINT` (0–255) 比较；不区分有符号 / 浮点；要比较 LREAL 等浮点用专门的浮点比较（考虑 NaN）。\n\n"
+        "**直接操作物理内存**：参数非法（地址 0、n 越界）可能崩溃，PDF NOTICE 警告。\n\n"
+        "**典型应用场景**：判等比手写循环灵活，可比较任意类型 / 结构体 / 数组的内存映像；返回三态语义还适用于排序键比较场景。"
+    ),
+    pitfalls=[
+        ("**不可用于浮点比较**：`+0.0` 和 `-0.0` 字节不同但数值相等；NaN 与自身字节相同但 `NaN != NaN`。", False),
+        ("**不可用于含 padding 的结构体**：编译器对齐 padding 字节内容未初始化，比较结果不稳定。要比较结构体先 MEMSET 0 再赋值。", False),
+        ("**`pBuf1 / pBuf2 == 0`**：PDF 未明确，实测通常返回 0（视为相等）；调用方应自检指针非空。", True),
+        ("**返回类型 `DINT`**：不要把返回值当 BOOL 直接用 `IF MEMCMP(...) THEN`——0 = 相等才是 FALSE，反直觉。", False),
+    ],
+    var_desc={
+        "pBuf1": "第一块内存起始地址。",
+        "pBuf2": "第二块内存起始地址。",
+        "n": "要比较的字节数。",
+    },
+    return_kind="NONE",
+    return_text=(
+        "本函数返回 `DINT`：\n\n"
+        "| 返回值 | 含义 |\n|---|---|\n"
+        "| `-1` | `pBuf1` 在第一个不同字节处小于 `pBuf2` |\n"
+        "| `0`  | 前 `n` 字节完全相同 |\n"
+        "| `1`  | `pBuf1` 在第一个不同字节处大于 `pBuf2` |\n"
+    ),
+    scenario="检查 200 字节的工艺参数结构体是否与上次保存的一致——一致则跳过持久化，避免无变化时的频繁写盘。",
+    value="一行函数比手写循环 + 早返判等省约 8 行；速度快约 5–10 倍。",
+    alt=(
+        "- 手写 FOR 循环逐字节比：慢且冗长。\n"
+        "- 结构体 `=` 运算符（IEC 不支持）：要 Beckhoff 拓展支持。"
+    ),
+    xml_scen="检查工艺参数结构体（200 字节）是否与上次落盘的版本一致，一致则跳过持久化写盘。",
+    xml_val="一行调用替代 200 次手写逐字节比对。",
+    xml_verify="同步两份缓冲区 → 在线触发 bCompareRequest → nCmpResult = 0；故意改 stCurrent 中一个字节 → nCmpResult = 1 或 -1。",
+    xml_vars=[
+        ("stCurrent", "ARRAY[0..199] OF BYTE", None, "本次工艺参数缓冲（200 字节）"),
+        ("stLastSaved", "ARRAY[0..199] OF BYTE", None, "上次落盘版本"),
+        ("bCompareRequest", "BOOL", None, "在线写 TRUE 触发一次比较"),
+        ("nCmpResult", "DINT", None, "比较结果：-1 / 0 / 1"),
+        ("bParamsChanged", "BOOL", None, "TRUE = 与上次不同，需要落盘"),
+        ("rtCmp", "R_TRIG", None, "上升沿检测"),
+    ],
+    xml_call=(
+        "rtCmp(CLK := bCompareRequest);\n"
+        "IF rtCmp.Q THEN\n"
+        "    nCmpResult := MEMCMP(\n"
+        "        pBuf1 := ADR(stCurrent),\n"
+        "        pBuf2 := ADR(stLastSaved),\n"
+        "        n     := SIZEOF(stCurrent)\n"
+        "    );\n"
+        "    // 业务侧：非 0 即视为有变化\n"
+        "    bParamsChanged := (nCmpResult <> 0);\n"
+        "END_IF;\n"
+    ),
+    related=["MEMCPY", "MEMMOVE", "MEMSET"],
+)
+
+
+# =================== I/O port access (2) ===================
+
+_add(
+    "F_IOPortRead",
+    summary=(
+        "F_IOPortRead 直接读取 PC 内一个 I/O 端口（不是工业 IO 模块，是 x86 主板 I/O 总线上的端口地址）。"
+        "适用于直接控制 PC 主板硬件（如蜂鸣器、并口、串口寄存器），是与硬件低层打交道的桥梁。"
+        "`eSize` 指定读取宽度（1 / 2 / 4 字节）；返回值是读到的 32 位无符号整数。"
+    ),
+    ftype="FUNCTION",
+    behavior=(
+        "**调用方式**：同步函数，立刻返回读到的值。\n\n"
+        "**端口宽度 `eSize`**：`E_IOAccessSize` 枚举，常用值 `IOAS_BYTE`（1 字节）、`IOAS_WORD`（2 字节）、`IOAS_DWORD`（4 字节）。读 1 字节时高位字节为 0。\n\n"
+        "**端口地址**：典型值是 LPT 端口 `0x378`、串口寄存器 `0x3F8`、PC 蜂鉣器 `0x61` 等 16 位 I/O 空间地址。读地址不会破坏硬件，但写地址（`F_IOPortWrite`）可能损坏，PDF NOTICE 警告。\n\n"
+        "**只在 PC / IPC 上有效**：CX 之类的嵌入式控制器可能没有标准的 x86 I/O 端口空间，调用此函数行为未定义。"
+    ),
+    pitfalls=[
+        ("**端口地址必须正确**：错误的端口地址可能读到不相关硬件状态或 0xFF；查 PC 主板手册或设备 datasheet 确认。", False),
+        ("**`eSize` 不当**：用 `IOAS_DWORD` 读 8 位端口可能跨端口读取，结果不可靠。匹配硬件实际宽度。", False),
+        ("**实时性影响**：直接 I/O 端口操作绕过 OS，可能阻塞 PLC 任务调度；高频调用慎用。", True),
+        ("**Embedded PC / Arm 平台**：CX Arm 系列没有 x86 风格 I/O 端口空间，本函数无意义。", True),
+    ],
+    var_desc={
+        "nAddr": "I/O 端口地址（16 位 I/O 空间，如 `16#378` LPT、`16#61` 蜂鉣器）。",
+        "eSize": "读取宽度枚举（`IOAS_BYTE` / `IOAS_WORD` / `IOAS_DWORD`），决定读 1 / 2 / 4 字节。",
+    },
+    return_kind="NONE",
+    return_text=(
+        "本函数返回 `DWORD`：读到的端口值，高位未读字节为 0（如读 1 字节时高 24 位 = 0）。\n"
+    ),
+    scenario="读取 LPT 并口当前输入状态做硬件诊断；或读 PC 主板 GPIO 寄存器查询机柜门开关。",
+    value="替代 OS 级 DDK 调用 / 写驱动；PLC 一行代码直读硬件端口。",
+    alt=(
+        "- 写 Windows 驱动 `inp` / `outp`：能用但要内核态权限。\n"
+        "- TwinCAT IO Driver（标准 EtherCAT 终端）：现代工程首选，避免直接端口操作。"
+    ),
+    xml_scen="读取 LPT 端口 0x378 的当前 8 位输入状态做硬件诊断（无 EtherCAT 终端时的应急通道）。",
+    xml_val="替代写 Windows 驱动 inp/outp，PLC 一行调用直读硬件端口。",
+    xml_verify="bReadRequest := TRUE 一次 → 观察 nPortValue 反映 LPT 引脚状态；改变并口外部输入再触发 → nPortValue 改变。",
+    xml_vars=[
+        ("nLptPortAddress", "UDINT", "16#378", "LPT1 默认 I/O 端口地址"),
+        ("nPortValue", "DWORD", None, "读到的端口值"),
+        ("bReadRequest", "BOOL", None, "在线写 TRUE 触发一次读取"),
+        ("rtRead", "R_TRIG", None, "上升沿检测"),
+    ],
+    xml_call=(
+        "// 上升沿检测，避免每周期读耗 CPU\n"
+        "rtRead(CLK := bReadRequest);\n"
+        "IF rtRead.Q THEN\n"
+        "    nPortValue := F_IOPortRead(\n"
+        "        nAddr := nLptPortAddress,\n"
+        "        eSize := IOAS_BYTE\n"
+        "    );\n"
+        "END_IF;\n"
+    ),
+    related=["F_IOPortWrite", "LPTSIGNAL"],
+)
+
+_add(
+    "F_IOPortWrite",
+    summary=(
+        "F_IOPortWrite 直接写一个值到 PC 主板的 I/O 端口。"
+        "**可能损坏硬件或数据**：PDF NOTICE 明确警告——写错端口可能导致系统崩溃、硬件损坏甚至 SSD 数据丢失。"
+        "正确使用前必须明确目标端口的硬件含义。"
+    ),
+    ftype="FUNCTION",
+    behavior=(
+        "**调用方式**：同步函数，写入立刻完成并返回 BOOL 表示是否调用成功（不代表硬件实际反应正确）。\n\n"
+        "**端口宽度 `eSize`**：与 `F_IOPortRead` 一致：`IOAS_BYTE` / `IOAS_WORD` / `IOAS_DWORD`。\n\n"
+        "**返回值**：`TRUE` = 调用层面成功（API 接受了请求）；`FALSE` = API 调用本身失败（如权限不足）。返回 TRUE 不等于硬件按预期工作。\n\n"
+        "**只在 PC / IPC 上有效**：Embedded Arm 控制器无标准 x86 I/O 端口空间。\n\n"
+        "**PC 蜂鉣器示例**：PDF 用 PC 蜂鉣器（端口 0x42 / 0x43 / 0x61）演示 `FB_Speaker` 的实现，是本函数最常见的合法用例。"
+    ),
+    pitfalls=[
+        ("**写错端口可能毁硬件**：随意试探地址极其危险，可能写入 BIOS / 芯片组寄存器导致永久损坏。**永远**查硬件 datasheet 确认地址。", False),
+        ("**返回 TRUE 不等于硬件响应**：API 接受不代表硬件按预期；要验证效果需用 `F_IOPortRead` 回读或外部测量。", False),
+        ("**多任务竞争**：同一端口被多个任务同时写，结果不可预期；需要用 `TestAndSet` 或全局互斥保护。", True),
+        ("**TwinCAT IO Driver 更安全**：标准 EtherCAT 终端有硬件级保护，远比直接端口写安全。新工程不建议用本函数。", True),
+    ],
+    var_desc={
+        "nAddr": "I/O 端口地址（16 位 I/O 空间）。",
+        "eSize": "写入宽度（`IOAS_BYTE` / `IOAS_WORD` / `IOAS_DWORD`）。",
+        "nValue": "要写入的值（最大 32 位，高位被 `eSize` 截断）。",
+    },
+    return_kind="BOOL",
+    scenario="实现 PC 蜂鉣器报警声：通过写主板蜂鉣器控制端口产生固定频率声波，用于声音提示。",
+    value="不依赖外部 EtherCAT 蜂鉣模块，纯软件触发 PC 内部蜂鉣器；省一个硬件通道。",
+    alt=(
+        "- EtherCAT 数字输出 + 外置蜂鉣器：硬件方案，更可靠但要额外接线。\n"
+        "- Windows `Beep()` 通过 WinAPI：可行但 PLC 调 WinAPI 要写 wrapper。"
+    ),
+    xml_scen="实现简易 PC 蜂鉣器报警：通过写主板端口 0x61 控制扬声器产生短促提示音（PDF FB_Speaker 示例）。",
+    xml_val="不用外置蜂鉣硬件，软件直接驱动 PC 主板内置蜂鉣器。",
+    xml_verify="bBeepRequest := TRUE → PC 主板蜂鉣器发出短促提示音；bWriteOk 应为 TRUE。注意：用错端口可能损坏硬件！",
+    xml_vars=[
+        ("nPcSpeakerPort", "UDINT", "16#61", "PC 蜂鉣器控制端口"),
+        ("nValueToWrite", "DWORD", "16#03", "蜂鉣器使能位（PDF 示例中的开启值）"),
+        ("bBeepRequest", "BOOL", None, "在线写 TRUE 触发一次写入"),
+        ("bWriteOk", "BOOL", None, "TRUE = API 接受写入"),
+        ("rtBeep", "R_TRIG", None, "上升沿检测"),
+    ],
+    xml_call=(
+        "// 上升沿触发：避免连续写端口（连续写蜂鉣器会持续响）\n"
+        "// 警告：端口地址 0x61 是 PC 蜂鉣器控制；其它地址可能损坏硬件\n"
+        "rtBeep(CLK := bBeepRequest);\n"
+        "IF rtBeep.Q THEN\n"
+        "    bWriteOk := F_IOPortWrite(\n"
+        "        nAddr  := nPcSpeakerPort,\n"
+        "        eSize  := IOAS_BYTE,\n"
+        "        nValue := nValueToWrite\n"
+        "    );\n"
+        "END_IF;\n"
+    ),
+    related=["F_IOPortRead", "LPTSIGNAL"],
+)
