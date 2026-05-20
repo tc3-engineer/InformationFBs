@@ -1319,3 +1319,647 @@ _add(
     ),
     related=["F_IOPortRead", "LPTSIGNAL"],
 )
+
+
+# =================== General functions (20) ===================
+
+_add(
+    "F_CmpLibVersion",
+    ftype="FUNCTION",
+    summary=(
+        "F_CmpLibVersion 把当前安装的库版本（通过 `stLibVersion_<libname>` 全局常量传入）与代码中要求的最小版本（major / minor / build / revision 四元组）做比较，返回 `-1` / `0` / `+1` 表示『装的版本低于 / 等于 / 高于』要求版本。"
+        "用于库级版本守门：在工程编译期或运行启动时检查依赖库版本，避免因下层库降级导致接口不兼容的隐蔽 bug。"
+    ),
+    behavior=(
+        "**返回值语义**：\n\n"
+        "- `-1`：当前库版本低于要求版本，应当告警或拒绝启动；\n"
+        "- ` 0`：当前库版本恰好等于要求版本；\n"
+        "- `+1`：当前库版本高于要求版本，通常仍兼容。\n\n"
+        "**版本比较顺序**：按字典序——先比 major，相等再比 minor，再 build，最后 revision。任一位较高即返回 +1，较低返回 -1。\n\n"
+        "**输入约束**：`stVersion` 必须传入对应库的 `stLibVersion_<libname>`，跨库混用没意义。\n\n"
+        "**典型用法**：在 PLC `INIT` 任务或 `FB_init` 中检查依赖，不满足时设置全局错误标志拒绝启动 MAIN 任务，避免后续逻辑跑在错误的库版本上。"
+    ),
+    pitfalls=[
+        ("**版本号比较不区分 release / debug**：本函数只比四元组数字，不关心库的内部构建标识。", False),
+        ("**不能比较跨库**：`stLibVersion_Tc2_System` 不能用本函数对照 `stLibVersion_Tc2_Math` 的要求。", False),
+        ("**库未引用时编译错误**：`stLibVersion_<libname>` 是常量，库未被工程引用时编译期就报错，不是运行期错误。", True),
+        ("**`>= 0` 才算满足要求**：忘了取 `>= 0` 而只判 `= 0` 会拒绝高版本，反而是常见 bug。", False),
+    ],
+    var_desc={
+        "stVersion": "目标库的版本常量，按 `stLibVersion_<libname>` 命名传入（类型 `ST_LibVersion`）。",
+        "iMajor": "要求的 major 主版本号。",
+        "iMinor": "要求的 minor 次版本号。",
+        "iBuild": "要求的 build 构建号。",
+        "iRevision": "要求的 revision 修订号。",
+    },
+    return_kind="NONE",
+    return_text=(
+        "本函数返回 `DINT`：\n\n"
+        "| 返回值 | 含义 | 处理建议 |\n|---|---|---|\n"
+        "| `-1` | 装的版本低于要求 | 告警 / 拒绝启动 |\n"
+        "| `0`  | 装的版本恰好等于要求 | 视业务需要继续或告警 |\n"
+        "| `+1` | 装的版本高于要求 | 通常兼容，继续 |\n"
+    ),
+    scenario="集成商交付前的版本守门：MAIN 启动时校验 Tc2_System ≥ 3.3.8.0，低版本直接置位 bSystemBlocked 拒绝运行 MAIN，避免依赖新 API 但库没升级的隐蔽崩溃。",
+    value="替代『先跑起来出错再查依赖』的低效方式，编译 + 启动时显式守门。",
+    alt=(
+        "- 检查 `stLibVersion.iMajor` 等字段手写比较：能用但要写 4 个 `IF` 分支，易写反。\n"
+        "- 不检查：风险大，库降级后逻辑可能挂在不可预测的地方。"
+    ),
+    xml_scen="MAIN 启动时检查 Tc2_System 是否 ≥ 3.3.8.0；低版本置位 bSystemBlocked，拒绝运行业务逻辑。",
+    xml_val="一行守门替代 4 段 IF 链；启动早期发现版本问题。",
+    xml_verify="在线观察 nCmpResult：装的是更新版本时 = 1；改 iMajorRequired := 99 → -1 → bSystemBlocked := TRUE。",
+    xml_vars=[
+        ("iMajorRequired", "UINT", "3", "要求 major"),
+        ("iMinorRequired", "UINT", "3", "要求 minor"),
+        ("iBuildRequired", "UINT", "8", "要求 build"),
+        ("iRevisionRequired", "UINT", "0", "要求 revision"),
+        ("nCmpResult", "DINT", None, "比较结果：-1 / 0 / +1"),
+        ("bSystemBlocked", "BOOL", None, "TRUE = 版本不满足，拒绝启动 MAIN"),
+    ],
+    xml_call=(
+        "// 启动期一次性比较；只要 >= 0 即视为满足要求\n"
+        "nCmpResult := F_CmpLibVersion(\n"
+        "    stVersion := stLibVersion_Tc2_System,\n"
+        "    iMajor    := iMajorRequired,\n"
+        "    iMinor    := iMinorRequired,\n"
+        "    iBuild    := iBuildRequired,\n"
+        "    iRevision := iRevisionRequired\n"
+        ");\n\n"
+        "// 版本不足直接锁住业务逻辑\n"
+        "bSystemBlocked := (nCmpResult &lt; 0);\n"
+    ),
+    related=["stLibVersion_Tc2_System"],
+)
+
+_add(
+    "F_CheckMemoryArea",
+    ftype="FUNCTION",
+    summary=(
+        "F_CheckMemoryArea 返回一个变量所在的内存区域类别（`E_TcMemoryArea` 枚举）：静态区（编译期分配）、动态区（`__NEW` 堆）、未知 / 非法地址等。"
+        "用于诊断指针来源、检测野指针、判断变量是否仍存活——尤其在动态分配 / 释放复杂的场景下，避免使用已经 `__DELETE` 的变量。"
+    ),
+    behavior=(
+        "**返回值**：`E_TcMemoryArea` 枚举，常见值：\n\n"
+        "- `eTcMA_Static`：静态分配区（普通 `VAR` / `VAR_GLOBAL`）；\n"
+        "- `eTcMA_Dynamic`：动态分配区（`__NEW` 出来的）；\n"
+        "- `eTcMA_Retain`：retain 持久化区；\n"
+        "- `eTcMA_Unknown` / `eTcMA_Invalid`：地址不属于任何已知区域（如 0 指针或越界）。\n\n"
+        "具体枚举值见 InfoSys `E_TcMemoryArea` topic。\n\n"
+        "**典型用法**：在通用接口里收到 `PVOID` 指针时，先 `F_CheckMemoryArea` 确认地址合法再解引用，避免野指针崩 PLC。\n\n"
+        "**与 `F_GetMappingStatus` 的区别**：本函数判断变量所在的内存类别（静态 / 动态 / 持久化），`F_GetMappingStatus` 判断变量是否被映射到 IO 链。两者关注点不同，常配合使用以诊断变量来源与生命周期。\n\n"
+        "**调试技巧**：复现野指针崩溃时，在通用接口入口统一加守护，命中 `eTcMA_Unknown` 即记录调用上下文便于定位。"
+    ),
+    pitfalls=[
+        ("**不检测对象生命周期**：`__DELETE` 后的内存区域可能仍然『属于动态区』，本函数不能判断对象是否还活着。要管理生命周期需自己加引用计数或 owner 字段。", False),
+        ("**性能开销**：每次调用要扫描内存映射表，循环里频繁调用会拖累实时性。建议只在边界场景（接口入口）调用。", True),
+        ("**`nSize` 必须正确**：传入的 `nSize` 错可能误判跨区域；用 `SIZEOF(myVar)` 取最安全。", False),
+    ],
+    var_desc={
+        "pData": "要检查的变量内存地址，通常 `ADR(myVar)`。",
+        "nSize": "变量字节数，通常 `SIZEOF(myVar)`。",
+    },
+    return_kind="NONE",
+    return_text="本函数返回 `E_TcMemoryArea`：枚举常量，具体值见 InfoSys 的 `E_TcMemoryArea` 类型 topic。\n",
+    scenario="动态对象池管理：分发指针前先 `F_CheckMemoryArea` 确认指向动态区且非 0，避免业务侧拿到静态地址用 `__DELETE` 释放（会崩溃）。",
+    value="替代『假设调用方传对了』的盲信心态；在出 bug 前定位。",
+    alt=("- 自己维护 owner 字段 + 引用计数：更准确但要写状态机。\n- 不检查：野指针崩溃风险。"),
+    xml_scen="启动时分别检查一个静态局部变量和一个 __NEW 出来的动态变量所在内存区域，演示 F_CheckMemoryArea 的诊断用法。",
+    xml_val="替代靠崩溃 / 拷贝调试日志定位野指针的低效方法。",
+    xml_verify="bCheckRequest := TRUE 触发一次 → 观察 eAreaStatic = eTcMA_Static（或对应枚举），eAreaDynamic = eTcMA_Dynamic。",
+    xml_vars=[
+        ("nStaticCounter", "USINT", "0", "静态局部变量（编译期分配）"),
+        ("pDynamicValue", "POINTER TO LREAL", None, "动态分配指针（__NEW）"),
+        ("eAreaStatic", "E_TcMemoryArea", None, "静态变量的内存区"),
+        ("eAreaDynamic", "E_TcMemoryArea", None, "动态变量的内存区"),
+        ("eAreaNull", "E_TcMemoryArea", None, "空指针的内存区（应为 Unknown）"),
+        ("pNull", "PVOID", "0", "空指针测试用"),
+        ("bCheckRequest", "BOOL", None, "在线写 TRUE 触发一次诊断"),
+        ("rtCheck", "R_TRIG", None, "上升沿检测"),
+    ],
+    xml_call=(
+        "rtCheck(CLK := bCheckRequest);\n"
+        "IF rtCheck.Q THEN\n"
+        "    // 1) 静态变量\n"
+        "    eAreaStatic := F_CheckMemoryArea(pData := ADR(nStaticCounter), nSize := SIZEOF(nStaticCounter));\n\n"
+        "    // 2) 动态分配；若未分配则先 __NEW\n"
+        "    IF pDynamicValue = 0 THEN\n"
+        "        pDynamicValue := __NEW(LREAL);\n"
+        "    END_IF;\n"
+        "    IF pDynamicValue &lt;&gt; 0 THEN\n"
+        "        eAreaDynamic := F_CheckMemoryArea(pData := pDynamicValue, nSize := SIZEOF(LREAL));\n"
+        "    END_IF;\n\n"
+        "    // 3) 空指针\n"
+        "    eAreaNull := F_CheckMemoryArea(pData := pNull, nSize := 1);\n"
+        "END_IF;\n"
+    ),
+    related=["F_GetMappingStatus", "F_GetStructMemberAlignment"],
+)
+
+_add(
+    "F_CreateIPv4Addr",
+    ftype="FUNCTION",
+    summary=(
+        "F_CreateIPv4Addr 把 IPv4 地址的 4 个字节数组（`T_IPv4AddrArr`，4 字节）格式化为字符串（如 `'172.16.7.199'`）。"
+        "字节顺序是网络字节序（高字节在前）。"
+        "适用于把数字形式的 IP 转成 HMI 显示字符串、日志记录、或拼接 URL 等场景。"
+    ),
+    behavior=(
+        "**输入字节顺序**：`nIds[0]` = IP 第一段，`nIds[3]` = IP 最后一段；与点分十进制阅读顺序一致。\n\n"
+        "**返回值**：`T_IPv4Addr` 字符串，固定格式 `D.D.D.D`，每段 0–255，无前导零。\n\n"
+        "**典型用法**：从 ADS / DHCP 接口拿到 4 字节 IP 后转字符串显示，或把工程配置中的 4 字节数组转字符串写入配置文件。\n\n"
+        "**反向操作**：`F_ScanIPv4AddrIds` 是本函数的反向——字符串→字节数组。"
+    ),
+    pitfalls=[
+        ("**只支持 IPv4**：要 IPv6 字符串拼接需要自己实现或用 `F_FormatStringArray`（其他库）。", False),
+        ("**字节序**：传入数组应是网络字节序而不是主机字节序；x86 是小端，如果直接强转 `DWORD` 会颠倒。", False),
+        ("**返回值是固定 `T_IPv4Addr` 类型**（约 16 字节字符串），不要赋给 `STRING(7)` 等过短类型。", True),
+    ],
+    var_desc={
+        "nIds": "IPv4 地址的 4 字节数组（`T_IPv4AddrArr`），网络字节序。",
+    },
+    return_kind="NONE",
+    return_text="本函数返回 `T_IPv4Addr`（字符串）：格式 `'D.D.D.D'`，每段 0–255。\n",
+    scenario="HMI 显示远端 PLC IP：从 ADS 读到 4 字节 IP 数组后用本函数转成 `'192.168.1.10'` 显示。",
+    value="替代手写 `CONCAT(USINT_TO_STRING(...))` 4 次 + 3 个点号；一行代码搞定。",
+    alt=("- 手拼字符串：约 4-6 行。\n- `F_FormatStringArray`：通用但更复杂。"),
+    xml_scen="HMI 显示远端 PLC IP：从配置数组拿到 4 字节 IPv4 转成 '172.16.7.199' 写到本地字符串变量供 HMI 读。",
+    xml_val="一行替代 4 段 CONCAT。",
+    xml_verify="在线改 aIpBytes 任一字节 → sIpDisplay 跟着变；aIpBytes := [192,168,1,1] → sIpDisplay = '192.168.1.1'。",
+    xml_vars=[
+        ("aIpBytes", "T_IPv4AddrArr", "[172, 16, 7, 199]", "IPv4 4 字节数组（网络字节序）"),
+        ("sIpDisplay", "T_IPv4Addr", "''", "格式化后的 HMI 显示字符串"),
+    ],
+    xml_call=(
+        "// 每周期格式化一次；4 字节 IP 转 'D.D.D.D' 字符串\n"
+        "sIpDisplay := F_CreateIPv4Addr(nIds := aIpBytes);\n"
+    ),
+    related=["F_ScanIPv4AddrIds", "F_CreateMacAddr"],
+)
+
+_add(
+    "F_ScanIPv4AddrIds",
+    ftype="FUNCTION",
+    summary=(
+        "F_ScanIPv4AddrIds 是 `F_CreateIPv4Addr` 的反向操作：把 `'172.16.7.199'` 这样的 IPv4 字符串解析成 4 字节数组（`T_IPv4AddrArr`）。"
+        "字符串非法时（空串、`'0.0.0.0'`、格式错）返回全零数组——调用方应当通过『非空且非全零』的双重判断检测错误。"
+    ),
+    behavior=(
+        "**解析方式**：从左到右扫描，遇 `.` 或字符串末尾即把当前段写入对应字节，4 段全部填好后返回。\n\n"
+        "**错误检测**：PDF 明确给出错误条件——若输入既不是空串、也不是 `'0.0.0.0'`，但返回数组所有字节为 0，则说明解析失败（格式不合法）。调用方必须做此双重检查。\n\n"
+        "**网络字节序**：输出与 `F_CreateIPv4Addr` 一致——`aIds[0]` = 第一段。"
+    ),
+    pitfalls=[
+        ("**全零返回有歧义**：`'0.0.0.0'` 合法，错串也返回 0；要区分必须比较输入字符串是否为合法格式。", False),
+        ("**只支持 IPv4**：IPv6 字符串解析需要其他库。", False),
+        ("**超长 / 含字母**：超过段值 255 或含字母时本函数返回 0，调用方需做合法性校验。", True),
+        ("**前导 / 尾部空格**：未明确，建议预先 `TRIM`。", True),
+    ],
+    var_desc={"sIPv4": "IPv4 字符串（`T_IPv4Addr`），如 `'172.16.7.199'`。"},
+    return_kind="NONE",
+    return_text="本函数返回 `T_IPv4AddrArr`：4 字节数组（网络字节序）。返回全零 + 输入非 `''` / `'0.0.0.0'` 表示解析失败。\n",
+    scenario="操作员在 HMI 输入远端 PLC IP 字符串，PLC 解析成 4 字节供 ADS 调用使用。",
+    value="一行替代手写 split + 字符串转数字 4 次循环。",
+    alt=("- 手写按 `.` split + `STRING_TO_USINT` 4 次：约 8-12 行。\n- 调用方自己解析：易错。"),
+    xml_scen="HMI 输入字符串 IP → PLC 解析成 4 字节数组，再喂给 ADS 调用。带合法性双重校验。",
+    xml_val="一行替代手写 split + STRING_TO_USINT 8-12 行。",
+    xml_verify="在线改 sUserInput := '192.168.1.100' → aIpParsed = [192,168,1,100]；改成 'abc' → aIpParsed = [0,0,0,0] 且 bParseError = TRUE。",
+    xml_vars=[
+        ("sUserInput", "T_IPv4Addr", "'172.16.7.199'", "HMI 输入的 IP 字符串"),
+        ("aIpParsed", "T_IPv4AddrArr", None, "解析后的 4 字节数组"),
+        ("bParseError", "BOOL", None, "TRUE = 非空且全零，解析失败"),
+    ],
+    xml_call=(
+        "// 每周期解析一次；用双重判断检错（全零 + 非合法 0.0.0.0 串）\n"
+        "aIpParsed := F_ScanIPv4AddrIds(sIPv4 := sUserInput);\n\n"
+        "// 错误判定：非空 / 非 0.0.0.0 但返回全零\n"
+        "bParseError := (sUserInput &lt;&gt; '') AND (sUserInput &lt;&gt; '0.0.0.0')\n"
+        "             AND (aIpParsed[0] = 0) AND (aIpParsed[1] = 0)\n"
+        "             AND (aIpParsed[2] = 0) AND (aIpParsed[3] = 0);\n"
+    ),
+    related=["F_CreateIPv4Addr"],
+)
+
+_add(
+    "F_CreateMacAddr",
+    ftype="FUNCTION",
+    summary=(
+        "F_CreateMacAddr 把 6 字节 MAC 地址数组（`T_MacAddrArr`）格式化为字符串（如 `'01-02-03-04-05-06'`）。"
+        "可选分隔符 `sSeparator`（默认 `'-'`，常见也用 `':'`）和大小写控制 `bLoCase`（FALSE = 大写 `ABCDEF`，TRUE = 小写 `abcdef`）。"
+    ),
+    behavior=(
+        "**输入**：`aMacAddr` 是 6 字节数组，按硬件 OUI 顺序排列（如 `[0x1C, 0x2C, 0x3C, 0x4C, 0x5C, 0x6C]`）。\n\n"
+        "**格式化规则**：每字节转 2 位 16 进制，用 `sSeparator` 拼接。`sSeparator` 长度限 1 字符，超出未定义。\n\n"
+        "**返回值**：`T_MacAddr` 字符串，17 字符（6×2 + 5 分隔符），固定长度。\n\n"
+        "**典型应用场景**：HMI 网络信息页显示本机 / 远端网卡 MAC、把 MAC 写入工艺日志、生成设备唯一标识用于绑定 license。\n\n"
+        "**与 `F_CreateIPv4Addr` 的关系**：风格一致——字节数组 → 字符串；不同点是 MAC 字节没有网络字节序与主机字节序之分（按硬件 OUI 顺序）。"
+    ),
+    pitfalls=[
+        ("**`sSeparator` 限 1 字符**：传 `'::'` 等行为未定义。", False),
+        ("**字节序**：按硬件顺序传入；与 IP 不同，MAC 没有『网络字节序』反转。", False),
+        ("**大小写不一致**：业务侧切换 `bLoCase` 后 HMI 显示可能与日志记录不一致；建议全工程统一。", True),
+    ],
+    var_desc={
+        "aMacAddr": "6 字节 MAC 地址数组（`T_MacAddrArr`）。",
+        "sSeparator": "字节之间的分隔符（1 字符），默认 `'-'`，常用也填 `':'`。",
+        "bLoCase": "TRUE 用小写 `abcdef`，FALSE 用大写 `ABCDEF`。默认 FALSE。",
+    },
+    return_kind="NONE",
+    return_text="本函数返回 `T_MacAddr`（字符串，17 字符）：如 `'01-02-03-04-05-06'`。\n",
+    scenario="HMI 显示本机网卡 MAC：从 ADS 读取本机 MAC 6 字节，转成 `'1C-2C-3C-4C-5C-6C'` 显示在『网络信息』页面。",
+    value="替代手写 6 次 BYTE_TO_HEX + 5 次拼接；一行调用。",
+    alt=("- 手拼字符串：约 8-10 行。\n- `F_FormatStringArray`：通用但更复杂。"),
+    xml_scen="HMI 显示本机网卡 MAC：从 ADS 读取 6 字节 MAC 转 '1C-2C-3C-4C-5C-6C' 字符串。",
+    xml_val="替代手写 6 次 hex 转换 + 5 次拼接 8-10 行。",
+    xml_verify="改 aMacBytes 任一字节 → sMacDisplay 跟着变；bUseLowerCase := TRUE → 输出转小写。",
+    xml_vars=[
+        ("aMacBytes", "T_MacAddrArr", "[16#1C, 16#2C, 16#3C, 16#4C, 16#5C, 16#6C]", "6 字节 MAC 地址"),
+        ("sSeparatorChar", "STRING(1)", "'-'", "分隔符：'-' 或 ':'"),
+        ("bUseLowerCase", "BOOL", "FALSE", "TRUE 用小写"),
+        ("sMacDisplay", "T_MacAddr", "''", "格式化后的 MAC 字符串"),
+    ],
+    xml_call=(
+        "// 每周期格式化一次\n"
+        "sMacDisplay := F_CreateMacAddr(\n"
+        "    aMacAddr   := aMacBytes,\n"
+        "    sSeparator := sSeparatorChar,\n"
+        "    bLoCase    := bUseLowerCase\n"
+        ");\n"
+    ),
+    related=["F_CreateIPv4Addr"],
+)
+
+
+_add(
+    "F_GetCpuCoreIndex",
+    ftype="FUNCTION",
+    summary=(
+        "F_GetCpuCoreIndex 给定任务索引 `nTaskIndex`，返回该任务运行的 CPU 核心索引。"
+        "若传 0，则返回当前调用任务自己所在的核心。无效任务索引返回 `-1`。"
+        "用于诊断 PLC 任务的实际 CPU 绑定，配合 `F_GetCpuCoreInfo` 读取该核的基时与负载上限。"
+    ),
+    behavior=(
+        "**返回值含义**：`-1` 表示传入的 `nTaskIndex` 无效；`≥ 0` 是 CPU 核心索引，对应 TwinCAT SYSTEM 节点 Real-time 子节点 Core 列里的数值。\n\n"
+        "**典型用法**：多任务工程在线检查每个 PLC 任务的 CPU 分布是否符合预期；如果发现两个高频任务挤在同一核，可在 SYSTEM → Real-time 配置里重新分配。\n\n"
+        "**自查方便**：传 0 即可得到当前任务的核心，无需先查任务索引。\n\n"
+        "**与 `F_GetCpuCoreInfo` 区别**：本函数只返回核索引，`F_GetCpuCoreInfo` 进一步读出该核的详细配置参数。"
+    ),
+    pitfalls=[
+        ("**任务索引 0 是『自身』而不是『任务 0』**：调用方要查特定任务必须先用 `GETCURTASKINDEXEX` 拿到任务索引再传入。", False),
+        ("**返回 -1**：任务索引无效（超出 1..n 范围或任务未配置）；不要把 -1 当成『核心 0』使用。", False),
+        ("**Real-time 配置变更**：把任务从 Isolated CPU 切到 Shared CPU 不重启 TwinCAT 时，本函数返回值可能与配置面板显示一致但行为已变。", True),
+    ],
+    var_desc={"nTaskIndex": "任务索引。`0` = 当前调用任务；`1..n` = 指定任务。"},
+    return_kind="NONE",
+    return_text="本函数返回 `DINT`：CPU 核心索引（≥ 0）；`-1` 表示任务索引无效。\n",
+    scenario="启动时记录每个 PLC 任务的 CPU 绑定到日志，便于上线后远程诊断 CPU 调度问题。",
+    value="替代去 SYSTEM 面板逐个看；PLC 代码自助查询。",
+    alt=("- 看 SYSTEM 面板：要登工程在线。\n- 自己写 Windows API：太复杂。"),
+    xml_scen="启动时记录当前 PLC 主任务所在 CPU 核心，写到全局变量供 HMI 显示。",
+    xml_val="替代登工程查 Real-time 面板。",
+    xml_verify="在线观察 nCurrentCore 应与 TwinCAT SYSTEM Real-time 面板里 MAIN 任务的 Core 列一致。",
+    xml_vars=[
+        ("nCurrentCore", "DINT", None, "当前任务所在 CPU 核心索引"),
+    ],
+    xml_call=(
+        "// 0 表示查询调用方自身所在核心，无需先查任务索引\n"
+        "nCurrentCore := F_GetCpuCoreIndex(nTaskIndex := 0);\n"
+    ),
+    related=["F_GetCpuCoreInfo", "GETCURTASKINDEXEX", "F_GetTaskInfo"],
+)
+
+_add(
+    "F_GetCpuCoreInfo",
+    ftype="FUNCTION",
+    summary=(
+        "F_GetCpuCoreInfo 读取指定 CPU 核心的详细配置信息（基时 / 核心负载上限等）到一个 `ST_CpuCoreInfo` 结构。"
+        "返回 `HRESULT`，成功 `S_OK`，无效核心索引返回 `0x9811070B`（参数无效）。"
+        "用于运行期诊断 CPU 配置是否符合工艺时序要求。"
+    ),
+    behavior=(
+        "**调用方式**：同步函数，立即返回。`pInfo` 指向调用方分配的 `ST_CpuCoreInfo` 实例。\n\n"
+        "**输入约束**：`nCpuCoreIndex` 必须是 TwinCAT 已分配给 PLC 的核心索引（从 `F_GetCpuCoreIndex` 得来）；超出范围返回 `0x9811070B`。\n\n"
+        "**输出结构**：`ST_CpuCoreInfo` 包含基时 baseTime（PLC 周期最小单位，单位 100ns）、核心负载上限百分比等字段；具体见 InfoSys `ST_CpuCoreInfo` topic。\n\n"
+        "**典型用法**：上电后诊断各核基时一致性，避免跨核任务在不同 baseTime 下产生周期错位。"
+    ),
+    pitfalls=[
+        ("**`pInfo` 必须指向有效 `ST_CpuCoreInfo`**：传 0 或类型错误会读 / 写错地址。永远 `pInfo := ADR(myInfo)`。", False),
+        ("**`HRESULT` 解读**：`SUCCEEDED(hr)` 才看 `pInfo^`；失败时 `pInfo^` 内容未定义。", False),
+        ("**仅在 TwinCAT v3.1.4024.11 以上可用**（PDF 明确），老版本编译报错。", True),
+    ],
+    var_desc={
+        "nCpuCoreIndex": "要查询的 CPU 核心索引。",
+        "pInfo": "`POINTER TO ST_CpuCoreInfo` —— 调用方分配的结构体地址。",
+    },
+    return_kind="HRESULT",
+    scenario="MAIN 启动时读取本核 baseTime，与工艺要求的 1 ms 周期比较，不匹配时告警。",
+    value="替代登工程查 Real-time 面板；PLC 代码自助验证 CPU 配置。",
+    alt=("- 看 SYSTEM Real-time 面板：登工程才能看。\n- 凭经验默认 1 ms：不可靠。"),
+    xml_scen="启动时读取当前核心 baseTime，与工艺要求 1 ms 比较，不匹配则告警。",
+    xml_val="替代登工程查 Real-time 面板，PLC 自助验证。",
+    xml_verify="在线观察 hrResult = 0；改 nCoreIndex := 99 → hrResult = 0x9811070B。",
+    xml_vars=[
+        ("nCoreIndex", "DINT", None, "要查询的核心索引（先从 F_GetCpuCoreIndex 拿）"),
+        ("stCoreInfo", "ST_CpuCoreInfo", None, "读取到的核心信息结构"),
+        ("hrResult", "HRESULT", None, "调用结果：S_OK = 0 / 失败码"),
+        ("bCfgOk", "BOOL", None, "TRUE = baseTime 与工艺要求一致"),
+    ],
+    xml_call=(
+        "// 先拿当前核心索引，再查详情\n"
+        "nCoreIndex := F_GetCpuCoreIndex(nTaskIndex := 0);\n"
+        "hrResult := F_GetCpuCoreInfo(\n"
+        "    nCpuCoreIndex := nCoreIndex,\n"
+        "    pInfo         := ADR(stCoreInfo)\n"
+        ");\n\n"
+        "// HRESULT 0 是 S_OK；上层业务判定 baseTime 是否匹配工艺要求\n"
+        "// （此处只示意，实际字段名以 ST_CpuCoreInfo 定义为准）\n"
+        "bCfgOk := (hrResult = 0);\n"
+    ),
+    related=["F_GetCpuCoreIndex", "F_GetTaskInfo"],
+)
+
+_add(
+    "F_GetMappingPartner",
+    ftype="FUNCTION",
+    summary=(
+        "F_GetMappingPartner 返回 PLC 变量映射伙伴端（mapping partner）的对象 ID（`OTCID` 类型）。"
+        "若一个 PLC 变量与 IO 链 / NC / 其他 PLC 映射，本函数返回对端对象 ID；用于在运行期诊断映射拓扑。"
+    ),
+    behavior=(
+        "**返回值**：`OTCID` 是 32 位无符号对象 ID，非 0 表示映射伙伴的对象 ID，`0` 表示该变量未映射或映射伙伴不存在。\n\n"
+        "**典型用法**：在线诊断某 PLC 变量是否真的与硬件 IO 通道挂上，避免『PLC 写值但 IO 不动』的隐蔽错配。\n\n"
+        "**与 `F_GetMappingStatus` 区别**：本函数返回对端 ID（具体是谁），`F_GetMappingStatus` 返回映射状态（是否映射）。两者常配合使用。\n\n"
+        "**输入约束**：`p` 用 `ADR(myVar)`，`n` 用 `SIZEOF(myVar)`；尺寸错误可能误判跨变量。"
+    ),
+    pitfalls=[
+        ("**`OTCID = 0`**：未映射 / 映射伙伴不存在；调用方要区分『未配置』与『配置错误』需配合 `F_GetMappingStatus`。", False),
+        ("**实时性影响**：每次调用扫映射表，高频循环里别用。", True),
+        ("**`OTCID` 解读**：需要查 TwinCAT 对象表才知道具体是哪个 IO / NC / PLC 对象；本函数只给 ID。", False),
+    ],
+    var_desc={
+        "p": "PLC 变量地址（`ADR(myVar)`）。",
+        "n": "变量字节数（`SIZEOF(myVar)`）。",
+    },
+    return_kind="NONE",
+    return_text="本函数返回 `OTCID`（`UDINT`）：映射伙伴对象 ID；`0` 表示未映射。\n",
+    scenario="启动时检查关键 IO 输入变量是否真的映射到了对应 EtherCAT 终端，未映射立即报告而不是等到执行时出错。",
+    value="替代靠『手动比对 IO 配置文件』的低效方式。",
+    alt=("- 看 TwinCAT IO 配置树：登工程才能看。\n- 不检查：故障难定位。"),
+    xml_scen="MAIN 启动时检查关键输入变量是否映射到 EtherCAT 终端；未映射立即报警。",
+    xml_val="替代手动比对 IO 配置树。",
+    xml_verify="未映射变量 → nPartnerId = 0；映射变量 → nPartnerId 非零。",
+    xml_vars=[
+        ("bMonitoredInput", "BOOL", None, "应当映射到某 EtherCAT DI 通道的关键输入"),
+        ("nPartnerId", "OTCID", None, "对端对象 ID；0 = 未映射"),
+        ("bMappedOk", "BOOL", None, "TRUE = 已映射"),
+    ],
+    xml_call=(
+        "nPartnerId := F_GetMappingPartner(\n"
+        "    p := ADR(bMonitoredInput),\n"
+        "    n := SIZEOF(bMonitoredInput)\n"
+        ");\n\n"
+        "// 非零即视为已挂上 IO 链\n"
+        "bMappedOk := (nPartnerId &lt;&gt; 0);\n"
+    ),
+    related=["F_GetMappingStatus", "F_CheckMemoryArea"],
+)
+
+_add(
+    "F_GetMappingStatus",
+    ftype="FUNCTION",
+    summary=(
+        "F_GetMappingStatus 返回 PLC 变量的映射状态枚举（`EPlcMappingStatus`）：未映射、已映射、部分映射。"
+        "用于在线诊断 IO / NC / 跨 PLC 映射的真实状态，比单纯读 IO 配置树更准确。"
+    ),
+    behavior=(
+        "**返回值 `EPlcMappingStatus`**：\n\n"
+        "- `MS_Unmapped`：变量未参与任何映射；\n"
+        "- `MS_Mapped`：变量整体映射到某个伙伴；\n"
+        "- `MS_Partial`：变量部分字节映射（典型于结构体里只映射了部分字段）。\n\n"
+        "**与 `F_GetMappingPartner` 区别**：本函数只回三态状态，`F_GetMappingPartner` 进一步告诉对端是谁。两者配合使用：先用本函数过滤出非 `MS_Mapped` 的变量，再用 `F_GetMappingPartner` 看具体对端 ID 定位问题。\n\n"
+        "**典型用法**：上线前一次性扫描所有重要变量的映射状态，把 `MS_Partial` 或 `MS_Unmapped` 项汇总成报告写入诊断日志。`MS_Partial` 通常是工程配置错误（结构体只挂了部分字段），需要工程师立即修复，运行期再发现就晚了。\n\n"
+        "**调用开销**：每次调用扫一遍映射表，开销与系统映射条目数成正比，避免在 PLC MAIN 循环里高频调用。"
+    ),
+    pitfalls=[
+        ("**`MS_Partial` 容易忽略**：结构体里只映射几个字段时返回 `MS_Partial`，要不要算『映射完成』取决于业务。", False),
+        ("**实时性影响**：与 `F_GetMappingPartner` 一致，每次调用扫表。", True),
+        ("**`nSize` 错误**：传错可能跨越多个变量造成误判。永远 `SIZEOF(myVar)`。", False),
+    ],
+    var_desc={
+        "p": "PLC 变量地址（`ADR(myVar)`）。",
+        "n": "变量字节数（`SIZEOF(myVar)`）。",
+    },
+    return_kind="NONE",
+    return_text="本函数返回 `EPlcMappingStatus`：`MS_Unmapped` / `MS_Mapped` / `MS_Partial`。\n",
+    scenario="启动后扫描所有 IO 变量的映射状态，把任何 `MS_Unmapped` / `MS_Partial` 项写入告警日志便于运维定位。",
+    value="替代手工比对 IO 配置树。",
+    alt=("- 看配置树：登工程才能看。\n- `F_GetMappingPartner` 配合：得到更详细的对端 ID。"),
+    xml_scen="启动时扫描一个关键 IO 输入变量的映射状态，未完全映射即告警。",
+    xml_val="自动化映射诊断。",
+    xml_verify="未映射 → eMapStatus = MS_Unmapped；正常映射 → MS_Mapped。",
+    xml_vars=[
+        ("bMonitoredInput", "BOOL", None, "应映射的关键输入变量"),
+        ("eMapStatus", "EPlcMappingStatus", None, "映射状态枚举"),
+        ("bMappingOk", "BOOL", None, "TRUE = 已完全映射"),
+    ],
+    xml_call=(
+        "eMapStatus := F_GetMappingStatus(\n"
+        "    p := ADR(bMonitoredInput),\n"
+        "    n := SIZEOF(bMonitoredInput)\n"
+        ");\n\n"
+        "// 只把『完全映射』算 OK；部分映射或未映射都视为异常\n"
+        "bMappingOk := (eMapStatus = MS_Mapped);\n"
+    ),
+    related=["F_GetMappingPartner"],
+)
+
+_add(
+    "F_GetStructMemberAlignment",
+    ftype="FUNCTION",
+    summary=(
+        "F_GetStructMemberAlignment 返回当前 TwinCAT runtime 使用的结构体成员对齐字节数（1 / 2 / 4 / 8）。"
+        "对齐设置直接影响结构体内存布局（padding 字节数）：x86 通常 8，Arm 通常 4。"
+        "用于跨平台序列化 / 反序列化、与 PC 端 C / C# 程序对接时校验布局一致性。"
+    ),
+    behavior=(
+        "**返回值**：`BYTE` 类型，值为 1 / 2 / 4 / 8，表示结构体成员的对齐边界。\n\n"
+        "**对齐影响**：例如 `BYTE + LREAL` 结构体在 8 字节对齐下 SIZEOF = 16（7 字节 padding），在 1 字节对齐下 SIZEOF = 9 无 padding。\n\n"
+        "**典型用法**：跨平台数据交换时校验 PLC 与 PC 端结构体布局一致；若 PC 端用 `#pragma pack(1)` 而 PLC 是 8 字节对齐，必须用 `MEMCPY` + 手算偏移，不能直接 `MEMCPY` 整个结构。"
+    ),
+    pitfalls=[
+        ("**编译期常量**：本值由 TwinCAT 版本和目标平台决定，运行期不会变。", True),
+        ("**ALIGN pragma 不影响本函数**：变量级的 `{attribute 'pack_mode' := '1'}` 不改全局返回值；要看实际 SIZEOF 才能知道结构体真布局。", True),
+        ("**跨平台序列化必须显式打包**：依赖默认对齐做跨平台 IPC 极其脆弱；建议每个字段单独 `MEMCPY` 或用 protobuf / JSON。", True),
+    ],
+    var_desc={},
+    return_kind="NONE",
+    return_text="本函数返回 `BYTE`：对齐字节数（1 / 2 / 4 / 8）。\n",
+    scenario="MAIN 启动时记录当前平台对齐到日志，便于跨平台部署时一眼看出 x86 vs Arm 的差异。",
+    value="替代凭经验猜对齐；运行期实测最准。",
+    alt=("- 凭经验：x86 = 8，Arm = 4——大多数对但偶尔会错。\n- 看 PDF：要找特定版本。"),
+    xml_scen="启动时记录当前平台对齐字节数到全局诊断变量；跨平台部署时一眼看出差异。",
+    xml_val="实测最准，替代凭经验猜。",
+    xml_verify="在 x86 工控机上观察 nAlignBytes = 8；在 Arm CX 上观察 = 4。",
+    xml_vars=[
+        ("nAlignBytes", "BYTE", None, "当前平台对齐字节数（1 / 2 / 4 / 8）"),
+    ],
+    xml_call=(
+        "// 一次调用即可，平台对齐不会运行期改变\n"
+        "nAlignBytes := F_GetStructMemberAlignment();\n"
+    ),
+    related=["MEMCPY", "F_CheckMemoryArea"],
+)
+
+_add(
+    "F_GetTaskInfo",
+    ftype="FUNCTION",
+    summary=(
+        "F_GetTaskInfo 返回当前调用任务的 `PlcTaskSystemInfo` 结构，包含任务索引、周期时间、优先级、最大执行时长、抖动统计等字段。"
+        "用于运行期监控任务负载、检测超周期、性能瓶颈分析。"
+    ),
+    behavior=(
+        "**调用方式**：同步函数，立即返回 `PlcTaskSystemInfo` 结构副本。\n\n"
+        "**结构字段**：`PlcTaskSystemInfo` 包含 `taskIndex`、`cycleTime`（任务设置的周期）、`lastExecTime`（上次实际执行时间）、`maxExecTime`、`minExecTime`、`cycleTimeExceeded`（超周期标志）、`priority` 等。\n\n"
+        "**典型用法**：MAIN 周期里调用本函数把 `lastExecTime` 存到 HMI 可视化变量，运维直接看到 PLC 任务的实际开销。\n\n"
+        "**性能监控模式**：在 MAIN 任务里调用本函数取 `maxExecTime`，与 `cycleTime` 做比，超过 80% 即报警，能在真正超周期之前提前预警。配合 `F_GetCpuCoreIndex` 可知道任务被分配到哪个 CPU 核。\n\n"
+        "**调用即得**：本函数无任何输入参数，返回值是结构体副本；不需要额外的状态机或异步等待。"
+    ),
+    pitfalls=[
+        ("**返回的是『调用所在任务』的信息**：不能查别的任务；要查其他任务用 ADS 读 `Task` 节点。", False),
+        ("**结构副本开销**：`PlcTaskSystemInfo` 不算大，但每个 PLC 周期调用一次额外几十纳秒。", True),
+        ("**`cycleTimeExceeded` 一次性触发**：建议自己加 latch，否则错过一拍可能漏报。", True),
+    ],
+    var_desc={},
+    return_kind="NONE",
+    return_text="本函数返回 `PlcTaskSystemInfo`：包含 cycleTime / lastExecTime / maxExecTime / cycleTimeExceeded / priority 等字段的结构体。\n",
+    scenario="HMI 监控页显示 PLC MAIN 任务的实际周期、最大执行时间、抖动；运维一眼看出是否超周期。",
+    value="替代登工程看实时面板。",
+    alt=("- 登工程 Real-time 面板：远程不方便。\n- ADS Read：可以但要拼报文。"),
+    xml_scen="每周期把 MAIN 任务的最大执行时间存到 HMI 可视化变量；运维直接看到是否超周期。",
+    xml_val="替代登工程开 Real-time 面板远程观察。",
+    xml_verify="加重 PLC 负载（如批量 MEMCPY）→ 观察 stMyTaskInfo.maxExecTime 增大。",
+    xml_vars=[
+        ("stMyTaskInfo", "PlcTaskSystemInfo", None, "本任务系统信息"),
+    ],
+    xml_call=(
+        "// 每周期更新一次任务信息到 HMI 可视化变量\n"
+        "stMyTaskInfo := F_GetTaskInfo();\n"
+    ),
+    related=["F_GetCpuCoreIndex", "GETCURTASKINDEXEX"],
+)
+
+_add(
+    "F_RaiseException",
+    ftype="FUNCTION",
+    summary=(
+        "F_RaiseException 在 PLC 代码中主动抛出一个运行时异常，异常码由 `ExceptionCode`（来自 `__SYSTEM.ExceptionCode` 枚举或自定义 `UDINT`）指定。"
+        "在 `__TRY` 块外抛会被 TwinCAT 异常处理捕获并停止 PLC；在 `__TRY` 内可被 `__CATCH` 捕获。"
+        "用于实现自定义错误流程、断言失败、不可恢复错误中止。"
+    ),
+    behavior=(
+        "**`__TRY` 内 vs 外**：\n\n"
+        "- `__TRY` 块外抛出：异常进入 TwinCAT 全局异常处理，PLC 停止执行。\n"
+        "- `__TRY` 块内抛出：可在 `__CATCH(exc)` 块中捕获并处理，PLC 不停。\n\n"
+        "**异常码**：可用 `__SYSTEM.ExceptionCode` 枚举（如 `RTSEXCPT_DIVIDEBYZERO`），也可自定义 `UDINT` 值。\n\n"
+        "**典型用法**：在断言失败（如关键参数越界、状态机进入不可达分支）时主动抛异常，让 PLC 显式停在错误现场而不是隐蔽继续。\n\n"
+        "**控制流影响**：调用本函数后控制流立即转移到最近的 `__CATCH` 块或全局异常处理器；调用点之后的代码**不会执行**。所以本函数不需要返回值——它要么终止任务要么进入捕获块。\n\n"
+        "**与 IEC 11 标准的关系**：`__TRY` / `__CATCH` / `__FINALLY` / `__ENDTRY` 是 CODESYS / TwinCAT 拓展，不是 IEC 61131-3 标准，跨厂商不可移植。"
+    ),
+    pitfalls=[
+        ("**`__TRY` 外抛出会立刻停 PLC**：必须确保 demo / 测试代码包裹在 `__TRY` / `__CATCH` 里，否则一抛异常生产环境直接停机。", False),
+        ("**异常码冲突**：自定义码建议在高位段（如 `16#80000000+`）避免与 TwinCAT 内置 `__SYSTEM.ExceptionCode` 冲突。", True),
+        ("**捕获后状态恢复**：`__CATCH` 内可读 `__SYSTEM.LastException` 检查；处理完需主动恢复局部状态。", True),
+        ("**与 `bError` / `nErrId` 共存**：业务可恢复错误用 `bError`，不可恢复或编程错误才用本函数。", True),
+    ],
+    var_desc={"ExceptionCode": "异常码（`UDINT`）。可用 `__SYSTEM.ExceptionCode` 枚举或自定义 `UDINT` 值。"},
+    return_kind="NONE",
+    return_text="本函数无返回值（抛异常后控制流转移）。\n",
+    scenario="在状态机进入『不可能到达』的 default 分支时主动 `F_RaiseException`，让 PLC 显式停在现场，便于事后分析比静默继续更好。",
+    value="替代 `printf` 日志 + 静默继续的弱断言；真正强制中止。",
+    alt=("- `bError := TRUE` + 业务流程跳转：可恢复错误用这个。\n- `RETURN`：静默退出，调试难。"),
+    xml_scen="在状态机的 default 分支（不可达）主动抛异常，让 PLC 停在现场便于事后分析。用 __TRY/__CATCH 演示捕获 + 恢复模式。",
+    xml_val="替代 printf 日志 + 静默继续，真正强制中止。",
+    xml_verify="bTriggerAssertion := TRUE → 观察 nExceptionCaught 非零且 nCounterCatch 递增；恢复执行流。",
+    xml_vars=[
+        ("bTriggerAssertion", "BOOL", None, "在线写 TRUE 触发一次断言失败"),
+        ("nExceptionCaught", "UDINT", None, "捕获到的异常码"),
+        ("nCounterCatch", "UDINT", None, "进入 __CATCH 的次数"),
+        ("nCounterAfter", "UDINT", None, "异常处理后继续执行的次数"),
+        ("rtTrig", "R_TRIG", None, "上升沿检测"),
+    ],
+    xml_call=(
+        "rtTrig(CLK := bTriggerAssertion);\n"
+        "IF rtTrig.Q THEN\n"
+        "    __TRY\n"
+        "        // 模拟『不可达分支』的断言失败\n"
+        "        F_RaiseException(ExceptionCode := 16#80000001);\n"
+        "    __CATCH(nExceptionCaught)\n"
+        "        // 捕获后记录并恢复\n"
+        "        nCounterCatch := nCounterCatch + 1;\n"
+        "    __ENDTRY\n"
+        "END_IF;\n\n"
+        "// 异常处理完后业务继续\n"
+        "nCounterAfter := nCounterAfter + 1;\n"
+    ),
+    related=[],
+)
+
+_add(
+    "F_SplitPathName",
+    ftype="FUNCTION",
+    summary=(
+        "F_SplitPathName 把一个完整路径字符串（如 `'C:\\BC\\INCLUDE\\file.txt'`）拆成 4 个分量：盘符 / 目录 / 文件名 / 扩展名，输出到 4 个 `VAR_IN_OUT` 字符串。"
+        "返回 `BOOL`：`TRUE` 成功，`FALSE` 失败（路径格式不合法）。"
+        "适用于配方 / 日志路径预处理：根据扩展名分发、根据目录归类。"
+    ),
+    behavior=(
+        "**输出 4 个分量**：\n\n"
+        "- `sDrive`：盘符 + 冒号（如 `'C:'`），3 字符 STRING；\n"
+        "- `sDir`：目录路径，**含**前导和尾随反斜杠（如 `'\\BC\\INCLUDE\\'`），`T_MaxString`；\n"
+        "- `sFileName`：文件名主体（不含扩展名），`T_MaxString`；\n"
+        "- `sExt`：扩展名**含**点号（如 `'.txt'`），`T_MaxString`。\n\n"
+        "**返回值**：`TRUE` = 拆分成功；`FALSE` = 路径格式错（缺少盘符或非法字符）。\n\n"
+        "**调用方负责分配输出字符串**：4 个 `VAR_IN_OUT` 都由调用方提供本地变量，FB 把结果写进去。`sDrive` 必须分配 `STRING(3)` 容量，其他 3 个 `T_MaxString`（约 255 字节）。\n\n"
+        "**调用例子**：完整路径 `'C:\\\\BC\\\\INCLUDE\\\\file.txt'` 拆分后 `sDrive = 'C:'`、`sDir = '\\\\BC\\\\INCLUDE\\\\'`、`sFileName = 'file'`、`sExt = '.txt'`。\n\n"
+        "**纯字符串处理**：本函数同步函数，立即返回；不做文件系统访问，路径不存在或无效路径不报错，只检查格式。"
+    ),
+    pitfalls=[
+        ("**`sDir` 含尾随 `\\`**：拼新路径时不要重复加 `\\`，否则得到 `'C:\\dir\\\\file.txt'` 双斜杠。", False),
+        ("**`sExt` 含点号**：业务比较扩展名要用 `'.csv'` 而不是 `'csv'`。", False),
+        ("**Linux 风格 `/` 路径**：PDF 没明确，实测 Windows 上 `/` 也能被识别为分隔符，但建议统一用 `\\`。", True),
+        ("**`VAR_IN_OUT` 必须先分配本地变量**：不能传匿名表达式。", False),
+    ],
+    var_desc={
+        "sPathName": "完整路径字符串，格式 `'X:\\DIR\\SUBDIR\\FILENAME.EXT'`。",
+        "sDrive": "**输出**：盘符（如 `'C:'`），3 字符。",
+        "sDir": "**输出**：目录路径（如 `'\\BC\\INCLUDE\\'`），含前后反斜杠。",
+        "sFileName": "**输出**：文件名主体（不含扩展名）。",
+        "sExt": "**输出**：扩展名（如 `'.txt'`），含点号。",
+    },
+    return_kind="BOOL",
+    scenario="读到一份新的工艺文件路径 `'D:\\Recipes\\Apr\\BatchA.csv'`，根据 `sExt = '.csv'` 走 CSV 解析分支，根据 `sDir` 把文件名记录到对应月份归档表。",
+    value="替代手写 `RIGHT` / `FIND` / `MID` 4 段：一行得到 4 分量。",
+    alt=("- 手写字符串扫描：约 15-20 行。"),
+    xml_scen="读到工艺文件路径 → 拆出扩展名 .csv 走 CSV 解析分支；按目录归档到月份表。",
+    xml_val="一行替代 15-20 行字符串扫描。",
+    xml_verify="改 sFullPath 为不同路径 → 4 个分量自动更新；非法路径 → bSplitOk = FALSE。",
+    xml_vars=[
+        ("sFullPath", "T_MaxString", "'D:\\Recipes\\Apr\\BatchA.csv'", "完整路径"),
+        ("sDriveOut", "STRING(3)", "''", "盘符输出"),
+        ("sDirOut", "T_MaxString", "''", "目录输出"),
+        ("sFileBase", "T_MaxString", "''", "文件名输出"),
+        ("sFileExt", "T_MaxString", "''", "扩展名输出"),
+        ("bSplitOk", "BOOL", None, "TRUE = 拆分成功"),
+    ],
+    xml_call=(
+        "// 单次完整调用；VAR_IN_OUT 必须传本地变量\n"
+        "bSplitOk := F_SplitPathName(\n"
+        "    sPathName := sFullPath,\n"
+        "    sDrive    := sDriveOut,\n"
+        "    sDir      := sDirOut,\n"
+        "    sFileName := sFileBase,\n"
+        "    sExt      := sFileExt\n"
+        ");\n"
+    ),
+    related=["FB_FileOpen"],
+)
