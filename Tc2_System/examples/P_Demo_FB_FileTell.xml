@@ -26,9 +26,9 @@
               <type><BOOL/></type>
               <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">在线写 TRUE 触发一次查询</xhtml></documentation>
             </variable>
-            <variable name="cbCurrentPos">
-              <type><UDINT/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">查询返回的当前指针偏移</xhtml></documentation>
+            <variable name="nCurrentPos">
+              <type><DINT/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">查询返回的当前指针偏移（出错时 = -1）</xhtml></documentation>
             </variable>
             <variable name="bTellError">
               <type><BOOL/></type>
@@ -46,9 +46,9 @@
         </interface>
         <body>
           <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
-// 场景：读完一段后查询当前文件指针位置 cbCurrentPos 保存到 retain 变量，便于断电重启续读。
+// 场景：读完一段后查询当前文件指针位置 nCurrentPos 保存到 retain 变量，便于断电重启续读。
 // 价值：替代手动跟踪偏移变量，直接从 OS 拿权威值。
-// 验证：在线置 bTellRequest := TRUE → 观察 cbCurrentPos 在 1-2 周期后非零；与刚读完的字节累计量一致。
+// 验证：在线置 bTellRequest := TRUE → 观察 nCurrentPos 在 1-2 周期后非零；与刚读完的字节累计量一致。
 // 验证步骤：
 //   1. 右键 PLC 项目 → Import PLCopenXML → 选本文件
 //   2. 引用 Tc2_System（References → Add library）
@@ -63,7 +63,7 @@ fbFileTell(
     bBusy     =&gt; bBusyMon,
     bError    =&gt; bTellError,
     nErrId    =&gt; nErrIdLast,
-    cbFilePos =&gt; cbCurrentPos
+    nSeekPos =&gt; nCurrentPos
 );
 </xhtml></ST>
         </body>

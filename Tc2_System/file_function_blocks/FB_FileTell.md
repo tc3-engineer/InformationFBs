@@ -19,7 +19,7 @@
 
 ## 1. 功能简述
 
-FB_FileTell 返回已打开文件的当前指针位置（从文件头算起的字节偏移），输出到 `cbFilePos`。常与 `FB_FileSeek` 配合使用：先 Tell 保存位置 → 做完读 / 写 → Seek 回原位置。也用于估算文件大小（Seek 到末尾再 Tell）。
+FB_FileTell 返回已打开文件的当前指针位置（从文件头算起的字节偏移），输出到 `nSeekPos`。常与 `FB_FileSeek` 配合使用：先 Tell 保存位置 → 做完读 / 写 → Seek 回原位置。也用于估算文件大小（Seek 到末尾再 Tell）。
 
 ## 2. 接口定义
 
@@ -57,7 +57,7 @@ END_VAR
 | `bBusy` | `BOOL` | TRUE 表示请求正在 ADS 通道上处理；同周期内 `bExecute` 仍为高电平也不会重新触发。 |
 | `bError` | `BOOL` | TRUE 表示本次请求失败，错误号在 `nErrId`。`bBusy` 复位为 FALSE 后才可信。 |
 | `nErrId` | `UDINT` | ADS 错误码（见 ADS Return Codes）；常见值 `0x70C` 文件不存在、`0x70D` 文件已存在、`0x745` ADS 超时、`0x1804` 路径未知。 |
-| `nSeekPos` | `DINT` | 有符号整数：`nSeekPos`。 |
+| `nSeekPos` | `DINT` | **输出**：当前文件指针字节偏移（从文件头起算）。追加模式下反映最近 I/O 后位置而非下次写位置。 |
 
 ### VAR_IN_OUT
 
@@ -65,11 +65,11 @@ END_VAR
 
 ## 3. 行为说明
 
-**调用方式**：周期调用，`bExecute` 上升沿触发一次查询。完成后 `cbFilePos` 给出当前指针字节偏移。
+**调用方式**：周期调用，`bExecute` 上升沿触发一次查询。完成后 `nSeekPos` 给出当前指针字节偏移。
 
-**追加模式细节**：PDF 明确指出在 `FOPEN_MODEAPPEND` 模式下，`cbFilePos` 反映的是『最近一次 I/O 操作』后的位置，**不是**下次写入位置——下次写入永远在末尾。读操作后 Tell 反映读完位置；写操作后位置变化未必如直觉。
+**追加模式细节**：PDF 明确指出在 `FOPEN_MODEAPPEND` 模式下，`nSeekPos` 反映的是『最近一次 I/O 操作』后的位置，**不是**下次写入位置——下次写入永远在末尾。读操作后 Tell 反映读完位置；写操作后位置变化未必如直觉。
 
-**未做 I/O 时**：以 `a` / `a+` 打开且尚未读 / 写过，`cbFilePos = 0`（文件头），与 r/w/+ 模式一致。
+**未做 I/O 时**：以 `a` / `a+` 打开且尚未读 / 写过，`nSeekPos = 0`（文件头），与 r/w/+ 模式一致。
 
 ## 4. 错误码 / 返回值
 
@@ -93,7 +93,7 @@ END_VAR
 
 - **追加模式下不是下次写位置**：在 `a` / `a+` 模式下 Tell 出来的位置只是最近一次 I/O 后的位置，**不是**下次写入位置（永远末尾）。要算文件大小用 Seek 到 SEEK_END 再 Tell。
 - **句柄非法**：传 0 或已 Close 的 `hFile` → `bError = TRUE`。
-- **>2 GB 限制**：`cbFilePos` 是 `UDINT`，理论 4 GB；但 Seek 是 `DINT` 限 2 GB，所以联合使用上限 2 GB。（工程经验补充）
+- **>2 GB 限制**：`nSeekPos` 是 `UDINT`，理论 4 GB；但 Seek 是 `DINT` 限 2 GB，所以联合使用上限 2 GB。（工程经验补充）
 
 ## 6. 最小例程
 

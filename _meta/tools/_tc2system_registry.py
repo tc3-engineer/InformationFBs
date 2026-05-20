@@ -521,35 +521,35 @@ _add(
 _add(
     "FB_FileTell",
     summary=(
-        "FB_FileTell 返回已打开文件的当前指针位置（从文件头算起的字节偏移），输出到 `cbFilePos`。"
+        "FB_FileTell 返回已打开文件的当前指针位置（从文件头算起的字节偏移），输出到 `nSeekPos`。"
         "常与 `FB_FileSeek` 配合使用：先 Tell 保存位置 → 做完读 / 写 → Seek 回原位置。"
         "也用于估算文件大小（Seek 到末尾再 Tell）。"
     ),
     behavior=(
-        "**调用方式**：周期调用，`bExecute` 上升沿触发一次查询。完成后 `cbFilePos` 给出当前指针字节偏移。\n\n"
-        "**追加模式细节**：PDF 明确指出在 `FOPEN_MODEAPPEND` 模式下，`cbFilePos` 反映的是『最近一次 I/O 操作』后的位置，**不是**下次写入位置——下次写入永远在末尾。读操作后 Tell 反映读完位置；写操作后位置变化未必如直觉。\n\n"
-        "**未做 I/O 时**：以 `a` / `a+` 打开且尚未读 / 写过，`cbFilePos = 0`（文件头），与 r/w/+ 模式一致。"
+        "**调用方式**：周期调用，`bExecute` 上升沿触发一次查询。完成后 `nSeekPos` 给出当前指针字节偏移。\n\n"
+        "**追加模式细节**：PDF 明确指出在 `FOPEN_MODEAPPEND` 模式下，`nSeekPos` 反映的是『最近一次 I/O 操作』后的位置，**不是**下次写入位置——下次写入永远在末尾。读操作后 Tell 反映读完位置；写操作后位置变化未必如直觉。\n\n"
+        "**未做 I/O 时**：以 `a` / `a+` 打开且尚未读 / 写过，`nSeekPos = 0`（文件头），与 r/w/+ 模式一致。"
     ),
     pitfalls=[
         ("**追加模式下不是下次写位置**：在 `a` / `a+` 模式下 Tell 出来的位置只是最近一次 I/O 后的位置，**不是**下次写入位置（永远末尾）。要算文件大小用 Seek 到 SEEK_END 再 Tell。", False),
         ("**句柄非法**：传 0 或已 Close 的 `hFile` → `bError = TRUE`。", False),
-        ("**>2 GB 限制**：`cbFilePos` 是 `UDINT`，理论 4 GB；但 Seek 是 `DINT` 限 2 GB，所以联合使用上限 2 GB。", True),
+        ("**>2 GB 限制**：`nSeekPos` 是 `UDINT`，理论 4 GB；但 Seek 是 `DINT` 限 2 GB，所以联合使用上限 2 GB。", True),
     ],
     var_desc={
         **_VD_FILE_ADS,
-        "cbFilePos": "**输出**：当前文件指针字节偏移（从文件头起算）。追加模式下反映最近 I/O 后位置而非下次写位置。",
+        "nSeekPos": "**输出**：当前文件指针字节偏移（从文件头起算）。追加模式下反映最近 I/O 后位置而非下次写位置。",
     },
     scenario="对一份大配方文件做断点续传读取：把 Tell 拿到的位置存到 retain，重启后 Seek 回原位置继续读。",
     value="封装 ADS 0x10007 命令；不用本 FB 要自己拼 ADS Read 命令。",
     alt=("- 手动维护一个本地 UDINT 跟踪每次读写后的偏移：能用但断电后会丢同步。"),
-    xml_scen="读完一段后查询当前文件指针位置 cbCurrentPos 保存到 retain 变量，便于断电重启续读。",
+    xml_scen="读完一段后查询当前文件指针位置 nCurrentPos 保存到 retain 变量，便于断电重启续读。",
     xml_val="替代手动跟踪偏移变量，直接从 OS 拿权威值。",
-    xml_verify="在线置 bTellRequest := TRUE → 观察 cbCurrentPos 在 1-2 周期后非零；与刚读完的字节累计量一致。",
+    xml_verify="在线置 bTellRequest := TRUE → 观察 nCurrentPos 在 1-2 周期后非零；与刚读完的字节累计量一致。",
     xml_vars=[
         ("fbFileTell", "FB_FileTell", None, "FB_FileTell 实例"),
         ("hOpenedFile", "UINT", None, "已打开句柄"),
         ("bTellRequest", "BOOL", None, "在线写 TRUE 触发一次查询"),
-        ("cbCurrentPos", "UDINT", None, "查询返回的当前指针偏移"),
+        ("nCurrentPos", "DINT", None, "查询返回的当前指针偏移（出错时 = -1）"),
         ("bTellError", "BOOL", None, "TRUE = 查询失败"),
         ("nErrIdLast", "UDINT", None, "ADS 错误号"),
         ("bBusyMon", "BOOL", None, "ADS 通讯中"),
@@ -563,7 +563,7 @@ _add(
         "    bBusy     => bBusyMon,\n"
         "    bError    => bTellError,\n"
         "    nErrId    => nErrIdLast,\n"
-        "    cbFilePos => cbCurrentPos\n"
+        "    nSeekPos => nCurrentPos\n"
         ");\n"
     ),
     related=["FB_FileOpen", "FB_FileSeek"],
@@ -2327,4 +2327,295 @@ _add(
         "END_IF;\n"
     ),
     related=[],
+)
+
+
+# =================== [Obsolete] (3) ===================
+
+_add(
+    "F_GetVersionTcSystem",
+    ftype="FUNCTION",
+    status="verified · deprecated",
+    summary=(
+        "**⚠️ 已废弃**：F_GetVersionTcSystem 读取 PLC 库版本信息的某个元素（major / minor / revision），每次调用只能返回一个分量。"
+        "PDF 与 InfoSys 都明确建议**改用全局常量 `stLibVersion_Tc2_System`**——一次性拿到完整版本结构，无需多次调用，更安全可读。"
+        "保留本函数仅为兼容老代码；新工程禁用。"
+    ),
+    behavior=(
+        "**已废弃，不建议在新代码中使用。**\n\n"
+        "**原始行为**：根据 `nVersionElement` 取版本结构里的一个字段：\n\n"
+        "- `1` = major（主版本号）\n"
+        "- `2` = minor（次版本号）\n"
+        "- `3` = revision（修订号）\n\n"
+        "**返回值 `UINT`**：对应字段值；越界 `nVersionElement` 行为未明确，建议不要传 1-3 之外的值。\n\n"
+        "**替代方案**：直接读 `stLibVersion_Tc2_System.iMajor` / `.iMinor` / `.iBuild` / `.iRevision` 字段，一次性获取所有信息，避免 3 次函数调用。本函数在新工程中应当完全避免使用。"
+    ),
+    pitfalls=[
+        ("**已废弃**：PDF / InfoSys 明确建议改用 `stLibVersion_Tc2_System` 全局常量。新工程不要用本函数。", False),
+        ("**只返回 3 个字段**：原始版本结构是 4 字段（major/minor/build/revision），本函数没有访问 build 的方式。", False),
+        ("**多次调用**：要拿完整版本必须调 3 次；用常量结构一行搞定。", True),
+    ],
+    var_desc={"nVersionElement": "要读的版本字段：1 = major、2 = minor、3 = revision。"},
+    return_kind="NONE",
+    return_text="本函数返回 `UINT`：对应字段的数值。无 build 字段访问能力。\n",
+    scenario="**仅老代码维护场景**：维护一份多年前写的工程，看见用了 `F_GetVersionTcSystem` 时知道它在干什么。新工程一律改用 `stLibVersion_Tc2_System.iMajor` 等。",
+    value="无新价值；已被全局常量取代。",
+    alt=(
+        "- `stLibVersion_Tc2_System.iMajor / iMinor / iBuild / iRevision`：**推荐**，一次读所有字段。\n"
+        "- `F_CmpLibVersion`：直接比对版本，省去手算。"
+    ),
+    xml_scen="对照演示：分别用废弃的 F_GetVersionTcSystem 和现代的 stLibVersion_Tc2_System 读 major，对比两者结果应当一致。",
+    xml_val="提醒读者切换到现代写法。",
+    xml_verify="观察 nMajorOld = nMajorNew；若不一致说明工程引用的库版本与当前运行不一致。",
+    xml_vars=[
+        ("nMajorOld", "UINT", None, "废弃方式读到的 major"),
+        ("nMajorNew", "UINT", None, "现代方式读到的 major"),
+        ("bMatched", "BOOL", None, "TRUE = 两种方式结果一致"),
+    ],
+    xml_call=(
+        "// 废弃方式（仅演示，不要在新代码用）\n"
+        "nMajorOld := F_GetVersionTcSystem(nVersionElement := 1);\n\n"
+        "// 现代方式：一行直接读全局常量字段\n"
+        "nMajorNew := stLibVersion_Tc2_System.iMajor;\n\n"
+        "// 应当一致\n"
+        "bMatched := (nMajorOld = nMajorNew);\n"
+    ),
+    related=["stLibVersion_Tc2_System", "F_CmpLibVersion"],
+)
+
+_add(
+    "GETSYSTEMTIME",
+    ftype="FUNCTION_BLOCK",
+    status="verified · deprecated",
+    summary=(
+        "**⚠️ 已废弃**：GETSYSTEMTIME 是功能块，读取系统时间戳（64 位整数，每单位 100ns，1601-01-01 以来的累计计数）。"
+        "PDF 明确指出**改用 `F_GetSystemTime` 函数**——只需一个返回值而不是两个输出，调用更简洁。"
+        "保留本 FB 仅为兼容老代码。"
+    ),
+    behavior=(
+        "**已废弃，不建议在新代码中使用。**\n\n"
+        "**原始行为**：每次调用都更新 64 位时间戳，拆成 `timeLoDW`（低 32 位）和 `timeHiDW`（高 32 位）两个 `UDINT` 输出。\n\n"
+        "**时间起点**：1601-01-01 00:00:00 UTC，与 Windows FILETIME 一致。\n\n"
+        "**单位**：100 ns。要换算成秒需 `/ 10_000_000`。\n\n"
+        "**替代方案**：`F_GetSystemTime()` 函数直接返回 `T_FILETIME64` 结构（含 64 位整数字段），无需手动拼装高低 32 位。\n\n"
+        "**为何废弃**：FB 形式调用啰嗦（要先实例化），返回两个分量需手动拼成 64 位。函数版本一行调用更优。"
+    ),
+    pitfalls=[
+        ("**已废弃**：用 `F_GetSystemTime()` 函数替代。", False),
+        ("**手拼高低 32 位**：要得到完整 64 位需 `nFull := SHL(TO_ULINT(timeHiDW), 32) OR TO_ULINT(timeLoDW)`，易写错。", False),
+        ("**FB 实例化开销**：函数版本无需实例化，更省内存。", True),
+    ],
+    var_desc={
+        "timeLoDW": "**输出**：时间戳低 32 位。",
+        "timeHiDW": "**输出**：时间戳高 32 位。",
+    },
+    scenario="**仅老代码维护场景**：维护用了 GETSYSTEMTIME 的工程时知道含义。新工程一律改 `F_GetSystemTime()` 函数。",
+    value="无新价值；已被函数版本取代。",
+    alt=("- `F_GetSystemTime()`：**推荐**，一行调用，返回完整 64 位结构。"),
+    xml_scen="对照演示：调用废弃的 GETSYSTEMTIME 与现代 F_GetSystemTime()，两者拼出的 64 位时间戳应当一致。",
+    xml_val="提醒切换到现代写法。",
+    xml_verify="观察 ulFullTimeOld = ulFullTimeNew（或差距 ≤ 1 个 PLC 周期）。",
+    xml_vars=[
+        ("fbGetSystemTime", "GETSYSTEMTIME", None, "废弃 FB 实例（仅演示）"),
+        ("nTimeLo", "UDINT", None, "废弃方式低 32 位"),
+        ("nTimeHi", "UDINT", None, "废弃方式高 32 位"),
+        ("ulFullTimeOld", "ULINT", None, "废弃方式拼装的 64 位"),
+    ],
+    xml_call=(
+        "// 废弃方式：先调 FB，再手动拼接两个 UDINT 成 ULINT\n"
+        "fbGetSystemTime(\n"
+        "    timeLoDW => nTimeLo,\n"
+        "    timeHiDW => nTimeHi\n"
+        ");\n"
+        "ulFullTimeOld := SHL(TO_ULINT(nTimeHi), 32) OR TO_ULINT(nTimeLo);\n\n"
+        "// 现代写法（注释，需 Tc2_System 提供 F_GetSystemTime 函数）：\n"
+        "// stFt := F_GetSystemTime();\n"
+        "// ulFullTimeNew := stFt.dwHighDateTime ... 等\n"
+    ),
+    related=["GETTASKTIME"],
+)
+
+_add(
+    "GETTASKTIME",
+    ftype="FUNCTION_BLOCK",
+    status="verified · deprecated",
+    summary=(
+        "**⚠️ 已废弃**：GETTASKTIME 是功能块，读取**当前任务的预期启动时间**（64 位时间戳，1601-01-01 起算，单位 100 ns）。"
+        "PDF 明确建议**改用 `F_GetTaskTime` 函数**。"
+        "保留本 FB 仅为兼容老代码；新工程禁用。"
+    ),
+    behavior=(
+        "**已废弃，不建议在新代码中使用。**\n\n"
+        "**与 `GETSYSTEMTIME` 区别**：GETSYSTEMTIME 返回当前实际时刻；本 FB 返回当前 PLC 任务的『预期启动时间』——这个时刻是 TwinCAT 调度器为本周期任务规划的开始时间，可能略早于 `GETSYSTEMTIME`（任务延迟时差更大）。\n\n"
+        "**返回 64 位拆两段**：与 GETSYSTEMTIME 同结构（`timeLoDW` + `timeHiDW`）。\n\n"
+        "**典型用法**：测量任务延迟 / 抖动——`GETSYSTEMTIME - GETTASKTIME` 即为本周期任务实际延迟。\n\n"
+        "**替代方案**：`F_GetTaskTime()` 函数。"
+    ),
+    pitfalls=[
+        ("**已废弃**：用 `F_GetTaskTime()` 函数替代。", False),
+        ("**返回的是『预期启动』而不是『当前实际』**：与 GETSYSTEMTIME 不同；测量抖动时要两者差值。", False),
+        ("**手拼高低 32 位**：同 GETSYSTEMTIME 的坑。", False),
+    ],
+    var_desc={
+        "timeLoDW": "**输出**：任务启动时间戳低 32 位。",
+        "timeHiDW": "**输出**：任务启动时间戳高 32 位。",
+    },
+    scenario="**仅老代码维护场景**：维护用了 GETTASKTIME 的工程。新工程改用 `F_GetTaskTime()` 函数。",
+    value="无新价值；已被函数版本取代。",
+    alt=("- `F_GetTaskTime()`：**推荐**，一行调用。\n- `F_GetTaskInfo()`：获取更全的任务信息（含 lastExecTime 等）。"),
+    xml_scen="对照演示：调用废弃 GETTASKTIME 与现代写法，两者拼出的任务启动时间戳应一致。",
+    xml_val="提醒切换到现代写法。",
+    xml_verify="观察 ulTaskStartOld 与 ulTaskStartNew 应当一致。",
+    xml_vars=[
+        ("fbGetTaskTime", "GETTASKTIME", None, "废弃 FB 实例（仅演示）"),
+        ("nTaskTimeLo", "UDINT", None, "低 32 位"),
+        ("nTaskTimeHi", "UDINT", None, "高 32 位"),
+        ("ulTaskStartOld", "ULINT", None, "拼装的 64 位任务启动时刻"),
+    ],
+    xml_call=(
+        "// 废弃方式\n"
+        "fbGetTaskTime(\n"
+        "    timeLoDW => nTaskTimeLo,\n"
+        "    timeHiDW => nTaskTimeHi\n"
+        ");\n"
+        "ulTaskStartOld := SHL(TO_ULINT(nTaskTimeHi), 32) OR TO_ULINT(nTaskTimeLo);\n\n"
+        "// 现代写法：ulTaskStartNew := F_GetTaskTime();\n"
+    ),
+    related=["GETSYSTEMTIME"],
+)
+
+
+# =================== Global constants (1) ===================
+
+_add(
+    "Constants",
+    ftype="VAR_GLOBAL",
+    summary=(
+        "Tc2_System 库提供一组全局常量集中定义在 `Constants`（章节 6.1）中，覆盖 ADS 端口号、ADS 状态码、ADS 索引组、文件打开模式等多类常量。"
+        "应用代码不要硬编码这些数字，应直接引用对应的常量符号，提升可读性并避免维护时数字写错。"
+    ),
+    behavior=(
+        "**常量分组**：\n\n"
+        "**1. ADS 端口号（`AMSPORT_*`）**：标识 TwinCAT 各服务的端口。常用：\n\n"
+        "- `AMSPORT_R0_PLC_RTS1` = 801 （TwinCAT 2.x PLC Runtime 1，老版兼容）\n"
+        "- `AMSPORT_R0_PLC_TC3` = 851 （TwinCAT 3 PLC Runtime，新版默认）\n"
+        "- `AMSPORT_R0_NC` = 500 （NC Server）\n"
+        "- `AMSPORT_R0_IO` = 300 （IO Server）\n"
+        "- `AMSPORT_LOGGER` = 100 （日志服务器）\n"
+        "- `AMSPORT_R3_SYSSERV` = 10000 （System Service）\n\n"
+        "**2. ADS 状态码（`ADSSTATE_*`）**：标识 ADS 对象当前状态：`ADSSTATE_RUN` = 5、`ADSSTATE_STOP` = 6、`ADSSTATE_CONFIG` = 15、`ADSSTATE_RECONFIG` = 16 等。\n\n"
+        "**3. ADS 索引组（`ADSIGRP_*`）**：标识 ADS 数据访问的索引组：`ADSIGRP_SYMTAB` = `16#F000`、`ADSIGRP_SYM_INFOBYNAME` 等。\n\n"
+        "**4. 其他**：文件打开模式（`FOPEN_MODE*`）、Default ADS 超时（`DEFAULT_ADS_TIMEOUT`）等。\n\n"
+        "**全部常量见 PDF §6.1**。本节列出最常用的；完整列表逐条搬运过来意义不大，建议查 PDF 或 InfoSys 对应章节。"
+    ),
+    pitfalls=[
+        ("**不要硬编码数字**：写 `nPort := 801` 不如 `nPort := AMSPORT_R0_PLC_RTS1` 直观；后续维护看到 851 还是 801 一目了然。", False),
+        ("**TwinCAT 2 vs 3 PLC 端口**：851 是 TC3 默认，老工程的 801 / 811 是 TC2，跨版本通讯要核对。", False),
+        ("**常量值不可改**：`VAR_GLOBAL CONSTANT` 编译期定下，运行期赋值会报错。", True),
+    ],
+    var_desc={},
+    return_kind="NONE",
+    return_text=(
+        "本节是 `VAR_GLOBAL CONSTANT` 集合，无返回值。\n\n"
+        "**核心常量速查**：\n\n"
+        "| 常量名 | 值 | 说明 |\n|---|---|---|\n"
+        "| `AMSPORT_R0_PLC_TC3` | 851 | TwinCAT 3 PLC Runtime 默认端口 |\n"
+        "| `AMSPORT_R0_PLC_RTS1` | 801 | TwinCAT 2 PLC Runtime 1（兼容） |\n"
+        "| `AMSPORT_R0_NC` | 500 | NC Server |\n"
+        "| `AMSPORT_LOGGER` | 100 | 日志服务器 |\n"
+        "| `ADSSTATE_RUN` | 5 | ADS 对象运行中 |\n"
+        "| `ADSSTATE_STOP` | 6 | ADS 对象停止 |\n"
+        "| `ADSSTATE_CONFIG` | 15 | TwinCAT 配置模式 |\n"
+        "| `DEFAULT_ADS_TIMEOUT` | T#5S | 默认 ADS 调用超时 |\n"
+        "| `FOPEN_MODEREAD` | 1 | 只读 |\n"
+        "| `FOPEN_MODEWRITE` | 2 | 只写 |\n"
+        "| `FOPEN_MODEAPPEND` | 4 | 追加 |\n"
+        "| `FOPEN_MODEPLUS` | 16 | 读写 |\n"
+        "| `FOPEN_MODEBINARY` | 32 | 二进制模式 |\n"
+        "| `FOPEN_MODETEXT` | 64 | 文本模式 |\n"
+    ),
+    scenario="MAIN 中调用 ADSREAD 时用 `nPort := AMSPORT_R0_PLC_TC3` 而不是硬编码 851；新人接手代码也能立刻明白这是 TC3 的 PLC 端口。",
+    value="替代魔法数字；可读性大幅提升。",
+    alt=("- 自定义常量：可行但重复造轮子。\n- 硬编码：可维护性最差。"),
+    xml_scen="演示直接引用 Constants 中的几个常用符号，把它们写到本地变量便于 HMI 监控显示。",
+    xml_val="替代硬编码 851 / 5 / T#5S 等魔法数字。",
+    xml_verify="观察 nPlcPort = 851，eRunningState = 5（ADSSTATE_RUN），tDefaultTimeout = T#5S。",
+    xml_vars=[
+        ("nPlcPort", "UINT", None, "本机 TC3 PLC 端口号"),
+        ("eRunningState", "UINT", None, "ADS Running 状态码"),
+        ("tDefaultTimeout", "TIME", None, "默认 ADS 超时"),
+        ("nFileTextAppendMode", "DWORD", None, "文本追加打开模式位掩码"),
+    ],
+    xml_call=(
+        "// 直接引用 Tc2_System.Constants 里的全局常量\n"
+        "nPlcPort            := AMSPORT_R0_PLC_TC3;\n"
+        "eRunningState       := ADSSTATE_RUN;\n"
+        "tDefaultTimeout     := DEFAULT_ADS_TIMEOUT;\n"
+        "nFileTextAppendMode := FOPEN_MODEAPPEND OR FOPEN_MODETEXT;\n"
+    ),
+    related=["stLibVersion_Tc2_System", "FB_FileOpen", "F_CmpLibVersion"],
+)
+
+
+# =================== Library version (1) ===================
+
+_add(
+    "stLibVersion_Tc2_System",
+    ftype="VAR_GLOBAL CONSTANT",
+    syntax_decl=(
+        "VAR_GLOBAL CONSTANT\n"
+        "    stLibVersion_Tc2_System : ST_LibVersion;\n"
+        "END_VAR"
+    ),
+    summary=(
+        "`stLibVersion_Tc2_System` 是 Tc2_System 库的版本全局常量（`ST_LibVersion` 类型）。"
+        "每个 Beckhoff PLC 库都按统一命名规则提供同名常量 `stLibVersion_<library>`。"
+        "结合 `F_CmpLibVersion` 函数可在启动期做库版本守门，避免依赖错版本的库导致接口不兼容。"
+    ),
+    behavior=(
+        "**类型结构 `ST_LibVersion`**：包含 4 个字段——\n\n"
+        "- `iMajor : UINT` 主版本号\n"
+        "- `iMinor : UINT` 次版本号\n"
+        "- `iBuild : UINT` 构建号\n"
+        "- `iRevision : UINT` 修订号\n\n"
+        "另外还有 `sVersion : STRING` 字符串形式版本和 `sLibName : STRING` 库名等字段（具体见 `ST_LibVersion` topic）。\n\n"
+        "**编译期常量**：由 Beckhoff 在发布库时写死；引用本库后该常量自动可用，无需自己赋值。\n\n"
+        "**使用模式**：\n\n"
+        "1. **直读字段**：`nMyMajor := stLibVersion_Tc2_System.iMajor;`\n"
+        "2. **比对版本**：`nCmp := F_CmpLibVersion(stLibVersion_Tc2_System, 3, 3, 8, 0); IF nCmp < 0 THEN ... END_IF;`\n"
+        "3. **HMI 显示**：直接读 `sVersion` 字符串字段。\n\n"
+        "**统一规则**：所有 Beckhoff 库都遵循 `stLibVersion_<libname>` 命名，跨库守门只需把库名换掉。"
+    ),
+    pitfalls=[
+        ("**不要写 `stLibVersion_Tc2_System := ...`**：常量赋值编译报错。", True),
+        ("**字段名 `iMajor` 而不是 `nMajor`**：早期版本可能不同；以 PDF 当前版本为准。", True),
+        ("**库未引用时编译错误**：常量编译期就需要存在，库未加进项目会直接编译失败。", True),
+        ("**与运行时实际加载的库版本**：通常一致，但热更新场景下可能不同步；正常工程不会遇到。", True),
+    ],
+    var_desc={},
+    return_kind="NONE",
+    return_text="本节是 `VAR_GLOBAL CONSTANT`，无返回值。访问方式：直接 `stLibVersion_Tc2_System.iMajor` 等。\n",
+    scenario="集成商交付前的版本守门：MAIN 启动时读 `stLibVersion_Tc2_System.iMajor / iMinor / iBuild / iRevision` 写入诊断日志，便于事后追溯；同时用 `F_CmpLibVersion` 拒绝低版本启动。",
+    value="替代 `F_GetVersionTcSystem` 的多次调用；一次拿到完整结构。",
+    alt=(
+        "- `F_GetVersionTcSystem`：废弃，多次调用且只能拿 3 个字段。\n"
+        "- 手工记录在文档：易过期、不可信。"
+    ),
+    xml_scen="启动时把 Tc2_System 版本各字段抓出来写到本地诊断变量，HMI 显示『库版本：x.y.z.r』。",
+    xml_val="替代 F_GetVersionTcSystem 多次调用，一次拿全。",
+    xml_verify="观察 nLibMajor / nLibMinor / nLibBuild / nLibRevision 与库发布版本一致（v1.17.3 对应字段）。",
+    xml_vars=[
+        ("nLibMajor", "UINT", None, "库主版本号"),
+        ("nLibMinor", "UINT", None, "库次版本号"),
+        ("nLibBuild", "UINT", None, "库构建号"),
+        ("nLibRevision", "UINT", None, "库修订号"),
+    ],
+    xml_call=(
+        "// 启动期一次性抓取库版本各字段；这些是编译期常量，每周期读开销可忽略\n"
+        "nLibMajor    := stLibVersion_Tc2_System.iMajor;\n"
+        "nLibMinor    := stLibVersion_Tc2_System.iMinor;\n"
+        "nLibBuild    := stLibVersion_Tc2_System.iBuild;\n"
+        "nLibRevision := stLibVersion_Tc2_System.iRevision;\n"
+    ),
+    related=["F_CmpLibVersion", "F_GetVersionTcSystem", "Constants"],
 )
