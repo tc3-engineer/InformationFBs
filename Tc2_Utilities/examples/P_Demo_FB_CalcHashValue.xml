@@ -70,6 +70,10 @@
 //   5. 与同输入数据离线命令行 (echo -n 'recipe-v1:tank=70C,time=120s' | sha256sum) 对比
 // ============================================================
 
+// 每周期先清零 bHashReady：语义是"本周期产出有效"，下一周期若没新计算就该
+// 自动回 FALSE，避免下游消费者把旧 hash 当新数据反复处理。
+bHashReady := FALSE;
+
 // 上升沿触发一次三段调用：start → update → finish
 IF bStartCalc THEN
     bStartCalc := FALSE;                                // 自动复位
@@ -78,7 +82,9 @@ IF bStartCalc THEN
                                            nData := LEN(sRecipePayload));
     bFinishOk  := fbHashCalculator.finish(pHash := ADR(aRecipeHash),
                                            nHash := SIZEOF(aRecipeHash));
-    bHashReady := bStartOk AND bUpdateOk;               // 本周期产出有效
+    // 三段全部成功才标 hash 有效。finish 失败时 aRecipeHash 内容未定义，
+    // 不能让 MES 把坏 hash 当好 hash 用而引入完整性误判。
+    bHashReady := bStartOk AND bUpdateOk AND bFinishOk;
 END_IF;
 </xhtml>
           </ST>

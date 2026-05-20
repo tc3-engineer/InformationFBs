@@ -87,6 +87,9 @@ hrThrottleResult := fbBoostMonitor.GetAllRtCoreThrottling(
 );
 
 // 业务策略：留 5°C 余量给 HMI 提前报警，不等到硬件自动限频
+// 注：每周期先清零再按本周期成功读取的结果重新置位，避免单次读取失败时上一
+//     周期的报警状态被锁住造成 HMI 误显。
+bTemperatureNearLimit := FALSE;
 IF SUCCEEDED(hrTempResult) AND nTemperatureLimitC &gt; 5 THEN
     bTemperatureNearLimit := nCurrentTemperatureC &gt;= (nTemperatureLimitC - 5);
 END_IF;
