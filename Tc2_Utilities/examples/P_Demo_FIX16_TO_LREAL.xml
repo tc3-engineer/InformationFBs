@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <project xmlns="http://www.plcopen.org/xml/tc6_0200">
-  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-10T11:00:00"/>
-  <contentHeader name="Tc2_Utilities.FIX16_TO_LREAL Demo" modificationDateTime="2026-05-10T11:00:00">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-12T12:00:00"/>
+  <contentHeader name="Tc2_Utilities.FIX16_TO_LREAL Demo" modificationDateTime="2026-05-12T12:00:00">
     <coordinateInfo>
       <fbd><scaling x="1" y="1"/></fbd>
       <ld><scaling x="1" y="1"/></ld>
@@ -14,36 +14,37 @@
       <pou name="P_Demo_FIX16_TO_LREAL" pouType="program">
         <interface>
           <localVars>
-            <variable name="bResult">
-              <type><LREAL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">FIX16_TO_LREAL 的返回值</xhtml></documentation>
-            </variable>
-            <variable name="bRun">
-              <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">触发一次调用</xhtml></documentation>
-            </variable>
-            <variable name="fp">
+            <variable name="fp8Setpoint">
               <type><derived name="T_FIX16"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">测试用本地变量</xhtml></documentation>
+              <initialValue><simpleValue value="154;"/></initialValue>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">0.6 在 Q8 编码 ≈ 154/256 = 0.6015625</xhtml></documentation>
+            </variable>
+            <variable name="lrDisp">
+              <type><LREAL/></type>
+            </variable>
+            <variable name="bDecode">
+              <type><BOOL/></type>
             </variable>
           </localVars>
         </interface>
         <body>
           <ST>
             <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
-// Tc2_Utilities.FIX16_TO_LREAL 演示程序（FUNCTION）
+// Tc2_Utilities.FIX16_TO_LREAL 演示程序（FUNCTION，单周期触发）
 // ============================================================
+// 场景：把 0.6 的定点数（Q8）转回 LREAL 显示，结果为 0.6015625（误差来自 0.6 不能精确表达）。
+// 价值：替代手写 `LREAL(in) / 256.0`；可读性更高，与 `LREAL_TO_FIX16` 对称使用。
 // 验证步骤：
-//   1. 引用 Tc2_Utilities（及依赖类型所在的库）
+//   1. 把本 PROGRAM 加到 PlcTask 调用列表
 //   2. 编译 + 登录
-//   3. 强制 bRun := TRUE 一个周期
-//   4. 观察 bResult 应为 12.5（当 fp 来自 LREAL_TO_FIX16(12.5, 8)）
+//   3. 在线把 b... 触发位置 TRUE 一个周期
+//   4. 观察输出变量是否符合期望
 // ============================================================
 
-fp := LREAL_TO_FIX16(12.5, 8);
-IF bRun THEN
-    bResult := FIX16_TO_LREAL(fp);
-    bRun := FALSE;
+IF bDecode THEN
+    // 注：解码方必须知道 n（这里 n=8）；本函数不接受 n 参数
+    lrDisp := FIX16_TO_LREAL(fp8Setpoint);
+    bDecode := FALSE;
 END_IF;
 </xhtml>
           </ST>

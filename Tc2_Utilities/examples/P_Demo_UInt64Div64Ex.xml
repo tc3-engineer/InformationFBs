@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <project xmlns="http://www.plcopen.org/xml/tc6_0200">
-  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-10T18:00:00"/>
-  <contentHeader name="Tc2_Utilities.UInt64Div64Ex Demo" modificationDateTime="2026-05-10T18:00:00">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-12T12:00:00"/>
+  <contentHeader name="Tc2_Utilities.UInt64Div64Ex Demo" modificationDateTime="2026-05-12T12:00:00">
     <coordinateInfo>
       <fbd><scaling x="1" y="1"/></fbd>
       <ld><scaling x="1" y="1"/></ld>
@@ -14,48 +14,45 @@
       <pou name="P_Demo_UInt64Div64Ex" pouType="program">
         <interface>
           <localVars>
-            <variable name="rResult">
-              <type><derived name="T_ULARGE_INTEGER"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">UInt64Div64Ex 返回值</xhtml></documentation>
+            <variable name="uliNanos">
+              <type><derived name="T_ULARGE_INTEGER;"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">累计纳秒</xhtml></documentation>
             </variable>
-            <variable name="bRun">
+            <variable name="uliDivisor">
+              <type><derived name="T_ULARGE_INTEGER;"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">1e9 = 一秒的纳秒数</xhtml></documentation>
+            </variable>
+            <variable name="uliSeconds">
+              <type><derived name="T_ULARGE_INTEGER;"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">秒数（商）</xhtml></documentation>
+            </variable>
+            <variable name="uliSubNs">
+              <type><derived name="T_ULARGE_INTEGER;"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">亚秒纳秒（余数）</xhtml></documentation>
+            </variable>
+            <variable name="bCompute">
               <type><BOOL/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">触发一次调用</xhtml></documentation>
-            </variable>
-            <variable name="a">
-              <type><derived name="T_ULARGE_INTEGER"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">测试用本地变量</xhtml></documentation>
-            </variable>
-            <variable name="b">
-              <type><derived name="T_ULARGE_INTEGER"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">测试用本地变量</xhtml></documentation>
-            </variable>
-            <variable name="q">
-              <type><derived name="T_ULARGE_INTEGER"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">测试用本地变量</xhtml></documentation>
-            </variable>
-            <variable name="r">
-              <type><derived name="T_ULARGE_INTEGER"/></type>
-              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">测试用本地变量</xhtml></documentation>
             </variable>
           </localVars>
         </interface>
         <body>
           <ST>
             <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
-// Tc2_Utilities.UInt64Div64Ex 演示程序（FUNCTION）
+// Tc2_Utilities.UInt64Div64Ex 演示程序（FUNCTION，单周期触发）
 // ============================================================
+// 场景：把累计纳秒数同时拆成秒数（商）+ 纳秒余数（亚秒部分）用于显示。
+// 价值：一次硬件除法同时拿商与余数，比两次调用快一倍。
 // 验证步骤：
-//   1. 引用 Tc2_Utilities
+//   1. 把本 PROGRAM 加到 PlcTask 调用列表
 //   2. 编译 + 登录
-//   3. 强制 bRun := TRUE 一个周期
-//   4. 在线监视 rResult
+//   3. 在线把 b... 触发位置 TRUE 一个周期
+//   4. 观察输出变量是否符合期望
 // ============================================================
 
-a := ULARGE_INTEGER(0, 100); b := ULARGE_INTEGER(0, 7);
-IF bRun THEN
-    rResult := UInt64Div64Ex(dividend := a, divisor := b, remainder := r);
-    bRun := FALSE;
+uliDivisor := ULARGE_INTEGER(0, 1000000000);   // 1e9
+IF bCompute AND NOT UInt64isZero(uliDivisor) THEN
+    uliSeconds := UInt64Div64Ex(uliNanos, uliDivisor, uliSubNs);
+    bCompute := FALSE;
 END_IF;
 </xhtml>
           </ST>

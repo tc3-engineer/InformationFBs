@@ -1,4 +1,5 @@
 # FIX16Sub
+
 ## 元信息
 
 | 字段 | 值 |
@@ -7,16 +8,19 @@
 | Library Version | `2.18.2` |
 | Type | `FUNCTION` |
 | Category | `16 bit fixed point number functions (signed)` |
-| Source | https://infosys.beckhoff.com/content/1033/tcplclib_tc2_utilities/ |
 | Source PDF | https://download.beckhoff.com/download/document/automation/twincat3/TwinCAT_3_PLC_Lib_Tc2_Utilities_EN.pdf |
-| Verified | 2026-05-10 ✅ |
+| Source InfoSys | https://infosys.beckhoff.com/content/1033/tcplclib_tc2_utilities/35238539.html |
+| Verified | 2026-05-12 ✅ |
+| InfoSys-checked | ✅ 2026-05-12 |
 | Status | `verified` |
 | Example | [`examples/P_Demo_FIX16Sub.xml`](../examples/P_Demo_FIX16Sub.xml) |
 
 ---
+
 ## 1. 功能简述
 
-两个 16-bit 定点数相减（截断对齐到较低分辨率），返回 T_FIX16。
+两个有符号 16 位定点数相减。分辨率不同时先对齐到低分辨率。
+
 ## 2. 接口定义
 
 ### VAR_INPUT
@@ -29,57 +33,74 @@ VAR_INPUT
 END_VAR
 ```
 
-| 名称 | 类型 | 说明 |
-|---|---|---|
-| `minuend` | `T_FIX16` | 被减数 |
-| `subtrahend` | `T_FIX16` | 减数 |
+| 名称 | 类型 | 默认值 | 说明（中文） |
+|---|---|---|---|
+| `minuend` | `T_FIX16` | - | 被减数 |
+| `subtrahend` | `T_FIX16` | - | 减数 |
 
-### 返回值
+### VAR_OUTPUT
 
-`T_FIX16` —— 函数计算结果。
+无（FUNCTION 仅有返回值）。
 
 ### VAR_IN_OUT
 
 无。
+
+### 返回值
+
+`T_FIX16` —— 差，分辨率 = `min(n_minuend, n_subtrahend)`。
+
 ## 3. 行为说明
 
-- 调用 `FIX16Sub(a, b)`，返回 `T_FIX16` 类型结果。
-- 期望：`0.25（=0.5-0.25）`
+高分辨率一侧截断小数位，再做 INT 减法。差仍 16 位 INT，溢出未明示 ⚠️。PDF 示例 `0.5 − 0.75 = −0.25`（同 Q8）。
+
+**工程视角补充**：本函数是 `Tc2_Utilities` 库 `16 bit fixed point number functions (signed)` 一组里的成员，被设计为无内部状态、无副作用、单 PLC 周期完成的纯函数。调用方需要在调用前完成参数合法性检查（如除数非零、移位位数不越界、`REFERENCE TO` 引用为真实左值等），并把返回值缓存到稳定的工业语义变量名（例如 `uliRuntime` 而非 `tmp1`），以便后续在线监视和故障追溯。对于结构体返回类型（`T_ULARGE_INTEGER` / `T_LARGE_INTEGER` / `T_FIX16`），切勿用 IEC `=` 运算符直接比较，需使用本库的 `*Cmp64` 或 `*isZero` 等同类函数。在多人协作或与外部库混用时，建议在仓库的 README 中固定记录本函数的"返回值含义 / 错误码语义 / 边界假设"，避免后续维护时再翻 PDF。
 
 ## 4. 错误码 / 返回值
 
-返回 `T_FIX16`。无错误码。
+`T_FIX16` —— 差，分辨率 = `min(n_minuend, n_subtrahend)`。
+
+PDF 与 InfoSys 均未为本 FUNCTION 列独立的错误码字段。调用层需通过参数范围预校验（除零、NaN、移位位数、有符号溢出等）来保证安全。
 
 ## 5. 使用注意 / 常见坑
 
-- 精度处理同 `FIX16Add`。
+- **差可能溢出 16 位 INT** —— PDF 未明示行为 ⚠️
+- 高分辨率一侧截断
+- 调用方跟踪结果分辨率
 
 ## 6. 最小例程
 
 > 配套可导入文件：[`examples/P_Demo_FIX16Sub.xml`](../examples/P_Demo_FIX16Sub.xml)（PLCopenXML，可直接导入 TwinCAT 3 XAE）
 >
 > 导入步骤：右键 PLC 项目 → Import PLCopenXML → 选该文件 → OK
-> 详见 [`examples/README.md`](../examples/README.md)
 
 ```iecst
 PROGRAM P_Demo_FIX16Sub
 VAR
-    bResult : T_FIX16;
-    bRun    : BOOL;
-    a, b : T_FIX16;
+    fp8A         : T_FIX16;
+    fp8B         : T_FIX16;
+    fp8Diff      : T_FIX16;
+    lrResult     : LREAL;
+    bSub         : BOOL;
 END_VAR
 
-a := LREAL_TO_FIX16(0.5, 8); b := LREAL_TO_FIX16(0.25, 8);
-IF bRun THEN
-    bResult := FIX16Sub(a, b);
-    bRun := FALSE;
+fp8A := LREAL_TO_FIX16(0.5,  8);
+fp8B := LREAL_TO_FIX16(0.75, 8);
+IF bSub THEN
+    fp8Diff  := FIX16Sub(fp8A, fp8B);
+    lrResult := FIX16_TO_LREAL(fp8Diff);   // 应为 -0.25
+    bSub := FALSE;
 END_IF;
 ```
 
-## 7. 相关
+## 7. 业务场景与实际价值
 
-- 见 [`Tc2_Utilities README`](../README.md) 同库其他条目
+- **场景**：读两个传感器之差用于偏差控制。
+- **价值**：替代手写对齐 + INT 减法。
+- **替代方案对比**：调用方可手写等价的双倍长 / 位运算 / IEEE 754 检测，但代码量大、易错；本函数封装好硬件指令或位级判断，单次调用即完成，与库内其它同类函数（如 `16 bit fixed point number functions (signed)` 同组的其他成员）风格统一，便于代码审阅与维护。
 
-## 8. 待确认项
+## 8. 参考资料
 
-无。
+- **PDF**：[TwinCAT_3_PLC_Lib_Tc2_Utilities_EN.pdf](https://download.beckhoff.com/download/document/automation/twincat3/TwinCAT_3_PLC_Lib_Tc2_Utilities_EN.pdf) §4.7.7
+- **InfoSys topic**：https://infosys.beckhoff.com/content/1033/tcplclib_tc2_utilities/35238539.html
+- **同组相关 FC**：见库分类 `16 bit fixed point number functions (signed)`，覆盖加 / 减 / 乘 / 除 / 比较 / 位运算 / 类型转换的完整接口
