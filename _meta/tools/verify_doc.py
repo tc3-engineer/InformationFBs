@@ -341,6 +341,18 @@ def verify(doc_path: str) -> tuple[int, list[str]]:
     if not section_text:
         return 2, [f"could not extract section {entry['section']} for {name}"]
 
+    # Strip "NEGATIVE sample" blocks (Beckhoff PDFs occasionally embed a
+    # FUNCTION_BLOCK showing how NOT to encapsulate the API — e.g. TestAndSet
+    # §4.1.20 has an FB_MyGlobalLock with its own VAR_INPUT/OUTPUT bLock/
+    # bLocked that are NOT part of the documented FC). Cut from the heading
+    # to the next "Prerequisites" / "Requirements" / next section marker.
+    section_text = re.sub(
+        r"NEGATIVE sample[\s\S]*?(?=\n\s*(?:Prerequisites|Requirements|See also)\b|\Z)",
+        "",
+        section_text,
+        flags=re.IGNORECASE,
+    )
+
     # For OO parent FBs (e.g. TC_CoreBoostMonitor with method children at
     # depth-3), the extracted section text includes the children's bodies and
     # therefore their VAR_INPUTs. The parent doc only describes its own
