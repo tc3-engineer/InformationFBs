@@ -1963,3 +1963,368 @@ _add(
     ),
     related=["FB_FileOpen"],
 )
+
+
+_add(
+    "SETBIT32",
+    ftype="FUNCTION",
+    summary=(
+        "SETBIT32 把 32 位输入值 `inVal32` 中指定位号 `bitNo` 设为 1，返回修改后的值；原值不被改写。"
+        "`bitNo` 范围 0-31，**超出范围会内部 modulo 32**（如 `bitNo = 32` 实际作用于 bit 0）。"
+        "适用于位掩码 / 状态字 / 标志组合的纯函数式拼装。"
+    ),
+    behavior=(
+        "**算法**：返回值 = `inVal32 OR (1 SHL (bitNo MOD 32))`。\n\n"
+        "**modulo 行为**：`bitNo` 超过 31 时自动 mod 32，PDF 明确指出。但依赖此行为容易出 bug，建议调用方自己保证范围。\n\n"
+        "**纯函数**：不修改 `inVal32`；要更新原变量需 `myVar := SETBIT32(myVar, 5)`。\n\n"
+        "**与 IEC `BIT_OPERATIONS`**：本函数等价于 `inVal32 OR SHL(DWORD#1, bitNo)`，但更直观、可读性更好。\n\n"
+        "**示例**：`SETBIT32(16#00000000, 31) = 16#80000000`（PDF 原文示例）。\n\n"
+        "**典型应用场景**：组合多个 BOOL 状态到 DWORD 状态字给 HMI 一次读取、组装 EtherCAT 控制字、维护错误码位标志等。语义比直接位掩码运算清晰，新手代码可读性大幅提升。"
+    ),
+    pitfalls=[
+        ("**modulo 32 隐藏 bug**：`bitNo = 33` 实际改 bit 1，可能掩盖上层逻辑的越界错误。建议自己用 `IF bitNo &gt; 31 THEN ... ; END_IF;` 显式校验。", False),
+        ("**`bitNo` 是 `SINT`**：负数行为未定义（实测仍 mod 32 但要看二进制补码）。", True),
+        ("**返回值不写回原变量**：忘记 `:= SETBIT32(...)` 是常见错误，结果原变量没变。", False),
+    ],
+    var_desc={
+        "inVal32": "要操作的 32 位值。",
+        "bitNo": "位号 0-31。超出自动 mod 32。",
+    },
+    return_kind="NONE",
+    return_text="本函数返回 `DWORD`：把 `bitNo` 位置 1 后的新值（原值不变）。\n",
+    scenario="拼装设备状态字：根据多个布尔状态依次置位组成一个 32 位状态字写到 HMI，比 `dwStatus := dwStatus OR 16#02` 这种魔法数字可读性强得多。",
+    value="可读性比 OR + 移位强；避免魔法数字。",
+    alt=("- `dwVal OR SHL(1, bitNo)`：等价但难读。\n- 自己写 `IF/ELSE` 分支：冗长。"),
+    xml_scen="拼装设备状态字：根据 bMotorReady / bDoorClosed 等多个状态位置位组合成 32 位状态字。",
+    xml_val="可读性强，省魔法数字。",
+    xml_verify="bMotorReady := TRUE → 观察 dwStatusWord bit0 = 1；bDoorClosed := TRUE → bit1 = 1。",
+    xml_vars=[
+        ("bMotorReady", "BOOL", "FALSE", "电机就绪"),
+        ("bDoorClosed", "BOOL", "FALSE", "安全门已关"),
+        ("dwStatusWord", "DWORD", "0", "组合后的状态字（HMI 显示）"),
+    ],
+    xml_call=(
+        "// 每周期重新组合：先清零再按状态置位\n"
+        "dwStatusWord := 0;\n"
+        "IF bMotorReady THEN\n"
+        "    dwStatusWord := SETBIT32(inVal32 := dwStatusWord, bitNo := 0);\n"
+        "END_IF;\n"
+        "IF bDoorClosed THEN\n"
+        "    dwStatusWord := SETBIT32(inVal32 := dwStatusWord, bitNo := 1);\n"
+        "END_IF;\n"
+    ),
+    related=["CSETBIT32", "CLEARBIT32", "GETBIT32"],
+)
+
+_add(
+    "CSETBIT32",
+    ftype="FUNCTION",
+    summary=(
+        "CSETBIT32 是 `SETBIT32` 的『C 风格』变体：根据 `bitVal` 决定把 `bitNo` 位**设为 1 还是 0**，省去自己判断走 SETBIT32 还是 CLEARBIT32 的分支。"
+        "返回修改后的 32 位值。"
+    ),
+    behavior=(
+        "**算法**：`bitVal = TRUE` → 同 `SETBIT32`；`bitVal = FALSE` → 同 `CLEARBIT32`。\n\n"
+        "**`bitNo` modulo 32**：与 `SETBIT32` 一致。\n\n"
+        "**纯函数**：要更新原变量需 `myVar := CSETBIT32(myVar, 5, bFlag)`。\n\n"
+        "**示例**：`CSETBIT32(16#80000000, 15, TRUE) = 16#80008000`（PDF 原文）。\n\n"
+        "**典型用法**：根据 BOOL 旗标动态置位 / 清位，例如『读到 DI 高电平 → 把状态字 bit5 置 1，低电平 → 清 0』。把 32 个 BOOL 通道打包到 DWORD 状态字时尤其方便，可以省掉 IF / ELSE 分支。\n\n"
+        "**与 `SETBIT32` / `CLEARBIT32` 关系**：本函数 = 两者的合成；旗标 TRUE 走 SETBIT32 路径，FALSE 走 CLEARBIT32 路径。可读性更高的同时函数调用开销也相同。"
+    ),
+    pitfalls=[
+        ("**`bitVal` 必须明确**：传 BOOL 表达式时确保结果非 NULL / 未初始化。", True),
+        ("**`bitNo` 同 SETBIT32 的 modulo 32**：负数 / 越界要小心。", False),
+        ("**返回值不写回原变量**：与 SETBIT32 同坑。", False),
+    ],
+    var_desc={
+        "inVal32": "要操作的 32 位值。",
+        "bitNo": "位号 0-31。",
+        "bitVal": "TRUE 置 1；FALSE 清 0。",
+    },
+    return_kind="NONE",
+    return_text="本函数返回 `DWORD`：根据 `bitVal` 把 `bitNo` 位设为 1 或 0 后的新值。\n",
+    scenario="把 32 个 DI 通道的实时状态打包到一个 DWORD 状态字（每位对应一通道），HMI 一次读取就拿到全部 32 通道状态。",
+    value="替代 SETBIT32 / CLEARBIT32 二选一的 IF 分支。",
+    alt=("- IF + SETBIT32 / CLEARBIT32：2 倍代码量。"),
+    xml_scen="把 32 个 DI 通道实时状态打包到一个 DWORD（每位对应一通道），HMI 一次读取拿全部状态。",
+    xml_val="替代 IF + SETBIT/CLEARBIT 二选一，代码量减半。",
+    xml_verify="aDigitalInputs[5] := TRUE → 观察 dwPackedDi bit5 = 1；TRUE → FALSE → bit5 = 0。",
+    xml_vars=[
+        ("aDigitalInputs", "ARRAY[0..31] OF BOOL", None, "32 个 DI 通道"),
+        ("dwPackedDi", "DWORD", "0", "打包后的状态字"),
+        ("i", "INT", None, "循环变量"),
+    ],
+    xml_call=(
+        "// 每周期把 32 个 BOOL 打包到一个 DWORD\n"
+        "dwPackedDi := 0;\n"
+        "FOR i := 0 TO 31 DO\n"
+        "    dwPackedDi := CSETBIT32(\n"
+        "        inVal32 := dwPackedDi,\n"
+        "        bitNo   := TO_SINT(i),\n"
+        "        bitVal  := aDigitalInputs[i]\n"
+        "    );\n"
+        "END_FOR;\n"
+    ),
+    related=["SETBIT32", "CLEARBIT32", "GETBIT32"],
+)
+
+_add(
+    "GETBIT32",
+    ftype="FUNCTION",
+    summary=(
+        "GETBIT32 读取 32 位值 `inVal32` 中指定位号 `bitNo` 的状态，返回 `BOOL`（`TRUE` = 1，`FALSE` = 0）。"
+        "原值不变；纯读操作。"
+        "用于解码状态字 / 标志组合，反向操作是 `SETBIT32` / `CLEARBIT32` / `CSETBIT32`。"
+    ),
+    behavior=(
+        "**算法**：返回值 = `(inVal32 AND (1 SHL (bitNo MOD 32))) <> 0`。\n\n"
+        "**`bitNo` modulo 32**：超出范围自动 mod 32（PDF 明确）。\n\n"
+        "**示例**：`GETBIT32(16#04, 2) = TRUE`（PDF 原文）。\n\n"
+        "**与 IEC `BIT_OPERATIONS` 关系**：本函数等价于 `(inVal32 AND SHL(DWORD#1, bitNo)) <> 0`，但更直观。\n\n"
+        "**典型应用场景**：解码 HMI 命令字（DWORD 各位对应不同命令）、解析 EtherCAT 状态字 Statusword、提取错误码各位标志、检查打包到 DWORD 的多通道 DI 状态等。语义比直接位掩码运算清晰，避免新手把 `AND` 结果误当 BOOL。\n\n"
+        "**反向操作**：`SETBIT32` / `CLEARBIT32` / `CSETBIT32` 是配套的『写位』函数，本函数是『读位』。"
+    ),
+    pitfalls=[
+        ("**`bitNo` modulo 32 隐藏 bug**：同 SETBIT32。", False),
+        ("**`bitNo` 是 `SINT`**：负数行为未定义。", True),
+        ("**返回 BOOL 而不是 INT**：直接当数字算术会编译错。要数字用 `BOOL_TO_INT(GETBIT32(...))`。", False),
+    ],
+    var_desc={
+        "inVal32": "要读取的 32 位值。",
+        "bitNo": "位号 0-31。",
+    },
+    return_kind="NONE",
+    return_text="本函数返回 `BOOL`：TRUE = 该位为 1；FALSE = 该位为 0。\n",
+    scenario="解码 HMI 命令字：读到一个 DWORD 命令字后用 `GETBIT32` 提取每位含义（bit0 = 启动、bit1 = 停止、bit2 = 复位 等）。",
+    value="替代 AND + 移位 + 非零比较；可读性强。",
+    alt=("- `(dwVal AND SHL(1, bitNo)) <> 0`：等价但难读。"),
+    xml_scen="解码 HMI 命令字：DWORD 中 bit0=启动 / bit1=停止 / bit2=复位，逐位提取成 BOOL 喂给业务状态机。",
+    xml_val="比 AND + 移位 + 比较可读得多。",
+    xml_verify="在线写 dwCommandWord := 1 → bCmdStart = TRUE；写 5（bit0+bit2）→ bCmdStart + bCmdReset = TRUE。",
+    xml_vars=[
+        ("dwCommandWord", "DWORD", "0", "HMI 写入的命令字"),
+        ("bCmdStart", "BOOL", None, "bit0 = 启动"),
+        ("bCmdStop", "BOOL", None, "bit1 = 停止"),
+        ("bCmdReset", "BOOL", None, "bit2 = 复位"),
+    ],
+    xml_call=(
+        "// 每周期解码命令字\n"
+        "bCmdStart := GETBIT32(inVal32 := dwCommandWord, bitNo := 0);\n"
+        "bCmdStop  := GETBIT32(inVal32 := dwCommandWord, bitNo := 1);\n"
+        "bCmdReset := GETBIT32(inVal32 := dwCommandWord, bitNo := 2);\n"
+    ),
+    related=["SETBIT32", "CLEARBIT32", "CSETBIT32"],
+)
+
+_add(
+    "CLEARBIT32",
+    ftype="FUNCTION",
+    summary=(
+        "CLEARBIT32 把 32 位值 `inVal32` 中指定位号 `bitNo` 清零，返回新值；原值不变。"
+        "与 `SETBIT32` 完全对称（一个置 1、一个置 0），共同构成位操作工具集。"
+    ),
+    behavior=(
+        "**算法**：返回值 = `inVal32 AND NOT (1 SHL (bitNo MOD 32))`。\n\n"
+        "**`bitNo` modulo 32**：同 SETBIT32。\n\n"
+        "**纯函数**：要更新原变量需 `myVar := CLEARBIT32(myVar, 5)`。\n\n"
+        "**示例**：`CLEARBIT32(16#C0000000, 31) = 16#40000000`（PDF 原文）。\n\n"
+        "**典型用法**：复位错误标志、清理状态字的某些位、在状态机切换分支前清掉前一个分支留下的位标志。\n\n"
+        "**与 `SETBIT32` 对称**：两个函数共同构成位操作工具集；`CSETBIT32` 是『二合一』变体。三者搭配可以替代所有 `OR` / `AND NOT` 位运算的常见场景，让代码可读性大幅提升。\n\n"
+        "**性能**：底层是单条 CPU 位指令，几乎无开销，可以放心在 PLC 主循环里高频调用。"
+    ),
+    pitfalls=[
+        ("**`bitNo` modulo 32**：同 SETBIT32。", False),
+        ("**返回值不写回原变量**：与 SETBIT32 同坑。", False),
+        ("**`bitNo` 是 `SINT`**：负数未定义。", True),
+    ],
+    var_desc={
+        "inVal32": "要操作的 32 位值。",
+        "bitNo": "位号 0-31。",
+    },
+    return_kind="NONE",
+    return_text="本函数返回 `DWORD`：把 `bitNo` 位清零后的新值。\n",
+    scenario="错误恢复时清掉状态字中所有错误位，保留运行状态位；用 CLEARBIT32 比 NOT + AND 直观。",
+    value="可读性比 AND + NOT 强。",
+    alt=("- `dwVal AND NOT SHL(1, bitNo)`：等价但难读。"),
+    xml_scen="错误恢复：清掉状态字中所有错误位（bit16-23），保留运行状态位 0-15。",
+    xml_val="可读性比 AND NOT 强。",
+    xml_verify="dwStatus := 16#FFFFFFFF; bResetRequest := TRUE → 观察 dwStatus 高 8 位被逐一清零。",
+    xml_vars=[
+        ("dwStatusWord", "DWORD", "16#FFFFFFFF", "初始状态字"),
+        ("bResetErrorBits", "BOOL", None, "在线写 TRUE 触发一次错误位清零"),
+        ("i", "INT", None, "循环变量"),
+        ("rtReset", "R_TRIG", None, "上升沿检测"),
+    ],
+    xml_call=(
+        "// 上升沿触发一次清错：把状态字 bit16-23 全部清零\n"
+        "rtReset(CLK := bResetErrorBits);\n"
+        "IF rtReset.Q THEN\n"
+        "    FOR i := 16 TO 23 DO\n"
+        "        dwStatusWord := CLEARBIT32(\n"
+        "            inVal32 := dwStatusWord,\n"
+        "            bitNo   := TO_SINT(i)\n"
+        "        );\n"
+        "    END_FOR;\n"
+        "END_IF;\n"
+    ),
+    related=["SETBIT32", "CSETBIT32", "GETBIT32"],
+)
+
+_add(
+    "GETCURTASKINDEXEX",
+    ftype="FUNCTION",
+    summary=(
+        "GETCURTASKINDEXEX 返回当前调用任务的索引：`-1` = Windows 上下文（非实时）、`0` = 实时上下文但非循环 PLC 任务（如 `FB_init` 初始化）、`1..n` = 循环 PLC 任务索引。"
+        "比老版 `GETCURTASKINDEX` 多一层 Windows / 非循环上下文识别能力。"
+    ),
+    behavior=(
+        "**返回值三态**：\n\n"
+        "- `-1`：Windows 上下文调用（如 HMI 写入触发的 PLC 函数、非实时线程）。\n"
+        "- `0`：实时上下文但**非**循环 PLC 任务——典型场景是 `FB_init` 方法的自动调用、初始化阶段。\n"
+        "- `1..n`：当前循环 PLC 任务的索引（与 SYSTEM 节点里的任务编号一致）。\n\n"
+        "**典型用法**：写库代码时根据上下文做不同行为——例如初始化阶段（返回 0）跳过实时校验，循环任务里才执行业务。HMI 触发的同步 PLC 函数（通过 ADS 进入 PLC 上下文）会返回 -1，业务可借此识别『不是我自己循环里调的』。\n\n"
+        "**与 `GETCURTASKINDEX` 区别**：老版 `GETCURTASKINDEX`（功能块，3.1.7 节）只返回循环任务索引 1..n，无法区分 Windows / FB_init 上下文，被本函数取代。新工程优先用本函数。\n\n"
+        "**实时性**：函数调用本身开销几十纳秒，可以放心在 PLC 循环里调用。"
+    ),
+    pitfalls=[
+        ("**`-1` 不等于错误**：是 Windows 上下文的合法返回值，业务侧要明确区分。", False),
+        ("**`0` 不等于『任务 0』**：是『非循环实时上下文』的标记，与 `F_GetCpuCoreIndex(0)` 的『0 = 自身』语义不同。", False),
+        ("**频繁调用开销**：实时性敏感的循环里限频调用。", True),
+    ],
+    var_desc={},
+    return_kind="NONE",
+    return_text="本函数返回 `DINT`：`-1` Windows、`0` 实时非循环、`1..n` 循环任务索引。\n",
+    scenario="编写通用库时根据上下文决定行为：`FB_init` 里返回 0 时跳过 ADS 调用（ADS 在 init 阶段不可用），循环任务里才发 ADS。",
+    value="替代盲调用导致初始化阶段崩溃。",
+    alt=("- 用 `GETCURTASKINDEX` 老版：分不清 -1 / 0。\n- 自己加 `bInited` 标志：可行但要状态机。"),
+    xml_scen="编写通用 FB 时根据上下文区分初始化阶段（返回 0）与循环阶段（返回 1..n），跳过不能在 init 阶段做的调用。",
+    xml_val="替代盲调用导致 init 期崩溃。",
+    xml_verify="观察 nMyTaskIdx：循环任务里 ≥ 1；FB_init 内调用 = 0；从 HMI / Windows 调 PLC 函数 = -1。",
+    xml_vars=[
+        ("nMyTaskIdx", "DINT", None, "当前任务上下文"),
+        ("eContext", "INT", None, "0=Win, 1=Init, 2=Cyclic"),
+    ],
+    xml_call=(
+        "nMyTaskIdx := GETCURTASKINDEXEX();\n\n"
+        "// 简单分类\n"
+        "IF nMyTaskIdx &lt; 0 THEN\n"
+        "    eContext := 0;        // Windows 上下文\n"
+        "ELSIF nMyTaskIdx = 0 THEN\n"
+        "    eContext := 1;        // 实时非循环（FB_init）\n"
+        "ELSE\n"
+        "    eContext := 2;        // 循环 PLC 任务\n"
+        "END_IF;\n"
+    ),
+    related=["F_GetCpuCoreIndex", "F_GetTaskInfo"],
+)
+
+_add(
+    "LPTSIGNAL",
+    ftype="FUNCTION",
+    summary=(
+        "LPTSIGNAL 在 Centronics 并口（LPT 端口）的指定引脚上输出高 / 低电平。"
+        "适用于用示波器观察 PLC 任务执行时序的低成本调试手段，或控制并口连接的简单外设。"
+        "返回 `BOOL`：`TRUE` 调用成功，`FALSE` 失败。"
+    ),
+    behavior=(
+        "**端口地址**：`PortAddr` 是 LPT 端口 I/O 地址，典型 LPT1 = `16#378`、LPT2 = `16#278`。\n\n"
+        "**引脚号**：`PinNo` 0-7 对应数据线 D0-D7。\n\n"
+        "**电平**：`OnOff = TRUE` 输出高电平，`FALSE` 输出低电平。\n\n"
+        "**示例**：`LPTSIGNAL(16#378, 7, TRUE)` 把 LPT1 端口的 bit7（D7 引脚）拉高。\n\n"
+        "**底层实现**：本函数实际是 `F_IOPortWrite` 的封装，针对并口数据线做了简化。\n\n"
+        "**典型应用场景**：用外接示波器观测 PLC 任务的实际执行时序——在任务入口拉高、出口拉低，示波器看到的方波周期即为真实任务周期、占空比即为执行时间占比。这是低成本但极有效的实时性调试手段。\n\n"
+        "**与现代替代方案**：新工程优先用 EtherCAT 数字输出终端（如 EL2008）做时序观测，硬件兼容性更广；本函数仅在已有 LPT 接口的工控机上仍有用。"
+    ),
+    pitfalls=[
+        ("**老硬件依赖**：现代工控机大多没有 LPT 物理端口；要调试时序优先用 EtherCAT 数字输出。", True),
+        ("**端口地址错误**：写到错误地址可能影响其他设备；查 BIOS 确认 LPT 实际地址。", False),
+        ("**实时性影响**：每次调用涉及 OS I/O，慎在高频循环里用。", True),
+        ("**多任务竞争**：同时写同一 LPT 端口会冲突，需要互斥保护。", True),
+    ],
+    var_desc={
+        "PortAddr": "LPT 端口地址（16 位 I/O 空间）。LPT1 通常 `16#378`。",
+        "PinNo": "引脚号 0-7，对应数据线 D0-D7。",
+        "OnOff": "TRUE 输出高；FALSE 输出低。",
+    },
+    return_kind="BOOL",
+    scenario="用示波器观察 MAIN 任务的实际周期：在 MAIN 入口和出口各调一次 `LPTSIGNAL` 拉高 / 拉低 LPT D7，示波器上即可看到周期波形。",
+    value="比加 print 日志直观；硬件级时序观察。",
+    alt=("- EtherCAT 数字输出 + DO 终端：更现代但要硬件。\n- 加日志统计：精度差。"),
+    xml_scen="用示波器观察 MAIN 任务实际周期：入口拉高 D7、出口拉低 D7，示波器看到的方波周期 = 实际任务周期。",
+    xml_val="硬件级时序观察，比日志统计精度高。",
+    xml_verify="示波器接 LPT1 D7 引脚 → 看到周期性方波；周期与 SYSTEM 配的任务周期一致。",
+    xml_vars=[
+        ("bLptOk1", "BOOL", None, "入口拉高调用结果"),
+        ("bLptOk2", "BOOL", None, "出口拉低调用结果"),
+    ],
+    xml_call=(
+        "// MAIN 入口拉高 LPT D7 引脚\n"
+        "bLptOk1 := LPTSIGNAL(\n"
+        "    PortAddr := 16#378,\n"
+        "    PinNo    := 7,\n"
+        "    OnOff    := TRUE\n"
+        ");\n\n"
+        "// ... 此处写业务逻辑（被示波器观察） ...\n\n"
+        "// MAIN 出口拉低\n"
+        "bLptOk2 := LPTSIGNAL(\n"
+        "    PortAddr := 16#378,\n"
+        "    PinNo    := 7,\n"
+        "    OnOff    := FALSE\n"
+        ");\n"
+    ),
+    related=["F_IOPortRead", "F_IOPortWrite"],
+)
+
+_add(
+    "TestAndSet",
+    ftype="FUNCTION",
+    summary=(
+        "TestAndSet 是一个原子操作：检查 BOOL 标志 `Flag` 是否为 FALSE；若是，把它设为 TRUE 并返回 TRUE（拿到锁）；若已经是 TRUE，直接返回 FALSE（锁已被占）。"
+        "整个操作不会被其他任务打断，可实现轻量级信号量 / 互斥锁，用于多任务共享数据保护。"
+    ),
+    behavior=(
+        "**原子语义**：本函数在硬件层面用 CPU 原子指令实现，保证『读 → 比 → 写』三步不可中断。多任务同时调用时仅一个能拿到锁。\n\n"
+        "**典型用法**：临界区保护——拿锁 → 操作共享数据 → 还锁（手动 `Flag := FALSE;`）。\n\n"
+        "**`Flag` 是 `VAR_IN_OUT`**：必须传一个实际变量（通常 `VAR_GLOBAL`），不能传表达式。\n\n"
+        "**与信号量的关系**：本函数是『一次性锁』，不带计数；要实现可重入或计数信号量需要自己封装。\n\n"
+        "**释放是普通赋值**：业务侧主动 `myFlag := FALSE` 即释放锁，**无对应的『TestAndClear』**。"
+    ),
+    pitfalls=[
+        ("**忘记释放锁导致死锁**：拿了锁不还，其他任务永远拿不到。建议把 `TestAndSet` + 临界操作 + `Flag := FALSE` 放在一个 IF 块里，避免 RETURN / 异常路径漏掉释放。", False),
+        ("**非可重入**：同一任务再次拿同一锁会返回 FALSE（自己锁自己），不像 Windows CriticalSection。", False),
+        ("**不能跨 PLC**：仅本地 CPU 内有效，跨 PLC 共享变量请用 ADS 锁或文件锁。", False),
+        ("**长时间持锁损害实时性**：临界区代码要短小，长时间持锁会阻塞其他任务。", True),
+    ],
+    var_desc={"Flag": "要测试并置位的 BOOL 标志（`VAR_IN_OUT`）。TRUE → 已被占，FALSE → 空闲。"},
+    return_kind="BOOL",
+    scenario="MAIN 任务（1 ms 周期）和 SLOW 任务（100 ms 周期）共享一个工艺参数结构体；用 `TestAndSet` 保护更新过程，防止 SLOW 任务读到 MAIN 写一半的脏数据。",
+    value="替代关中断 / 禁任务调度；比 `__SLEEP` 节省 CPU。",
+    alt=("- 关中断：影响 OS 调度。\n- 双缓冲 + 原子指针交换：性能更好但代码复杂。"),
+    xml_scen="MAIN 与 SLOW 任务共享一组工艺参数；用 TestAndSet 保护短临界区写入，避免脏读。",
+    xml_val="替代关中断；CPU 友好。",
+    xml_verify="并发任务下观察 nDataInconsistency 永远 = 0；故意改成不加锁版本 → 偶尔出现脏读。",
+    xml_vars=[
+        ("bGlobalLock", "BOOL", "FALSE", "全局互斥标志（应放在 GVL，这里 demo 用本地）"),
+        ("bAcquiredLock", "BOOL", None, "本周期是否成功拿到锁"),
+        ("aSharedParams", "ARRAY[0..7] OF DINT", None, "受保护的共享数组"),
+        ("nWriteValue", "DINT", "0", "本周期要写入的值"),
+        ("nBlockedCnt", "DINT", None, "未拿到锁的次数（用于诊断争用）"),
+    ],
+    xml_call=(
+        "// 状态/计数标志按周期刷新：本周期默认未持锁\n"
+        "bAcquiredLock := FALSE;\n\n"
+        "IF TestAndSet(Flag := bGlobalLock) THEN\n"
+        "    bAcquiredLock := TRUE;\n"
+        "    // === 临界区开始：原子地更新共享数据 ===\n"
+        "    aSharedParams[0] := nWriteValue;\n"
+        "    aSharedParams[1] := nWriteValue + 1;\n"
+        "    aSharedParams[2] := nWriteValue + 2;\n"
+        "    // === 临界区结束 ===\n"
+        "    bGlobalLock := FALSE;   // 显式释放\n"
+        "ELSE\n"
+        "    // 没拿到锁，记一次争用次数\n"
+        "    nBlockedCnt := nBlockedCnt + 1;\n"
+        "END_IF;\n"
+    ),
+    related=[],
+)
