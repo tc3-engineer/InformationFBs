@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project xmlns="http://www.plcopen.org/xml/tc6_0200">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-20T00:00:00"/>
+  <contentHeader name="Tc2_System.GETCURTASKINDEX Demo" modificationDateTime="2026-05-20T00:00:00">
+    <coordinateInfo>
+      <fbd><scaling x="1" y="1"/></fbd>
+      <ld><scaling x="1" y="1"/></ld>
+      <sfc><scaling x="1" y="1"/></sfc>
+    </coordinateInfo>
+  </contentHeader>
+  <types>
+    <dataTypes/>
+    <pous>
+      <pou name="P_Demo_GETCURTASKINDEX" pouType="program">
+        <interface>
+          <localVars>
+            <variable name="fbGETCURTASKINDEX">
+              <type><derived name="GETCURTASKINDEX"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">GETCURTASKINDEX 实例</xhtml></documentation>
+            </variable>
+            <variable name="nCurrentTaskIndex">
+              <type><BYTE/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">当前任务索引 1..4；FB_init 中调用结果不可靠</xhtml></documentation>
+            </variable>
+          </localVars>
+        </interface>
+        <body>
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
+// Tc2_System.GETCURTASKINDEX 演示程序
+// ============================================================
+// 场景：老项目里日志染色：每条日志带上任务索引便于排查。
+// 价值：保留兼容旧代码；新代码改用 GETCURTASKINDEXEX 函数。
+// 验证：把本 PROGRAM 加到第 2 个 PLC 任务，登录后 nCurrentTaskIndex 应为 2。
+// 验证步骤：
+//   1. 右键 PLC 项目 → Import PLCopenXML → 选本文件
+//   2. 引用 Tc2_System（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』指引在线写值观察
+// ============================================================
+
+fbGETCURTASKINDEX(index =&gt; nCurrentTaskIndex);
+
+</xhtml></ST>
+        </body>
+      </pou>
+    </pous>
+  </types>
+  <instances><configurations/></instances>
+</project>

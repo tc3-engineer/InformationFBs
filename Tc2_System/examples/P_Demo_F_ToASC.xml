@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project xmlns="http://www.plcopen.org/xml/tc6_0200">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-20T00:00:00"/>
+  <contentHeader name="Tc2_System.F_ToASC Demo" modificationDateTime="2026-05-20T00:00:00">
+    <coordinateInfo>
+      <fbd><scaling x="1" y="1"/></fbd>
+      <ld><scaling x="1" y="1"/></ld>
+      <sfc><scaling x="1" y="1"/></sfc>
+    </coordinateInfo>
+  </contentHeader>
+  <types>
+    <dataTypes/>
+    <pous>
+      <pou name="P_Demo_F_ToASC" pouType="program">
+        <interface>
+          <localVars>
+            <variable name="sCommand">
+              <initialValue><simpleValue value="'R'"/></initialValue>
+              <type><string/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">操作员命令字符串</xhtml></documentation>
+            </variable>
+            <variable name="byFirstCharCode">
+              <type><BYTE/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">首字符 ASCII（'R'=0x52, ''=0）</xhtml></documentation>
+            </variable>
+            <variable name="eCommand">
+              <type><INT/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">解析后的命令枚举（用 CASE 派发）</xhtml></documentation>
+            </variable>
+          </localVars>
+        </interface>
+        <body>
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
+// Tc2_System.F_ToASC 演示程序
+// ============================================================
+// 场景：HMI 输入命令字，PLC 取首字符 ASCII 做 CASE 派发。
+// 价值：替代多次字符串比较；BYTE 比较更快。
+// 验证：登录后 byFirstCharCode = 16#52 ('R')；改 sCommand 为 'Start' 后 byFirstCharCode = 16#53 ('S')；空串后为 0。
+// 验证步骤：
+//   1. 右键 PLC 项目 → Import PLCopenXML → 选本文件
+//   2. 引用 Tc2_System（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』指引在线写值观察
+// ============================================================
+
+// 命令派发示例
+CASE byFirstCharCode OF
+    16#52: eCommand := 1; // 'R' reset
+    16#53: eCommand := 2; // 'S' start
+    16#50: eCommand := 3; // 'P' pause
+ELSE
+    eCommand := 0;
+END_CASE;
+</xhtml></ST>
+        </body>
+      </pou>
+    </pous>
+  </types>
+  <instances><configurations/></instances>
+</project>

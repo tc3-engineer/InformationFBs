@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project xmlns="http://www.plcopen.org/xml/tc6_0200">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-20T00:00:00"/>
+  <contentHeader name="Tc2_System.SFCActionControl Demo" modificationDateTime="2026-05-20T00:00:00">
+    <coordinateInfo>
+      <fbd><scaling x="1" y="1"/></fbd>
+      <ld><scaling x="1" y="1"/></ld>
+      <sfc><scaling x="1" y="1"/></sfc>
+    </coordinateInfo>
+  </contentHeader>
+  <types>
+    <dataTypes/>
+    <pous>
+      <pou name="P_Demo_SFCActionControl" pouType="program">
+        <interface>
+          <localVars>
+            <variable name="fbSFCActionControl">
+              <type><derived name="SFCActionControl"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">SFCActionControl 实例</xhtml></documentation>
+            </variable>
+          </localVars>
+        </interface>
+        <body>
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
+// Tc2_System.SFCActionControl 演示程序
+// ============================================================
+// 场景：复杂 SFC 工艺用 IEC 步 + S/R/P 等限定符；引用 Tc2_System 即可启用。
+// 价值：替代经典步 + 手写 set/reset 逻辑，限定符语义由编译器实现。
+// 验证：在工程的 References 节点确认 Tc2_System；建一个含 IEC 步 + S 限定符的 SFC POU，编译应通过；运行后 action 表现符合 S 语义（持续保持直到被 R）。
+// 验证步骤：
+//   1. 右键 PLC 项目 → Import PLCopenXML → 选本文件
+//   2. 引用 Tc2_System（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』指引在线写值观察
+// ============================================================
+
+// 严禁手动实例化 SFCActionControl。只要 Tc2_System 被引用，IEC 步 action 限定符语义由编译器自动生效。
+;
+</xhtml></ST>
+        </body>
+      </pou>
+    </pous>
+  </types>
+  <instances><configurations/></instances>
+</project>

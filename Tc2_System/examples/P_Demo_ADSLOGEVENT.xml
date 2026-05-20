@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project xmlns="http://www.plcopen.org/xml/tc6_0200">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-20T00:00:00"/>
+  <contentHeader name="Tc2_System.ADSLOGEVENT Demo" modificationDateTime="2026-05-20T00:00:00">
+    <coordinateInfo>
+      <fbd><scaling x="1" y="1"/></fbd>
+      <ld><scaling x="1" y="1"/></ld>
+      <sfc><scaling x="1" y="1"/></sfc>
+    </coordinateInfo>
+  </contentHeader>
+  <types>
+    <dataTypes/>
+    <pous>
+      <pou name="P_Demo_ADSLOGEVENT" pouType="program">
+        <interface>
+          <localVars>
+            <variable name="fbADSLOGEVENT">
+              <type><derived name="ADSLOGEVENT"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">ADSLOGEVENT 实例</xhtml></documentation>
+            </variable>
+            <variable name="bEventActive">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">电平 TRUE = 事件 active；FALSE = 事件复位</xhtml></documentation>
+            </variable>
+            <variable name="bEventAckReq">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">上升沿确认事件</xhtml></documentation>
+            </variable>
+            <variable name="stEventCfg">
+              <type><derived name="TcEvent"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">事件配置结构（事件 ID、源 ID 等）</xhtml></documentation>
+            </variable>
+            <variable name="nEventState">
+              <type><UDINT/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">事件内部状态</xhtml></documentation>
+            </variable>
+            <variable name="bAdsErr">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">ADS 错误</xhtml></documentation>
+            </variable>
+            <variable name="nLastAdsError">
+              <type><UDINT/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">ADS 错误码</xhtml></documentation>
+            </variable>
+            <variable name="bEventAcked">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">事件已被确认</xhtml></documentation>
+            </variable>
+          </localVars>
+        </interface>
+        <body>
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
+// Tc2_System.ADSLOGEVENT 演示程序
+// ============================================================
+// 场景：旧 TwinCAT 3.1.4024 项目里温度报警推到 EventLogger。
+// 价值：替代手写日志 + HMI 报警表，EventLogger 内置可视化。
+// 验证：填好 stEventCfg.iEvent 与 stEventCfg.iSourceId（用 SimpleAdsLogEvent 演示更直观），写 bEventActive := TRUE 后 System Manager 报警面板出现该事件；写 bEventActive := FALSE 后事件消失。
+// 验证步骤：
+//   1. 右键 PLC 项目 → Import PLCopenXML → 选本文件
+//   2. 引用 Tc2_System（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』指引在线写值观察
+// ============================================================
+
+fbADSLOGEVENT(
+    NETID := '', PORT := 110, Event := bEventActive, EventQuit := bEventAckReq, EventConfigData := stEventCfg, EventDataAddress := 0, EventDataLength := 0, FbCleanup := FALSE, TMOUT := DEFAULT_ADS_TIMEOUT,
+    EventState =&gt; nEventState, Err =&gt; bAdsErr, ErrId =&gt; nLastAdsError, Quit =&gt; bEventAcked
+);
+
+</xhtml></ST>
+        </body>
+      </pou>
+    </pous>
+  </types>
+  <instances><configurations/></instances>
+</project>

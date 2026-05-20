@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project xmlns="http://www.plcopen.org/xml/tc6_0200">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-20T00:00:00"/>
+  <contentHeader name="Tc2_System.DRAND Demo" modificationDateTime="2026-05-20T00:00:00">
+    <coordinateInfo>
+      <fbd><scaling x="1" y="1"/></fbd>
+      <ld><scaling x="1" y="1"/></ld>
+      <sfc><scaling x="1" y="1"/></sfc>
+    </coordinateInfo>
+  </contentHeader>
+  <types>
+    <dataTypes/>
+    <pous>
+      <pou name="P_Demo_DRAND" pouType="program">
+        <interface>
+          <localVars>
+            <variable name="fbDRAND">
+              <type><derived name="DRAND"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">DRAND 实例</xhtml></documentation>
+            </variable>
+            <variable name="nSeedValue">
+              <initialValue><simpleValue value="42"/></initialValue>
+              <type><INT/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">固定种子；改这里可换序列</xhtml></documentation>
+            </variable>
+            <variable name="rRandomWeight">
+              <type><LREAL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">0..1 区间，乘 200 后加 300 得 300..500g</xhtml></documentation>
+            </variable>
+            <variable name="rSimWeight_g">
+              <type><LREAL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">折算后的仿真重量（克）</xhtml></documentation>
+            </variable>
+          </localVars>
+        </interface>
+        <body>
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
+// Tc2_System.DRAND 演示程序
+// ============================================================
+// 场景：分拣线调试期，给虚拟物料赋 300..500g 随机重量驱动下游分流逻辑。
+// 价值：固定种子 (nSeedValue=42) 保证每次启动同一序列，便于回归对比。
+// 验证：登录后观察 rRandomWeight 在 0..1 之间跳动；rSimWeight_g 在 300..500g 之间。修改 nSeedValue 后重启会看到完全不同但可复现的序列。
+// 验证步骤：
+//   1. 右键 PLC 项目 → Import PLCopenXML → 选本文件
+//   2. 引用 Tc2_System（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』指引在线写值观察
+// ============================================================
+
+fbDRAND(
+    Seed := nSeedValue,
+    Num =&gt; rRandomWeight
+);
+
+// 折算到 300..500g
+rSimWeight_g := rRandomWeight * 200.0 + 300.0;
+</xhtml></ST>
+        </body>
+      </pou>
+    </pous>
+  </types>
+  <instances><configurations/></instances>
+</project>

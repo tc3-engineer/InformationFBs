@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project xmlns="http://www.plcopen.org/xml/tc6_0200">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-20T00:00:00"/>
+  <contentHeader name="Tc2_System.FB_SetLedColorEx_BAPI Demo" modificationDateTime="2026-05-20T00:00:00">
+    <coordinateInfo>
+      <fbd><scaling x="1" y="1"/></fbd>
+      <ld><scaling x="1" y="1"/></ld>
+      <sfc><scaling x="1" y="1"/></sfc>
+    </coordinateInfo>
+  </contentHeader>
+  <types>
+    <dataTypes/>
+    <pous>
+      <pou name="P_Demo_FB_SetLedColorEx_BAPI" pouType="program">
+        <interface>
+          <localVars>
+            <variable name="fbFB_SetLedColorEx_BAPI">
+              <type><derived name="FB_SetLedColorEx_BAPI"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">FB_SetLedColorEx_BAPI 实例</xhtml></documentation>
+            </variable>
+            <variable name="bSetLedReq">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">上升沿触发切灯</xhtml></documentation>
+            </variable>
+            <variable name="nTargetLed">
+              <initialValue><simpleValue value="1"/></initialValue>
+              <type><USINT/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">1 = U1 LED，2 = U2 LED</xhtml></documentation>
+            </variable>
+            <variable name="eDesiredColor">
+              <initialValue><simpleValue value="eUsrLED_Green"/></initialValue>
+              <type><derived name="E_UsrLED_Color"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">目标颜色</xhtml></documentation>
+            </variable>
+            <variable name="bLedSwitching">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">切换中</xhtml></documentation>
+            </variable>
+            <variable name="bLedSwitchErr">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">切换错误</xhtml></documentation>
+            </variable>
+            <variable name="nLastAdsError">
+              <type><UDINT/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">错误码</xhtml></documentation>
+            </variable>
+          </localVars>
+        </interface>
+        <body>
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
+// Tc2_System.FB_SetLedColorEx_BAPI 演示程序
+// ============================================================
+// 场景：CX5230 双 LED：U1 显示 PLC 运行态，U2 显示 SCADA 链路态。
+// 价值：替代为两颗灯各写一份 ADS 命令。
+// 验证：把 nTargetLed = 1 / eDesiredColor = eUsrLED_Red，触发后 U1 应变红；改 nTargetLed = 2 / eDesiredColor = eUsrLED_Blue，U2 应变蓝。
+// 验证步骤：
+//   1. 右键 PLC 项目 → Import PLCopenXML → 选本文件
+//   2. 引用 Tc2_System（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』指引在线写值观察
+// ============================================================
+
+fbFB_SetLedColorEx_BAPI(
+    sNetID := '', nLedID := nTargetLed, eNewColor := eDesiredColor, bExecute := bSetLedReq, tTimeout := DEFAULT_ADS_TIMEOUT,
+    bBusy =&gt; bLedSwitching, bError =&gt; bLedSwitchErr, nErrID =&gt; nLastAdsError
+);
+
+</xhtml></ST>
+        </body>
+      </pou>
+    </pous>
+  </types>
+  <instances><configurations/></instances>
+</project>

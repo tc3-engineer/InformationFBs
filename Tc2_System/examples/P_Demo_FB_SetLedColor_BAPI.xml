@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project xmlns="http://www.plcopen.org/xml/tc6_0200">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-20T00:00:00"/>
+  <contentHeader name="Tc2_System.FB_SetLedColor_BAPI Demo" modificationDateTime="2026-05-20T00:00:00">
+    <coordinateInfo>
+      <fbd><scaling x="1" y="1"/></fbd>
+      <ld><scaling x="1" y="1"/></ld>
+      <sfc><scaling x="1" y="1"/></sfc>
+    </coordinateInfo>
+  </contentHeader>
+  <types>
+    <dataTypes/>
+    <pous>
+      <pou name="P_Demo_FB_SetLedColor_BAPI" pouType="program">
+        <interface>
+          <localVars>
+            <variable name="fbFB_SetLedColor_BAPI">
+              <type><derived name="FB_SetLedColor_BAPI"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">FB_SetLedColor_BAPI 实例</xhtml></documentation>
+            </variable>
+            <variable name="bSetLedReq">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">在线上升沿触发切灯</xhtml></documentation>
+            </variable>
+            <variable name="eDesiredColor">
+              <initialValue><simpleValue value="eUsrLED_Green"/></initialValue>
+              <type><derived name="E_UsrLED_Color"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">目标颜色，默认绿</xhtml></documentation>
+            </variable>
+            <variable name="bLedSwitching">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">切换中</xhtml></documentation>
+            </variable>
+            <variable name="bLedSwitchErr">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">BAPI 调用错误</xhtml></documentation>
+            </variable>
+            <variable name="nLastAdsError">
+              <type><UDINT/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">ADS / BAPI 错误码</xhtml></documentation>
+            </variable>
+          </localVars>
+        </interface>
+        <body>
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
+// Tc2_System.FB_SetLedColor_BAPI 演示程序
+// ============================================================
+// 场景：CX5130 把整机健康态映射到 USR LED，无 HMI 工位也能扫一眼判断状态。
+// 价值：替代外接信号灯柱布线；BAPI 协议已封装，业务只关心枚举值。
+// 验证：登录后改 eDesiredColor 为 eUsrLED_Red，写 bSetLedReq := TRUE，物理 USR LED 应在 1 秒内变红；改成 eUsrLED_Off 再触发后熄灭。
+// 验证步骤：
+//   1. 右键 PLC 项目 → Import PLCopenXML → 选本文件
+//   2. 引用 Tc2_System（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』指引在线写值观察
+// ============================================================
+
+fbFB_SetLedColor_BAPI(
+    sNetID := '', eNewColor := eDesiredColor, bExecute := bSetLedReq, tTimeout := DEFAULT_ADS_TIMEOUT,
+    bBusy =&gt; bLedSwitching, bError =&gt; bLedSwitchErr, nErrID =&gt; nLastAdsError
+);
+
+</xhtml></ST>
+        </body>
+      </pou>
+    </pous>
+  </types>
+  <instances><configurations/></instances>
+</project>

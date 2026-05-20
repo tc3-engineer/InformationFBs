@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project xmlns="http://www.plcopen.org/xml/tc6_0200">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-20T00:00:00"/>
+  <contentHeader name="Tc2_System.ADSREADEX Demo" modificationDateTime="2026-05-20T00:00:00">
+    <coordinateInfo>
+      <fbd><scaling x="1" y="1"/></fbd>
+      <ld><scaling x="1" y="1"/></ld>
+      <sfc><scaling x="1" y="1"/></sfc>
+    </coordinateInfo>
+  </contentHeader>
+  <types>
+    <dataTypes/>
+    <pous>
+      <pou name="P_Demo_ADSREADEX" pouType="program">
+        <interface>
+          <localVars>
+            <variable name="fbADSREADEX">
+              <type><derived name="ADSREADEX"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">ADSREADEX 实例</xhtml></documentation>
+            </variable>
+            <variable name="bReadStatusReq">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">在线触发一次读</xhtml></documentation>
+            </variable>
+            <variable name="sStatusText">
+              <type><string><length>255</length></string></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">对端 PLC 状态字符串</xhtml></documentation>
+            </variable>
+            <variable name="bAdsReading">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">正在读</xhtml></documentation>
+            </variable>
+            <variable name="bAdsReadErr">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">ADS 错误</xhtml></documentation>
+            </variable>
+            <variable name="nLastAdsError">
+              <type><UDINT/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">ADS 错误码</xhtml></documentation>
+            </variable>
+            <variable name="nActualBytes">
+              <type><UDINT/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">本次实际读到字节数</xhtml></documentation>
+            </variable>
+          </localVars>
+        </interface>
+        <body>
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
+// Tc2_System.ADSREADEX 演示程序
+// ============================================================
+// 场景：读对端 PLC 全局可变长字符串 sStatusText 给诊断界面。
+// 价值：替代 ADSREAD + 手工 STRLEN；本 FB 直接告诉你装了多少有效字节。
+// 验证：触发后 sStatusText 装入对端文本，nActualBytes = 真实字节数（不是 256 上限）。
+// 验证步骤：
+//   1. 右键 PLC 项目 → Import PLCopenXML → 选本文件
+//   2. 引用 Tc2_System（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』指引在线写值观察
+// ============================================================
+
+fbADSREADEX(
+    NETID := '', PORT := 851, IDXGRP := 16#0000F005, IDXOFFS := 0, LEN := 256, DESTADDR := ADR(sStatusText), READ := bReadStatusReq, TMOUT := DEFAULT_ADS_TIMEOUT,
+    BUSY =&gt; bAdsReading, ERR =&gt; bAdsReadErr, ERRID =&gt; nLastAdsError, COUNT_R =&gt; nActualBytes
+);
+
+</xhtml></ST>
+        </body>
+      </pou>
+    </pous>
+  </types>
+  <instances><configurations/></instances>
+</project>

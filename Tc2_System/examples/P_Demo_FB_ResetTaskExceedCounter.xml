@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project xmlns="http://www.plcopen.org/xml/tc6_0200">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-20T00:00:00"/>
+  <contentHeader name="Tc2_System.FB_ResetTaskExceedCounter Demo" modificationDateTime="2026-05-20T00:00:00">
+    <coordinateInfo>
+      <fbd><scaling x="1" y="1"/></fbd>
+      <ld><scaling x="1" y="1"/></ld>
+      <sfc><scaling x="1" y="1"/></sfc>
+    </coordinateInfo>
+  </contentHeader>
+  <types>
+    <dataTypes/>
+    <pous>
+      <pou name="P_Demo_FB_ResetTaskExceedCounter" pouType="program">
+        <interface>
+          <localVars>
+            <variable name="fbFB_ResetTaskExceedCounter">
+              <type><derived name="FB_ResetTaskExceedCounter"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">FB_ResetTaskExceedCounter 实例</xhtml></documentation>
+            </variable>
+            <variable name="bResetExceedReq">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">在线上升沿触发清零</xhtml></documentation>
+            </variable>
+            <variable name="nMyTaskPort">
+              <type><UINT/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">目标任务 ADS 端口</xhtml></documentation>
+            </variable>
+            <variable name="bExceedResetting">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">正在写</xhtml></documentation>
+            </variable>
+            <variable name="bExceedResetErr">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">ADS 写错误</xhtml></documentation>
+            </variable>
+            <variable name="nLastAdsError">
+              <type><UDINT/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">ADS 错误码</xhtml></documentation>
+            </variable>
+          </localVars>
+        </interface>
+        <body>
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
+// Tc2_System.FB_ResetTaskExceedCounter 演示程序
+// ============================================================
+// 场景：优化任务代码后清零超限计数做新基线验证。
+// 价值：一行调用替代手写 ADSWRITE + 符号句柄维护。
+// 验证：登录后 nMyTaskPort 自动填充；先用 FB_ReadTaskExceedCounter 看到当前值非 0，写 bResetExceedReq := TRUE 后再读，应为 0。
+// 验证步骤：
+//   1. 右键 PLC 项目 → Import PLCopenXML → 选本文件
+//   2. 引用 Tc2_System（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』指引在线写值观察
+// ============================================================
+
+// 自动取本任务 ADS 端口
+nMyTaskPort := TwinCAT_SystemInfoVarList._TaskInfo[GETCURTASKINDEXEX()].AdsPort;
+
+fbFB_ResetTaskExceedCounter(
+    bExecute := bResetExceedReq, nTaskAdsPort := nMyTaskPort,
+    bBusy =&gt; bExceedResetting, bError =&gt; bExceedResetErr, nErrorID =&gt; nLastAdsError
+);
+
+</xhtml></ST>
+        </body>
+      </pou>
+    </pous>
+  </types>
+  <instances><configurations/></instances>
+</project>

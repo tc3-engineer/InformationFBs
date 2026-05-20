@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project xmlns="http://www.plcopen.org/xml/tc6_0200">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-20T00:00:00"/>
+  <contentHeader name="Tc2_System.ADSLOGLREAL Demo" modificationDateTime="2026-05-20T00:00:00">
+    <coordinateInfo>
+      <fbd><scaling x="1" y="1"/></fbd>
+      <ld><scaling x="1" y="1"/></ld>
+      <sfc><scaling x="1" y="1"/></sfc>
+    </coordinateInfo>
+  </contentHeader>
+  <types>
+    <dataTypes/>
+    <pous>
+      <pou name="P_Demo_ADSLOGLREAL" pouType="program">
+        <interface>
+          <localVars>
+            <variable name="bTemperatureTooHigh">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">温度越限信号</xhtml></documentation>
+            </variable>
+            <variable name="rtTempAlarm">
+              <type><derived name="R_TRIG"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">边沿触发</xhtml></documentation>
+            </variable>
+            <variable name="rCurrentTemp">
+              <initialValue><simpleValue value="187.203045"/></initialValue>
+              <type><LREAL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">当前温度（°C）</xhtml></documentation>
+            </variable>
+            <variable name="udiAdsLogRes">
+              <type><DINT/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">返回 0 = 成功</xhtml></documentation>
+            </variable>
+          </localVars>
+        </interface>
+        <body>
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
+// Tc2_System.ADSLOGLREAL 演示程序
+// ============================================================
+// 场景：水冷温度越限弹一次消息框 + 写日志。
+// 价值：替代手写 REAL_TO_STRING + 拼字符串。
+// 验证：登录后写 bTemperatureTooHigh := TRUE，弹出 'PLC Msg.: Max Temp. reached ! Temperature: 187.203045'。
+// 验证步骤：
+//   1. 右键 PLC 项目 → Import PLCopenXML → 选本文件
+//   2. 引用 Tc2_System（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』指引在线写值观察
+// ============================================================
+
+rtTempAlarm(CLK := bTemperatureTooHigh);
+IF rtTempAlarm.Q THEN
+    udiAdsLogRes := ADSLOGLREAL(
+        msgCtrlMask := ADSLOG_MSGTYPE_HINT OR ADSLOG_MSGTYPE_MSGBOX,
+        msgFmtStr := 'PLC Msg.: Max Temp. reached ! Temperature: %f',
+        lrealArg := rCurrentTemp);
+END_IF;
+</xhtml></ST>
+        </body>
+      </pou>
+    </pous>
+  </types>
+  <instances><configurations/></instances>
+</project>

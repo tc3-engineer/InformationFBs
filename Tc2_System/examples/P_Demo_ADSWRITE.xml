@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project xmlns="http://www.plcopen.org/xml/tc6_0200">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-20T00:00:00"/>
+  <contentHeader name="Tc2_System.ADSWRITE Demo" modificationDateTime="2026-05-20T00:00:00">
+    <coordinateInfo>
+      <fbd><scaling x="1" y="1"/></fbd>
+      <ld><scaling x="1" y="1"/></ld>
+      <sfc><scaling x="1" y="1"/></sfc>
+    </coordinateInfo>
+  </contentHeader>
+  <types>
+    <dataTypes/>
+    <pous>
+      <pou name="P_Demo_ADSWRITE" pouType="program">
+        <interface>
+          <localVars>
+            <variable name="fbADSWRITE">
+              <type><derived name="ADSWRITE"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">ADSWRITE 实例</xhtml></documentation>
+            </variable>
+            <variable name="bResetAxisReq">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">上升沿触发 NC 轴 1 复位</xhtml></documentation>
+            </variable>
+            <variable name="bAdsWriting">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">正在写</xhtml></documentation>
+            </variable>
+            <variable name="bAdsWriteErr">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">ADS 写错误</xhtml></documentation>
+            </variable>
+            <variable name="nLastAdsError">
+              <type><UDINT/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">ADS 错误码</xhtml></documentation>
+            </variable>
+          </localVars>
+        </interface>
+        <body>
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
+// Tc2_System.ADSWRITE 演示程序
+// ============================================================
+// 场景：HMI 按 '复位轴 1' 按钮，PLC 通过 ADSWRITE 命令 NC 重新激活轴 1。
+// 价值：替代 PDO 链接传递控制位，无需改硬件配置就能发命令。
+// 验证：登录后 bResetAxisReq := TRUE，bAdsWriting 闪一下后；NC Manager 里看到轴 1 重新进入 ready 态。
+// 验证步骤：
+//   1. 右键 PLC 项目 → Import PLCopenXML → 选本文件
+//   2. 引用 Tc2_System（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』指引在线写值观察
+// ============================================================
+
+fbADSWRITE(
+    NETID := '', PORT := 501, IDXGRP := 16#00004201, IDXOFFS := 16#00000051, LEN := 0, SRCADDR := 0, WRITE := bResetAxisReq, TMOUT := DEFAULT_ADS_TIMEOUT,
+    BUSY =&gt; bAdsWriting, ERR =&gt; bAdsWriteErr, ERRID =&gt; nLastAdsError
+);
+
+</xhtml></ST>
+        </body>
+      </pou>
+    </pous>
+  </types>
+  <instances><configurations/></instances>
+</project>
