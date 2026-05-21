@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project xmlns="http://www.plcopen.org/xml/tc6_0200">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-21T00:00:00"/>
+  <contentHeader name="Tc2_MC2.MC_MoveVelocity Demo" modificationDateTime="2026-05-21T00:00:00">
+    <coordinateInfo>
+      <fbd><scaling x="1" y="1"/></fbd>
+      <ld><scaling x="1" y="1"/></ld>
+      <sfc><scaling x="1" y="1"/></sfc>
+    </coordinateInfo>
+  </contentHeader>
+  <types>
+    <dataTypes/>
+    <pous>
+      <pou name="P_Demo_MC_MoveVelocity" pouType="program">
+        <interface>
+          <localVars>
+            <variable name="fbConveyorRun"><type><derived name="MC_MoveVelocity"/></type></variable>
+            <variable name="fbConveyorHalt"><type><derived name="MC_Halt"/></type></variable>
+            <variable name="axisConveyor"><type><derived name="AXIS_REF"/></type></variable>
+            <variable name="rtStartTrig"><type><derived name="R_TRIG"/></type></variable>
+            <variable name="rtStopTrig"><type><derived name="R_TRIG"/></type></variable>
+            <variable name="bStartConveyor"><initialValue><simpleValue value="FALSE"/></initialValue><type><BOOL/></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">在线 TRUE 启动传送带</xhtml></documentation></variable>
+            <variable name="bStopConveyor"><initialValue><simpleValue value="FALSE"/></initialValue><type><BOOL/></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">在线 TRUE 平稳停止传送带</xhtml></documentation></variable>
+            <variable name="lrLineSpeedMMpS"><initialValue><simpleValue value="1500.0"/></initialValue><type><LREAL/></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">传送带线速度 mm/s</xhtml></documentation></variable>
+            <variable name="bAtSpeed"><type><BOOL/></type></variable>
+            <variable name="bRunBusy"><type><BOOL/></type></variable>
+            <variable name="bHaltDone"><type><BOOL/></type></variable>
+            <variable name="nRunErrorID"><type><UDINT/></type></variable>
+          </localVars>
+        </interface>
+        <body>
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：包装线主传送带 — 启动后恒速 1.5 m/s 运行直到 PLC 发停车指令。
+//       MoveVelocity 负责加速到目标速度，Halt 负责停车，分工明确。
+// 价值：达到恒速后 FB 自动"放手"，NC 维持速度无需 PLC 持续干预。
+// 验证：bStartConveyor := TRUE → 看 axisConveyor.NcToPlc.ActVelo 爬升到 1500，
+//       bAtSpeed 置 TRUE。bStopConveyor := TRUE → 减速到 0，bHaltDone 短暂 TRUE。
+// =============================================================================
+
+rtStartTrig(CLK := bStartConveyor);
+rtStopTrig(CLK := bStopConveyor);
+
+fbConveyorRun(
+    Execute      := rtStartTrig.Q,
+    Velocity     := lrLineSpeedMMpS,
+    Acceleration := 2000.0,
+    Deceleration := 2000.0,
+    Jerk         := 20000.0,
+    Direction    := MC_Positive_Direction,
+    BufferMode   := MC_Aborting,
+    Axis         := axisConveyor,
+    InVelocity   =&gt; bAtSpeed,
+    Busy         =&gt; bRunBusy,
+    ErrorID      =&gt; nRunErrorID
+);
+
+fbConveyorHalt(
+    Execute      := rtStopTrig.Q,
+    Deceleration := 2000.0,
+    Jerk         := 20000.0,
+    BufferMode   := MC_Aborting,
+    Axis         := axisConveyor,
+    Done         =&gt; bHaltDone
+);
+</xhtml></ST>
+        </body>
+      </pou>
+    </pous>
+  </types>
+  <instances><configurations/></instances>
+</project>

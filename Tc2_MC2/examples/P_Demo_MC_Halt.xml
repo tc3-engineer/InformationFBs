@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project xmlns="http://www.plcopen.org/xml/tc6_0200">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-21T00:00:00"/>
+  <contentHeader name="Tc2_MC2.MC_Halt Demo" modificationDateTime="2026-05-21T00:00:00">
+    <coordinateInfo>
+      <fbd><scaling x="1" y="1"/></fbd>
+      <ld><scaling x="1" y="1"/></ld>
+      <sfc><scaling x="1" y="1"/></sfc>
+    </coordinateInfo>
+  </contentHeader>
+  <types>
+    <dataTypes/>
+    <pous>
+      <pou name="P_Demo_MC_Halt" pouType="program">
+        <interface>
+          <localVars>
+            <variable name="fbCycleHalt"><type><derived name="MC_Halt"/></type></variable>
+            <variable name="axisProcess"><type><derived name="AXIS_REF"/></type></variable>
+            <variable name="rtCycleEnd"><type><derived name="R_TRIG"/></type></variable>
+            <variable name="bEndOfCycle"><initialValue><simpleValue value="FALSE"/></initialValue><type><BOOL/></type></variable>
+            <variable name="bHaltDone"><type><BOOL/></type></variable>
+            <variable name="bHaltBusy"><type><BOOL/></type></variable>
+            <variable name="bAborted"><type><BOOL/></type></variable>
+            <variable name="nErrorID"><type><UDINT/></type></variable>
+          </localVars>
+        </interface>
+        <body>
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：包装线传送带每完成一袋产品就发"节拍结束"信号让传送带平稳停下，下一
+//       节拍信号到了再启动。这是"正常工艺停"——用 MC_Halt 不用 MC_Stop。
+// 价值：停后不锁轴，下一节拍 MC_MoveVelocity 可直接启动，不需先 Reset。
+// 验证：先 MC_MoveVelocity 让传送带跑起来（demo 假设已跑）；bEndOfCycle := TRUE →
+//       看 ActVelo 在 ~ 0.75 s 内减到 0，bHaltDone 短暂置 TRUE。然后立刻
+//       MC_MoveVelocity 应能再启动（如果先发 MC_Stop 就启动不了，需 Reset）。
+// =============================================================================
+
+rtCycleEnd(CLK := bEndOfCycle);
+
+fbCycleHalt(
+    Execute        := rtCycleEnd.Q,
+    Deceleration   := 2000.0,
+    Jerk           := 20000.0,
+    BufferMode     := MC_Aborting,
+    Axis           := axisProcess,
+    Done           =&gt; bHaltDone,
+    Busy           =&gt; bHaltBusy,
+    CommandAborted =&gt; bAborted,
+    ErrorID        =&gt; nErrorID
+);
+</xhtml></ST>
+        </body>
+      </pou>
+    </pous>
+  </types>
+  <instances><configurations/></instances>
+</project>
