@@ -33,7 +33,7 @@
 
 | 库 | InfoSys 版本 | 估算 FB+FC | 状态 | 备注 |
 |---|---|---|---|---|
-| Tc2_MC2 | 2.17.0 | ~80 | ⏳ pending | PLCopen 单/多轴 |
+| Tc2_MC2 | 2.17.0 | 22 (single-axis subset) | ✅ done (22/22) | PLCopen 单轴运动；多轴 / Cam / FlyingSaw 见 Tc2_MC2_Drive 及 Tc3_McCoordinatedMotion |
 | Tc2_MC2_Drive | 1.14.2 | ~30 | ⏳ pending | SoE 驱动器接入 |
 | Tc2_NC | 现行 | ~30 | ⏳ pending | NC PTP 底层（PDF 走 TF50x0 别名，见 preflight） |
 | Tc2_NcDrive | 现行 | ~30 | ⏳ pending | NC 驱动器 wrapper |

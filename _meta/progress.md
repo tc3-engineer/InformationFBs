@@ -543,3 +543,25 @@
 2026-05-20T09:30:00Z | Tc2_System     | time_functions                           | F_GetSystemTime                          | verified | S2 scope - PDF + InfoSys cross-verified
 2026-05-20T09:30:00Z | Tc2_System     | time_functions                           | F_GetTaskTime                            | verified | S2 scope - PDF + InfoSys cross-verified
 2026-05-20T09:30:00Z | Tc2_System     | time_functions                           | F_GetTaskTotalTime                       | verified | S2 scope - PDF + InfoSys cross-verified
+2026-05-21T10:00:00Z | Tc2_MC2        | point_to_point_motion                    | MC_MoveAbsolute                          | verified | PLCopen single-axis motion - PDF + InfoSys cross-verified
+2026-05-21T10:00:00Z | Tc2_MC2        | point_to_point_motion                    | MC_MoveRelative                          | verified | PDF + InfoSys cross-verified
+2026-05-21T10:00:00Z | Tc2_MC2        | point_to_point_motion                    | MC_MoveAdditive                          | verified | PDF + InfoSys cross-verified
+2026-05-21T10:00:00Z | Tc2_MC2        | point_to_point_motion                    | MC_MoveModulo                            | verified | PDF + InfoSys cross-verified
+2026-05-21T10:00:00Z | Tc2_MC2        | point_to_point_motion                    | MC_MoveVelocity                          | verified | PDF + InfoSys cross-verified
+2026-05-21T10:00:00Z | Tc2_MC2        | point_to_point_motion                    | MC_MoveContinuousAbsolute                | verified | PDF + InfoSys cross-verified
+2026-05-21T10:00:00Z | Tc2_MC2        | point_to_point_motion                    | MC_MoveContinuousRelative                | verified | PDF + InfoSys cross-verified
+2026-05-21T10:00:00Z | Tc2_MC2        | point_to_point_motion                    | MC_Halt                                  | verified | PDF + InfoSys cross-verified
+2026-05-21T10:00:00Z | Tc2_MC2        | point_to_point_motion                    | MC_Stop                                  | verified | PDF + InfoSys cross-verified
+2026-05-21T10:00:00Z | Tc2_MC2        | superposition                            | MC_MoveSuperImposed                      | verified | PDF + InfoSys cross-verified
+2026-05-21T10:00:00Z | Tc2_MC2        | superposition                            | MC_AbortSuperposition                    | verified | PDF + InfoSys cross-verified
+2026-05-21T10:00:00Z | Tc2_MC2        | homing                                   | MC_Home                                  | verified | PDF + InfoSys cross-verified
+2026-05-21T10:00:00Z | Tc2_MC2        | manual_motion                            | MC_Jog                                   | verified | PDF + InfoSys cross-verified
+2026-05-21T10:00:00Z | Tc2_MC2        | axis_coupling                            | MC_GearIn                                | verified | PDF + InfoSys cross-verified
+2026-05-21T10:00:00Z | Tc2_MC2        | axis_coupling                            | MC_GearInDyn                             | verified | PDF + InfoSys cross-verified
+2026-05-21T10:00:00Z | Tc2_MC2        | axis_coupling                            | MC_GearOut                               | verified | PDF + InfoSys cross-verified
+2026-05-21T10:00:00Z | Tc2_MC2        | axis_coupling                            | MC_GearInMultiMaster                     | verified | PDF + InfoSys cross-verified
+2026-05-21T10:00:00Z | Tc2_MC2        | phasing                                  | MC_HaltPhasing                           | verified | PDF + InfoSys cross-verified
+2026-05-21T10:00:00Z | Tc2_MC2        | phasing                                  | MC_PhasingAbsolute                       | verified | PDF + InfoSys cross-verified
+2026-05-21T10:00:00Z | Tc2_MC2        | phasing                                  | MC_PhasingRelative                       | verified | PDF + InfoSys cross-verified
+2026-05-21T10:00:00Z | Tc2_MC2        | torque_control                           | MC_TorqueControl                         | verified | PDF + InfoSys cross-verified
+2026-05-21T10:00:00Z | Tc2_MC2        | library_version                          | stLibVersion_Tc2_MC2                     | verified | PDF + InfoSys cross-verified
