@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project xmlns="http://www.plcopen.org/xml/tc6_0200">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-21T07:00:00"/>
+  <contentHeader name="Tc2_TcpIp.SOCKETADDR_TO_STRING Demo" modificationDateTime="2026-05-21T07:00:00">
+    <coordinateInfo><fbd><scaling x="1" y="1"/></fbd><ld><scaling x="1" y="1"/></ld><sfc><scaling x="1" y="1"/></sfc></coordinateInfo>
+  </contentHeader>
+  <types>
+    <dataTypes/>
+    <pous>
+      <pou name="P_Demo_SOCKETADDR_TO_STRING" pouType="program">
+        <interface>
+          <localVars>
+            <variable name="fbStartListening"><type><derived name="FB_SocketListen"/></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">先开 listener，再拆其 localAddr 显示</xhtml></documentation></variable>
+            <variable name="bRequestListen"><type><BOOL/></type></variable>
+            <variable name="bListenBusy"><type><BOOL/></type></variable>
+            <variable name="bListenError"><type><BOOL/></type></variable>
+            <variable name="nListenErrId"><type><UDINT/></type></variable>
+            <variable name="hListener"><type><derived name="T_HSOCKET"/></type></variable>
+            <variable name="sListenerLocalAddr"><type><string><length>22</length></string></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">listener 实际绑定的网卡 IP + 端口</xhtml></documentation></variable>
+            <variable name="sListenerRemoteAddr"><type><string><length>22</length></string></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">listener 的 remote 应为 "0.0.0.0:0"</xhtml></documentation></variable>
+          </localVars>
+        </interface>
+        <body>
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：多网卡 CX 工控机开 listener，需要验证 listener 究竟绑到了哪个网卡。
+//       通过 SOCKETADDR_TO_STRING 把 hListener.localAddr 拆出来，比靠
+//       HSOCKET_TO_STRING 更紧凑（不带 Handle: 前缀）。
+//
+// 价值：演示从 T_HSOCKET 子结构提取地址字串的标准做法；同时确认 listener
+//       的 remoteAddr 是 0.0.0.0:0（无意义）这一预期。
+//
+// 验证步骤：
+//   1. 在线 bRequestListen := TRUE
+//   2. hListener.handle 非 0 后：
+//      sListenerLocalAddr  显示 "0.0.0.0:200" 或绑定的具体 IP
+//      sListenerRemoteAddr 显示 "0.0.0.0:0"
+//   3. 改 sLocalHost 为具体网卡 IP（如 '192.168.1.10'）→ sListenerLocalAddr
+//      显示 "192.168.1.10:200" 验证绑定生效
+// =============================================================================
+
+fbStartListening(
+    sSrvNetId := '', sLocalHost := '0.0.0.0', nLocalPort := 200,
+    bExecute := bRequestListen, tTimeout := T#5S,
+    bBusy =&gt; bListenBusy, bError =&gt; bListenError, nErrId =&gt; nListenErrId,
+    hListener =&gt; hListener);
+
+// 每周期把 listener 的 local/remote 各自字串化（纯计算，无副作用）
+sListenerLocalAddr  := SOCKETADDR_TO_STRING(stSockAddr := hListener.localAddr);
+sListenerRemoteAddr := SOCKETADDR_TO_STRING(stSockAddr := hListener.remoteAddr);
+</xhtml></ST>
+        </body>
+      </pou>
+    </pous>
+  </types>
+  <instances><configurations/></instances>
+</project>

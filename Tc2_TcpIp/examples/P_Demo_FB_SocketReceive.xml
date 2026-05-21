@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project xmlns="http://www.plcopen.org/xml/tc6_0200">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-21T07:00:00"/>
+  <contentHeader name="Tc2_TcpIp.FB_SocketReceive Demo" modificationDateTime="2026-05-21T07:00:00">
+    <coordinateInfo><fbd><scaling x="1" y="1"/></fbd><ld><scaling x="1" y="1"/></ld><sfc><scaling x="1" y="1"/></sfc></coordinateInfo>
+  </contentHeader>
+  <types>
+    <dataTypes/>
+    <pous>
+      <pou name="P_Demo_FB_SocketReceive" pouType="program">
+        <interface>
+          <localVars>
+            <variable name="fbConnectToScanner"><type><derived name="FB_SocketConnect"/></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">先建连，给 Receive 提供一个真实句柄</xhtml></documentation></variable>
+            <variable name="fbReceiveFromPeer"><type><derived name="FB_SocketReceive"/></type></variable>
+            <variable name="fbPollTON"><type><derived name="TON"/></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">100ms 节拍触发 polling</xhtml></documentation></variable>
+            <variable name="bRequestConnect"><type><BOOL/></type></variable>
+            <variable name="bConnectBusy"><type><BOOL/></type></variable>
+            <variable name="bConnectError"><type><BOOL/></type></variable>
+            <variable name="nConnectErrId"><type><UDINT/></type></variable>
+            <variable name="hScanner"><type><derived name="T_HSOCKET"/></type></variable>
+            <variable name="abRxBuffer"><type><array><dimension lower="0" upper="1499"/><baseType><BYTE/></baseType></array></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">接收缓冲（1500 字节 ≈ 一个以太网 MTU 上限）</xhtml></documentation></variable>
+            <variable name="bPollPulse"><type><BOOL/></type></variable>
+            <variable name="bRxBusy"><type><BOOL/></type></variable>
+            <variable name="bRxError"><type><BOOL/></type></variable>
+            <variable name="nRxErrId"><type><UDINT/></type></variable>
+            <variable name="nRecBytes"><type><UDINT/></type></variable>
+            <variable name="sAssembledLine"><type><string><length>255</length></string></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">应用层拼出的一行（按 LF 切分）</xhtml></documentation></variable>
+            <variable name="sStashBuffer"><type><string><length>2048</length></string></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">未拼齐的字节暂存</xhtml></documentation></variable>
+            <variable name="nLinesReceived"><type><UDINT/></type></variable>
+          </localVars>
+        </interface>
+        <body>
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：PLC 作为 TCP 客户端连到一台工业条码扫描枪（172.16.5.10:9100），
+//       扫枪持续上送 "code_xxx\n" 行；本例程把字节流按 LF 切包，每凑齐一行
+//       就累加 nLinesReceived。
+//
+// 价值：演示"周期 polling + 流式累积 + 分隔符切包"的标准 TCP 客户端解析套路；
+//       提醒 nRecBytes=0 不算错误（队列空时正常）。
+//
+// 验证步骤：
+//   1. 起 ncat -l 9100 作伪扫描枪
+//   2. 在线 bRequestConnect := TRUE → hScanner.handle 非 0
+//   3. 在 ncat 端输入若干行（每行回车）
+//   4. PLC 内 sAssembledLine 显示最后一整行（截到 LF 前的内容）
+//   5. nLinesReceived 每收齐一行 +1
+//   6. 在 ncat 杀掉时 bRxError 置 TRUE，nRxErrId=0x00008004 (NOTCONNECTED)
+// =============================================================================
+
+// 阶段 1：建连
+fbConnectToScanner(
+    sSrvNetId := '',
+    sRemoteHost := '172.16.5.10',
+    nRemotePort := 9100,
+    bExecute := bRequestConnect,
+    tTimeout := T#10S,
+    bBusy =&gt; bConnectBusy,
+    bError =&gt; bConnectError,
+    nErrId =&gt; nConnectErrId,
+    hSocket =&gt; hScanner
+);
+
+// 100ms 自激 TON：连续生成 polling 上升沿
+fbPollTON(IN := NOT fbPollTON.Q, PT := T#100MS, Q =&gt; bPollPulse);
+
+// 周期 polling 接收
+fbReceiveFromPeer(
+    sSrvNetId := '',
+    hSocket   := hScanner,
+    cbLen     := SIZEOF(abRxBuffer),
+    pDest     := ADR(abRxBuffer),
+    bExecute  := bPollPulse,
+    tTimeout  := T#5S,
+    bBusy     =&gt; bRxBusy,
+    bError    =&gt; bRxError,
+    nErrId    =&gt; nRxErrId,
+    nRecBytes =&gt; nRecBytes
+);
+
+// 应用层：本周期收到 nRecBytes 字节，把它当字符附加进 sStashBuffer，再按 $N 切行
+IF nRecBytes &gt; 0 THEN
+    // 简化演示：直接把缓冲拼到 sStashBuffer 末尾
+    sStashBuffer := CONCAT(sStashBuffer, MEMSTRING(ADR(abRxBuffer), nRecBytes));
+    // 如果含 $N（LF），切出第一行
+    IF FIND(sStashBuffer, '$N') &gt; 0 THEN
+        sAssembledLine := LEFT(sStashBuffer, FIND(sStashBuffer, '$N') - 1);
+        sStashBuffer := DELETE(sStashBuffer, FIND(sStashBuffer, '$N'), 1);
+        nLinesReceived := nLinesReceived + 1;
+    END_IF;
+END_IF;
+
+// 注：上面 MEMSTRING / CONCAT / FIND / LEFT / DELETE 函数来自 Tc2_Standard / Tc2_System。
+// 真实工程里应用更严密的拼包逻辑，本例只作教学演示。
+</xhtml></ST>
+        </body>
+      </pou>
+    </pous>
+  </types>
+  <instances><configurations/></instances>
+</project>

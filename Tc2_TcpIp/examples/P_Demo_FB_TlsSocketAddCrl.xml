@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project xmlns="http://www.plcopen.org/xml/tc6_0200">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-21T07:00:00"/>
+  <contentHeader name="Tc2_TcpIp.FB_TlsSocketAddCrl Demo" modificationDateTime="2026-05-21T07:00:00">
+    <coordinateInfo><fbd><scaling x="1" y="1"/></fbd><ld><scaling x="1" y="1"/></ld><sfc><scaling x="1" y="1"/></sfc></coordinateInfo>
+  </contentHeader>
+  <types>
+    <dataTypes/>
+    <pous>
+      <pou name="P_Demo_FB_TlsSocketAddCrl" pouType="program">
+        <interface>
+          <localVars>
+            <variable name="fbCreateClient"><type><derived name="FB_TlsSocketCreate"/></type></variable>
+            <variable name="fbAddCorpCa"><type><derived name="FB_TlsSocketAddCa"/></type></variable>
+            <variable name="fbAddCrl"><type><derived name="FB_TlsSocketAddCrl"/></type></variable>
+            <variable name="hSocket"><type><derived name="T_HSOCKET"/></type></variable>
+            <variable name="bRequestCreate"><type><BOOL/></type></variable>
+            <variable name="bCreateBusy"><type><BOOL/></type></variable>
+            <variable name="bCreateError"><type><BOOL/></type></variable>
+            <variable name="nCreateErrId"><type><UDINT/></type></variable>
+            <variable name="sCaPath"><initialValue><simpleValue value="'C:\TwinCAT\3.1\Boot\Plc\TcpIpServer\corp_ca.pem'"/></initialValue><type><string><length>255</length></string></type></variable>
+            <variable name="bRequestCa"><type><BOOL/></type></variable>
+            <variable name="bCaBusy"><type><BOOL/></type></variable>
+            <variable name="bCaError"><type><BOOL/></type></variable>
+            <variable name="nCaErrId"><type><UDINT/></type></variable>
+            <variable name="sCrlPath"><initialValue><simpleValue value="'C:\TwinCAT\3.1\Boot\Plc\TcpIpServer\corp_ca.crl.pem'"/></initialValue><type><string><length>255</length></string></type></variable>
+            <variable name="bRequestCrl"><type><BOOL/></type></variable>
+            <variable name="bCrlBusy"><type><BOOL/></type></variable>
+            <variable name="bCrlError"><type><BOOL/></type></variable>
+            <variable name="nCrlErrId"><type><UDINT/></type></variable>
+          </localVars>
+        </interface>
+        <body>
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：能源行业 PLC 出工厂网连远程监控中心，要满足 IEC 62443，TLS 必须含
+//       吊销校验。运维定期把企业 CA 最新 CRL 推送到 PLC 文件系统，PLC 启动
+//       时按 Create → AddCa → AddCrl → Connect 顺序加载。
+//
+// 价值：演示完整 PKI 校验链装载：AddCa 提供签发链信任，AddCrl 提供吊销跟进。
+//       缺 CRL 则被吊销的证书仍能通过校验，违反 IEC 62443 / ISA-99 等标准。
+//
+// 验证步骤：
+//   1. 在线 bRequestCreate := TRUE
+//   2. 在线 bRequestCa := TRUE → bCaError=FALSE
+//   3. 在线 bRequestCrl := TRUE → bCrlError=FALSE
+//   4. 故意把 CRL 文件改成损坏内容 → nCrlErrId=0x0000808C (TLS_CRL_INVALID)
+//   5. AddCrl 必须在 Connect 之前调；Connect 之后调会报 TLS_INVALID_STATE
+// =============================================================================
+
+fbCreateClient(
+    sSrvNetId := '', bListener := FALSE,
+    bExecute := bRequestCreate, tTimeout := T#5S,
+    bBusy =&gt; bCreateBusy, bError =&gt; bCreateError, nErrId =&gt; nCreateErrId,
+    hSocket =&gt; hSocket);
+
+// AddCa 在前（AddCrl 验签需要 CA 公钥）
+fbAddCorpCa(
+    sSrvNetId := '', hSocket := hSocket,
+    sCaPath := sCaPath,
+    bExecute := bRequestCa, tTimeout := T#5S,
+    bBusy =&gt; bCaBusy, bError =&gt; bCaError, nErrId =&gt; nCaErrId);
+
+// AddCrl 在后
+fbAddCrl(
+    sSrvNetId := '', hSocket := hSocket,
+    sCrlPath := sCrlPath,
+    bExecute := bRequestCrl, tTimeout := T#5S,
+    bBusy =&gt; bCrlBusy, bError =&gt; bCrlError, nErrId =&gt; nCrlErrId);
+</xhtml></ST>
+        </body>
+      </pou>
+    </pous>
+  </types>
+  <instances><configurations/></instances>
+</project>

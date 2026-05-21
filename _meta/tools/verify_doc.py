@@ -225,10 +225,11 @@ _PLACEHOLDER_PHRASES = (
 
 _CJK_RE = re.compile(r"[一-鿿]")
 _INFOSYS_TOPIC_RE = re.compile(
-    # Beckhoff InfoSys uses two URL slugs depending on the library:
+    # Beckhoff InfoSys uses several URL slugs depending on the library:
     #   tcplclib_<lower>            — most TwinCAT 3 libs (e.g. tcplclib_tc2_mc2)
     #   tcplclib<lower>             — some legacy / NC libs (e.g. tcplclibmc2_camming)
-    r"https?://infosys\.beckhoff\.com/content/\d+/tcplclib[a-z0-9_]+/\d+\.html"
+    #   tf<digits>_tc3_<lower>      — TF function products (e.g. tf6310_tc3_tcpip → Tc2_TcpIp)
+    r"https?://infosys\.beckhoff\.com/content/\d+/(?:tcplclib[a-z0-9_]+|tf\d+_tc3_[a-z0-9_]+)/\d+\.html"
 )
 _INFOSYS_CHECKED_OK_RE = re.compile(
     r"(?:✅\s*\d{4}-\d{2}-\d{2}|⚠️\s*not-on-infosys)"

@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project xmlns="http://www.plcopen.org/xml/tc6_0200">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-21T07:00:00"/>
+  <contentHeader name="Tc2_TcpIp.FB_SocketSend Demo" modificationDateTime="2026-05-21T07:00:00">
+    <coordinateInfo><fbd><scaling x="1" y="1"/></fbd><ld><scaling x="1" y="1"/></ld><sfc><scaling x="1" y="1"/></sfc></coordinateInfo>
+  </contentHeader>
+  <types>
+    <dataTypes/>
+    <pous>
+      <pou name="P_Demo_FB_SocketSend" pouType="program">
+        <interface>
+          <localVars>
+            <variable name="fbConnectToMes"><type><derived name="FB_SocketConnect"/></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">先建连，给 Send 提供一个真实句柄</xhtml></documentation></variable>
+            <variable name="fbSendOrderResp"><type><derived name="FB_SocketSend"/></type></variable>
+            <variable name="bRequestConnect"><type><BOOL/></type></variable>
+            <variable name="bConnectBusy"><type><BOOL/></type></variable>
+            <variable name="bConnectError"><type><BOOL/></type></variable>
+            <variable name="nConnectErrId"><type><UDINT/></type></variable>
+            <variable name="hRemoteMes"><type><derived name="T_HSOCKET"/></type></variable>
+            <variable name="sResponsePayload"><initialValue><simpleValue value="'OK,ORDER_ACCEPTED$N'"/></initialValue><type><string><length>128</length></string></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">应答字串：以 LF 结尾让对端按行解析</xhtml></documentation></variable>
+            <variable name="bRequestSend"><type><BOOL/></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">在线上升沿发一次</xhtml></documentation></variable>
+            <variable name="bSendBusy"><type><BOOL/></type></variable>
+            <variable name="bSendError"><type><BOOL/></type></variable>
+            <variable name="nSendErrId"><type><UDINT/></type></variable>
+            <variable name="nSentTotal"><type><UDINT/></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">累计成功发送次数，监控用</xhtml></documentation></variable>
+            <variable name="bRtrigSendDone"><type><derived name="R_TRIG"/></type></variable>
+          </localVars>
+        </interface>
+        <body>
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：PLC 收到 MES 下发的订单（外部触发，本 demo 中由 bRequestSend 代表）
+//       立刻回送一段固定应答字串"OK,ORDER_ACCEPTED\n"。
+//
+// 价值：演示"建连成功之后才允许 Send；cbLen 必须算上字串终止符；bBusy 期间
+//       不要改 sResponsePayload"的标准纪律。
+//
+// 验证步骤：
+//   1. 对端起 ncat -l 9000 监听
+//   2. 在线 bRequestConnect := TRUE，等 hRemoteMes.handle 非 0
+//   3. 在线脉冲 bRequestSend := TRUE
+//      → ncat 端立刻打印 "OK,ORDER_ACCEPTED"
+//      → nSentTotal 每次脉冲 +1
+//   4. 故意把 ncat 杀掉再脉冲 bRequestSend
+//      → bSendError 置 TRUE，nSendErrId 为 0x00008004 (NOTCONNECTED)
+// =============================================================================
+
+// 阶段 1：建连（提供 hRemoteMes 给 Send 用）
+fbConnectToMes(
+    sSrvNetId   := '',
+    sRemoteHost := '172.16.6.180',
+    nRemotePort := 9000,
+    bExecute    := bRequestConnect,
+    tTimeout    := T#10S,
+    bBusy       =&gt; bConnectBusy,
+    bError      =&gt; bConnectError,
+    nErrId      =&gt; nConnectErrId,
+    hSocket     =&gt; hRemoteMes
+);
+
+// 阶段 2：发字串。+1 是因为 LEN 不含 $00 终止符，对端如按 null 判结尾需要它
+fbSendOrderResp(
+    sSrvNetId := '',
+    hSocket   := hRemoteMes,
+    cbLen     := TO_UDINT(LEN(sResponsePayload) + 1),
+    pSrc      := ADR(sResponsePayload),
+    bExecute  := bRequestSend,
+    tTimeout  := T#5S,
+    bBusy     =&gt; bSendBusy,
+    bError    =&gt; bSendError,
+    nErrId    =&gt; nSendErrId
+);
+
+// 在 bBusy 下降沿（即一次发送刚完成那一周期）累加计数
+bRtrigSendDone(CLK := NOT bSendBusy AND bRequestSend AND NOT bSendError);
+IF bRtrigSendDone.Q THEN
+    nSentTotal := nSentTotal + 1;
+END_IF;
+</xhtml></ST>
+        </body>
+      </pou>
+    </pous>
+  </types>
+  <instances><configurations/></instances>
+</project>

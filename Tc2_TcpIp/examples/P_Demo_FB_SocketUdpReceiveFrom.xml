@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project xmlns="http://www.plcopen.org/xml/tc6_0200">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-21T07:00:00"/>
+  <contentHeader name="Tc2_TcpIp.FB_SocketUdpReceiveFrom Demo" modificationDateTime="2026-05-21T07:00:00">
+    <coordinateInfo><fbd><scaling x="1" y="1"/></fbd><ld><scaling x="1" y="1"/></ld><sfc><scaling x="1" y="1"/></sfc></coordinateInfo>
+  </contentHeader>
+  <types>
+    <dataTypes/>
+    <pous>
+      <pou name="P_Demo_FB_SocketUdpReceiveFrom" pouType="program">
+        <interface>
+          <localVars>
+            <variable name="fbCreateUdp"><type><derived name="FB_SocketUdpCreate"/></type></variable>
+            <variable name="fbReceiveUdpHello"><type><derived name="FB_SocketUdpReceiveFrom"/></type></variable>
+            <variable name="fbPollTON"><type><derived name="TON"/></type></variable>
+            <variable name="bRequestCreate"><type><BOOL/></type></variable>
+            <variable name="bCreateBusy"><type><BOOL/></type></variable>
+            <variable name="bCreateError"><type><BOOL/></type></variable>
+            <variable name="nCreateErrId"><type><UDINT/></type></variable>
+            <variable name="hUdpSocket"><type><derived name="T_HSOCKET"/></type></variable>
+            <variable name="abRxBuffer"><type><array><dimension lower="0" upper="1499"/><baseType><BYTE/></baseType></array></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">缓冲 1500 字节，覆盖以太网 MTU 防截断</xhtml></documentation></variable>
+            <variable name="bPollPulse"><type><BOOL/></type></variable>
+            <variable name="bRxBusy"><type><BOOL/></type></variable>
+            <variable name="bRxError"><type><BOOL/></type></variable>
+            <variable name="nRxErrId"><type><UDINT/></type></variable>
+            <variable name="sLastSenderHost"><type><derived name="T_IPv4Addr"/></type></variable>
+            <variable name="nLastSenderPort"><type><UDINT/></type></variable>
+            <variable name="nRecBytes"><type><UDINT/></type></variable>
+            <variable name="nPacketsReceived"><type><UDINT/></type></variable>
+            <variable name="sLastPayload"><type><string><length>128</length></string></type></variable>
+          </localVars>
+        </interface>
+        <body>
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：PLC 在 5005 端口收来自网段 HMI/PC 的 UDP "HELLO" 发现回应包，记录
+//       每个回应的对端 IP 和端口，用作设备发现协议。
+//
+// 价值：演示 UDP 接收的两个关键特性：
+//       1) 缓冲 cbLen 必须 ≥ MTU，否则单包被截断不补回；
+//       2) sRemoteHost/nRemotePort 每包不同，必须每收一包都重新读。
+//
+// 验证步骤：
+//   1. 在线 bRequestCreate := TRUE，等 hUdpSocket.handle 非 0
+//   2. 在另一台机器: ncat -u PLC_IP 5005 后输入 "REPLY,HMI_01" 回车
+//   3. nPacketsReceived +1，sLastSenderHost 显示发送端 IP，
+//      nLastSenderPort 显示其源端口（OS 自动分配的 ephemeral port）
+//   4. sLastPayload 应为 "REPLY,HMI_01"（取 nRecBytes 字节构造 STRING）
+//   5. 用另一台机器再发一包 → sLastSenderHost 切换到新 IP
+// =============================================================================
+
+// 阶段 1：创建 UDP socket
+fbCreateUdp(
+    sSrvNetId := '',
+    sLocalHost := '0.0.0.0',
+    nLocalPort := 5005,
+    bExecute := bRequestCreate,
+    tTimeout := T#5S,
+    bBusy =&gt; bCreateBusy,
+    bError =&gt; bCreateError,
+    nErrId =&gt; nCreateErrId,
+    hSocket =&gt; hUdpSocket
+);
+
+// 100ms 自激 TON：连续 polling
+fbPollTON(IN := NOT fbPollTON.Q, PT := T#100MS, Q =&gt; bPollPulse);
+
+// 周期 polling 接收
+fbReceiveUdpHello(
+    sSrvNetId := '',
+    hSocket   := hUdpSocket,
+    cbLen     := SIZEOF(abRxBuffer),
+    pDest     := ADR(abRxBuffer),
+    bExecute  := bPollPulse,
+    tTimeout  := T#5S,
+    bBusy       =&gt; bRxBusy,
+    bError      =&gt; bRxError,
+    nErrId      =&gt; nRxErrId,
+    sRemoteHost =&gt; sLastSenderHost,
+    nRemotePort =&gt; nLastSenderPort,
+    nRecBytes   =&gt; nRecBytes
+);
+
+// 收到包时累加 + 把字节转 STRING 方便 monitor
+IF nRecBytes &gt; 0 THEN
+    nPacketsReceived := nPacketsReceived + 1;
+    sLastPayload := MEMSTRING(ADR(abRxBuffer), nRecBytes);
+END_IF;
+</xhtml></ST>
+        </body>
+      </pou>
+    </pous>
+  </types>
+  <instances><configurations/></instances>
+</project>

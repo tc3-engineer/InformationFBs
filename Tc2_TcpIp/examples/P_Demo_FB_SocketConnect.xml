@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project xmlns="http://www.plcopen.org/xml/tc6_0200">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-21T07:00:00"/>
+  <contentHeader name="Tc2_TcpIp.FB_SocketConnect Demo" modificationDateTime="2026-05-21T07:00:00">
+    <coordinateInfo>
+      <fbd><scaling x="1" y="1"/></fbd>
+      <ld><scaling x="1" y="1"/></ld>
+      <sfc><scaling x="1" y="1"/></sfc>
+    </coordinateInfo>
+  </contentHeader>
+  <types>
+    <dataTypes/>
+    <pous>
+      <pou name="P_Demo_FB_SocketConnect" pouType="program">
+        <interface>
+          <localVars>
+            <variable name="fbConnectToMes"><type><derived name="FB_SocketConnect"/></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">主动建连到 MES 服务器</xhtml></documentation></variable>
+            <variable name="fbSendQuery"><type><derived name="FB_SocketSend"/></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">建连成功后用此 FB 发一条查询</xhtml></documentation></variable>
+            <variable name="fbCloseMesSocket"><type><derived name="FB_SocketClose"/></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">流程结束前关闭句柄，避免泄漏</xhtml></documentation></variable>
+            <variable name="bRequestConnect"><initialValue><simpleValue value="FALSE"/></initialValue><type><BOOL/></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">在线置 TRUE 触发一次建连</xhtml></documentation></variable>
+            <variable name="bConnectBusy"><type><BOOL/></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">建连进行中标志</xhtml></documentation></variable>
+            <variable name="bConnectError"><type><BOOL/></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">建连失败</xhtml></documentation></variable>
+            <variable name="nConnectErrId"><type><UDINT/></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">建连错误号（参考 §5.1.1 错误码表）</xhtml></documentation></variable>
+            <variable name="hMesSocket"><type><derived name="T_HSOCKET"/></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">建连后写出的 socket 句柄</xhtml></documentation></variable>
+            <variable name="bRequestSendQuery"><type><BOOL/></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">在线脉冲触发一次发送</xhtml></documentation></variable>
+            <variable name="sQueryPayload"><initialValue><simpleValue value="'GET /order/status HTTP/1.0$R$L$R$L'"/></initialValue><type><string><length>80</length></string></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">伪 HTTP 查询，仅为演示</xhtml></documentation></variable>
+            <variable name="bSendBusy"><type><BOOL/></type></variable>
+            <variable name="bSendError"><type><BOOL/></type></variable>
+            <variable name="nSendErrId"><type><UDINT/></type></variable>
+            <variable name="bRequestClose"><type><BOOL/></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">在线脉冲触发关闭，防止句柄泄漏</xhtml></documentation></variable>
+            <variable name="bCloseBusy"><type><BOOL/></type></variable>
+            <variable name="bCloseError"><type><BOOL/></type></variable>
+            <variable name="nCloseErrId"><type><UDINT/></type></variable>
+          </localVars>
+        </interface>
+        <body>
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：PLC（CX5020）作为 MES 客户端，主动连接 MES 服务器 172.16.6.180:2404，
+//       完成"建连 → 发一条订单查询字串 → 关闭"的全生命周期演示。
+//
+// 价值：直接 demo socket 三段式生命周期——
+//         FB_SocketConnect → 业务收发 → FB_SocketClose
+//       漏掉 Close 会泄漏 Server 句柄，PLC 重启后即使 PLC 程序忘了，OS 仍占着，
+//       必须靠 FB_SocketCloseAll 兜底（建议在 PLC 启动也单独跑一次）。
+//
+// 验证步骤：
+//   1. 确认目标机已安装 TF6310 license，否则建连立刻报 license 错
+//   2. 准备一个监听 172.16.6.180:2404 的 TCP 服务（可用 netcat: ncat -l 2404）
+//   3. 在 XAE Import 本文件，编译并登录
+//   4. 在线把 bRequestConnect := TRUE
+//        → bConnectBusy 短暂为 TRUE，几百毫秒后落回；hMesSocket.handle 非 0
+//   5. 在 netcat 端能看到一个 TCP 连接打开（"connection from ...:port"）
+//   6. 在线脉冲 bRequestSendQuery := TRUE
+//        → 字串 "GET /order/status HTTP/1.0..." 出现在 netcat 端
+//   7. 在线脉冲 bRequestClose := TRUE
+//        → netcat 端打印 "connection closed"
+//   8. 如果故意填错 IP（例如 192.0.2.99） → 等 45 秒 bConnectError 置 TRUE，
+//        nConnectErrId 应为 0x80072749 (10065 WSAEHOSTUNREACH) 或 0x8007274C
+//        (10060 WSAETIMEDOUT) 等
+// =============================================================================
+
+// 阶段 1：建连（bRequestConnect 上升沿触发一次，FB 内部异步推进）
+fbConnectToMes(
+    sSrvNetId   := '',
+    sRemoteHost := '172.16.6.180',
+    nRemotePort := 2404,
+    bExecute    := bRequestConnect,
+    tTimeout    := T#45S,
+    bBusy       =&gt; bConnectBusy,
+    bError      =&gt; bConnectError,
+    nErrId      =&gt; nConnectErrId,
+    hSocket     =&gt; hMesSocket
+);
+
+// 阶段 2：建连成功后才允许发查询（用 bRequestSendQuery 作单独触发，避免一上电就发）
+fbSendQuery(
+    sSrvNetId := '',
+    hSocket   := hMesSocket,
+    cbLen     := TO_UDINT(LEN(sQueryPayload)),
+    pSrc      := ADR(sQueryPayload),
+    bExecute  := bRequestSendQuery,
+    tTimeout  := T#5S,
+    bBusy     =&gt; bSendBusy,
+    bError    =&gt; bSendError,
+    nErrId    =&gt; nSendErrId
+);
+
+// 阶段 3：流程结束时关闭句柄。注意：bRequestClose 即便忘按，PLC 启动时的
+//         FB_SocketCloseAll 也能兜底清理；但正常业务里每次 Connect 必须配 Close。
+fbCloseMesSocket(
+    sSrvNetId := '',
+    hSocket   := hMesSocket,
+    bExecute  := bRequestClose,
+    tTimeout  := T#5S,
+    bBusy     =&gt; bCloseBusy,
+    bError    =&gt; bCloseError,
+    nErrId    =&gt; nCloseErrId
+);
+</xhtml></ST>
+        </body>
+      </pou>
+    </pous>
+  </types>
+  <instances><configurations/></instances>
+</project>

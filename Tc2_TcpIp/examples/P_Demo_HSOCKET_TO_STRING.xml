@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project xmlns="http://www.plcopen.org/xml/tc6_0200">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-21T07:00:00"/>
+  <contentHeader name="Tc2_TcpIp.HSOCKET_TO_STRING Demo" modificationDateTime="2026-05-21T07:00:00">
+    <coordinateInfo><fbd><scaling x="1" y="1"/></fbd><ld><scaling x="1" y="1"/></ld><sfc><scaling x="1" y="1"/></sfc></coordinateInfo>
+  </contentHeader>
+  <types>
+    <dataTypes/>
+    <pous>
+      <pou name="P_Demo_HSOCKET_TO_STRING" pouType="program">
+        <interface>
+          <localVars>
+            <variable name="fbConnect"><type><derived name="FB_SocketConnect"/></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">先建连产生真实句柄，再 demo 字串转换</xhtml></documentation></variable>
+            <variable name="bRequestConnect"><type><BOOL/></type></variable>
+            <variable name="bConnectBusy"><type><BOOL/></type></variable>
+            <variable name="bConnectError"><type><BOOL/></type></variable>
+            <variable name="nConnectErrId"><type><UDINT/></type></variable>
+            <variable name="hClient"><type><derived name="T_HSOCKET"/></type></variable>
+            <variable name="sHandleStr"><type><string><length>80</length></string></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">在线 monitor 这个看人类可读句柄</xhtml></documentation></variable>
+          </localVars>
+        </interface>
+        <body>
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：PLC 连到 172.16.6.180:2404 的远端服务器。建连成功后每周期把
+//       hClient 句柄翻成人读字符串，便于在线观察 Server 给本机分配的
+//       local port、当前 remote 是哪条连接。
+//
+// 价值：演示句柄结构 → 字串的简单使用；用作日志 / HMI 显示 / 故障诊断。
+//
+// 验证步骤：
+//   1. 准备远端 ncat -l 2404 监听
+//   2. 在线 bRequestConnect := TRUE
+//   3. hClient.handle 非 0 后，sHandleStr 立刻显示
+//      "Handle:0x4001 Local:172.16.6.X:YYYYY Remote:172.16.6.180:2404"
+//      其中 YYYYY 是 Server 给本机自动分配的 ephemeral 端口
+//   4. 建连失败时句柄全零，sHandleStr 显示 "Handle:0x0 Local:0.0.0.0:0 Remote:0.0.0.0:0"
+// =============================================================================
+
+fbConnect(
+    sSrvNetId := '', sRemoteHost := '172.16.6.180', nRemotePort := 2404,
+    bExecute := bRequestConnect, tTimeout := T#10S,
+    bBusy =&gt; bConnectBusy, bError =&gt; bConnectError, nErrId =&gt; nConnectErrId,
+    hSocket =&gt; hClient);
+
+// 每周期更新人读字串；纯计算，开销忽略
+sHandleStr := HSOCKET_TO_STRING(hSocket := hClient);
+</xhtml></ST>
+        </body>
+      </pou>
+    </pous>
+  </types>
+  <instances><configurations/></instances>
+</project>

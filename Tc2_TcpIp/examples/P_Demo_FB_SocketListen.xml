@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project xmlns="http://www.plcopen.org/xml/tc6_0200">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-21T07:00:00"/>
+  <contentHeader name="Tc2_TcpIp.FB_SocketListen Demo" modificationDateTime="2026-05-21T07:00:00">
+    <coordinateInfo><fbd><scaling x="1" y="1"/></fbd><ld><scaling x="1" y="1"/></ld><sfc><scaling x="1" y="1"/></sfc></coordinateInfo>
+  </contentHeader>
+  <types>
+    <dataTypes/>
+    <pous>
+      <pou name="P_Demo_FB_SocketListen" pouType="program">
+        <interface>
+          <localVars>
+            <variable name="fbStartListening"><type><derived name="FB_SocketListen"/></type></variable>
+            <variable name="fbAcceptIncoming"><type><derived name="FB_SocketAccept"/></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">配套 Accept，把例程做成可观察的"等连接"</xhtml></documentation></variable>
+            <variable name="bRequestListen"><type><BOOL/></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">上升沿开监听</xhtml></documentation></variable>
+            <variable name="bListenBusy"><type><BOOL/></type></variable>
+            <variable name="bListenError"><type><BOOL/></type></variable>
+            <variable name="nListenErrId"><type><UDINT/></type></variable>
+            <variable name="hPlcListener"><type><derived name="T_HSOCKET"/></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">监听句柄，给 FB_SocketAccept 用</xhtml></documentation></variable>
+            <variable name="bPollAccept"><initialValue><simpleValue value="FALSE"/></initialValue><type><BOOL/></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">在线置 TRUE 后周期 Accept</xhtml></documentation></variable>
+            <variable name="bAcceptBusy"><type><BOOL/></type></variable>
+            <variable name="bClientAccepted"><type><BOOL/></type></variable>
+            <variable name="bAcceptError"><type><BOOL/></type></variable>
+            <variable name="nAcceptErrId"><type><UDINT/></type></variable>
+            <variable name="hRemoteClient"><type><derived name="T_HSOCKET"/></type></variable>
+          </localVars>
+        </interface>
+        <body>
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：PLC 当 TCP 服务器，监听 0.0.0.0:200，等 SCADA / HMI 连入。
+//
+// 价值：本例程展示"FB_SocketListen 开 listener → FB_SocketAccept 周期接受
+//       客户端连接"的标准服务器套路。listener 只需开一次；Accept 每周期 poll。
+//
+// 验证步骤：
+//   1. 在线 bRequestListen := TRUE
+//      → bListenBusy 闪烁后落回，hPlcListener.handle 非 0，listener 已开
+//   2. 在 PC 上用 telnet PLC_IP 200 或 ncat PLC_IP 200
+//   3. 在线 bPollAccept := TRUE
+//      → bClientAccepted 短暂为 TRUE，hRemoteClient.handle 非 0
+//      → 远端 telnet 显示已连接
+//   4. 若端口被占用 → bListenError=TRUE, nListenErrId=0x80072740 (WSAEADDRINUSE)
+// =============================================================================
+
+// listener 创建（只在 bRequestListen 上升沿那一刻动一次）
+fbStartListening(
+    sSrvNetId   := '',
+    sLocalHost  := '0.0.0.0',
+    nLocalPort  := 200,
+    bExecute    := bRequestListen,
+    tTimeout    := T#5S,
+    bBusy       =&gt; bListenBusy,
+    bError      =&gt; bListenError,
+    nErrId      =&gt; nListenErrId,
+    hListener   =&gt; hPlcListener
+);
+
+// listener 创建好后周期 poll 接受 incoming（每周期都 trigger Accept，是设计要求）
+fbAcceptIncoming(
+    sSrvNetId := '',
+    hListener := hPlcListener,
+    bExecute  := bPollAccept,
+    tTimeout  := T#5S,
+    bAccepted =&gt; bClientAccepted,
+    bBusy     =&gt; bAcceptBusy,
+    bError    =&gt; bAcceptError,
+    nErrId    =&gt; nAcceptErrId,
+    hSocket   =&gt; hRemoteClient
+);
+</xhtml></ST>
+        </body>
+      </pou>
+    </pous>
+  </types>
+  <instances><configurations/></instances>
+</project>
