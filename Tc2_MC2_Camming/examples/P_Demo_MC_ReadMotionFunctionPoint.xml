@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project xmlns="http://www.plcopen.org/xml/tc6_0200">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-21T00:00:00"/>
+  <contentHeader name="Tc2_MC2_Camming.MC_ReadMotionFunctionPoint Demo" modificationDateTime="2026-05-21T00:00:00">
+    <coordinateInfo>
+      <fbd><scaling x="1" y="1"/></fbd>
+      <ld><scaling x="1" y="1"/></ld>
+      <sfc><scaling x="1" y="1"/></sfc>
+    </coordinateInfo>
+  </contentHeader>
+  <types>
+    <dataTypes/>
+    <pous>
+      <pou name="P_Demo_MC_ReadMotionFunctionPoint" pouType="program">
+        <interface>
+          <localVars>
+            <variable name="fbReadSinglePoint"><type><derived name="MC_ReadMotionFunctionPoint"/></type></variable>
+            <variable name="stPointBuf"><type><derived name="MC_MotionFunctionPoint"/></type></variable>
+            <variable name="nActiveCamId"><type><derived name="MC_CAM_ID"/></type></variable>
+            <variable name="nTargetPointID"><initialValue><simpleValue value="2"/></initialValue><type><derived name="MC_MotionFunctionPoint_ID"/></type></variable>
+            <variable name="bRequestRead"><initialValue><simpleValue value="FALSE"/></initialValue><type><BOOL/></type></variable>
+            <variable name="rtReadTrig"><type><derived name="R_TRIG"/></type></variable>
+            <variable name="bReadDone"><type><BOOL/></type></variable>
+            <variable name="bReadBusy"><type><BOOL/></type></variable>
+            <variable name="bReadError"><type><BOOL/></type></variable>
+            <variable name="nReadErrorID"><type><UDINT/></type></variable>
+          </localVars>
+        </interface>
+        <body>
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：印刷机调试 — 工程师要确认上一次写入操作（MC_WriteMotionFunctionPoint）
+//       是否真的把第 2 号节点的从轴位置改到了预期值。直接用本 FB 把那个
+//       节点的当前定义回读上来，与 HMI 设定值对比。
+// 价值：相比读整张 cam 表然后挑出第 2 点，本 FB 只读 1 个点，NC 处理快、
+//       PLC 不用预留大数组缓冲；HMI"逐节点编辑"页面专用接口。
+// 验证步骤：
+//   1) 编译登录；确认 nActiveCamId 已有效（实际工程里来自 MC_CamTableSelect.CamTableID）。
+//   2) nTargetPointID 已默认为 2；可改成表里其他存在的 PointID。
+//   3) 在线 bRequestRead := TRUE → R_TRIG 上升沿触发 Execute；
+//      观察 bReadBusy 立 TRUE，1-N 周期后 bReadDone := TRUE。
+//   4) Watch stPointBuf 字段（MasterPos / SlavePos / TransitionType ...），
+//      与 HMI 或离线 cam designer 中该节点的设定值核对，应一致。
+//   5) 故障路径：把 nTargetPointID 改成一个表内不存在的大数（如 999），
+//      重新触发，应观察 bReadError := TRUE 且 nReadErrorID 非零。
+// =============================================================================
+
+rtReadTrig(CLK := bRequestRead);
+
+// 单次完整调用：Execute 上升沿 + 凸轮表 ID + 目标 PointID；
+// 数据通过 VAR_IN_OUT 的 Point 结构返回。
+fbReadSinglePoint(
+    Execute    := rtReadTrig.Q,
+    CamTableID := nActiveCamId,
+    PointID    := nTargetPointID,
+    Point      := stPointBuf,
+    Done       =&gt; bReadDone,
+    Busy       =&gt; bReadBusy,
+    Error      =&gt; bReadError,
+    ErrorID    =&gt; nReadErrorID
+);
+</xhtml></ST>
+        </body>
+      </pou>
+    </pous>
+  </types>
+  <instances><configurations/></instances>
+</project>
