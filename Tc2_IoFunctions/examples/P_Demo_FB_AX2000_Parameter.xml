@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project xmlns="http://www.plcopen.org/xml/tc6_0200">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-21T00:00:00"/>
+  <contentHeader name="Tc2_IoFunctions.FB_AX2000_Parameter Demo" modificationDateTime="2026-05-21T00:00:00">
+    <coordinateInfo>
+      <fbd><scaling x="1" y="1"/></fbd>
+      <ld><scaling x="1" y="1"/></ld>
+      <sfc><scaling x="1" y="1"/></sfc>
+    </coordinateInfo>
+  </contentHeader>
+  <types>
+    <dataTypes/>
+    <pous>
+      <pou name="P_Demo_FB_AX2000_Parameter" pouType="program">
+        <interface>
+          <localVars>
+            <variable name="fbAx2000Param">
+              <type><derived name="FB_AX2000_Parameter"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">AX2000 PKW 参数访问 FB</xhtml></documentation>
+            </variable>
+            <variable name="iAx2000SlaveStation">
+              <initialValue><simpleValue value="5"/></initialValue>
+              <type><BYTE/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">AX2000 Profibus 站号</xhtml></documentation>
+            </variable>
+            <variable name="iParamPnu">
+              <initialValue><simpleValue value="16#03A2"/></initialValue>
+              <type><WORD/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">参数号 PNU</xhtml></documentation>
+            </variable>
+            <variable name="iAxisNumber">
+              <initialValue><simpleValue value="1"/></initialValue>
+              <type><BYTE/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">轴号</xhtml></documentation>
+            </variable>
+            <variable name="iParamByteLen">
+              <initialValue><simpleValue value="4"/></initialValue>
+              <type><BYTE/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">参数字节长度 (2 或 4)</xhtml></documentation>
+            </variable>
+            <variable name="iParamSubIdx">
+              <initialValue><simpleValue value="0"/></initialValue>
+              <type><BYTE/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">子索引</xhtml></documentation>
+            </variable>
+            <variable name="iParamWriteVal">
+              <initialValue><simpleValue value="30"/></initialValue>
+              <type><DWORD/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">要写入的值</xhtml></documentation>
+            </variable>
+            <variable name="iProfibusMasterDevId">
+              <initialValue><simpleValue value="1"/></initialValue>
+              <type><WORD/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">FC310x Device Id</xhtml></documentation>
+            </variable>
+            <variable name="bReadPkwReq">
+              <initialValue><simpleValue value="FALSE"/></initialValue>
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">上升沿读 PKW</xhtml></documentation>
+            </variable>
+            <variable name="bWritePkwReq">
+              <initialValue><simpleValue value="FALSE"/></initialValue>
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">上升沿写 PKW</xhtml></documentation>
+            </variable>
+            <variable name="tPkwTimeout">
+              <initialValue><simpleValue value="T#2S"/></initialValue>
+              <type><TIME/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">ADS 超时</xhtml></documentation>
+            </variable>
+            <variable name="bPkwBusy">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">工作中</xhtml></documentation>
+            </variable>
+            <variable name="iLastDriveError">
+              <type><DWORD/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">驱动器错误号</xhtml></documentation>
+            </variable>
+            <variable name="iLastReadbackValue">
+              <type><DINT/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">读 PKW 返回值</xhtml></documentation>
+            </variable>
+          </localVars>
+        </interface>
+        <body>
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：AX2000 老线伺服维护：上电时把位置环积分时间 (PNU 0x03A2) 写为工程定制值 30，避免每次重启都要拨调试软件。
+// 价值：把驱动器关键参数纳入 PLC 程序版本控制；工程师不需要带笔记本到现场。
+// 验证：登录后 iAx2000SlaveStation := 5、iParamPnu := 16#03A2、iParamWriteVal := 30、bWritePkwReq := TRUE → 触发上升沿 → fbAx2000Param.bBusy 短暂 TRUE → 回 FALSE 后 iLastDriveError = 0 表示成功；再 bReadPkwReq 上升沿读回参数验证 iLastReadbackValue = 30。
+// 验证步骤：
+//   1. 右键 PLC 项目 → Import PLCopenXML → 选本文件
+//   2. 引用 Tc2_IoFunctions（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』行的指示在线写值观察
+// =============================================================================
+
+fbAx2000Param(
+    iSlaveAddress   := iAx2000SlaveStation,
+    iPnu            := iParamPnu,
+    nAxis           := iAxisNumber,
+    iLength         := iParamByteLen,
+    iSubIndex       := iParamSubIdx,
+    iParameterValue := iParamWriteVal,
+    iFC310xDeviceId := iProfibusMasterDevId,
+    bStartRead      := bReadPkwReq,
+    bStartWrite     := bWritePkwReq,
+    tTimeOut        := tPkwTimeout,
+    bBusy           =&gt; bPkwBusy,
+    iErrorId        =&gt; iLastDriveError,
+    iReadValue      =&gt; iLastReadbackValue
+);
+</xhtml></ST>
+        </body>
+      </pou>
+    </pous>
+  </types>
+  <instances><configurations/></instances>
+</project>

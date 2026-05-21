@@ -115,11 +115,17 @@ def lint(path: str) -> tuple[int, list[str]]:
             diags.append("empty <derived name=\"\">")
             continue
         upper = dn.upper()
+        # Detect IEC syntax fragments mistakenly placed in <derived name=...>:
+        # `POINTER TO X`, `REFERENCE TO X`, `STRING(N)`, `WSTRING(N)` — these
+        # require dedicated PLCopenXML elements. Match only the whole-word
+        # keyword form (with following space) so legitimate identifiers
+        # containing the substrings (e.g. "FB_AX2000_Reference",
+        # "PointerCursor") don't trip the check.
         if (
             " " in dn
             or "(" in dn
-            or "POINTER" in upper
-            or "REFERENCE" in upper
+            or upper.startswith("POINTER ")
+            or upper.startswith("REFERENCE ")
             or upper.startswith("STRING(")
             or upper.startswith("WSTRING(")
         ):
