@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project xmlns="http://www.plcopen.org/xml/tc6_0200">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-20T00:00:00"/>
+  <contentHeader name="Tc2_System.MEMMOVE Demo" modificationDateTime="2026-05-20T00:00:00">
+    <coordinateInfo>
+      <fbd><scaling x="1" y="1"/></fbd>
+      <ld><scaling x="1" y="1"/></ld>
+      <sfc><scaling x="1" y="1"/></sfc>
+    </coordinateInfo>
+  </contentHeader>
+  <types>
+    <dataTypes/>
+    <pous>
+      <pou name="P_Demo_MEMMOVE" pouType="program">
+        <interface>
+          <localVars>
+            <variable name="aSamples">
+              <type><array><dimension lower="0" upper="9"/><baseType><LREAL/></baseType></array></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">环形采样缓冲（10 个）</xhtml></documentation>
+            </variable>
+            <variable name="lrNewSample">
+              <initialValue><simpleValue value="0.0"/></initialValue>
+              <type><LREAL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">新采样值（在线写入）</xhtml></documentation>
+            </variable>
+            <variable name="bShiftRequest">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">在线写 TRUE 触发一次移位</xhtml></documentation>
+            </variable>
+            <variable name="nBytesShifted">
+              <type><UDINT/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">实际移位字节数</xhtml></documentation>
+            </variable>
+            <variable name="rtShift">
+              <type><derived name="R_TRIG"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">上升沿检测</xhtml></documentation>
+            </variable>
+          </localVars>
+        </interface>
+        <body>
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：环形采样缓冲区左移：每次新采样到来时，把 aSamples[1..9] 整体左移到 aSamples[0..8]，aSamples[9] 留给新值。
+// 价值：MEMCPY 在重叠区行为未定义；MEMMOVE 保证正确。
+// 验证：在线 bShiftRequest := TRUE 触发一次 → 观察 aSamples[0] 等于之前的 aSamples[1] 值。
+// 验证步骤：
+//   1. 右键 PLC 项目 → Import PLCopenXML → 选本文件
+//   2. 引用 Tc2_System（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』行的指示在线写值观察
+// =============================================================================
+
+// 上升沿检测，避免周期性误触发
+rtShift(CLK := bShiftRequest);
+IF rtShift.Q THEN
+    // 把 aSamples[1..9] 整体左移到 aSamples[0..8]；源和目的重叠，必须 MEMMOVE
+    nBytesShifted := MEMMOVE(
+        destAddr := ADR(aSamples[0]),
+        srcAddr  := ADR(aSamples[1]),
+        n        := SIZEOF(aSamples) - SIZEOF(aSamples[0])
+    );
+    // 末尾位置填新采样
+    aSamples[9] := lrNewSample;
+END_IF;
+</xhtml></ST>
+        </body>
+      </pou>
+    </pous>
+  </types>
+  <instances><configurations/></instances>
+</project>
