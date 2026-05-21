@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project xmlns="http://www.plcopen.org/xml/tc6_0200">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-20T00:00:00"/>
+  <contentHeader name="Tc2_System.FB_SimpleAdsLogEvent Demo" modificationDateTime="2026-05-20T00:00:00">
+    <coordinateInfo>
+      <fbd><scaling x="1" y="1"/></fbd>
+      <ld><scaling x="1" y="1"/></ld>
+      <sfc><scaling x="1" y="1"/></sfc>
+    </coordinateInfo>
+  </contentHeader>
+  <types>
+    <dataTypes/>
+    <pous>
+      <pou name="P_Demo_FB_SimpleAdsLogEvent" pouType="program">
+        <interface>
+          <localVars>
+            <variable name="fbFB_SimpleAdsLogEvent">
+              <type><derived name="FB_SimpleAdsLogEvent"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">FB_SimpleAdsLogEvent 实例</xhtml></documentation>
+            </variable>
+            <variable name="bLowCoolant">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">电平：TRUE = 冷却液位告警 active</xhtml></documentation>
+            </variable>
+            <variable name="bAckCoolantAlarm">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">上升沿确认告警</xhtml></documentation>
+            </variable>
+            <variable name="nLastAdsError">
+              <type><UDINT/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">ADS 错误码</xhtml></documentation>
+            </variable>
+            <variable name="bAdsErr">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">ADS 错误</xhtml></documentation>
+            </variable>
+          </localVars>
+        </interface>
+        <body>
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
+// Tc2_System.FB_SimpleAdsLogEvent 演示程序
+// ============================================================
+// 场景：包装线 '冷却液位低' 告警 (SourceId=1, EventId=4711) 推到 EventLogger。
+// 价值：事件文本提前在 EventLogger 配好；业务代码只关心电平变化。
+// 验证：登录后写 bLowCoolant := TRUE，HMI 报警表出现 4711 号告警；写 bAckCoolantAlarm := TRUE 后告警变为已确认；写 bLowCoolant := FALSE 后告警消失。
+// 验证步骤：
+//   1. 右键 PLC 项目 → Import PLCopenXML → 选本文件
+//   2. 引用 Tc2_System（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』指引在线写值观察
+// ============================================================
+
+fbFB_SimpleAdsLogEvent(
+    SourceId := 1, EventId := 4711, bSetEvent := bLowCoolant, bQuit := bAckCoolantAlarm,
+    ErrId =&gt; nLastAdsError, Error =&gt; bAdsErr
+);
+
+</xhtml></ST>
+        </body>
+      </pou>
+    </pous>
+  </types>
+  <instances><configurations/></instances>
+</project>

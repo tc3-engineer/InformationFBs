@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project xmlns="http://www.plcopen.org/xml/tc6_0200">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-20T00:00:00"/>
+  <contentHeader name="Tc2_System.AnalyzeExpressionTable Demo" modificationDateTime="2026-05-20T00:00:00">
+    <coordinateInfo>
+      <fbd><scaling x="1" y="1"/></fbd>
+      <ld><scaling x="1" y="1"/></ld>
+      <sfc><scaling x="1" y="1"/></sfc>
+    </coordinateInfo>
+  </contentHeader>
+  <types>
+    <dataTypes/>
+    <pous>
+      <pou name="P_Demo_AnalyzeExpressionTable" pouType="program">
+        <interface>
+          <localVars>
+            <variable name="fbAnalyzeExpressionTable">
+              <type><derived name="AnalyzeExpressionTable"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">AnalyzeExpressionTable 实例</xhtml></documentation>
+            </variable>
+            <variable name="bSensorA">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">传感器 A</xhtml></documentation>
+            </variable>
+            <variable name="bSensorB">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">传感器 B</xhtml></documentation>
+            </variable>
+            <variable name="bSensorC">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">传感器 C</xhtml></documentation>
+            </variable>
+            <variable name="SFCEnableLimit">
+              <initialValue><simpleValue value="TRUE"/></initialValue>
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">启用步超时监控</xhtml></documentation>
+            </variable>
+            <variable name="SFCError">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">有步超时</xhtml></documentation>
+            </variable>
+            <variable name="SFCErrorAnalyzationTable">
+              <type><array><dimension lower="0" upper="15"/><baseType><derived name="ExpressionResult"/></baseType></array></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">本 FB 自动写入的诊断数组（类型见 Tc2_System DUT）</xhtml></documentation>
+            </variable>
+          </localVars>
+        </interface>
+        <body>
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
+// Tc2_System.AnalyzeExpressionTable 演示程序
+// ============================================================
+// 场景：SFC 卡步事件结构化写入 MES：拿到变量名+当前值数组直接入库。
+// 价值：替代字符串解析；本 FB 给的就是结构化 ARRAY。
+// 验证：在 SFC POU 中复刻本声明区 + 步超时配置；运行触发卡步后 SFCErrorAnalyzationTable 第 0..N 元素装入未满足变量信息。
+// 验证步骤：
+//   1. 右键 PLC 项目 → Import PLCopenXML → 选本文件
+//   2. 引用 Tc2_System（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』指引在线写值观察
+// ============================================================
+
+// 本 FB 由系统在 SFC 步超时时自动调用，业务代码零侵入；本 PROGRAM 仅展示必需的 SFC flag 声明。
+;
+</xhtml></ST>
+        </body>
+      </pou>
+    </pous>
+  </types>
+  <instances><configurations/></instances>
+</project>

@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project xmlns="http://www.plcopen.org/xml/tc6_0200">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-20T00:00:00"/>
+  <contentHeader name="Tc2_System.F_GetTaskTime Demo" modificationDateTime="2026-05-20T00:00:00">
+    <coordinateInfo>
+      <fbd><scaling x="1" y="1"/></fbd>
+      <ld><scaling x="1" y="1"/></ld>
+      <sfc><scaling x="1" y="1"/></sfc>
+    </coordinateInfo>
+  </contentHeader>
+  <types>
+    <dataTypes/>
+    <pous>
+      <pou name="P_Demo_F_GetTaskTime" pouType="program">
+        <interface>
+          <localVars>
+            <variable name="ulTaskScheduledTime">
+              <type><ULINT/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">本周期开始时间戳</xhtml></documentation>
+            </variable>
+            <variable name="ulFirstEventTs">
+              <type><ULINT/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">周期内第一个事件时间戳</xhtml></documentation>
+            </variable>
+            <variable name="ulSecondEventTs">
+              <type><ULINT/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">周期内第二个事件时间戳（应与 First 完全相同）</xhtml></documentation>
+            </variable>
+          </localVars>
+        </interface>
+        <body>
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
+// Tc2_System.F_GetTaskTime 演示程序
+// ============================================================
+// 场景：周期内多事件需共享同一时间戳便于在日志里识别『同周期事件』。
+// 价值：替代每事件各取 F_GetSystemTime（值不同），本函数同周期保持一致。
+// 验证：登录后 ulFirstEventTs 与 ulSecondEventTs 在同一 PLC 周期内应完全相同；下一周期才一起前进任务周期对应的 100ns 数（1ms 任务前进 10000）。
+// 验证步骤：
+//   1. 右键 PLC 项目 → Import PLCopenXML → 选本文件
+//   2. 引用 Tc2_System（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』指引在线写值观察
+// ============================================================
+
+ulFirstEventTs := F_GetTaskTime();
+// 假装做点事
+ulSecondEventTs := F_GetTaskTime();
+// 同周期内两者应相等
+</xhtml></ST>
+        </body>
+      </pou>
+    </pous>
+  </types>
+  <instances><configurations/></instances>
+</project>

@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project xmlns="http://www.plcopen.org/xml/tc6_0200">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-20T00:00:00"/>
+  <contentHeader name="Tc2_System.ADSRDWRTEX Demo" modificationDateTime="2026-05-20T00:00:00">
+    <coordinateInfo>
+      <fbd><scaling x="1" y="1"/></fbd>
+      <ld><scaling x="1" y="1"/></ld>
+      <sfc><scaling x="1" y="1"/></sfc>
+    </coordinateInfo>
+  </contentHeader>
+  <types>
+    <dataTypes/>
+    <pous>
+      <pou name="P_Demo_ADSRDWRTEX" pouType="program">
+        <interface>
+          <localVars>
+            <variable name="fbADSRDWRTEX">
+              <type><derived name="ADSRDWRTEX"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">ADSRDWRTEX 实例</xhtml></documentation>
+            </variable>
+            <variable name="bReadErrMsgReq">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">上升沿触发</xhtml></documentation>
+            </variable>
+            <variable name="sSymbolName">
+              <initialValue><simpleValue value="'.sLastErrorMsg'"/></initialValue>
+              <type><string><length>80</length></string></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">对端 PLC 全局字符串变量名</xhtml></documentation>
+            </variable>
+            <variable name="nSymNameLen">
+              <type><UDINT/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">LEN(sSymbolName)+1</xhtml></documentation>
+            </variable>
+            <variable name="sErrorMsg">
+              <type><string><length>255</length></string></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">读到的错误消息</xhtml></documentation>
+            </variable>
+            <variable name="bAdsBusy">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">正在读</xhtml></documentation>
+            </variable>
+            <variable name="bAdsErr">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">错误</xhtml></documentation>
+            </variable>
+            <variable name="nLastAdsError">
+              <type><UDINT/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">错误码</xhtml></documentation>
+            </variable>
+            <variable name="nActualBytes">
+              <type><UDINT/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">实际读到字节数</xhtml></documentation>
+            </variable>
+          </localVars>
+        </interface>
+        <body>
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
+// Tc2_System.ADSRDWRTEX 演示程序
+// ============================================================
+// 场景：诊断界面按名读对端 PLC 错误消息字符串 .sLastErrorMsg。
+// 价值：替代 ADSRDWRT + 手动 STRLEN，本 FB 直接给真实字节数。
+// 验证：触发后 sErrorMsg 装入错误文本，nActualBytes = 真实字节数（通常 &lt; 256）。
+// 验证步骤：
+//   1. 右键 PLC 项目 → Import PLCopenXML → 选本文件
+//   2. 引用 Tc2_System（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』指引在线写值观察
+// ============================================================
+
+nSymNameLen := LEN(sSymbolName) + 1;
+
+fbADSRDWRTEX(
+    NETID := '', PORT := 851, IDXGRP := 16#0000F004, IDXOFFS := 0, WRITELEN := nSymNameLen, READLEN := SIZEOF(sErrorMsg), SRCADDR := ADR(sSymbolName), DESTADDR := ADR(sErrorMsg), WRTRD := bReadErrMsgReq, TMOUT := DEFAULT_ADS_TIMEOUT,
+    BUSY =&gt; bAdsBusy, ERR =&gt; bAdsErr, ERRID =&gt; nLastAdsError, COUNT_R =&gt; nActualBytes
+);
+
+</xhtml></ST>
+        </body>
+      </pou>
+    </pous>
+  </types>
+  <instances><configurations/></instances>
+</project>

@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project xmlns="http://www.plcopen.org/xml/tc6_0200">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-20T00:00:00"/>
+  <contentHeader name="Tc2_System.F_GetTaskTotalTime Demo" modificationDateTime="2026-05-20T00:00:00">
+    <coordinateInfo>
+      <fbd><scaling x="1" y="1"/></fbd>
+      <ld><scaling x="1" y="1"/></ld>
+      <sfc><scaling x="1" y="1"/></sfc>
+    </coordinateInfo>
+  </contentHeader>
+  <types>
+    <dataTypes/>
+    <pous>
+      <pou name="P_Demo_F_GetTaskTotalTime" pouType="program">
+        <interface>
+          <localVars>
+            <variable name="nMonitoredTaskIndex">
+              <initialValue><simpleValue value="1"/></initialValue>
+              <type><DINT/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">被监视任务索引（TwinCAT System Manager 任务列表序号，1=PlcTask）</xhtml></documentation>
+            </variable>
+            <variable name="udwTaskExecTime_100ns">
+              <type><UDINT/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">上一周期任务执行总时长（100ns）</xhtml></documentation>
+            </variable>
+            <variable name="rTaskLoadPercent">
+              <type><REAL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">任务 CPU 利用率 %（基于 1ms 周期估算）</xhtml></documentation>
+            </variable>
+          </localVars>
+        </interface>
+        <body>
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
+// Tc2_System.F_GetTaskTotalTime 演示程序
+// ============================================================
+// 场景：1ms 任务做负载趋势监控，提前发现接近周期上限的容量风险。
+// 价值：替代 System Manager 手工巡检，自动化监控可告警。
+// 验证：登录后 udwTaskExecTime_100ns 应稳定在某个值（例如 200000 = 20us）；rTaskLoadPercent 给百分比。任务负载升高时该值应同步上升。
+// 验证步骤：
+//   1. 右键 PLC 项目 → Import PLCopenXML → 选本文件
+//   2. 引用 Tc2_System（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』指引在线写值观察
+// ============================================================
+
+// 取指定任务上一周期累计执行时长（100ns 单位）
+udwTaskExecTime_100ns := F_GetTaskTotalTime(nMonitoredTaskIndex);
+
+// 基于 1ms 任务周期估算利用率（10000 = 1ms）
+rTaskLoadPercent := TO_REAL(udwTaskExecTime_100ns) / 100.0;
+</xhtml></ST>
+        </body>
+      </pou>
+    </pous>
+  </types>
+  <instances><configurations/></instances>
+</project>

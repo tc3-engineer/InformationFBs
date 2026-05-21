@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project xmlns="http://www.plcopen.org/xml/tc6_0200">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-20T00:00:00"/>
+  <contentHeader name="Tc2_System.GETCPUACCOUNT Demo" modificationDateTime="2026-05-20T00:00:00">
+    <coordinateInfo>
+      <fbd><scaling x="1" y="1"/></fbd>
+      <ld><scaling x="1" y="1"/></ld>
+      <sfc><scaling x="1" y="1"/></sfc>
+    </coordinateInfo>
+  </contentHeader>
+  <types>
+    <dataTypes/>
+    <pous>
+      <pou name="P_Demo_GETCPUACCOUNT" pouType="program">
+        <interface>
+          <localVars>
+            <variable name="fbGETCPUACCOUNT">
+              <type><derived name="GETCPUACCOUNT"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">GETCPUACCOUNT 实例</xhtml></documentation>
+            </variable>
+            <variable name="udwTickerStart">
+              <type><UDINT/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">段起始 ticker</xhtml></documentation>
+            </variable>
+            <variable name="udwTickerNow">
+              <type><UDINT/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">当前 ticker</xhtml></documentation>
+            </variable>
+            <variable name="udwElapsedTicks">
+              <type><UDINT/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">差值（×100ns）</xhtml></documentation>
+            </variable>
+          </localVars>
+        </interface>
+        <body>
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
+// Tc2_System.GETCPUACCOUNT 演示程序
+// ============================================================
+// 场景：profiling 一段轨迹生成代码的耗时，100 ns 精度。
+// 价值：替代 logic analyzer / 调试打印；任务内即可计时。
+// 验证：登录后观察 udwElapsedTicks 持续接近某稳定值（如 50 = 5 us）。在被 profiling 代码里插入 FOR 循环，udwElapsedTicks 应明显升高。
+// 验证步骤：
+//   1. 右键 PLC 项目 → Import PLCopenXML → 选本文件
+//   2. 引用 Tc2_System（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』指引在线写值观察
+// ============================================================
+
+fbGETCPUACCOUNT(cpuAccountDW =&gt; udwTickerNow);
+
+udwTickerStart := udwTickerNow;
+// 在这里放被 profiling 的代码段（演示用空段）；上下两次调用之间的差值就是耗时
+fbGETCPUACCOUNT(cpuAccountDW =&gt; udwTickerNow);
+udwElapsedTicks := udwTickerNow - udwTickerStart;
+</xhtml></ST>
+        </body>
+      </pou>
+    </pous>
+  </types>
+  <instances><configurations/></instances>
+</project>

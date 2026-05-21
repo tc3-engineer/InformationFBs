@@ -510,3 +510,36 @@
 2026-05-11T01:00:00Z | Tc3_EventLogger | FB_TcSourceInfo                          | ExtendName                               | verified | auto-extracted VAR from PDF
 2026-05-11T01:00:00Z | Tc3_EventLogger | FB_TcSourceInfo                          | ResetToDefault                           | verified | auto-extracted VAR from PDF
 2026-05-11T04:30:00Z | Tc3_EventLogger | (audit-fix)                              | full-library                             | verified | P0-1 HRESULT template ×74 | P0-2 FB_TcAlarm.Create VAR_INPUT restored | P0-3 default-values ×15 | P0-4 PLCopenXML <derived> ×28 (REFERENCE/POINTER/STRING + 7 method-level rewires) | P1 README counts | P2 SetJsonAttribute disambiguation note | verify 74/74 PASS, lint 74/74 PASS | InfoSys cross-verified Create / SendMessage / ClearAllAlarms / FB_RequestEventText / FB_TcAlarm
+2026-05-20T09:30:00Z | Tc2_System     | ads_function_blocks                      | ADSREAD                                  | verified | S2 scope - PDF + InfoSys cross-verified
+2026-05-20T09:30:00Z | Tc2_System     | ads_function_blocks                      | ADSREADEX                                | verified | S2 scope - PDF + InfoSys cross-verified
+2026-05-20T09:30:00Z | Tc2_System     | ads_function_blocks                      | ADSWRITE                                 | verified | S2 scope - PDF + InfoSys cross-verified
+2026-05-20T09:30:00Z | Tc2_System     | ads_function_blocks                      | ADSRDWRT                                 | verified | S2 scope - PDF + InfoSys cross-verified
+2026-05-20T09:30:00Z | Tc2_System     | ads_function_blocks                      | ADSRDWRTEX                               | verified | S2 scope - PDF + InfoSys cross-verified
+2026-05-20T09:30:00Z | Tc2_System     | ads_functions                            | ADSLOGDINT                               | verified | S2 scope - PDF + InfoSys cross-verified
+2026-05-20T09:30:00Z | Tc2_System     | ads_functions                            | ADSLOGLREAL                              | verified | S2 scope - PDF + InfoSys cross-verified
+2026-05-20T09:30:00Z | Tc2_System     | ads_functions                            | ADSLOGSTR                                | verified | S2 scope - PDF + InfoSys cross-verified
+2026-05-20T09:30:00Z | Tc2_System     | ads_functions                            | F_CreateAmsNetId                         | verified | S2 scope - PDF + InfoSys cross-verified
+2026-05-20T09:30:00Z | Tc2_System     | ads_functions                            | F_ScanAmsNetIds                          | verified | S2 scope - PDF + InfoSys cross-verified
+2026-05-20T09:30:00Z | Tc2_System     | character_functions                      | F_ToCHR                                  | verified | S2 scope - PDF + InfoSys cross-verified
+2026-05-20T09:30:00Z | Tc2_System     | character_functions                      | F_ToASC                                  | verified | S2 scope - PDF + InfoSys cross-verified
+2026-05-20T09:30:00Z | Tc2_System     | eventlogger_function_blocks              | ADSLOGEVENT                              | verified | S2 scope - PDF + InfoSys cross-verified
+2026-05-20T09:30:00Z | Tc2_System     | eventlogger_function_blocks              | ADSCLEAREVENTS                           | verified | S2 scope - PDF + InfoSys cross-verified
+2026-05-20T09:30:00Z | Tc2_System     | eventlogger_function_blocks              | FB_SimpleAdsLogEvent                     | verified | S2 scope - PDF + InfoSys cross-verified
+2026-05-20T09:30:00Z | Tc2_System     | general_function_blocks                  | DRAND                                    | verified | S2 scope - PDF + InfoSys cross-verified
+2026-05-20T09:30:00Z | Tc2_System     | general_function_blocks                  | FB_IecCriticalSection                    | verified | S2 scope - PDF + InfoSys cross-verified
+2026-05-20T09:30:00Z | Tc2_System     | general_function_blocks                  | FB_ReadTaskExceedCounter                 | verified | S2 scope - PDF + InfoSys cross-verified
+2026-05-20T09:30:00Z | Tc2_System     | general_function_blocks                  | FB_ResetTaskExceedCounter                | verified | S2 scope - PDF + InfoSys cross-verified
+2026-05-20T09:30:00Z | Tc2_System     | general_function_blocks                  | FB_SetLedColor_BAPI                      | verified | S2 scope - PDF + InfoSys cross-verified
+2026-05-20T09:30:00Z | Tc2_System     | general_function_blocks                  | FB_SetLedColorEx_BAPI                    | verified | S2 scope - PDF + InfoSys cross-verified
+2026-05-20T09:30:00Z | Tc2_System     | general_function_blocks                  | GETCURTASKINDEX                          | verified | S2 scope - PDF + InfoSys cross-verified
+2026-05-20T09:30:00Z | Tc2_System     | general_function_blocks                  | FB_CreateGUID                            | verified | S2 scope - PDF + InfoSys cross-verified
+2026-05-20T09:30:00Z | Tc2_System     | iec_sfc_function_blocks                  | AnalyzeExpression                        | verified | S2 scope - PDF + InfoSys cross-verified
+2026-05-20T09:30:00Z | Tc2_System     | iec_sfc_function_blocks                  | AnalyzeExpressionTable                   | verified | S2 scope - PDF + InfoSys cross-verified
+2026-05-20T09:30:00Z | Tc2_System     | iec_sfc_function_blocks                  | AnalyzeExpressionCombined                | verified | S2 scope - PDF + InfoSys cross-verified
+2026-05-20T09:30:00Z | Tc2_System     | iec_sfc_function_blocks                  | AppendErrorString                        | verified | S2 scope - PDF + InfoSys cross-verified
+2026-05-20T09:30:00Z | Tc2_System     | iec_sfc_function_blocks                  | SFCActionControl                         | verified | S2 scope - PDF + InfoSys cross-verified
+2026-05-20T09:30:00Z | Tc2_System     | time_function_blocks                     | GETCPUACCOUNT                            | verified | S2 scope - PDF + InfoSys cross-verified
+2026-05-20T09:30:00Z | Tc2_System     | time_function_blocks                     | GETCPUCOUNTER                            | verified | S2 scope - PDF + InfoSys cross-verified
+2026-05-20T09:30:00Z | Tc2_System     | time_functions                           | F_GetSystemTime                          | verified | S2 scope - PDF + InfoSys cross-verified
+2026-05-20T09:30:00Z | Tc2_System     | time_functions                           | F_GetTaskTime                            | verified | S2 scope - PDF + InfoSys cross-verified
+2026-05-20T09:30:00Z | Tc2_System     | time_functions                           | F_GetTaskTotalTime                       | verified | S2 scope - PDF + InfoSys cross-verified
