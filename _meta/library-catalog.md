@@ -44,7 +44,7 @@
 | 库 | InfoSys 版本 | 估算 FB+FC | 状态 | 备注 |
 |---|---|---|---|---|
 | Tc2_EtherCAT | 现行 | ~80 | ⏳ pending | EtherCAT 主从配置 |
-| Tc2_TcpIp | 现行 | ~30 | ⏳ pending | Socket TCP/UDP（走 TF6310 别名） |
+| Tc2_TcpIp | 1.5.2 | 24 | ✅ done (24/24) | TF6310 TCP/UDP/TLS socket（19 FB + 4 FC + 1 GVL；9 DUT 仅引用） |
 | Tc2_SerialCom | 现行 | ~20 | ⏳ pending | 串口通信（走 TF6340 别名） |
 | Tc2_ModbusSrv | 现行 | ~20 | ⏳ pending | Modbus 服务端（走 TF6250 别名） |
 | Tc2_ModbusRTU | 现行 | ~20 | ⏳ pending | Modbus RTU 主站（走 TF6255 别名） |
