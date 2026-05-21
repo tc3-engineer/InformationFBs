@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project xmlns="http://www.plcopen.org/xml/tc6_0200">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-21T07:00:00"/>
+  <contentHeader name="Tc2_TcpIp.FB_TlsSocketListen Demo" modificationDateTime="2026-05-21T07:00:00">
+    <coordinateInfo><fbd><scaling x="1" y="1"/></fbd><ld><scaling x="1" y="1"/></ld><sfc><scaling x="1" y="1"/></sfc></coordinateInfo>
+  </contentHeader>
+  <types>
+    <dataTypes/>
+    <pous>
+      <pou name="P_Demo_FB_TlsSocketListen" pouType="program">
+        <interface>
+          <localVars>
+            <variable name="fbCreateTlsListener"><type><derived name="FB_TlsSocketCreate"/></type></variable>
+            <variable name="fbSetServerCert"><type><derived name="FB_TlsSocketSetCert"/></type></variable>
+            <variable name="fbStartTlsListen"><type><derived name="FB_TlsSocketListen"/></type></variable>
+            <variable name="fbAcceptIncoming"><type><derived name="FB_SocketAccept"/></type></variable>
+            <variable name="hListener"><type><derived name="T_HSOCKET"/></type></variable>
+            <variable name="bRequestCreate"><type><BOOL/></type></variable>
+            <variable name="bCreateBusy"><type><BOOL/></type></variable>
+            <variable name="bCreateError"><type><BOOL/></type></variable>
+            <variable name="nCreateErrId"><type><UDINT/></type></variable>
+            <variable name="sCertPath"><initialValue><simpleValue value="'C:\TwinCAT\3.1\Boot\Plc\TcpIpServer\server.pem'"/></initialValue><type><string><length>255</length></string></type></variable>
+            <variable name="sKeyPath"><initialValue><simpleValue value="'C:\TwinCAT\3.1\Boot\Plc\TcpIpServer\server.key'"/></initialValue><type><string><length>255</length></string></type></variable>
+            <variable name="sKeyPwd"><type><string><length>255</length></string></type></variable>
+            <variable name="bRequestSetCert"><type><BOOL/></type></variable>
+            <variable name="bSetCertBusy"><type><BOOL/></type></variable>
+            <variable name="bSetCertError"><type><BOOL/></type></variable>
+            <variable name="nSetCertErrId"><type><UDINT/></type></variable>
+            <variable name="stListenFlags"><type><derived name="ST_TlsListenFlags"/></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">默认 bNoClientCert := TRUE 即单向 TLS（HTTPS 风格）</xhtml></documentation></variable>
+            <variable name="bRequestListen"><type><BOOL/></type></variable>
+            <variable name="bListenBusy"><type><BOOL/></type></variable>
+            <variable name="bListenError"><type><BOOL/></type></variable>
+            <variable name="nListenErrId"><type><UDINT/></type></variable>
+            <variable name="bPollAccept"><type><BOOL/></type></variable>
+            <variable name="bClientAccepted"><type><BOOL/></type></variable>
+            <variable name="bAcceptBusy"><type><BOOL/></type></variable>
+            <variable name="bAcceptError"><type><BOOL/></type></variable>
+            <variable name="nAcceptErrId"><type><UDINT/></type></variable>
+            <variable name="hRemoteClient"><type><derived name="T_HSOCKET"/></type></variable>
+          </localVars>
+        </interface>
+        <body>
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：PLC 端在 8443 端口启 HTTPS-like TLS 监听服务，给现场手持终端通过
+//       HTTPS 访问 PLC 数据 API。CA 由 PLC 自己签发（自签或私 CA）。
+//
+// 价值：演示 TLS 服务端的完整启动链路：
+//       Create(bListener:=TRUE) → SetCert(server.pem/key) → Listen → Accept。
+//       少 SetCert 必报 TLS_CERT_NOTFOUND。
+//
+// 验证步骤：
+//   1. 把服务端证书 + 私钥拷到 sCertPath / sKeyPath 指定位置
+//   2. 在线 bRequestCreate := TRUE 创建 socket
+//   3. 在线 bRequestSetCert := TRUE 配置证书
+//   4. 在线 bRequestListen := TRUE 开监听
+//   5. 在线 bPollAccept := TRUE 持续 polling
+//   6. PC 上 curl -k https://PLC_IP:8443/ 看到 TLS 握手日志
+//   7. 注：bPollAccept 是 TON 节拍触发更稳，本例保持简洁直接 polling
+// =============================================================================
+
+// 阶段 1：Create（监听模式）
+fbCreateTlsListener(
+    sSrvNetId := '', bListener := TRUE,
+    bExecute := bRequestCreate, tTimeout := T#5S,
+    bBusy =&gt; bCreateBusy, bError =&gt; bCreateError, nErrId =&gt; nCreateErrId,
+    hSocket =&gt; hListener);
+
+// 阶段 2：SetCert（必须）
+fbSetServerCert(
+    sSrvNetId := '', hSocket := hListener,
+    sCertPath := sCertPath, sKeyPath := sKeyPath, sKeyPwd := sKeyPwd,
+    bExecute := bRequestSetCert, tTimeout := T#5S,
+    bBusy =&gt; bSetCertBusy, bError =&gt; bSetCertError, nErrId =&gt; nSetCertErrId);
+
+// 阶段 3：Listen
+fbStartTlsListen(
+    sSrvNetId := '', sLocalHost := '0.0.0.0', nLocalPort := 8443,
+    flags := stListenFlags,
+    bExecute := bRequestListen, tTimeout := T#5S,
+    hListener := hListener,
+    bBusy =&gt; bListenBusy, bError =&gt; bListenError, nErrId =&gt; nListenErrId);
+
+// 阶段 4：Accept（普通 FB_SocketAccept 处理 incoming，TLS 握手对应用透明）
+fbAcceptIncoming(
+    sSrvNetId := '', hListener := hListener,
+    bExecute := bPollAccept, tTimeout := T#5S,
+    bAccepted =&gt; bClientAccepted,
+    bBusy =&gt; bAcceptBusy, bError =&gt; bAcceptError, nErrId =&gt; nAcceptErrId,
+    hSocket =&gt; hRemoteClient);
+</xhtml></ST>
+        </body>
+      </pou>
+    </pous>
+  </types>
+  <instances><configurations/></instances>
+</project>

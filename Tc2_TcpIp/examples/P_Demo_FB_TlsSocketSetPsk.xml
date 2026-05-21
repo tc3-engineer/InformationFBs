@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project xmlns="http://www.plcopen.org/xml/tc6_0200">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-21T07:00:00"/>
+  <contentHeader name="Tc2_TcpIp.FB_TlsSocketSetPsk Demo" modificationDateTime="2026-05-21T07:00:00">
+    <coordinateInfo><fbd><scaling x="1" y="1"/></fbd><ld><scaling x="1" y="1"/></ld><sfc><scaling x="1" y="1"/></sfc></coordinateInfo>
+  </contentHeader>
+  <types>
+    <dataTypes/>
+    <pous>
+      <pou name="P_Demo_FB_TlsSocketSetPsk" pouType="program">
+        <interface>
+          <localVars>
+            <variable name="fbCreateClient"><type><derived name="FB_TlsSocketCreate"/></type></variable>
+            <variable name="fbSetPsk"><type><derived name="FB_TlsSocketSetPsk"/></type></variable>
+            <variable name="hSocket"><type><derived name="T_HSOCKET"/></type></variable>
+            <variable name="bRequestCreate"><type><BOOL/></type></variable>
+            <variable name="bCreateBusy"><type><BOOL/></type></variable>
+            <variable name="bCreateError"><type><BOOL/></type></variable>
+            <variable name="nCreateErrId"><type><UDINT/></type></variable>
+            <variable name="sPskIdentity"><initialValue><simpleValue value="'sensor-line-A-station-3'"/></initialValue><type><string><length>255</length></string></type></variable>
+            <variable name="abPskBytes"><type><array><dimension lower="0" upper="15"/><baseType><BYTE/></baseType></array></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">16 字节随机 PSK；真实工程应从安全存储读，不可硬编码</xhtml></documentation></variable>
+            <variable name="bPskBytesInitialized"><type><BOOL/></type></variable>
+            <variable name="bRequestSetPsk"><type><BOOL/></type></variable>
+            <variable name="bSetPskBusy"><type><BOOL/></type></variable>
+            <variable name="bSetPskError"><type><BOOL/></type></variable>
+            <variable name="nSetPskErrId"><type><UDINT/></type></variable>
+            <variable name="bPskReady"><type><BOOL/></type></variable>
+          </localVars>
+        </interface>
+        <body>
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：100 台同型号扫描枪连工厂 IoT 网关。出厂烧录同一对
+//       (identity = "sensor-line-A-station-3", PSK = 16 byte 随机字节)；
+//       网关侧也配置同样 identity → PSK 映射。建连时双方 PSK 校验通过即开始
+//       TLS 通讯，全程无证书 PKI。
+//
+// 价值：演示 PSK 模式的最简部署——Create → SetPsk → Connect 三步走，
+//       无需 AddCa / SetCert / AddCrl。运维负担显著小于 PKI。
+//
+// 验证步骤：
+//   1. 启动后 PLC 周期 1 把 abPskBytes 初始化为约定的 16 字节（演示用：
+//      生产应从加密文件 / TPM 读，不能硬编码）
+//   2. 在线 bRequestCreate := TRUE → hSocket 创建
+//   3. 在线 bRequestSetPsk := TRUE
+//      → bSetPskBusy 闪烁后落回；bPskReady := TRUE
+//   4. 故意把 abPskBytes 改成全 0 后再 SetPsk → 服务端验失败时 Connect
+//      会报 0x00008089 (TLS_HANDSHAKE_FAIL)
+//   5. 故意 pskKeyLen := 200（超 128 上限）→ 范围检查触发 PSK_SETUP_ERROR
+// =============================================================================
+
+// 启动阶段一次性把 PSK 字节填进数组（演示用；生产从安全存储 load）
+IF NOT bPskBytesInitialized THEN
+    abPskBytes[0]  := 16#A1; abPskBytes[1]  := 16#B2;
+    abPskBytes[2]  := 16#C3; abPskBytes[3]  := 16#D4;
+    abPskBytes[4]  := 16#E5; abPskBytes[5]  := 16#F6;
+    abPskBytes[6]  := 16#07; abPskBytes[7]  := 16#18;
+    abPskBytes[8]  := 16#29; abPskBytes[9]  := 16#3A;
+    abPskBytes[10] := 16#4B; abPskBytes[11] := 16#5C;
+    abPskBytes[12] := 16#6D; abPskBytes[13] := 16#7E;
+    abPskBytes[14] := 16#8F; abPskBytes[15] := 16#90;
+    bPskBytesInitialized := TRUE;
+END_IF;
+
+fbCreateClient(
+    sSrvNetId := '', bListener := FALSE,
+    bExecute := bRequestCreate, tTimeout := T#5S,
+    bBusy =&gt; bCreateBusy, bError =&gt; bCreateError, nErrId =&gt; nCreateErrId,
+    hSocket =&gt; hSocket);
+
+fbSetPsk(
+    sSrvNetId := '', hSocket := hSocket,
+    sIdentity := sPskIdentity,
+    pskKey    := ADR(abPskBytes),
+    pskKeyLen := SIZEOF(abPskBytes),
+    bExecute  := bRequestSetPsk,
+    tTimeout  := T#5S,
+    bBusy     =&gt; bSetPskBusy,
+    bError    =&gt; bSetPskError,
+    nErrId    =&gt; nSetPskErrId);
+
+IF NOT bSetPskBusy AND NOT bSetPskError AND bRequestSetPsk THEN
+    bPskReady := TRUE;
+END_IF;
+</xhtml></ST>
+        </body>
+      </pou>
+    </pous>
+  </types>
+  <instances><configurations/></instances>
+</project>
