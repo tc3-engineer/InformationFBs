@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project xmlns="http://www.plcopen.org/xml/tc6_0200">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-21T00:00:00"/>
+  <contentHeader name="Tc2_MC2.MC_GearIn Demo" modificationDateTime="2026-05-21T00:00:00">
+    <coordinateInfo>
+      <fbd><scaling x="1" y="1"/></fbd>
+      <ld><scaling x="1" y="1"/></ld>
+      <sfc><scaling x="1" y="1"/></sfc>
+    </coordinateInfo>
+  </contentHeader>
+  <types>
+    <dataTypes/>
+    <pous>
+      <pou name="P_Demo_MC_GearIn" pouType="program">
+        <interface>
+          <localVars>
+            <variable name="fbCouplePusher"><type><derived name="MC_GearIn"/></type></variable>
+            <variable name="axisMainRoller"><type><derived name="AXIS_REF"/></type></variable>
+            <variable name="axisPusher"><type><derived name="AXIS_REF"/></type></variable>
+            <variable name="rtCoupleTrig"><type><derived name="R_TRIG"/></type></variable>
+            <variable name="bRequestCouple"><initialValue><simpleValue value="FALSE"/></initialValue><type><BOOL/></type></variable>
+            <variable name="bIsCoupled"><type><BOOL/></type></variable>
+            <variable name="bCoupleBusy"><type><BOOL/></type></variable>
+            <variable name="nErrorID"><type><UDINT/></type></variable>
+          </localVars>
+        </interface>
+        <body>
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：包装机主滚筒带动料袋前行，推送轴必须以主滚筒 2 倍速度同步把袋子推
+//       出 — 用电子齿轮 RatioNumerator/Denominator = 2/1 严格绑定，保证袋
+//       长一致不受主速度变化影响。
+// 价值：建立耦合后 PLC 不用周期性发推送命令，主滚筒动从轴自动跟。
+// 验证：先用 MC_Halt 把 axisPusher 停住（耦合要求从轴静止）；
+//       bRequestCouple := TRUE → bIsCoupled 立 TRUE；
+//       此时改 axisMainRoller 的速度（外部 MC_MoveVelocity），axisPusher.NcToPlc.ActVelo
+//       应自动 = 主轴速度 × 2。
+//       注意：解耦时（用 MC_GearOut）从轴不会自动停，需另用 MC_Halt(axisPusher) 接着停。
+// =============================================================================
+
+rtCoupleTrig(CLK := bRequestCouple);
+
+fbCouplePusher(
+    Execute          := rtCoupleTrig.Q,
+    RatioNumerator   := 2.0,
+    RatioDenominator := 1,
+    Acceleration     := 0.0,
+    Deceleration     := 0.0,
+    Jerk             := 0.0,
+    Master           := axisMainRoller,
+    Slave            := axisPusher,
+    InGear           =&gt; bIsCoupled,
+    Busy             =&gt; bCoupleBusy,
+    ErrorID          =&gt; nErrorID
+);
+</xhtml></ST>
+        </body>
+      </pou>
+    </pous>
+  </types>
+  <instances><configurations/></instances>
+</project>
