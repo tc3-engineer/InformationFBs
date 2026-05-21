@@ -1301,3 +1301,1068 @@ REG['FB_WriteOutput_analog'] = dict(
         ');\n'
     ),
 )
+
+
+# ---------------- AX200x Profibus (5 FBs) ----------------
+
+AX2000_PITFALLS = [
+    ('AX2000 是 1990s-2000s 的 Kollmorgen 老型号伺服；现代工程基本用 AX5000 (EtherCAT) + Tc2/Tc3 NCI 替代。本系列 FB 仅用于维护老线。', False),
+    ('**`stPZDIN` / `stPZDOUT` 必须链到 System Manager 中 AX2000 在 Profibus 上的 PZD（过程数据）映射区**，否则数据交换不通。', True),
+    ('AX2000 通讯通过 Profibus FC310x / EL6731 主站；调用任何 AX2000 FB 前先确保 Profibus 主站本身已正常。', True),
+    ('错误号 `iErrorId` 是 AX2000 驱动器返回的"驱动器错误号"，与 ADS 错误号无关。具体含义见 AX2000 / S300 手册的 Fault Code 表。', True),
+]
+
+REG['FB_AX2000_Parameter'] = dict(
+    ftype='FUNCTION_BLOCK',
+    summary=(
+        'AX2000 Profibus 伺服驱动器的参数读 / 写功能块，使用 Profibus DP-V1 PKW 机制访问驱动器内部参数（如位置环增益、加减速时间、电流限）。'
+        '注意：写参数改变运行模式时，必须把 `FB_AX2000_AXACT` 的 "STOP" 输入保持 TRUE。'
+    ),
+    behavior=(
+        '`bStartRead` 上升沿触发一次读 PKW；`bStartWrite` 上升沿触发一次写 PKW。'
+        '不要同时拉高两者，会冲突。'
+        '`iPnu` 选择参数号（如 PNU 0x03A2 = velocity loop integral time）；'
+        '`nAxis` 是双轴 / 三轴扩展时的轴号；'
+        '`iLength` 区分 2 字节或 4 字节参数（按 PNU 列表决定）。'
+        '`bBusy = TRUE` 直到驱动器应答；完成后 `iReadValue` 含读得的参数值（仅 `bStartRead` 路径）。'
+        '出错时 `iErrorId` 给出 AX2000 驱动器错误号——这是 PROFIDRIVE 的 PKW 错误码体系，不是 ADS 错误号。'
+        '`tTimeOut` 是 ADS 调用超时；PKW 本身在 Profibus 上需要多个 DP cycle 完成，超时建议 ≥ 2 秒。'
+    ),
+    var_desc={
+        'iSlaveAddress': 'AX2000 在 Profibus 上的站地址。',
+        'iPnu': 'PROFIDRIVE PKW 参数号（PNU）；可用值参见 AX2000 手册的 PKW 参数列表。',
+        'nAxis': '轴号（多轴扩展用）。',
+        'iLength': '参数长度（2 或 4 字节）。',
+        'iSubIndex': 'PKW 子索引（数组型参数访问元素用）。',
+        'iParameterValue': '要写入或读出的参数值。',
+        'iFC310xDeviceId': 'Profibus 主站卡（FC310x）的 Device Id。',
+        'bStartRead': '上升沿启动读 PKW。',
+        'bStartWrite': '上升沿启动写 PKW；改运行模式时需 `FB_AX2000_AXACT.STOP = TRUE`。',
+        'iReadValue': '读 PKW 返回的参数值。',
+        'iErrorId': 'AX2000 驱动器 PKW 错误码（不是 ADS 错误号；具体见 AX2000 手册）。',
+    },
+    pitfalls=AX2000_PITFALLS + [
+        ('改运行模式（如位置 → 速度）时必须先让 `FB_AX2000_AXACT.bStop = TRUE` 把驱动器停下，否则写参数被驱动器拒绝。', False),
+        ('PKW 是慢速通道（DP 每个周期只能传一个参数读/写），不要循环周期读参数；上电时一次性配置即可。', True),
+    ],
+    scenario='AX2000 维护：上电时把当前位置环增益从默认值改为工程定制值（例如 PNU 0x03A2 = 30）。',
+    value='让 PLC 程序在上电时把驱动器参数写到一致状态，替换工人手拨 Kollmorgen 调试软件。',
+    alt=(
+        '- Kollmorgen 调试软件 Drive.exe：能写但要插串口 / 工程模式\n'
+        '- 改用现代 EL72xx + Tc2/Tc3 NCI：投资大但更可靠\n'
+        '- **本 FB**：维护老线最现实做法'
+    ),
+    related=['FB_AX2000_AXACT', 'FB_AX2000_Reference', 'FB_AX200X_Profibus'],
+    xml_scen='AX2000 老线伺服维护：上电时把位置环积分时间 (PNU 0x03A2) 写为工程定制值 30，避免每次重启都要拨调试软件。',
+    xml_val='把驱动器关键参数纳入 PLC 程序版本控制；工程师不需要带笔记本到现场。',
+    xml_verify='登录后 iAx2000SlaveStation := 5、iParamPnu := 16#03A2、iParamWriteVal := 30、bWritePkwReq := TRUE → 触发上升沿 → fbAx2000Param.bBusy 短暂 TRUE → 回 FALSE 后 iLastDriveError = 0 表示成功；再 bReadPkwReq 上升沿读回参数验证 iLastReadbackValue = 30。',
+    xml_vars=[
+        ('fbAx2000Param', 'FB_AX2000_Parameter', None, 'AX2000 PKW 参数访问 FB'),
+        ('iAx2000SlaveStation', 'BYTE', '5', 'AX2000 Profibus 站号'),
+        ('iParamPnu', 'WORD', '16#03A2', '参数号 PNU'),
+        ('iAxisNumber', 'BYTE', '1', '轴号'),
+        ('iParamByteLen', 'BYTE', '4', '参数字节长度 (2 或 4)'),
+        ('iParamSubIdx', 'BYTE', '0', '子索引'),
+        ('iParamWriteVal', 'DWORD', '30', '要写入的值'),
+        ('iProfibusMasterDevId', 'WORD', '1', 'FC310x Device Id'),
+        ('bReadPkwReq', 'BOOL', 'FALSE', '上升沿读 PKW'),
+        ('bWritePkwReq', 'BOOL', 'FALSE', '上升沿写 PKW'),
+        ('tPkwTimeout', 'TIME', 'T#2S', 'ADS 超时'),
+        ('bPkwBusy', 'BOOL', None, '工作中'),
+        ('iLastDriveError', 'DWORD', None, '驱动器错误号'),
+        ('iLastReadbackValue', 'DINT', None, '读 PKW 返回值'),
+    ],
+    xml_call=(
+        'fbAx2000Param(\n'
+        '    iSlaveAddress   := iAx2000SlaveStation,\n'
+        '    iPnu            := iParamPnu,\n'
+        '    nAxis           := iAxisNumber,\n'
+        '    iLength         := iParamByteLen,\n'
+        '    iSubIndex       := iParamSubIdx,\n'
+        '    iParameterValue := iParamWriteVal,\n'
+        '    iFC310xDeviceId := iProfibusMasterDevId,\n'
+        '    bStartRead      := bReadPkwReq,\n'
+        '    bStartWrite     := bWritePkwReq,\n'
+        '    tTimeOut        := tPkwTimeout,\n'
+        '    bBusy           => bPkwBusy,\n'
+        '    iErrorId        => iLastDriveError,\n'
+        '    iReadValue      => iLastReadbackValue\n'
+        ');\n'
+    ),
+)
+
+
+REG['FB_AX2000_AXACT'] = dict(
+    ftype='FUNCTION_BLOCK',
+    summary=(
+        'AX2000 Profibus 伺服轴动作命令 FB：启动 / 停止 / 短停 / 错误复位、设定速度 / 位置 / motion-task。'
+        '**必须循环调用**（必须每个 PLC 周期调用一次，PDF 明确说明）。'
+    ),
+    behavior=(
+        '本 FB 是 AX2000 的核心动作接口，必须循环调用让 PZD 过程数据保持实时刷新到驱动器。'
+        '`bStart` 上升沿发动作命令；动作类型由其它输入位决定：'
+        '`iVelocity` / `iPosition` 表示直接 motion 指令的速度与目标位置；'
+        '`imotion_tasknumber` / `imotion_blocktype` 用于调驱动器内已存的 motion-task；'
+        '`bStop` 上升沿正常停车并禁能；`bShortStop` 短停（保持使能）；`bErrorResume` 复位 AX2000 错误。'
+        '`bBusy = TRUE` 直到驱动器接受命令；`bError` 表示驱动器报错（具体故障码不在本 FB 输出，需读驱动器 PNU）；`bTimeOutErr` 表示 PLC 与驱动器之间的 ADS / Profibus 超时。'
+        '`stPZDIN` / `stPZDOUT` 是 IN_OUT 的 Profibus 过程数据结构，必须在 System Manager 中链到 AX2000 站的 PZD 区域，且每周期循环调用本 FB 才能让数据流动。'
+    ),
+    var_desc={
+        'iVelocity': '目标速度（典型单位 μm/s 或者驱动器配置的工程单位）。',
+        'iPosition': '目标位置（典型单位 μm 或度，依驱动器配置）。',
+        'imotion_tasknumber': '驱动器内存里预存的 motion-task 块编号；若用直接指令则忽略。',
+        'imotion_blocktype': 'motion-task 类型（位运算 flag，可选项参见 AX2000 手册）。',
+        'bStart': '上升沿向驱动器发 start 命令。',
+        'bStop': '上升沿正常停车，并把驱动器置 disable。',
+        'bShortStop': '上升沿短停，但保持 enable。',
+        'bErrorResume': '上升沿复位 AX2000 错误（不复位 PLC-Profibus 之间的 TimeOut 错）。',
+        'stPZDIN': 'Profibus 过程数据：驱动器 → PLC 方向；链到 System Manager 中 AX2000 的 PZD IN 区。',
+        'stPZDOUT': 'Profibus 过程数据：PLC → 驱动器方向；链到 System Manager 中 AX2000 的 PZD OUT 区。',
+        'bError': 'TRUE = AX2000 驱动器报故障；具体故障号需读驱动器 PNU。',
+        'bTimeOutErr': 'TRUE = PLC ↔ 驱动器之间的 ADS / Profibus 通讯超时。',
+    },
+    pitfalls=AX2000_PITFALLS + [
+        ('**必须每周期循环调用**：本 FB 是 PZD 数据交换的载体，不调用驱动器会丢失通讯心跳进入超时故障。', False),
+        ('改运行模式（如位置 ↔ 速度）必须先 `bStop` 让驱动器禁能，不能在运动中改。', False),
+    ],
+    scenario='AX2000 老线运动控制：印刷套筒定位伺服，上电后等位置就绪信号 → bStart 发位置指令到 12000 μm。',
+    value='把 PROFIDRIVE 状态机 + PZD 编码全部封装；业务侧只关心 motion 指令。',
+    alt=(
+        '- 直接读写 PZD 字节：协议繁琐\n'
+        '- 现代 NCI + EL72xx：投资大但更可靠\n'
+        '- **本 FB**：维护老线必用'
+    ),
+    related=['FB_AX2000_Parameter', 'FB_AX2000_Reference', 'FB_AX200X_Profibus'],
+    xml_scen='AX2000 印刷套筒伺服：上电后位置就绪即下发位置指令 12000 μm + 速度 1500 μm/s。',
+    xml_val='封装 PROFIDRIVE 协议状态机，避免手撸 PZD 协议。',
+    xml_verify='登录后 stAx2000PzdIn / stAx2000PzdOut 已链到 AX2000 PZD；在线写 bMotionStartReq := TRUE → fbAx2000Action.bBusy 短暂 TRUE → 驱动器开始定位；监视 stAx2000PzdIn 中位置实时反馈应趋向 iMotionTargetPosition。',
+    xml_vars=[
+        ('fbAx2000Action', 'FB_AX2000_AXACT', None, 'AX2000 动作 FB（必须循环调用）'),
+        ('stAx2000PzdIn', 'ST_PZD_IN', None, '驱动器 → PLC PZD（链到 %I*）'),
+        ('stAx2000PzdOut', 'ST_PZD_OUT', None, 'PLC → 驱动器 PZD（链到 %Q*）'),
+        ('iTargetVelocity', 'DWORD', '1500', '目标速度 μm/s'),
+        ('iMotionTargetPosition', 'DINT', '12000', '目标位置 μm'),
+        ('iMotionTaskNum', 'WORD', '0', '存内 motion-task 号；0 表示用直接指令'),
+        ('iMotionBlockType', 'WORD', '16#2000', 'motion-task 类型 (默认 SI 单位)'),
+        ('bMotionStartReq', 'BOOL', 'FALSE', '上升沿启动 motion'),
+        ('bMotionStopReq', 'BOOL', 'FALSE', '上升沿正常停车'),
+        ('bMotionShortStopReq', 'BOOL', 'FALSE', '上升沿短停'),
+        ('bMotionErrorReset', 'BOOL', 'FALSE', '上升沿复位 AX2000 错误'),
+        ('tMotionTimeout', 'TIME', 'T#5S', 'PZD 通讯超时'),
+        ('bMotionBusy', 'BOOL', None, '工作中'),
+        ('bMotionErrFlag', 'BOOL', None, '驱动器故障'),
+        ('bMotionTimeoutErrFlag', 'BOOL', None, '通讯超时'),
+    ],
+    xml_call=(
+        '// 必须每周期循环调用以维持 PZD 通讯\n'
+        'fbAx2000Action(\n'
+        '    iVelocity          := iTargetVelocity,\n'
+        '    iPosition          := iMotionTargetPosition,\n'
+        '    imotion_tasknumber := iMotionTaskNum,\n'
+        '    imotion_blocktype  := iMotionBlockType,\n'
+        '    bStart             := bMotionStartReq,\n'
+        '    bStop              := bMotionStopReq,\n'
+        '    bShortStop         := bMotionShortStopReq,\n'
+        '    bErrorResume       := bMotionErrorReset,\n'
+        '    tTimeOut           := tMotionTimeout,\n'
+        '    stPZDIN            := stAx2000PzdIn,\n'
+        '    stPZDOUT           := stAx2000PzdOut,\n'
+        '    bBusy              => bMotionBusy,\n'
+        '    bError             => bMotionErrFlag,\n'
+        '    bTimeOutErr        => bMotionTimeoutErrFlag\n'
+        ');\n'
+    ),
+)
+
+
+REG['FB_AX2000_JogMode'] = dict(
+    ftype='FUNCTION_BLOCK',
+    summary=(
+        'AX2000 Profibus 伺服点动模式：以基础速度 (`iBasicVelo`) × 驱动器内部 v-jog mode 因子 持续运行。'
+        '常用于调试期间手动移动轴。'
+    ),
+    behavior=(
+        '`bStart` 上升沿启动点动；`bStop` 上升沿停止。'
+        '点动期间通过 PZD 持续发送 jog 指令到驱动器；驱动器按 `iBasicVelo` × 内部 v-jog 因子计算实际速度。'
+        '点动通常用于调试 / 维护，工程切换到自动后应该用 `FB_AX2000_AXACT`。'
+        '`stPZDIN` / `stPZDOUT` IN_OUT 与 AXACT 一致：必须链到 PZD 区且循环调用。'
+        '`bBusy` 表示命令处理中；`bErr` / `bTimeOutErr` 表示驱动器故障 / 通讯超时。'
+    ),
+    var_desc={
+        'iBasicVelo': '基础速度（INT，单位由驱动器配置；最终速度 = iBasicVelo × v-jog factor）。',
+        'bStart': '上升沿启动点动。',
+        'bStop': '上升沿停止点动。',
+    },
+    pitfalls=AX2000_PITFALLS + [
+        ('点动模式仅供调试，正常工艺要用 `FB_AX2000_AXACT` 的 motion-task 模式。', True),
+        ('实际速度 = `iBasicVelo` × v-jog factor，因子需在驱动器里配置；不要把 `iBasicVelo` 想当然作物理速度。', True),
+    ],
+    scenario='AX2000 维护：把轴点动到机械零位附近，工人按 HMI 上的 jog+ / jog- 按钮。',
+    value='不用拆驱动器接调试软件即可手动移动轴。',
+    alt=(
+        '- 用驱动器面板按钮：要打开机柜\n'
+        '- Drive.exe 调试软件：要插串口 / 网线\n'
+        '- **本 FB**：HMI 按钮即可'
+    ),
+    related=['FB_AX2000_AXACT', 'FB_AX2000_Reference', 'FB_AX2000_Parameter'],
+    xml_scen='AX2000 调试期间通过 HMI 手动点动伺服轴，基础速度 100。',
+    xml_val='调试人员不用打开柜门接调试软件。',
+    xml_verify='登录后 stAx2000PzdIn / stAx2000PzdOut 已链到 PZD；按 bJogPositiveReq := TRUE → 轴开始正方向点动；松开 → 调 bJogStopReq := TRUE → 轴停止。',
+    xml_vars=[
+        ('fbAx2000Jog', 'FB_AX2000_JogMode', None, 'AX2000 点动 FB'),
+        ('stAx2000PzdIn', 'ST_PZD_IN', None, 'PZD 输入'),
+        ('stAx2000PzdOut', 'ST_PZD_OUT', None, 'PZD 输出'),
+        ('iJogBasicSpeed', 'INT', '100', '点动基础速度'),
+        ('bJogPositiveReq', 'BOOL', 'FALSE', 'HMI 按钮：点动正方向'),
+        ('bJogStopReq', 'BOOL', 'FALSE', 'HMI 按钮：停点动'),
+        ('tJogTimeout', 'TIME', 'T#5S', '超时'),
+        ('bJogBusy', 'BOOL', None, '工作中'),
+        ('bJogErrFlag', 'BOOL', None, '驱动器故障'),
+        ('bJogTimeoutErrFlag', 'BOOL', None, '通讯超时'),
+    ],
+    xml_call=(
+        '// 循环调用以维持 PZD 通讯\n'
+        'fbAx2000Jog(\n'
+        '    bStart      := bJogPositiveReq,\n'
+        '    bStop       := bJogStopReq,\n'
+        '    iBasicVelo  := iJogBasicSpeed,\n'
+        '    tTimeOut    := tJogTimeout,\n'
+        '    stPZDIN     := stAx2000PzdIn,\n'
+        '    stPZDOUT    := stAx2000PzdOut,\n'
+        '    bBusy       => bJogBusy,\n'
+        '    bErr        => bJogErrFlag,\n'
+        '    bTimeOutErr => bJogTimeoutErrFlag\n'
+        ');\n'
+    ),
+)
+
+
+REG['FB_AX2000_Reference'] = dict(
+    ftype='FUNCTION_BLOCK',
+    summary=(
+        'AX2000 Profibus 伺服回参考 / 设定参考点 FB。'
+        '可设定当前位置为参考点 (`bSetRefPoint`)，或启动 / 停止 homing 找参考点 (`bCalibrStart` / `bCalibrStop`)。'
+    ),
+    behavior=(
+        '`bSetRefPoint` 上升沿 → 把当前位置标记为参考点（零位）。'
+        '`bCalibrStart` 上升沿 → 启动 homing：驱动器按内部配置的 homing 方法（限位回、Z 脉冲、原点感应器等）找参考点；速度由 `iCalVelo` × v-jog factor 决定。'
+        '`bCalibrStop` 上升沿 → 中止 homing。'
+        '完成 / 出错通过 `bBusy` 落回 + `bErr` 反映。'
+        '与其它 AX2000 FB 一样，本 FB 通过 PZD 与驱动器交换，因此 `stPZDIN` / `stPZDOUT` 必须链到 System Manager 的 PZD 区，且必须循环调用。'
+    ),
+    var_desc={
+        'bSetRefPoint': '上升沿把当前位置设为参考点（零位）。',
+        'bCalibrStart': '上升沿启动 homing 找参考点。',
+        'bCalibrStop': '上升沿中止 homing。',
+        'iCalVelo': 'homing 基础速度（最终速度 = iCalVelo × v-jog factor）。',
+    },
+    pitfalls=AX2000_PITFALLS + [
+        ('homing 方法（用限位 / Z 脉冲 / 感应器）在驱动器侧配置，本 FB 不能切换方法。', True),
+        ('homing 可能撞到机械限位；调试时务必先观察 limit switch 信号正确接入。', True),
+    ],
+    scenario='AX2000 印刷套筒维修后重新对零：先用 jog 移到接近原点 → `bCalibrStart` 让伺服找精确零位。',
+    value='把 homing 流程做成程序接口，可在 HMI 一键触发。',
+    alt=(
+        '- 手动 jog + 看尺读数：人工操作易错\n'
+        '- 驱动器面板 homing：要打开机柜\n'
+        '- **本 FB**：HMI 触发'
+    ),
+    related=['FB_AX2000_AXACT', 'FB_AX2000_JogMode', 'FB_AX200X_Profibus'],
+    xml_scen='维修后重新对零：HMI 按钮触发本 FB 启动 homing，伺服按机械原点感应器找零位。',
+    xml_val='homing 程序化，工人按一键完成。',
+    xml_verify='登录后 stAx2000PzdIn / stAx2000PzdOut 已链；在线写 bHomingStartReq := TRUE → fbAx2000Ref.bBusy 短暂 TRUE → 驱动器开始 homing → 找到零位后 bBusy 落回 FALSE，bHomingErrFlag = FALSE 表示成功。',
+    xml_vars=[
+        ('fbAx2000Ref', 'FB_AX2000_Reference', None, 'AX2000 回零 FB'),
+        ('stAx2000PzdIn', 'ST_PZD_IN', None, 'PZD 输入'),
+        ('stAx2000PzdOut', 'ST_PZD_OUT', None, 'PZD 输出'),
+        ('bSetRefPointReq', 'BOOL', 'FALSE', 'HMI：设定当前为零位'),
+        ('bHomingStartReq', 'BOOL', 'FALSE', 'HMI：启动 homing'),
+        ('bHomingStopReq', 'BOOL', 'FALSE', 'HMI：停 homing'),
+        ('iHomingVelocity', 'WORD', '50', 'homing 基础速度'),
+        ('bHomingBusy', 'BOOL', None, '工作中'),
+        ('bHomingErrFlag', 'BOOL', None, '驱动器故障'),
+    ],
+    xml_call=(
+        'fbAx2000Ref(\n'
+        '    bSetRefPoint := bSetRefPointReq,\n'
+        '    bCalibrStart := bHomingStartReq,\n'
+        '    bCalibrStop  := bHomingStopReq,\n'
+        '    iCalVelo     := iHomingVelocity,\n'
+        '    stPZDIN      := stAx2000PzdIn,\n'
+        '    stPZDOUT     := stAx2000PzdOut,\n'
+        '    bBusy        => bHomingBusy,\n'
+        '    bErr         => bHomingErrFlag\n'
+        ');\n'
+    ),
+)
+
+
+REG['FB_AX200X_Profibus'] = dict(
+    ftype='FUNCTION_BLOCK',
+    summary=(
+        'AX2000 综合 FB：整合 AXACT + JogMode + Reference 的功能（不含参数读写）。'
+        '所有 motion / jog / homing 的入口都在这里，按 `iRunningMode` 切换：0 = Digital speed，1 = Motiontask，2 = JogMode，3 = Calibration。'
+    ),
+    behavior=(
+        '`bInit` 上升沿在驱动器内部置 operation mode 2（positioning）作为初始化。'
+        '`iRunningMode` 切换当前动作类型：'
+        '0 = Digital speed（用 `iDigitalSpeed` 直接给速度），'
+        '1 = Motiontask（执行 `imotion_tasknumber` 内存中存的 motion 块），'
+        '2 = JogMode（用 `iJogModeBasicValue` 点动），'
+        '3 = Calibration（用 `iCalVelo` homing）。'
+        '`bStart` / `bStop` / `bShortStop` / `bErrorResume` 与 AXACT 一致。'
+        '`bMode_DigitalSpeed` 初始化时把驱动器置入 Digital speed 模式而非默认的 positioning 模式。'
+        '本 FB 内部循环调用 AXACT/JogMode/Reference 的功能，外部只需要调本一个 FB。'
+    ),
+    var_desc={
+        'bInit': '上升沿初始化驱动器到指定 operation mode。',
+        'bMode_DigitalSpeed': '初始化时是否切到 Digital speed 模式（否则默认 positioning）。',
+        'iDigitalSpeed': 'Digital speed 模式下的直接速度指令。',
+        'iVelocity': 'Motiontask 模式下的运行速度。',
+        'iPosition': 'Motiontask 模式下的目标位置。',
+        'iRunningMode': '0=Digital speed, 1=Motiontask, 2=JogMode, 3=Calibration。',
+        'iJogModeBasicValue': 'JogMode 基础速度。',
+        'iCalVelo': 'Calibration (homing) 基础速度。',
+        'bSetRefPoint': '上升沿设当前为参考点。',
+    },
+    pitfalls=AX2000_PITFALLS + [
+        ('**本 FB 是综合接口，便于新工程使用**；维护时若发现某一动作有问题，可拆分调用单独的 AXACT/JogMode/Reference 来排查。', True),
+        ('参数读写不在本 FB 内——需要 `FB_AX2000_Parameter` 配套。', True),
+    ],
+    scenario='AX2000 新接入工程：用一个 FB 涵盖 motion 全功能，业务程序按 iRunningMode 切动作类型。',
+    value='单一接口，减少业务程序中维护多个 AX2000 FB 实例的复杂度。',
+    alt=(
+        '- 分别用 AXACT / JogMode / Reference 三个 FB：灵活但更多代码\n'
+        '- **本 FB**：综合接口'
+    ),
+    related=['FB_AX2000_AXACT', 'FB_AX2000_JogMode', 'FB_AX2000_Reference', 'FB_AX2000_Parameter'],
+    xml_scen='AX2000 综合控制：一个 FB 涵盖初始化 + jog + motion + homing。',
+    xml_val='单一接口，业务代码简洁。',
+    xml_verify='登录后 bDriveInitReq := TRUE 一次完成初始化；切 iRunMode := 1 (Motiontask) + bStartCmd := TRUE → 伺服按 iPositionTarget 定位。',
+    xml_vars=[
+        ('fbAx2000All', 'FB_AX200X_Profibus', None, 'AX2000 综合 FB'),
+        ('stAx2000PzdIn', 'ST_PZD_IN', None, 'PZD 输入'),
+        ('stAx2000PzdOut', 'ST_PZD_OUT', None, 'PZD 输出'),
+        ('bDriveInitReq', 'BOOL', 'FALSE', '上升沿初始化'),
+        ('bUseDigitalSpeedMode', 'BOOL', 'FALSE', '初始化为 Digital speed'),
+        ('iDigitalSpeedCmd', 'DWORD', '0', 'Digital speed 指令'),
+        ('iVelocityCmd', 'DWORD', '1500', 'Motion 速度'),
+        ('iPositionTarget', 'DINT', '12000', '目标位置'),
+        ('iRunMode', 'BYTE', '1', '0=DS 1=MT 2=Jog 3=Cal'),
+        ('iMotionTaskNum', 'WORD', '0', 'motion-task 号'),
+        ('iMotionBlockType', 'WORD', '16#2000', 'motion-task 类型'),
+        ('iJogBaseVelo', 'INT', '100', 'Jog 基础速度'),
+        ('iCalVelocity', 'WORD', '50', 'Homing 速度'),
+        ('bSetRefPointReq', 'BOOL', 'FALSE', '设置零位'),
+        ('bStartCmd', 'BOOL', 'FALSE', '上升沿启动'),
+        ('bStopCmd', 'BOOL', 'FALSE', '上升沿停止'),
+        ('bShortStopCmd', 'BOOL', 'FALSE', '短停'),
+        ('iAx2000Station', 'BYTE', '5', 'AX2000 站号'),
+        ('iFC310xDevId', 'WORD', '1', 'FC310x DeviceId'),
+        ('bErrResumeReq', 'BOOL', 'FALSE', '复位错误'),
+        ('tCmdTimeout', 'TIME', 'T#5S', '超时'),
+    ],
+    xml_call=(
+        '// 必须循环调用维持 PZD 通讯\n'
+        'fbAx2000All(\n'
+        '    bInit              := bDriveInitReq,\n'
+        '    bMode_DigitalSpeed := bUseDigitalSpeedMode,\n'
+        '    iDigitalSpeed      := iDigitalSpeedCmd,\n'
+        '    iVelocity          := iVelocityCmd,\n'
+        '    iPosition          := iPositionTarget,\n'
+        '    iRunningMode       := iRunMode,\n'
+        '    imotion_tasknumber := iMotionTaskNum,\n'
+        '    imotion_blocktype  := iMotionBlockType,\n'
+        '    iJogModeBasicValue := iJogBaseVelo,\n'
+        '    iCalVelo           := iCalVelocity,\n'
+        '    bSetRefPoint       := bSetRefPointReq,\n'
+        '    bStart             := bStartCmd,\n'
+        '    bStop              := bStopCmd,\n'
+        '    bShortStop         := bShortStopCmd,\n'
+        '    iSlaveAddress      := iAx2000Station,\n'
+        '    iFC310xDeviceId    := iFC310xDevId,\n'
+        '    bErrorResume       := bErrResumeReq,\n'
+        '    tTimeOut           := tCmdTimeout\n'
+        ');\n'
+    ),
+)
+
+
+# ---------------- Beckhoff Lightbus (3 FBs) ----------------
+
+LB_PITFALLS = [
+    ('Beckhoff Lightbus 是早期光纤总线，**TwinCAT 3 已不再支持** Lightbus 主站硬件（C1220 ISA / FC200x PCI）。PDF 明确说 "not supported by TwinCAT 3 at present"。', False),
+    ('本系列 FB 仅供老工程升级到 TwinCAT 3 后做"代码兼容性参考"，**实际运行需要 TwinCAT 2 或更早**。', False),
+    ('ADS 错误号见 Beckhoff **ADS Return Codes** 在线表；具体光纤错误码 PDF 未列入本节。', True),
+]
+
+REG['IOF_LB_BreakLocationTest'] = dict(
+    ftype='FUNCTION_BLOCK',
+    summary=(
+        'Beckhoff Lightbus（光纤总线）断纤定位测试。'
+        '在光纤环里 walking 测试，若没有断纤则 `BOXNO` 返回当前环内模块总数；若有断纤则 `BREAK := TRUE` 且 `BOXNO` 返回断点前最后一个能通讯到的模块号。'
+        '若 `BOXNO = 0xFF` 表示断点紧靠接收端，无法定位具体模块。'
+    ),
+    behavior=(
+        '`START` 上升沿触发一次测试：`BUSY := TRUE`，FB 经 ADS 把 walking 测试命令发到 Lightbus 主站。'
+        '主站在光纤环里按顺序探测每个模块的应答，直到无应答为止。'
+        '完成后 `BUSY := FALSE`，结果：'
+        '`BREAK = FALSE` 时 `BOXNO` = 环内模块总数（用于核对配置）；'
+        '`BREAK = TRUE` 时 `BOXNO` = 断点前最后一个能通讯的模块号；若 `BOXNO = 0xFF` 表示接收端正面就断了。'
+        'Lightbus 模块号是从发射器开始数 1, 2, ..., N。'
+    ),
+    var_desc={
+        'BREAK': 'TRUE = 检测到断纤；FALSE = 光纤环正常。',
+        'BOXNO': 'BREAK=FALSE 时是模块总数；BREAK=TRUE 时是断点前最后能通讯的模块号；0xFF 表示接收端直接断纤。',
+    },
+    pitfalls=LB_PITFALLS + [
+        ('断纤定位是诊断功能，不要循环周期调用——会占用 Lightbus 主站带宽。', True),
+        ('找到断点后 walking 测试会终止，需要修复光纤后再次调用本 FB 确认恢复。', True),
+    ],
+    scenario='Lightbus 老线突然报通讯故障：调本 FB 定位断点 → 现场顺着光纤数到第 N 个模块（BOXNO 值）附近检查。',
+    value='避免逐段拔光纤排查；一次测试定位到具体模块附近。',
+    alt=(
+        '- 人工逐段排查：耗时\n'
+        '- 用专门光纤测试仪：要带工具到现场\n'
+        '- **本 FB**：PLC 程序触发即可'
+    ),
+    related=['IOF_LB_ParityCheck', 'IOF_LB_ParityCheckWithReset', 'IOF_DeviceReset'],
+    xml_scen='Lightbus 通讯故障：HMI 按钮触发断纤定位，BOXNO 显示断点位置帮助现场人员快速找到问题模块。',
+    xml_val='把断纤定位做成 HMI 一键操作。',
+    xml_verify='登录后 nLightbusDeviceId := 系统中 Lightbus 主站 DeviceId；写 bStartBreakTest := TRUE → bBreakTestBusy 短暂 TRUE → 回 FALSE 后 bBreakDetected 表示是否有断纤；正常时 nLastModuleNo 应等于工程配置的 Lightbus 模块总数。',
+    xml_vars=[
+        ('fbLightbusBreakTest', 'IOF_LB_BreakLocationTest', None, 'Lightbus 断纤定位 FB'),
+        ('sTargetNetId', 'T_AmsNetId', "''", '本机'),
+        ('nLightbusDeviceId', 'UDINT', '1', 'Lightbus 主站 Device Id'),
+        ('bStartBreakTest', 'BOOL', 'FALSE', '上升沿触发测试'),
+        ('tBreakTestTimeout', 'TIME', 'T#10S', 'ADS 超时（光纤环大时给足）'),
+        ('bBreakTestBusy', 'BOOL', None, '工作中'),
+        ('bBreakTestErr', 'BOOL', None, '失败'),
+        ('nLastErrCode', 'UDINT', None, '错误号'),
+        ('bBreakDetected', 'BOOL', None, '断纤标志'),
+        ('nLastModuleNo', 'WORD', None, '模块号 / 总数'),
+    ],
+    xml_call=(
+        'fbLightbusBreakTest(\n'
+        '    NETID    := sTargetNetId,\n'
+        '    DEVICEID := nLightbusDeviceId,\n'
+        '    START    := bStartBreakTest,\n'
+        '    TMOUT    := tBreakTestTimeout,\n'
+        '    BUSY     => bBreakTestBusy,\n'
+        '    ERR      => bBreakTestErr,\n'
+        '    ERRID    => nLastErrCode,\n'
+        '    BREAK    => bBreakDetected,\n'
+        '    BOXNO    => nLastModuleNo\n'
+        ');\n'
+    ),
+)
+
+
+REG['IOF_LB_ParityCheck'] = dict(
+    ftype='FUNCTION_BLOCK',
+    summary=(
+        'Beckhoff Lightbus 读取所有模块的奇偶错误计数器（每模块一个 8 bit 计数器，无溢出）。'
+        '**不复位** 计数（如要复位见 `IOF_LB_ParityCheckWithReset`）。最多 256 个计数（即最多 256 模块）。'
+    ),
+    behavior=(
+        '调用前用户准备一个 `ARRAY[1..N] OF BYTE` 缓冲区（N = 要读的模块数）并把 `DESTADDR := ADR(buffer)`、`LEN := N`。'
+        '`START` 上升沿触发一次读：`BUSY := TRUE`，FB 经 ADS 把 N 个奇偶计数器读到缓冲区。'
+        '完成后 `BUSY := FALSE`，`buffer[k]` = 模块 k 的奇偶错误累积值。'
+        '由于计数器不溢出，长时间运行的环可能某些模块累积到 255 后停在 255——这本身不是故障，只是已饱和。'
+        '想看相对增长率，需要定期用 `IOF_LB_ParityCheckWithReset` 复位。'
+    ),
+    var_desc={
+        'LEN': '要读的模块计数（字节数 = 计数器个数）。',
+    },
+    pitfalls=LB_PITFALLS + [
+        ('计数器**不溢出**：到 255 后会停止累积；长时间不复位时数据失去时间分布信息。', True),
+        ('PDF 中 `LEN` VAR 区写 `UDINT`、描述列写 "UINT"，以 VAR 区为准。', True),
+    ],
+    scenario='Lightbus 长期运行：周期（每天一次）读所有模块的奇偶错计数，趋势异常时报警。',
+    value='把光纤层错误监控做成可程序化采集，写入历史库做趋势分析。',
+    alt=(
+        '- 直接读 Lightbus 主站寄存器：底层繁琐\n'
+        '- **本 FB**：标准'
+    ),
+    related=['IOF_LB_ParityCheckWithReset', 'IOF_LB_BreakLocationTest'],
+    xml_scen='Lightbus 长期运行下趋势监控：每天定时读 5 个模块的奇偶错计数到本地缓冲。',
+    xml_val='让 SCADA 看光纤层的故障趋势。',
+    xml_verify='登录后 nLightbusDeviceId 设为主站 ID；nParityCounterCount := 5；写 bStartReadParity := TRUE → bReadBusy 短暂 TRUE → 回 FALSE 后 aParityErrCounters[1..5] 显示 5 个模块的奇偶错累积值。',
+    xml_vars=[
+        ('fbLightbusParityRead', 'IOF_LB_ParityCheck', None, 'Lightbus 奇偶错读 FB'),
+        ('sTargetNetId', 'T_AmsNetId', "''", '本机'),
+        ('nLightbusDeviceId', 'UDINT', '1', '主站 Device Id'),
+        ('aParityErrCounters', 'ARRAY[1..256] OF BYTE', None, '奇偶错计数缓冲'),
+        ('nParityCounterCount', 'UDINT', '5', '要读的模块数（= 字节数）'),
+        ('bStartReadParity', 'BOOL', 'FALSE', '上升沿触发'),
+        ('tReadTimeout', 'TIME', 'T#5S', '超时'),
+        ('bReadBusy', 'BOOL', None, '工作中'),
+        ('bReadErr', 'BOOL', None, '失败'),
+        ('nLastErrCode', 'UDINT', None, '错误号'),
+    ],
+    xml_call=(
+        '// LEN 是字节数 = 计数器个数；DESTADDR 用 ADR()\n'
+        'fbLightbusParityRead(\n'
+        '    NETID    := sTargetNetId,\n'
+        '    DEVICEID := nLightbusDeviceId,\n'
+        '    LEN      := nParityCounterCount,\n'
+        '    DESTADDR := ADR(aParityErrCounters),\n'
+        '    START    := bStartReadParity,\n'
+        '    TMOUT    := tReadTimeout,\n'
+        '    BUSY     => bReadBusy,\n'
+        '    ERR      => bReadErr,\n'
+        '    ERRID    => nLastErrCode\n'
+        ');\n'
+    ),
+)
+
+
+REG['IOF_LB_ParityCheckWithReset'] = dict(
+    ftype='FUNCTION_BLOCK',
+    summary=(
+        '与 `IOF_LB_ParityCheck` 相同，**但读后立即把每个模块的奇偶错计数器清零**。'
+        '用于做"过去 T 时间内的奇偶错增量"采样。'
+    ),
+    behavior=(
+        '调用前用户准备 `ARRAY[1..N] OF BYTE` 缓冲区。'
+        '`START` 上升沿触发：`BUSY := TRUE`，FB 经 ADS 把 N 个计数器读到缓冲区**并复位主站侧的计数到 0**。'
+        '完成后 `buffer[k]` = 模块 k 从上次复位到现在的奇偶错次数。'
+        '常见用法：每分钟调本 FB 采样一次 → 用差量做 1 分钟内的错误率统计 → SCADA 显示。'
+    ),
+    var_desc={
+        'LEN': '要读的模块计数（字节数）。',
+    },
+    pitfalls=LB_PITFALLS + [
+        ('调用之后主站侧计数器复位 0；想拿"自上次复位以来的累积"用本 FB；想看"长期累积"用不带 Reset 的版本。', False),
+        ('两个版本不要混用 / 并发调用，会让两边的复位时机错乱。', True),
+    ],
+    scenario='Lightbus 实时错误率监控：每分钟调本 FB 一次 → 把结果直接当成"该分钟错误数"送 SCADA 画趋势图。',
+    value='做实时错误率监控，比累积型计数更直观。',
+    alt=(
+        '- 不带 Reset + 自己减上次值：可行但容易出软件 bug（计数到 255 饱和时差量算错）\n'
+        '- **本 FB**：硬件帮忙做差量'
+    ),
+    related=['IOF_LB_ParityCheck', 'IOF_LB_BreakLocationTest'],
+    xml_scen='Lightbus 实时错误率：每分钟读 5 个模块奇偶错增量送 SCADA。',
+    xml_val='做差量计数比软件自己减更可靠。',
+    xml_verify='登录后第一次写 bStartReadResetParity := TRUE → 完成后 aParityIncrement[1..5] 显示自上次复位以来的奇偶错次数；间隔 1 分钟再触发一次 → 看 aParityIncrement 是否随通讯质量波动。',
+    xml_vars=[
+        ('fbLightbusParityReadReset', 'IOF_LB_ParityCheckWithReset', None, 'Lightbus 奇偶错读+复位 FB'),
+        ('sTargetNetId', 'T_AmsNetId', "''", '本机'),
+        ('nLightbusDeviceId', 'UDINT', '1', '主站 Device Id'),
+        ('aParityIncrement', 'ARRAY[1..256] OF BYTE', None, '奇偶错增量缓冲'),
+        ('nParityCounterCount', 'UDINT', '5', '要读的模块数'),
+        ('bStartReadResetParity', 'BOOL', 'FALSE', '上升沿触发'),
+        ('tReadTimeout', 'TIME', 'T#5S', '超时'),
+        ('bReadBusy', 'BOOL', None, '工作中'),
+        ('bReadErr', 'BOOL', None, '失败'),
+        ('nLastErrCode', 'UDINT', None, '错误号'),
+    ],
+    xml_call=(
+        'fbLightbusParityReadReset(\n'
+        '    NETID    := sTargetNetId,\n'
+        '    DEVICEID := nLightbusDeviceId,\n'
+        '    LEN      := nParityCounterCount,\n'
+        '    DESTADDR := ADR(aParityIncrement),\n'
+        '    START    := bStartReadResetParity,\n'
+        '    TMOUT    := tReadTimeout,\n'
+        '    BUSY     => bReadBusy,\n'
+        '    ERR      => bReadErr,\n'
+        '    ERRID    => nLastErrCode\n'
+        ');\n'
+    ),
+)
+
+
+# ---------------- Beckhoff UPS (1 FB) ----------------
+
+REG['FB_GetUPSStatus'] = dict(
+    ftype='FUNCTION_BLOCK',
+    summary=(
+        '读取 Beckhoff UPS（不间断电源）状态，从 PLC 程序就能拿到当前电源是否在用 UPS、电池剩余电量、是否处于断电倒计时等。'
+        '本 FB 是 **电平触发**（不是边沿）：`bEnable = TRUE` 时周期读取（约每 4.5 秒一次），`bValid` 表示最新读到的数据是否有效。'
+        '前提：已安装 Beckhoff UPS 软件组件（Windows 7+ 在 *Start → Programs → Beckhoff → UPS Software Components*）。'
+    ),
+    behavior=(
+        '`bEnable = TRUE` 时 FB 每隔约 4.5 秒经 ADS 读一次 UPS 状态（间隔由 FB 内部控制，无需外部触发），结果填入 `stStatus`。'
+        '`bValid` 反映最近一次读取是否成功：TRUE 表示 `stStatus` 数据可信；FALSE 表示当前读取在进行 / 出错。'
+        '出错时 `bError := TRUE`、`nErrId` 给出 ADS 错误号；错误原因消失后下次循环会自动复位。'
+        '本 FB 是 **电平**（level-triggered）模式：`bEnable = FALSE` 时停止读取，`bValid` 也会落到 FALSE。'
+        '不同于其它 ADS FB 的"上升沿触发"，本 FB 一旦 enable 就持续工作直到 disable。'
+        '`nPort = 0` 对应 Windows UPS Service / Windows Battery Driver；其它端口号保留为未来扩展。'
+    ),
+    var_desc={
+        'sNetId': '本机用空串；远端填对端 AMS Net ID。',
+        'nPort': 'ADS 端口号；目前固定 0（= Windows UPS Service / Windows Battery Driver）。',
+        'bEnable': 'TRUE 电平使能周期读 UPS 状态；FALSE 停止。',
+        'bValid': 'TRUE = 最新 `stStatus` 数据有效；FALSE = 数据未就绪 / 读取出错。',
+        'bError': 'TRUE = 上次读取失败。',
+        'nErrId': 'ADS 错误号。',
+        'stStatus': 'UPS 状态结构（电池电量 / 在 AC 还是 battery / 是否倒计时关机等），详见 `ST_UPSStatus`。',
+    },
+    pitfalls=[
+        ('**电平触发**，不是上升沿——业务侧直接给 `bEnable := TRUE` 即可，不需要发脉冲。', False),
+        ('约 4.5 秒读一次，**不要期待秒级实时**。若需要立刻得到 UPS 状态，断电后 0-4.5 秒会出现陈旧数据。', True),
+        ('需要事先安装 Beckhoff UPS 软件组件且正确配置；驱动未装时 ADS 调用会返回端口错误（`0x6`）。', True),
+        ('远端读取（`sNetId` 非空）目前是预留能力——大部分 UPS 工作场景都是本机读本机 UPS（`sNetId := ""`）。', True),
+    ],
+    scenario='CX5020 工控机配 Beckhoff CB3011 UPS：PLC 程序周期读 UPS 状态，断电时立即把关键 retain 数据写盘并发报警。',
+    value='掉电不丢数据：UPS 给约 2 秒延迟，本 FB 让 PLC 程序在掉电瞬间就知道断电了，并执行保护逻辑。',
+    alt=(
+        '- 不读 UPS 状态：断电瞬间 PLC 不知道，retain 不写盘\n'
+        '- 用单独的 IO 给 UPS 报警继电器接 PLC DI：能做但要硬件接线\n'
+        '- **本 FB**：纯软件方式读 UPS'
+    ),
+    related=['FB_S_UPS_CB3011 (Tc2_SUPS)', 'FB_S_UPS_BAPI (Tc2_SUPS)'],
+    xml_scen='CX 工控机配 CB3011 UPS：周期读 UPS 状态；检测到 UPS 在用电池且剩余 < 30 秒 → 触发关键数据写盘 + 报警。',
+    xml_val='掉电保护：让 PLC 程序提前 1-2 秒响应即将断电。',
+    xml_verify='登录后 bEnableUpsMonitor := TRUE → 1-5 秒后 bUpsStatusValid 应为 TRUE，stUpsStatus 各字段（如 PowerStatus / BatteryFlag）有值；模拟断电（拔市电插头）→ 1-5 秒内 stUpsStatus 显示电池模式。',
+    xml_vars=[
+        ('fbReadUpsStatus', 'FB_GetUPSStatus', None, 'UPS 状态读 FB（电平触发）'),
+        ('sUpsTargetNetId', 'T_AmsNetId', "''", '本机空串'),
+        ('nUpsAdsPort', 'T_AmsPort', '0', '0 = Windows UPS Service'),
+        ('bEnableUpsMonitor', 'BOOL', 'TRUE', '电平使能：TRUE 即开始监控'),
+        ('bUpsStatusValid', 'BOOL', None, '数据是否有效'),
+        ('bUpsReadError', 'BOOL', None, '读 UPS 出错'),
+        ('nUpsReadErrId', 'UDINT', None, 'ADS 错误号'),
+        ('stUpsStatus', 'ST_UPSStatus', None, 'UPS 状态结构'),
+    ],
+    xml_call=(
+        '// 电平触发：bEnable = TRUE 即周期读，不需要上升沿\n'
+        'fbReadUpsStatus(\n'
+        '    sNetId   := sUpsTargetNetId,\n'
+        '    nPort    := nUpsAdsPort,\n'
+        '    bEnable  := bEnableUpsMonitor,\n'
+        '    bValid   => bUpsStatusValid,\n'
+        '    bError   => bUpsReadError,\n'
+        '    nErrId   => nUpsReadErrId,\n'
+        '    stStatus => stUpsStatus\n'
+        ');\n'
+    ),
+)
+
+
+# ---------------- Bus Terminal configuration (5 FBs) ----------------
+
+KL_CONFIG_PITFALLS = [
+    ('**写端子寄存器会改 EEPROM**，**不要循环周期调用 `bConfigurate`**——EEPROM 寿命 10 万次写入。上电时配置一次足够。', False),
+    ('`stInData` / `stOutData` 必须 IN_OUT 链到 System Manager 中端子的过程数据区，否则 FB 与端子之间通讯不通。', True),
+    ('PDF 指出"本 FB 不遵循 alternative output format"——意思是过程数据在标准 vs alternative 模式下偏移不同，FB 假定**标准模式**；若 System Manager 中端子设为 alternative 会出错。', True),
+    ('`tTimeout` 默认未指定时建议给 ≥ 2 秒，K-bus 端子配置握手较慢。', True),
+    ('错误号 `iErrorId` 见 PDF 5.6 节的 KL Config 错误码表（如端子型号不匹配 / 寄存器写失败）；具体表 PDF 在每个 FB 后会列。', True),
+]
+
+REG['FB_KL1501Config'] = dict(
+    ftype='FUNCTION_BLOCK',
+    summary=(
+        '配置 KL1501（1 通道计数器端子）：选择计数器类型（32 bit 上下计数 / 2×16 bit 上计数 / 32 bit 门控计数 (Low/High 禁用)）+ 选择反向计数。'
+        '配置过程是把这些设置写到 KL1501 内部寄存器，并读回校验。'
+    ),
+    behavior=(
+        '本 FB 有两种命令：'
+        '`bConfigurate` 上升沿 = 写配置（先读端子通用数据 → 写配置寄存器 → 读回校验 → 输出到 FB 输出）；'
+        '`bReadConfig` 上升沿 = 仅读配置（不写）。'
+        '两者执行期间 `bBusy := TRUE`，期间不接受第二个命令。'
+        '`iSetCounterType` 取值含义：0 = 32 bit 上下计数；1 = 2×16 bit 上计数；2 = 32 bit 门控计数（gate Low 禁用）；3 = 32 bit 门控计数（gate High 禁用）。'
+        '`bSetBackwardCounting = TRUE` 反向计数。'
+        '完成后输出端子的 `iTerminalType` (端子型号编码)、`iSpecialType` (特殊版本)、`iState` (状态)、`iDataIn0` / `iDataIn1` / `iDataIn` (当前计数值)。'
+        '出错时 `bError := TRUE`、`iErrorId` 给出 KL Config 错误号。'
+    ),
+    var_desc={
+        'bConfigurate': '上升沿启动写配置序列：先读端子通用信息 → 写配置寄存器 → 读回校验。',
+        'bReadConfig': '上升沿启动只读序列：读端子通用信息 + 当前配置参数。',
+        'iSetCounterType': '计数器类型：0=32bit 上下 1=2×16bit 上 2=32bit 门控(Low 禁用) 3=32bit 门控(High 禁用)。',
+        'bSetBackwardCounting': 'TRUE = 反向计数。',
+        'tTimeout': '端子配置 / 读取必须在此时长内完成。',
+        'stInData': '端子输入过程映像，IN_OUT 链到 System Manager。',
+        'stOutData': '端子输出过程映像，IN_OUT 链到 System Manager。',
+        'iState': '端子状态字节。',
+        'iDataIn0': '通道 0 当前计数值（用于 2×16bit 模式）。',
+        'iDataIn1': '通道 1 当前计数值（同上）。',
+        'iDataIn': '组合 32bit 计数值（32bit 模式）。',
+        'iTerminalType': '端子型号编码（应为 KL1501 对应的值）。',
+        'iSpecialType': '端子特殊版本。',
+    },
+    pitfalls=KL_CONFIG_PITFALLS + [
+        ('计数器类型改变后端子计数值会清零；不要在运行中改类型。', True),
+    ],
+    scenario='印刷线 KL1501 计数器端子：上电时把端子配为 32 bit 上下计数（type 0）+ 不反向，配套编码器接到端子。',
+    value='把端子配置代码化，避免现场用 KS2000 工具人工拨号。',
+    alt=(
+        '- KS2000 配置工具：要带工具到现场\n'
+        '- 直接读写端子寄存器：底层繁琐\n'
+        '- **本 FB**：上电一次完成配置'
+    ),
+    related=['FB_ReadCouplerRegs (Tc2_Coupler)', 'ReadWriteTerminalReg (Tc2_Coupler)'],
+    xml_scen='上电时把 KL1501 配为 32 bit 上下计数器，不反向；运行后读端子计数值进行设备速度计算。',
+    xml_val='端子配置纳入 PLC 程序版本控制。',
+    xml_verify='登录确认 stKl1501InProcessImg / stKl1501OutProcessImg 已链到端子；在线写 bDoKl1501Configure := TRUE → fbKl1501.bBusy 短暂 TRUE → 回 FALSE 后 iLastKl1501Error = 0 表示成功；iCurrentCountValue 应反映编码器旋转。',
+    xml_vars=[
+        ('fbKl1501', 'FB_KL1501Config', None, 'KL1501 配置 FB'),
+        ('stKl1501InProcessImg', 'ST_KL1501InData', None, 'KL1501 输入过程映像（链到 %I*）'),
+        ('stKl1501OutProcessImg', 'ST_KL1501OutData', None, 'KL1501 输出过程映像（链到 %Q*）'),
+        ('bDoKl1501Configure', 'BOOL', 'FALSE', '上升沿写配置'),
+        ('bDoKl1501ReadConfig', 'BOOL', 'FALSE', '上升沿只读配置'),
+        ('iCounterTypeSelected', 'INT', '0', '0=32 上下 1=2×16 上 2/3=门控'),
+        ('bReverseCountDir', 'BOOL', 'FALSE', '反向计数'),
+        ('tKl1501ConfigTimeout', 'TIME', 'T#5S', '配置超时'),
+        ('bKl1501Busy', 'BOOL', None, '工作中'),
+        ('bKl1501Error', 'BOOL', None, '出错'),
+        ('iLastKl1501Error', 'UDINT', None, '错误号'),
+        ('iKl1501State', 'USINT', None, '状态字节'),
+        ('iCount0', 'UINT', None, '通道 0 计数'),
+        ('iCount1', 'UINT', None, '通道 1 计数'),
+        ('iCurrentCountValue', 'UDINT', None, '32 bit 组合计数值'),
+        ('iKl1501TerminalCode', 'WORD', None, '端子型号编码'),
+        ('iKl1501SpecialVer', 'WORD', None, '端子特殊版本'),
+    ],
+    xml_call=(
+        'fbKl1501(\n'
+        '    bConfigurate         := bDoKl1501Configure,\n'
+        '    bReadConfig          := bDoKl1501ReadConfig,\n'
+        '    iSetCounterType      := iCounterTypeSelected,\n'
+        '    bSetBackwardCounting := bReverseCountDir,\n'
+        '    tTimeout             := tKl1501ConfigTimeout,\n'
+        '    stInData             := stKl1501InProcessImg,\n'
+        '    stOutData            := stKl1501OutProcessImg,\n'
+        '    bBusy                => bKl1501Busy,\n'
+        '    bError               => bKl1501Error,\n'
+        '    iErrorId             => iLastKl1501Error,\n'
+        '    iState               => iKl1501State,\n'
+        '    iDataIn0             => iCount0,\n'
+        '    iDataIn1             => iCount1,\n'
+        '    iDataIn              => iCurrentCountValue,\n'
+        '    iTerminalType        => iKl1501TerminalCode,\n'
+        '    iSpecialType         => iKl1501SpecialVer\n'
+        ');\n'
+    ),
+)
+
+
+REG['FB_KL27x1Config'] = dict(
+    ftype='FUNCTION_BLOCK',
+    summary=(
+        '配置 KL2751 / KL2761（1 通道调光器端子）：斜坡时间 / 调光模式 / 看门狗超时 / 短路后自动恢复 / 50Hz 或 60Hz 等。'
+        '运行时不需要持续调，**上电配置一次** 即可。'
+    ),
+    behavior=(
+        '`bConfigurate` 上升沿写配置；`bReadConfig` 上升沿只读。'
+        '`iSetRampTime` 与 `bSetDimRampAbsolute` 配合定义斜坡时间：'
+        '`bSetDimRampAbsolute = FALSE`（相对）→ 斜坡时间是整个数据区 0..32767 全程的时间；'
+        '`= TRUE`（绝对）→ 每一调光步长都用相同的 ramp 时间。'
+        '`iSetWatchdogTimeout`（单位 10 ms 倍数）：现场总线丢失通讯后多少 ms 触发 fail-safe。'
+        '`iSetTimeoutOnValue` / `iSetTimeoutOffValue` 决定 fail-safe 时输出的亮度（取决于当前过程数据是 > 0 还是 = 0）。'
+        '`bSetWatchdogDisable = TRUE` 关闭看门狗（不推荐生产线用）。'
+        '`bSetOnAfterShortCircuit = TRUE` 短路恢复后自动点亮；FALSE 短路后保持灭。'
+        '`bSetLineFrequency60Hz = TRUE` 表示 60 Hz 市电（北美），FALSE 表示 50 Hz（欧 / 亚）。'
+    ),
+    var_desc={
+        'bConfigurate': '上升沿写配置。',
+        'bReadConfig': '上升沿只读配置。',
+        'bSetDimRampAbsolute': 'FALSE = 斜坡时间针对 0..32767 全程；TRUE = 每一步长固定时间。',
+        'iSetRampTime': '斜坡时间设定（具体含义见 PDF 表）。',
+        'bSetWatchdogDisable': 'TRUE = 关闭看门狗。',
+        'iSetWatchdogTimeout': '看门狗超时（× 10 ms）。',
+        'iSetTimeoutOnValue': 'fail-safe 模式下当前过程数据 > 0 时输出的亮度。',
+        'iSetTimeoutOffValue': 'fail-safe 模式下当前过程数据 = 0 时输出的亮度。',
+        'iSetDimmerMode': '调光模式（前沿 / 后沿等，见 PDF 表）。',
+        'bSetOnAfterShortCircuit': 'TRUE = 短路恢复后自动开。',
+        'bSetLineFrequency60Hz': 'TRUE = 60Hz, FALSE = 50Hz。',
+        'tTimeout': '配置超时。',
+    },
+    pitfalls=KL_CONFIG_PITFALLS + [
+        ('调光模式与负载类型必须匹配（电感 / 电容 / 阻性）；选错会损坏负载或端子。', False),
+        ('60Hz / 50Hz 设置必须与市电匹配。', False),
+    ],
+    scenario='剧院 LED 调光：8 路 KL2751 端子上电时配置成"前沿调光 + 50 Hz + 短路恢复"。',
+    value='把调光端子配置代码化，便于多台设备工程批量复制。',
+    alt=(
+        '- KS2000 工具：要带工具\n'
+        '- **本 FB**：上电一次'
+    ),
+    related=['FB_KL320xConfig', 'FB_ReadCouplerRegs (Tc2_Coupler)'],
+    xml_scen='剧院调光系统：上电时把 KL2751 配为绝对斜坡 100、50 Hz、短路恢复后亮、fail-safe = 0。',
+    xml_val='端子配置纳入 PLC 程序版本控制；现场更换端子无需重新拨码。',
+    xml_verify='登录确认 stKl27x1InProcessImg / OutProcessImg 已链；写 bDoConfigure := TRUE → fbKl27x1.bBusy 短暂 TRUE → 回 FALSE 后 iLastError = 0 表示成功。',
+    xml_vars=[
+        ('fbKl27x1', 'FB_KL27x1Config', None, 'KL2751/2761 配置 FB'),
+        ('stKl27x1InProcessImg', 'ST_KL27x1InData', None, '输入过程映像'),
+        ('stKl27x1OutProcessImg', 'ST_KL27x1OutData', None, '输出过程映像'),
+        ('bDoConfigure', 'BOOL', 'FALSE', '上升沿写配置'),
+        ('bDoReadConfig', 'BOOL', 'FALSE', '上升沿只读'),
+        ('bUseAbsoluteRamp', 'BOOL', 'TRUE', 'TRUE = 每步固定时间'),
+        ('iRampTimeSetting', 'INT', '100', '斜坡时间'),
+        ('bDisableWatchdog', 'BOOL', 'FALSE', '关闭看门狗'),
+        ('iWatchdogTimeoutMs10', 'UINT', '20', '看门狗超时 × 10 ms (= 200 ms)'),
+        ('iFailSafeOnValue', 'UINT', '0', 'fail-safe 时数据>0 的亮度'),
+        ('iFailSafeOffValue', 'UINT', '0', 'fail-safe 时数据=0 的亮度'),
+        ('iDimMode', 'INT', '0', '调光模式（具体表见 PDF）'),
+        ('bAutoOnAfterShortCircuit', 'BOOL', 'TRUE', '短路恢复后自动亮'),
+        ('bUse60HzMains', 'BOOL', 'FALSE', '60Hz 还是 50Hz'),
+        ('tKl27x1ConfigTimeout', 'TIME', 'T#5S', '超时'),
+        ('bKl27x1Busy', 'BOOL', None, '工作中'),
+        ('bKl27x1Error', 'BOOL', None, '出错'),
+        ('iLastError', 'UDINT', None, '错误号'),
+    ],
+    xml_call=(
+        'fbKl27x1(\n'
+        '    bConfigurate            := bDoConfigure,\n'
+        '    bReadConfig             := bDoReadConfig,\n'
+        '    bSetDimRampAbsolute     := bUseAbsoluteRamp,\n'
+        '    iSetRampTime            := iRampTimeSetting,\n'
+        '    bSetWatchdogDisable     := bDisableWatchdog,\n'
+        '    iSetWatchdogTimeout     := iWatchdogTimeoutMs10,\n'
+        '    iSetTimeoutOnValue      := iFailSafeOnValue,\n'
+        '    iSetTimeoutOffValue     := iFailSafeOffValue,\n'
+        '    iSetDimmerMode          := iDimMode,\n'
+        '    bSetOnAfterShortCircuit := bAutoOnAfterShortCircuit,\n'
+        '    bSetLineFrequency60Hz   := bUse60HzMains,\n'
+        '    tTimeout                := tKl27x1ConfigTimeout,\n'
+        '    bBusy                   => bKl27x1Busy,\n'
+        '    bError                  => bKl27x1Error,\n'
+        '    iErrorId                => iLastError\n'
+        ');\n'
+    ),
+)
+
+
+REG['FB_KL320xConfig'] = dict(
+    ftype='FUNCTION_BLOCK',
+    summary=(
+        '配置 KL3201 / KL3202 / KL3204（电阻传感器输入端子，RTD / PT100/PT1000 等）的单个通道传感器类型。'
+        '多通道端子需要为每个通道单独实例化本 FB（混合配置允许）。'
+    ),
+    behavior=(
+        '本 FB 只负责一个通道的配置。多通道端子需要按通道数实例化对应数量的 FB 实例（混合配置允许，例如通道 1 用 PT100、通道 2 用 PT1000）。'
+        '`bConfigurate` 上升沿启动写配置序列：先读端子通用信息 → 写传感器类型寄存器 → 读回校验 → 输出端子型号 / 特殊版本 / 通道状态等。'
+        '`bReadConfig` 上升沿启动只读序列：仅读取当前配置而不写入 EEPROM。'
+        '执行期间 `bBusy := TRUE`，不接受第二个命令。'
+        '`iSetSensorType` 选择传感器类型（PT100 / PT1000 / Ni100 / 0-3 kΩ 直接电阻 等），具体取值见 PDF KL3201/3202/3204 手册的传感器类型表。'
+        '`tTimeout` 限制配置时长，默认建议 ≥ 2 秒以适应 K-bus 端子配置握手。'
+        '完成后 `bBusy` 落回，`bError` / `iErrorId` 反映成功 / 失败。'
+    ),
+    var_desc={
+        'iSetSensorType': '传感器类型编码（PT100 / PT1000 / Ni100 / 直接电阻 等；具体见 PDF KL3201 手册表）。',
+    },
+    pitfalls=KL_CONFIG_PITFALLS + [
+        ('多通道端子须每通道一个 FB 实例；不要把一个 FB 实例切换通道使用。', True),
+        ('传感器类型编码不同端子型号略有差异（KL3201 vs KL3202 vs KL3204），按当前接的端子手册选。', True),
+    ],
+    scenario='炉温监控：KL3204 多通道电阻输入端子，4 个通道接 4 个 PT100，上电时配 4 个 FB 实例把每通道配为 PT100。',
+    value='端子配置代码化。',
+    alt=(
+        '- KS2000 工具：要带工具\n'
+        '- **本 FB**：纯 PLC 程序'
+    ),
+    related=['FB_KL3208Config', 'FB_KL3228Config', 'FB_KL1501Config'],
+    xml_scen='炉温监控：KL3204 端子 4 路接 PT100，上电时配 4 个通道全为 PT100。',
+    xml_val='配置代码化，便于多炉子工程批量复制。',
+    xml_verify='登录确认 stKl3204InProcessImg / OutProcessImg 已链；写 bDoConfigure := TRUE → fbKl320x.bBusy 短暂 TRUE → 回 FALSE 后 iLastError = 0 表示成功。',
+    xml_vars=[
+        ('fbKl320x', 'FB_KL320xConfig', None, 'KL3201/3202/3204 配置 FB（每通道一个实例）'),
+        ('stKl3204InProcessImg', 'ST_KL320xInData', None, '过程映像 输入'),
+        ('stKl3204OutProcessImg', 'ST_KL320xOutData', None, '过程映像 输出'),
+        ('bDoConfigure', 'BOOL', 'FALSE', '上升沿写配置'),
+        ('bDoReadConfig', 'BOOL', 'FALSE', '上升沿只读'),
+        ('iSensorTypeCode', 'INT', '0', '传感器类型（具体表见 PDF）'),
+        ('tConfigTimeout', 'TIME', 'T#5S', '超时'),
+        ('bKl320xBusy', 'BOOL', None, '工作中'),
+        ('bKl320xError', 'BOOL', None, '出错'),
+        ('iLastError', 'UDINT', None, '错误号'),
+    ],
+    xml_call=(
+        'fbKl320x(\n'
+        '    bConfigurate   := bDoConfigure,\n'
+        '    bReadConfig    := bDoReadConfig,\n'
+        '    iSetSensorType := iSensorTypeCode,\n'
+        '    tTimeout       := tConfigTimeout,\n'
+        '    stInData       := stKl3204InProcessImg,\n'
+        '    stOutData      := stKl3204OutProcessImg,\n'
+        '    bBusy          => bKl320xBusy,\n'
+        '    bError         => bKl320xError,\n'
+        '    iErrorId       => iLastError\n'
+        ');\n'
+    ),
+)
+
+
+REG['FB_KL3208Config'] = dict(
+    ftype='FUNCTION_BLOCK',
+    summary=(
+        '配置 KL3208-0010（8 通道电阻传感器输入端子）单个通道的传感器类型。'
+        '8 个通道每个都用一个本 FB 实例（混合配置允许）。'
+    ),
+    behavior=(
+        '与 `FB_KL320xConfig` 用法完全相同，只是面对的端子是 8 通道版本，需要 8 个 FB 实例分别配置。'
+        '`bConfigurate` 上升沿启动写配置序列（读通用信息 → 写寄存器 → 读回校验）；'
+        '`bReadConfig` 上升沿启动只读序列（不写入 EEPROM）。'
+        '`iSetSensorType` 选传感器类型（具体编码见 PDF KL3208 手册表，与 KL3204 可能略有差异）。'
+        '执行期间 `bBusy := TRUE`，结束后通过 `bError` / `iErrorId` 反映成功 / 失败。'
+        '`tTimeout` 限制单通道配置时长；K-bus 握手较慢，建议 ≥ 2 秒。'
+        '8 通道一次性配完时间约 4-8 秒（每通道一次握手），可串行调用。'
+    ),
+    var_desc={
+        'iSetSensorType': '传感器类型编码（PT100 / PT1000 / Ni100 / 直接电阻 等；具体见 PDF KL3208 手册表）。',
+    },
+    pitfalls=KL_CONFIG_PITFALLS + [
+        ('8 通道要 8 个 FB 实例，不要复用一个 FB 切通道访问。', True),
+        ('KL3208 与 KL3204 的传感器类型编码可能不完全相同；按 KL3208 手册选。', True),
+    ],
+    scenario='机柜温度监控：KL3208 8 通道端子分别接 8 个 PT1000 监控不同设备温度。',
+    value='8 通道配置代码化。',
+    alt=(
+        '- KS2000 工具：要带工具\n'
+        '- **本 FB**：8 个实例搞定'
+    ),
+    related=['FB_KL320xConfig', 'FB_KL3228Config'],
+    xml_scen='8 路 PT1000 上电批量配置；本 demo 只演示一个通道，实际要 8 个 FB 实例。',
+    xml_val='代码化配置。',
+    xml_verify='登录确认 stKl3208InProcessImg / OutProcessImg 已链；写 bDoConfigure := TRUE → fbKl3208.bBusy 短暂 TRUE → 回 FALSE 后 iLastError = 0。',
+    xml_vars=[
+        ('fbKl3208', 'FB_KL3208Config', None, 'KL3208-0010 配置 FB（每通道一个实例）'),
+        ('stKl3208InProcessImg', 'ST_KL3208InData', None, '过程映像 输入'),
+        ('stKl3208OutProcessImg', 'ST_KL3208OutData', None, '过程映像 输出'),
+        ('bDoConfigure', 'BOOL', 'FALSE', '上升沿写配置'),
+        ('bDoReadConfig', 'BOOL', 'FALSE', '上升沿只读'),
+        ('iSensorTypeCode', 'INT', '1', 'PT1000 编码（具体表见 PDF）'),
+        ('tConfigTimeout', 'TIME', 'T#5S', '超时'),
+        ('bKl3208Busy', 'BOOL', None, '工作中'),
+        ('bKl3208Error', 'BOOL', None, '出错'),
+        ('iLastError', 'UDINT', None, '错误号'),
+    ],
+    xml_call=(
+        'fbKl3208(\n'
+        '    bConfigurate   := bDoConfigure,\n'
+        '    bReadConfig    := bDoReadConfig,\n'
+        '    iSetSensorType := iSensorTypeCode,\n'
+        '    tTimeout       := tConfigTimeout,\n'
+        '    stInData       := stKl3208InProcessImg,\n'
+        '    stOutData      := stKl3208OutProcessImg,\n'
+        '    bBusy          => bKl3208Busy,\n'
+        '    bError         => bKl3208Error,\n'
+        '    iErrorId       => iLastError\n'
+        ');\n'
+    ),
+)
+
+
+REG['FB_KL3228Config'] = dict(
+    ftype='FUNCTION_BLOCK',
+    summary=(
+        '配置 KL3228（8 通道电阻传感器输入端子）单个通道的传感器类型。'
+        '与 KL3208 类似但端子型号是 KL3228。'
+    ),
+    behavior=(
+        '与 `FB_KL3208Config` 用法相同，本 FB 只负责一个通道的配置，8 通道端子需要 8 个 FB 实例。'
+        '`bConfigurate` 上升沿启动写配置序列（读通用信息 → 写传感器类型寄存器 → 读回校验）。'
+        '`bReadConfig` 上升沿启动只读序列（不写 EEPROM）。'
+        '`iSetSensorType` 选传感器类型，编码按 KL3228 手册表（与 KL3208 可能略有差异，按当前接的端子手册选）。'
+        '执行期间 `bBusy := TRUE`，结束后通过 `bError` / `iErrorId` 反映成功 / 失败。'
+        '`tTimeout` 限制配置时长，默认建议 ≥ 2 秒以适应 K-bus 握手延迟。'
+    ),
+    var_desc={
+        'iSetSensorType': '传感器类型编码（按 KL3228 手册表）。',
+    },
+    pitfalls=KL_CONFIG_PITFALLS + [
+        ('KL3228 与 KL3208 编码可能不同，按 KL3228 手册选。', True),
+    ],
+    scenario='KL3228 8 通道温度采集，上电配置每个通道为对应传感器类型。',
+    value='代码化批量配置。',
+    alt=(
+        '- KS2000 工具\n'
+        '- **本 FB**：上电完成'
+    ),
+    related=['FB_KL3208Config', 'FB_KL320xConfig'],
+    xml_scen='KL3228 端子 8 通道全部接 PT100 监控生产线 8 个工位温度。',
+    xml_val='端子配置代码化。',
+    xml_verify='登录确认 stKl3228InProcessImg / OutProcessImg 已链；写 bDoConfigure := TRUE → 回 FALSE 后 iLastError = 0。',
+    xml_vars=[
+        ('fbKl3228', 'FB_KL3228Config', None, 'KL3228 配置 FB'),
+        ('stKl3228InProcessImg', 'ST_KL3228InData', None, '过程映像 输入'),
+        ('stKl3228OutProcessImg', 'ST_KL3228OutData', None, '过程映像 输出'),
+        ('bDoConfigure', 'BOOL', 'FALSE', '上升沿写配置'),
+        ('bDoReadConfig', 'BOOL', 'FALSE', '上升沿只读'),
+        ('iSensorTypeCode', 'INT', '0', 'PT100 编码（KL3228 手册）'),
+        ('tConfigTimeout', 'TIME', 'T#5S', '超时'),
+        ('bKl3228Busy', 'BOOL', None, '工作中'),
+        ('bKl3228Error', 'BOOL', None, '出错'),
+        ('iLastError', 'UDINT', None, '错误号'),
+    ],
+    xml_call=(
+        'fbKl3228(\n'
+        '    bConfigurate   := bDoConfigure,\n'
+        '    bReadConfig    := bDoReadConfig,\n'
+        '    iSetSensorType := iSensorTypeCode,\n'
+        '    tTimeout       := tConfigTimeout,\n'
+        '    stInData       := stKl3228InProcessImg,\n'
+        '    stOutData      := stKl3228OutProcessImg,\n'
+        '    bBusy          => bKl3228Busy,\n'
+        '    bError         => bKl3228Error,\n'
+        '    iErrorId       => iLastError\n'
+        ');\n'
+    ),
+)
+
+
+# ---------------- CANopen (1 FB) ----------------
+
+REG['IOF_CAN_Layer2Command'] = dict(
+    ftype='FUNCTION_BLOCK',
+    summary=(
+        '向 CAN 主站发送一个 layer-2 命令（10 字节）。'
+        '本 FB 是访问 CAN 层 2（原始 CAN 帧）的接口，绕过 CANopen 协议栈直接发原始 CAN 报文，用于诊断或与非 CANopen 设备通讯。'
+        'PDF 明确："本功能 TwinCAT 3 目前不支持"（适配的硬件 HILSCHER CIF3xx 老 ISA 卡）。'
+    ),
+    behavior=(
+        '`START` 上升沿触发一次发送：`BUSY := TRUE`，FB 把 `SRCADDR` 指向的 `LEN` 字节 layer-2 命令通过 ADS 发到 CAN 主站。'
+        '完成后 `BUSY := FALSE`；出错 `ERR := TRUE`、`ERRID` 给出 ADS 错误号。'
+        '触发语义为上升沿一次性，调用者需要在 `BUSY` 落回后再决定下一次是否重新触发。'
+        '注意：本 FB 的 VAR_INPUT 在 PDF VAR 区只列了 NETID / DEVICEID / BOXADDR / START / TMOUT，'
+        '但描述列还提到 `LEN` (UDINT) 和 `SRCADDR` (PVOID)；这两个字段实际存在但被 PDF VAR 区漏列。'
+        '⚠️ 调用时按 PDF 描述列填，名称按 PDF 写法。'
+    ),
+    var_desc={
+        'BOXADDR': 'CAN 设备地址（layer-2 命令的目标节点）。',
+    },
+    pitfalls=ADS_PITFALLS + [
+        ('**TwinCAT 3 不支持本功能**（PDF 明确说明），HILSCHER CIF3xx 是早期 ISA 卡。', False),
+        ('PDF VAR_INPUT 漏列 `LEN` 和 `SRCADDR`；实际接口含这两参数，按 PDF 描述列填。', True),
+        ('layer-2 直发原始 CAN 报文需要懂 CAN 协议帧结构；用错可能干扰总线上其它节点。', True),
+    ],
+    scenario='维护老线：HILSCHER CIF30 ISA 卡接 CANopen 网络，用本 FB 发原始 CAN 报文做诊断（如发 NMT 复位命令）。',
+    value='绕过 CANopen 栈访问底层 CAN 帧。',
+    alt=(
+        '- 在 TwinCAT 3 上跑：不支持\n'
+        '- 用 Tc3_CANopen 库：标准做法\n'
+        '- **本 FB**：仅维护早期工程'
+    ),
+    related=['IOF_DeviceReset'],
+    xml_scen='HILSCHER CIF3xx ISA 卡 + CANopen 现场总线：发原始 CAN 帧做诊断（如手动触发 NMT 复位）。',
+    xml_val='维护早期老工程的诊断能力。',
+    xml_verify='⚠️ TwinCAT 3 不支持本功能；本例程仅作"代码兼容性参考"，运行时不会真正发出 CAN 报文。',
+    xml_vars=[
+        ('fbCanLayer2', 'IOF_CAN_Layer2Command', None, 'CAN layer-2 命令 FB'),
+        ('sTargetNetId', 'T_AmsNetId', "''", '本机'),
+        ('nCanDeviceId', 'UDINT', '1', 'CAN 主站 Device Id'),
+        ('nCanNodeAddr', 'WORD', '0', '目标节点'),
+        ('aCanLayer2Data', 'ARRAY[1..5] OF WORD', None, '10 字节 CAN layer-2 命令'),
+        ('bStartCanCmd', 'BOOL', 'FALSE', '上升沿触发'),
+        ('tCanCmdTimeout', 'TIME', 'T#5S', '超时'),
+        ('bCanCmdBusy', 'BOOL', None, '工作中'),
+        ('bCanCmdError', 'BOOL', None, '出错'),
+        ('nLastCanErrCode', 'UDINT', None, '错误号'),
+    ],
+    xml_call=(
+        '// 注：PDF VAR_INPUT 漏列 LEN/SRCADDR，但描述列说有；按描述列调用\n'
+        'fbCanLayer2(\n'
+        '    NETID    := sTargetNetId,\n'
+        '    DEVICEID := nCanDeviceId,\n'
+        '    BOXADDR  := nCanNodeAddr,\n'
+        '    START    := bStartCanCmd,\n'
+        '    TMOUT    := tCanCmdTimeout,\n'
+        '    BUSY     => bCanCmdBusy,\n'
+        '    ERR      => bCanCmdError,\n'
+        '    ERRID    => nLastCanErrCode\n'
+        ');\n'
+    ),
+)
