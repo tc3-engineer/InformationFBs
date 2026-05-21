@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project xmlns="http://www.plcopen.org/xml/tc6_0200">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-21T00:00:00"/>
+  <contentHeader name="Tc2_MC2_Camming.MC_SetCamOnlineChangeMode Demo" modificationDateTime="2026-05-21T00:00:00">
+    <coordinateInfo>
+      <fbd><scaling x="1" y="1"/></fbd>
+      <ld><scaling x="1" y="1"/></ld>
+      <sfc><scaling x="1" y="1"/></sfc>
+    </coordinateInfo>
+  </contentHeader>
+  <types>
+    <dataTypes/>
+    <pous>
+      <pou name="P_Demo_MC_SetCamOnlineChangeMode" pouType="program">
+        <interface>
+          <localVars>
+            <variable name="fbConfigCamActivation"><type><derived name="MC_SetCamOnlineChangeMode"/></type></variable>
+            <variable name="stChangeModeOpts"><type><derived name="ST_SetOnlineChangeModeOptions"/></type></variable>
+            <variable name="eActivationMode"><type><derived name="MC_CamActivationMode"/></type></variable>
+            <variable name="eMasterScaling"><type><derived name="MC_CamScalingMode"/></type></variable>
+            <variable name="eSlaveScaling"><type><derived name="MC_CamScalingMode"/></type></variable>
+            <variable name="lrSwitchOverMasterPos"><initialValue><simpleValue value="0.0"/></initialValue><type><LREAL/></type></variable>
+            <variable name="nActiveCamId"><type><derived name="MC_CAM_ID"/></type></variable>
+            <variable name="bConfigureNow"><initialValue><simpleValue value="FALSE"/></initialValue><type><BOOL/></type></variable>
+            <variable name="rtConfigTrig"><type><derived name="R_TRIG"/></type></variable>
+            <variable name="bConfigDone"><type><BOOL/></type></variable>
+            <variable name="bConfigBusy"><type><BOOL/></type></variable>
+            <variable name="bConfigError"><type><BOOL/></type></variable>
+            <variable name="nConfigErrorID"><type><UDINT/></type></variable>
+          </localVars>
+        </interface>
+        <body>
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：包装机系统初始化阶段 — 在 PLC 启动且完成 MC_CamTableSelect 加载
+//       生产凸轮表后，配置该表的"在线修改激活策略"：未来用
+//       MC_WriteMotionFunction* 写 cam 形状时，新数据排队等主轴回到 0 位
+//       (lrSwitchOverMasterPos = 0.0) 才切换。这样跑产品过程中下发配方
+//       不会在产品中段引起从轴跳变。
+// 价值：把"写数据"和"激活时机"解耦 — 后续写 cam 的逻辑不再需要每次
+//       判断"现在切安不安全"；NC 内核根据本配置以微秒级时序自动切换。
+//       这是 cam runtime API 安全使用的核心机制。
+// 验证步骤：
+//   1) 编译登录；nActiveCamId 已由 MC_CamTableSelect 准备好。
+//   2) eActivationMode 在 PLC 初始化时设为 MC_CAMACTIVATION_ATMASTERCAMPOS
+//      （或工艺要求的其他枚举值，由项目算法填）；本例代码不显式赋值，
+//      由调用方按需在线写入或在外部初始化代码中设置。
+//   3) 在线 bConfigureNow := TRUE → R_TRIG 上升沿触发 Execute；
+//      bConfigBusy 立 TRUE，1-N 周期后 bConfigDone := TRUE。
+//   4) 此时本 FB 不会让任何 cam 形状变化 — 这是正常的（配置类 FB）。
+//   5) 验证生效：随后调用 MC_WriteMotionFunctionPoint 修改某节点，
+//      bWriteDone 后 watch Axis.Status.CamDataQueued — 应为 TRUE
+//      (说明数据排队中)；主轴运动到 lrSwitchOverMasterPos = 0 时
+//      CamDataQueued 变 FALSE，从轴轨迹切到新 cam。
+//   6) 故障路径：nActiveCamId 传 0 或一个无效 ID 触发，应观察
+//      bConfigError := TRUE。
+// =============================================================================
+// 说明：eActivationMode / eMasterScaling / eSlaveScaling 在本例为局部变
+//       量，工程里通常在初始化段或配方表里赋值。本例不显式硬编码具体
+//       枚举值（避免与 PDF 枚举定义脱节）。
+
+rtConfigTrig(CLK := bConfigureNow);
+
+// 单次完整调用：注意 ActivationPosition 是"未缩放"位置参考；
+// 若应用层位置已经过 MasterScaling 缩放，调用前需先 / MasterScaling 反推。
+fbConfigCamActivation(
+    Execute            := rtConfigTrig.Q,
+    ActivationMode     := eActivationMode,
+    ActivationPosition := lrSwitchOverMasterPos,
+    MasterScalingMode  := eMasterScaling,
+    SlaveScalingMode   := eSlaveScaling,
+    CamTableID         := nActiveCamId,
+    Options            := stChangeModeOpts,
+    Done               =&gt; bConfigDone,
+    Busy               =&gt; bConfigBusy,
+    Error              =&gt; bConfigError,
+    ErrorID            =&gt; nConfigErrorID
+);
+</xhtml></ST>
+        </body>
+      </pou>
+    </pous>
+  </types>
+  <instances><configurations/></instances>
+</project>
