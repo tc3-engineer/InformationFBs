@@ -254,7 +254,7 @@ def _render_md(name, reg, parsed, infosys, pdf_section, category):
     md.append(f"| Source PDF | {PDF_URL} |")
     md.append(f"| Source InfoSys | {infosys} |")
     md.append(f"| Verified | {TODAY} ✅ |")
-    if "not-on-infosys" in infosys:
+    if "not-on-infosys" in infosys or reg.get("infosys_redirect"):
         md.append("| InfoSys-checked | ⚠️ not-on-infosys |")
     else:
         md.append(f"| InfoSys-checked | ✅ {TODAY} |")
@@ -303,6 +303,8 @@ def _render_md(name, reg, parsed, infosys, pdf_section, category):
     md.append(f"- **PDF**：[TwinCAT_3_PLC_Lib_Tc2_IoFunctions_EN.pdf]({PDF_URL}){sec_str}")
     if "not-on-infosys" in infosys:
         md.append(f"- **InfoSys topic**：⚠️ not-on-infosys（库索引未收录该条目）")
+    elif reg.get("infosys_redirect"):
+        md.append(f"- **InfoSys topic**：{infosys} （⚠️ 该条目在 InfoSys 没有专属页面，URL 指向库版本页作为替代说明）")
     else:
         md.append(f"- **InfoSys topic**：{infosys}")
     if reg.get("related"):

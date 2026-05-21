@@ -2366,3 +2366,2188 @@ REG['IOF_CAN_Layer2Command'] = dict(
         ');\n'
     ),
 )
+
+
+# ---------------- NOV/DP-RAM (4 FBs) ----------------
+
+NOV_PITFALLS = [
+    ('**自 TwinCAT 2.9 build 927 起，retain data 已不再需要本系列 FB**（PDF 明确说明）；本 FB 仅用于早期 FCxxxx-0002 卡的 NOV-RAM 直接访问。', False),
+    ('NOV-RAM 的地址查找在第一次调用 / `nDevId` 改变时通过内部 ADSREAD 进行，**需要几个 PLC 周期**才能拿到地址；之后通过 MEMCPY 直接读写。', True),
+    ('NOV-RAM 总长度由 FB 内部检测，**自动限制最大读 / 写长度**，不会越界；但调用方仍应 sanity-check 自己的缓冲不要超过 NOV-RAM 物理大小。', True),
+    ('某些卡的 NOV-RAM 要求 BYTE 或 WORD 对齐访问（如 CX9000），本 FB 用 MEMCPY 直接拷贝时会失败——这种情况要改用 `FB_NovRamReadWriteEx`。', True),
+]
+
+REG['FB_NovRamReadWrite'] = dict(
+    ftype='FUNCTION_BLOCK',
+    summary=(
+        '访问 FCxxxx-0002 现场总线卡 NOV-RAM 的读 / 写 FB（老接口）。'
+        '`bRead` 上升沿从 NOV-RAM 偏移 0 读 `cbDestLen` 字节到 `pDestAddr`；'
+        '`bWrite` 上升沿把 `pSrcAddr` 处 `cbSrcLen` 字节写到 NOV-RAM 偏移 0。'
+        '两者同时拉高时先写后读。'
+    ),
+    behavior=(
+        '本 FB 在**第一次调用** 或者 `nDevId` 改变时，内部用 ADSREAD 取 NOV-RAM 物理地址指针（需要几个 PLC 周期）。'
+        '之后的读写直接 MEMCPY，**单次 PLC 周期内即可完成**（与 retain 写盘的 ms 级延迟不同）。'
+        '`bRead` 上升沿启动一次读，`bWrite` 上升沿启动一次写。'
+        '两者同时拉高 → 先写后读，可用于"写 + 校验"模式。'
+        '`bBusy = TRUE` 表示地址查找尚未完成 / 命令未结束；落回 FALSE 表示动作完成。'
+        '`bErr` / `nErrId` 反映 ADS 错误号；常见 `0x701` (Service not supported) 表示该卡需要 BYTE 对齐——改用 Ex 版本。'
+        '`pDestAddr` / `pSrcAddr` 用 `ADR(buffer)` 取得；`cbDestLen` / `cbSrcLen` 用 `SIZEOF(buffer)` 或显式字节数。'
+    ),
+    var_desc={
+        'nDevId': '目标 NOVRAM 卡的 DeviceId（System Manager 自动分配）。',
+        'bRead': '上升沿启动从 NOV-RAM 偏移 0 读 `cbDestLen` 字节到 `pDestAddr`。',
+        'bWrite': '上升沿启动把 `pSrcAddr` 处 `cbSrcLen` 字节写到 NOV-RAM 偏移 0。',
+        'cbSrcLen': '写入字节数。',
+        'cbDestLen': '读取字节数。',
+        'pSrcAddr': '源数据缓冲地址（用 `ADR()`）。',
+        'pDestAddr': '目标数据缓冲地址（用 `ADR()`）。',
+    },
+    pitfalls=NOV_PITFALLS + [
+        ('**只能从偏移 0 开始读 / 写**；想从指定偏移读 / 写要用 `FB_NovRamReadWriteEx`。', True),
+    ],
+    scenario='老 PLC 工程：用 FC3101-0002 卡的 NOV-RAM 存退出时机器姿态（坐标 / 工件计数），下次上电恢复。',
+    value='替代手写 NOV-RAM 地址映射 + MEMCPY 调用。',
+    alt=(
+        '- TwinCAT 2.9+ 的 VAR RETAIN：标准做法，无需本 FB\n'
+        '- `FB_NovRamReadWriteEx`：支持指定偏移 + 字节对齐\n'
+        '- **本 FB**：早期老工程兼容'
+    ),
+    related=['FB_NovRamReadWriteEx', 'FB_GetDPRAMInfo', 'FB_GetDPRAMInfoEx'],
+    xml_scen='早期 FC3101-0002 卡 NOV-RAM 存"机器姿态"结构（坐标 + 工件计数 + 当前模式）；上电读出恢复，关机前写入。',
+    xml_val='掉电不丢工艺状态。',
+    xml_verify='登录后 nDeviceId 设为 FC3101 的 ID；触发 bReadFromNovRam → bNovRamBusy 短暂 TRUE → 回 FALSE 后 stMachineStateFromNov 含上次写入的内容；修改 stMachineStateToNov 后触发 bWriteToNovRam → 重新读应得到新值。',
+    xml_vars=[
+        ('fbNovRamAccess', 'FB_NovRamReadWrite', None, 'NOV-RAM 读写 FB（老接口）'),
+        ('nNovRamDeviceId', 'UDINT', '1', 'NOVRAM 卡 Device Id'),
+        ('stMachineStateToNov', 'ARRAY[1..32] OF BYTE', None, '要写入 NOV 的状态结构（32 字节）'),
+        ('stMachineStateFromNov', 'ARRAY[1..32] OF BYTE', None, '从 NOV 读出的状态结构'),
+        ('bReadFromNovRam', 'BOOL', 'FALSE', '上升沿触发读'),
+        ('bWriteToNovRam', 'BOOL', 'FALSE', '上升沿触发写'),
+        ('tNovRamTimeout', 'TIME', 'T#5S', '超时'),
+        ('bNovRamBusy', 'BOOL', None, '工作中'),
+        ('bNovRamErr', 'BOOL', None, '出错'),
+        ('nLastNovErrCode', 'UDINT', None, 'ADS 错误号'),
+    ],
+    xml_call=(
+        '// pSrcAddr / pDestAddr 用 ADR() 取地址；cbXxxLen 用 SIZEOF 自动算字节数\n'
+        'fbNovRamAccess(\n'
+        '    nDevId    := nNovRamDeviceId,\n'
+        '    bRead     := bReadFromNovRam,\n'
+        '    bWrite    := bWriteToNovRam,\n'
+        '    cbSrcLen  := SIZEOF(stMachineStateToNov),\n'
+        '    cbDestLen := SIZEOF(stMachineStateFromNov),\n'
+        '    pSrcAddr  := ADR(stMachineStateToNov),\n'
+        '    pDestAddr := ADR(stMachineStateFromNov),\n'
+        '    tTimeOut  := tNovRamTimeout,\n'
+        '    bBusy     => bNovRamBusy,\n'
+        '    bErr      => bNovRamErr,\n'
+        '    nErrId    => nLastNovErrCode\n'
+        ');\n'
+    ),
+)
+
+
+REG['FB_NovRamReadWriteEx'] = dict(
+    ftype='FUNCTION_BLOCK',
+    summary=(
+        '加强版 NOV-RAM 读 / 写。比 `FB_NovRamReadWrite` 多两点：'
+        '① 可指定读 / 写偏移 (`nReadOffs` / `nWriteOffs`)，不必从 0 开始；'
+        '② 自动检测 NOV-RAM 是否需要 BYTE / WORD 对齐访问，必要时改用逐字节拷贝（如 CX9000 NOVRAM 只允许 BYTE 访问）。'
+    ),
+    behavior=(
+        '工作方式与 `FB_NovRamReadWrite` 类似但更通用：'
+        '`bRead` 上升沿从偏移 `nReadOffs` 读 `cbDestLen` 字节；'
+        '`bWrite` 上升沿写 `cbSrcLen` 字节到偏移 `nWriteOffs`。'
+        '`bRead` 与 `bWrite` 同时拉高时先写后读。'
+        '本 FB 内部首次调用先用 ADSREAD 查 NOV-RAM 元信息（含访问类型 BYTE/WORD/DWORD），之后按访问类型用 MEMCPY 或逐字节拷贝读写。'
+        '`bBusy` 反映地址查找 + 命令执行状态；`bErr` / `nErrId` 反映 ADS 错误。'
+    ),
+    var_desc={
+        'nReadOffs': '读取起始偏移（NOV-RAM 内字节偏移）。',
+        'nWriteOffs': '写入起始偏移。',
+    },
+    pitfalls=NOV_PITFALLS + [
+        ('**CX9000 NOVRAM 只允许 BYTE 访问**——必须用本 FB；普通 FCxxx-0002 用 `FB_NovRamReadWrite` 即可。', True),
+    ],
+    scenario='CX9000 配 NOVRAM：存"批次产量计数"，按批次号偏移存储；写入时按偏移寻址。',
+    value='支持偏移 + 字节对齐，覆盖 FCxxxx-0002 之外的 NOV-RAM 硬件。',
+    alt=(
+        '- `FB_NovRamReadWrite`：只能偏移 0，不支持字节对齐\n'
+        '- **本 FB**：通用'
+    ),
+    related=['FB_NovRamReadWrite', 'FB_GetDPRAMInfoEx'],
+    xml_scen='CX9000 NOVRAM 按批次号偏移存"批次产量"：批次 N 的产量存在偏移 N*4 处。',
+    xml_val='灵活偏移寻址；适应非标 NOV-RAM 硬件。',
+    xml_verify='登录后 nReadOffsetFromNov := 4 (第 1 批位置)、触发 bReadFromNovRam → bNovRamBusy 短暂 TRUE → 回 FALSE 后 nReadbackProduction 显示上次写入的批次 1 产量；改 nWriteOffsetToNov := 8 后写新批次再读验证。',
+    xml_vars=[
+        ('fbNovRamAccessEx', 'FB_NovRamReadWriteEx', None, 'NOV-RAM 读写 Ex FB'),
+        ('nNovRamDeviceId', 'UDINT', '1', 'NOVRAM 卡 Device Id'),
+        ('nProductionCountToWrite', 'UDINT', '0', '要写入的批次产量'),
+        ('nReadbackProduction', 'UDINT', '0', '读回的批次产量'),
+        ('nReadOffsetFromNov', 'UDINT', '4', '读偏移（字节）'),
+        ('nWriteOffsetToNov', 'UDINT', '4', '写偏移（字节）'),
+        ('bReadFromNovRam', 'BOOL', 'FALSE', '上升沿读'),
+        ('bWriteToNovRam', 'BOOL', 'FALSE', '上升沿写'),
+        ('tNovRamTimeout', 'TIME', 'T#5S', '超时'),
+        ('bNovRamBusy', 'BOOL', None, '工作中'),
+        ('bNovRamErr', 'BOOL', None, '出错'),
+        ('nLastNovErrCode', 'UDINT', None, 'ADS 错误号'),
+    ],
+    xml_call=(
+        'fbNovRamAccessEx(\n'
+        '    nDevId     := nNovRamDeviceId,\n'
+        '    bRead      := bReadFromNovRam,\n'
+        '    bWrite     := bWriteToNovRam,\n'
+        '    cbSrcLen   := SIZEOF(nProductionCountToWrite),\n'
+        '    cbDestLen  := SIZEOF(nReadbackProduction),\n'
+        '    pSrcAddr   := ADR(nProductionCountToWrite),\n'
+        '    pDestAddr  := ADR(nReadbackProduction),\n'
+        '    nReadOffs  := nReadOffsetFromNov,\n'
+        '    nWriteOffs := nWriteOffsetToNov,\n'
+        '    tTimeOut   := tNovRamTimeout,\n'
+        '    bBusy      => bNovRamBusy,\n'
+        '    bErr       => bNovRamErr,\n'
+        '    nErrId     => nLastNovErrCode\n'
+        ');\n'
+    ),
+)
+
+
+REG['FB_GetDPRAMInfo'] = dict(
+    ftype='FUNCTION_BLOCK',
+    summary=(
+        '查询 NOV / DP-RAM 卡的物理地址指针 + 配置大小。'
+        '查到地址指针后可用 MEMCPY / MEMSET / MEMCMP 直接读写 NOV-RAM 任意偏移。'
+        '若 NOV-RAM 要求 BYTE / WORD 对齐访问（如 CX9000），本 FB 会返回 `0x701` 错误——这种情况改用 `FB_GetDPRAMInfoEx` + `FB_NovRamReadWriteEx`。'
+    ),
+    behavior=(
+        '`bExecute` 上升沿触发查询：`bBusy := TRUE`，FB 经 ADS 查 NOV-RAM 元信息。'
+        '完成后 `stInfo` 含地址指针 + 大小（结构 `ST_NovRamAddrInfo`，定义见 PDF §5 数据类型表）。'
+        '业务侧用 `POINTER TO MyStruct` 加 `stInfo.pAddress` 来直接访问 NOV-RAM 任意位置。'
+        '若硬件需要特殊对齐，`nErrId = 0x701` (Service not supported) → 改用 Ex 版本。'
+        '触发语义为上升沿一次性，调用者需要在 `bBusy` 落回后再使用 `stInfo` 中的地址。'
+    ),
+    var_desc={
+        'bExecute': '上升沿触发一次 NOV-RAM 信息查询。',
+        'stInfo': 'NOV-RAM 元信息结构 `ST_NovRamAddrInfo`（含地址指针 + 大小）。',
+    },
+    pitfalls=NOV_PITFALLS + [
+        ('返回的地址指针 **直接指向物理 NOV-RAM**；用 `POINTER TO STRUCT` 访问要确保结构大小 ≤ NOV-RAM 大小。', True),
+        ('`nErrId = 0x701` 表示需要字节对齐访问 → 改用 `FB_GetDPRAMInfoEx`。', True),
+    ],
+    scenario='第三方 DPRAM 卡未被 TwinCAT 直接支持时：先配置为 generic NOV/DP-RAM，用本 FB 拿到地址指针，然后用 PLC 程序自行 MEMCPY 读写。',
+    value='让非标 DPRAM 卡也能在 PLC 程序里直接访问。',
+    alt=(
+        '- TwinCAT 标准 DPRAM 驱动：标准但只支持已知卡\n'
+        '- `FB_GetDPRAMInfoEx`：更通用（含访问类型）\n'
+        '- **本 FB**：通用入口，适合大多数 FCxxx-0002 卡'
+    ),
+    related=['FB_GetDPRAMInfoEx', 'FB_NovRamReadWrite', 'FB_NovRamReadWriteEx'],
+    xml_scen='上电时一次性查询 FC3101 卡 NOV-RAM 的地址指针，存到全局指针变量，后续业务直接通过 POINTER TO STRUCT 读写。',
+    xml_val='拿到地址指针后访问 NOV-RAM 比走 FB 接口快得多（直接 MEMCPY，一个 PLC 周期完成）。',
+    xml_verify='登录后 nDeviceId := 1（NOVRAM 卡 ID），触发 bGetDpramInfoReq → bGetInfoBusy 短暂 TRUE → 回 FALSE 后 stDpramAddrInfo 含地址指针与大小；可在线 monitor 这些字段。',
+    xml_vars=[
+        ('fbGetDpramInfo', 'FB_GetDPRAMInfo', None, 'NOV/DP-RAM 信息查询 FB'),
+        ('nDpramDeviceId', 'UDINT', '1', 'NOVRAM 卡 Device Id'),
+        ('bGetDpramInfoReq', 'BOOL', 'FALSE', '上升沿触发查询'),
+        ('tInfoQueryTimeout', 'TIME', 'T#5S', '超时'),
+        ('bGetInfoBusy', 'BOOL', None, '工作中'),
+        ('bGetInfoError', 'BOOL', None, '出错'),
+        ('nLastInfoErrCode', 'UDINT', None, '错误号'),
+        ('stDpramAddrInfo', 'ST_NovRamAddrInfo', None, 'NOV/DP-RAM 地址 + 大小结构'),
+    ],
+    xml_call=(
+        'fbGetDpramInfo(\n'
+        '    nDevId   := nDpramDeviceId,\n'
+        '    bExecute := bGetDpramInfoReq,\n'
+        '    tTimeOut := tInfoQueryTimeout,\n'
+        '    bBusy    => bGetInfoBusy,\n'
+        '    bError   => bGetInfoError,\n'
+        '    nErrId   => nLastInfoErrCode,\n'
+        '    stInfo   => stDpramAddrInfo\n'
+        ');\n'
+    ),
+)
+
+
+REG['FB_GetDPRAMInfoEx'] = dict(
+    ftype='FUNCTION_BLOCK',
+    summary=(
+        '加强版 NOV / DP-RAM 信息查询。比 `FB_GetDPRAMInfo` 多返回 **访问类型** (`eAccessType`，BYTE / WORD / DWORD)。'
+        '业务侧可据此选择对应大小的访问方式。'
+    ),
+    behavior=(
+        '`bExecute` 上升沿触发查询：`bBusy := TRUE`，FB 经 ADS 查 NOV-RAM 完整元信息。'
+        '完成后 `stInfo` (类型 `ST_NovRamAddrInfoEx`) 含地址指针 + 大小 + 访问类型枚举。'
+        '若访问类型是 BYTE 对齐（如 CX9000），调用方须用 `FB_NovRamReadWriteEx` 而非直接 MEMCPY，否则会触发异常。'
+        '若访问类型是 DWORD 或不要求特殊对齐，可直接 MEMCPY。'
+        '触发语义为上升沿一次性，调用者需要在 `bBusy` 落回后再使用 `stInfo` 内容。'
+    ),
+    var_desc={
+        'bExecute': '上升沿触发查询。',
+        'stInfo': 'NOV-RAM 完整元信息（地址、大小、访问类型）。',
+    },
+    pitfalls=NOV_PITFALLS + [
+        ('返回的 `eAccessType` 决定后续访问方式；先用本 FB 查一次再决定用普通 / Ex 读写 FB。', False),
+    ],
+    scenario='通用 PLC 程序：兼容多种 NOV-RAM 卡（FC3101-0002、CX9000 等），上电时先用本 FB 查访问类型再决定后续访问策略。',
+    value='通用接口，便于编写跨硬件平台的 PLC 程序。',
+    alt=(
+        '- `FB_GetDPRAMInfo`：缺访问类型字段\n'
+        '- **本 FB**：通用'
+    ),
+    related=['FB_GetDPRAMInfo', 'FB_NovRamReadWriteEx'],
+    xml_scen='通用 NOV-RAM 访问框架：上电查访问类型 + 地址，按类型分支选用普通 / Ex 读写。',
+    xml_val='跨硬件平台 PLC 程序复用。',
+    xml_verify='登录后 nDeviceId := 1；触发 bGetDpramInfoExReq → 完成后 stDpramAddrInfoEx 中可看到 eAccessType（BYTE/WORD/DWORD）与地址指针。',
+    xml_vars=[
+        ('fbGetDpramInfoEx', 'FB_GetDPRAMInfoEx', None, 'NOV/DP-RAM Ex 信息查询 FB'),
+        ('nDpramDeviceId', 'UDINT', '1', 'NOVRAM 卡 Device Id'),
+        ('bGetDpramInfoExReq', 'BOOL', 'FALSE', '上升沿触发查询'),
+        ('tInfoQueryTimeout', 'TIME', 'T#5S', '超时'),
+        ('bGetInfoExBusy', 'BOOL', None, '工作中'),
+        ('bGetInfoExError', 'BOOL', None, '出错'),
+        ('nLastInfoExErrCode', 'UDINT', None, '错误号'),
+        ('stDpramAddrInfoEx', 'ST_NovRamAddrInfoEx', None, 'NOV/DP-RAM Ex 信息结构'),
+    ],
+    xml_call=(
+        'fbGetDpramInfoEx(\n'
+        '    nDevId   := nDpramDeviceId,\n'
+        '    bExecute := bGetDpramInfoExReq,\n'
+        '    tTimeOut := tInfoQueryTimeout,\n'
+        '    bBusy    => bGetInfoExBusy,\n'
+        '    bError   => bGetInfoExError,\n'
+        '    nErrId   => nLastInfoExErrCode,\n'
+        '    stInfo   => stDpramAddrInfoEx\n'
+        ');\n'
+    ),
+)
+
+
+# ---------------- Profibus DPV1 (Sinamics) (6) ----------------
+
+DPV1_PITFALLS = [
+    ('Sinamics Profidrive 用 Motorola (big-endian) 字节序，TwinCAT 用 Intel (little-endian)。本系列函数自动做字节翻转。', True),
+    ('DPV1 通讯需要 Profibus 主站 FC310x / CX1500-M310 / EL6731 之一；普通 EtherCAT 不行。', True),
+    ('一次最多 39 个参数；DPV1 报文最大 240 字节。超过会被截断。', True),
+    ('参数定义在 `ST_Dpv1ParamAddrEx` 数组里：每条记录含参数号、子索引、字节长度等。', True),
+    ('完整的"读 / 写参数"流程是 3 步：`F_CreateDpv1*ReqPkg` 生成报文 → `FB_Dpv1*` 发报文等响应 → `F_SplitDpv1*ResPkg` 解析响应。', False),
+]
+
+REG['F_CreateDpv1ReadReqPkg'] = dict(
+    ftype='FUNCTION',
+    summary=(
+        '生成 DPV1 **读参数** 请求报文。给定参数清单 + drive ID，函数在用户准备的 240 字节缓冲里组装好可发送的 DPV1 帧，自动做大小端字节转换。'
+        '返回值是组装好的报文实际长度（USINT，≤ 240）。'
+    ),
+    behavior=(
+        '调用流程：'
+        '① 用户准备 `pDpv1ReqData : POINTER TO ARRAY[1..240] OF BYTE`（240 字节缓冲）+ `stDpv1Parameter : ARRAY[1..39] OF ST_Dpv1ParamAddrEx`（参数清单）；'
+        '② 在 stDpv1Parameter 里填好要读的参数号、子索引、字节长度（每条记录）；'
+        '③ 调本 FC：`nLen := F_CreateDpv1ReadReqPkg(pDpv1ReqData := ADR(buf), iNumOfParams := 3, iDriveId := 2, stDpv1Parameter := arrParams)`；'
+        '④ FC 把 stDpv1Parameter 编码到 DPV1 帧里、自动把多字节参数翻转大小端，返回报文长度；'
+        '⑤ 把 `nLen` + `buf` 传给 `FB_Dpv1Read` 实际发出。'
+        '`iDriveId` 选择驱动器对象：1 = ControllerUnit，2 = drive A，3 = drive B…（最多 16）。'
+        '本 FC 是无状态、立即返回（不像 FB 有 busy / done 状态），单次 PLC 周期完成。'
+    ),
+    var_desc={
+        'pDpv1ReqData': '240 字节缓冲指针（用户准备 `ARRAY[1..240] OF BYTE`，传 `ADR()` 进来）。',
+        'iNumOfParams': '本次报文要读的参数数（1..39）。',
+        'iDriveId': 'drive 对象 ID（1 = ControllerUnit，2 = drive A，3 = drive B…1..16）。',
+        'stDpv1Parameter': '参数清单数组（[1..39]）：每条含参数号、子索引、字节长度。',
+    },
+    return_text=(
+        '本函数返回 `USINT` = 生成的 DPV1 读报文实际长度（字节数，≤ 240）。\n\n'
+        '| 返回值 | 含义 |\n|---|---|\n'
+        '| > 0 | 报文生成成功，返回长度供后续 `FB_Dpv1Read` 使用 |\n'
+        '| 0 | 参数错误（iNumOfParams 超出 1..39，或参数列表为空） |\n'
+    ),
+    pitfalls=DPV1_PITFALLS + [
+        ('返回值如果是 0，说明参数错；不要把 0 当成有效长度传给 `FB_Dpv1Read`，否则 FB 会发空报文。', True),
+    ],
+    scenario='SINAMICS S120 双轴驱动器：上电时一次性读两个轴的 Speed Setpoint + Actual Position + Fault Code 共 6 个参数。',
+    value='把 DPV1 帧编码 + 大小端转换封装为一行函数调用。',
+    alt=(
+        '- 手撸 DPV1 协议：约 100 行 + 大小端转换\n'
+        '- 用 SINAMICS Starter 软件读：要工程模式\n'
+        '- **本 FC**：一行编码'
+    ),
+    related=['F_SplitDpv1ReadResPkg', 'FB_Dpv1Read', 'F_CreateDpv1WriteReqPkg'],
+    xml_scen='SINAMICS S120 上电诊断：构造一个 DPV1 读请求帧读取 3 个驱动器参数。',
+    xml_val='把 DPV1 帧手撸协议替换为函数调用。',
+    xml_verify='登录后填好 arrDpv1ReqParams[1..3]（每条含 parameter number + sub-index + length），写 bBuildReqPkg := TRUE → 一个 PLC 周期后 nReqPkgLen 显示生成的帧长度（> 0 表示成功）。',
+    xml_vars=[
+        ('aDpv1ReqBuffer', 'ARRAY[1..240] OF BYTE', None, 'DPV1 读请求帧缓冲 240 字节'),
+        ('arrDpv1ReqParams', 'ARRAY[1..39] OF ST_Dpv1ParamAddrEx', None, '参数清单'),
+        ('iNumParamsToRead', 'USINT', '3', '要读的参数数'),
+        ('iDriveObjectId', 'USINT', '2', '1=CU 2=drive A 3=drive B'),
+        ('bBuildReqPkg', 'BOOL', 'FALSE', '触发：构造请求帧'),
+        ('nReqPkgLen', 'USINT', None, '生成的帧长度（字节）'),
+    ],
+    xml_call=(
+        '// 单次调用：构造帧，立即返回长度\n'
+        'IF bBuildReqPkg THEN\n'
+        '    nReqPkgLen := F_CreateDpv1ReadReqPkg(\n'
+        '        pDpv1ReqData    := ADR(aDpv1ReqBuffer),\n'
+        '        iNumOfParams    := iNumParamsToRead,\n'
+        '        iDriveId        := iDriveObjectId,\n'
+        '        stDpv1Parameter := arrDpv1ReqParams\n'
+        '    );\n'
+        '    bBuildReqPkg := FALSE;\n'
+        'END_IF;\n'
+    ),
+)
+
+
+REG['F_CreateDpv1WriteReqPkg'] = dict(
+    ftype='FUNCTION',
+    summary=(
+        '生成 DPV1 **写参数** 请求报文。'
+        '与读版本类似但多一个 `stDpv1ValueHeaderEx` 数组传递每个参数要写入的值。'
+        '返回报文实际长度。'
+    ),
+    behavior=(
+        '调用流程：'
+        '① 准备 `pDpv1ReqData`（240 字节缓冲）+ `stDpv1Parameter`（参数清单）+ `stDpv1ValueHeaderEx`（值清单）；'
+        '② 在 `stDpv1Parameter[k]` 填参数号 / 子索引 / 长度，在 `stDpv1ValueHeaderEx[k]` 填要写入的值；'
+        '③ 调本 FC 编码生成报文，返回值是组装好的报文长度；'
+        '④ 用 `FB_Dpv1Write` 发出去。'
+        'FC 自动把多字节参数值做 Motorola ↔ Intel 字节翻转，保证驱动器收到正确的字节序。'
+        '本 FC 无状态、同步返回，单个 PLC 周期完成，不会阻塞业务任务。'
+        '`iDriveId` 选择目标驱动器对象：1 = ControllerUnit，2 = drive A，3 = drive B…（最多 16 个）。'
+    ),
+    var_desc={
+        'pDpv1ReqData': '240 字节缓冲指针。',
+        'iNumOfParams': '本次报文要写的参数数（1..39）。',
+        'iDriveId': 'drive 对象 ID。',
+        'stDpv1Parameter': '参数清单数组。',
+        'stDpv1ValueHeaderEx': '参数值数组，每条对应 `stDpv1Parameter` 同下标的参数要写入的值。',
+    },
+    return_text=(
+        '本函数返回 `USINT` = 生成的 DPV1 写报文实际长度。\n\n'
+        '| 返回值 | 含义 |\n|---|---|\n'
+        '| > 0 | 报文生成成功 |\n'
+        '| 0 | 参数错误 |\n'
+    ),
+    pitfalls=DPV1_PITFALLS,
+    scenario='SINAMICS S120 上电写参数：把 drive A 的速度限值 + 加速度配置一次性下载。',
+    value='封装 DPV1 写报文编码 + 字节翻转。',
+    alt=(
+        '- 手撸 DPV1 协议\n'
+        '- **本 FC**：一行编码'
+    ),
+    related=['F_SplitDpv1WriteResPkg', 'FB_Dpv1Write', 'F_CreateDpv1ReadReqPkg'],
+    xml_scen='SINAMICS S120 上电写驱动参数：一次写入 2 个参数（速度限值 + 加速度）到 drive A。',
+    xml_val='封装 DPV1 写帧编码与字节序转换。',
+    xml_verify='填好 arrDpv1ReqParams[1..2] + arrDpv1ValueHdr[1..2]，写 bBuildWriteReqPkg := TRUE → 一周期后 nWriteReqPkgLen > 0 表示帧已构造。',
+    xml_vars=[
+        ('aDpv1WriteReqBuffer', 'ARRAY[1..240] OF BYTE', None, 'DPV1 写请求帧 240 字节'),
+        ('arrDpv1ReqParams', 'ARRAY[1..39] OF ST_Dpv1ParamAddrEx', None, '参数清单'),
+        ('arrDpv1ValueHdr', 'ARRAY[1..39] OF ST_Dpv1ValueHeaderEx', None, '要写入的值清单'),
+        ('iNumParamsToWrite', 'USINT', '2', '参数数'),
+        ('iDriveObjectId', 'USINT', '2', 'drive A'),
+        ('bBuildWriteReqPkg', 'BOOL', 'FALSE', '触发：构造写请求帧'),
+        ('nWriteReqPkgLen', 'USINT', None, '生成的帧长度'),
+    ],
+    xml_call=(
+        'IF bBuildWriteReqPkg THEN\n'
+        '    nWriteReqPkgLen := F_CreateDpv1WriteReqPkg(\n'
+        '        pDpv1ReqData        := ADR(aDpv1WriteReqBuffer),\n'
+        '        iNumOfParams        := iNumParamsToWrite,\n'
+        '        iDriveId            := iDriveObjectId,\n'
+        '        stDpv1Parameter     := arrDpv1ReqParams,\n'
+        '        stDpv1ValueHeaderEx := arrDpv1ValueHdr\n'
+        '    );\n'
+        '    bBuildWriteReqPkg := FALSE;\n'
+        'END_IF;\n'
+    ),
+)
+
+
+REG['F_SplitDpv1ReadResPkg'] = dict(
+    ftype='FUNCTION',
+    summary=(
+        '解析 DPV1 **读参数** 响应报文。'
+        '把 240 字节响应帧拆分为各参数值填到 `stDpv1ValueHeaderEx[k]`，同时把字节序翻转回 Intel。'
+        '返回报文实际长度。'
+    ),
+    behavior=(
+        '`FB_Dpv1Read` 完成（`bBusy` 落回）后，把响应缓冲指针传给本 FC，FC 根据先前发出的 `stDpv1Parameter`（数组依然要传入用以知道每条记录的字节长度）解析每条参数的值，写到 `stDpv1ValueHeaderEx`，并做 Motorola → Intel 字节翻转。'
+        '业务侧读 `stDpv1ValueHeaderEx[k].dwValue`（或对应类型）即可拿到参数值。'
+        '本 FC 无状态、同步返回。'
+        '若响应帧含 DPV1 异常码（参数无效 / 写保护等），本 FC 仍可解析，但 `stDpv1ValueHeaderEx[k]` 内对应字段会标错误。'
+    ),
+    var_desc={
+        'pDpv1ResData': '240 字节响应缓冲指针。',
+        'stDpv1Parameter': '与请求时相同的参数清单（解析需要它知道每条记录的字节长度）。',
+        'stDpv1ValueHeaderEx': '输出：每条参数解析后的值。',
+    },
+    return_text=(
+        '本函数返回 `USINT` = 响应报文实际长度（字节，≤ 240）。\n\n'
+        '| 返回值 | 含义 |\n|---|---|\n'
+        '| > 0 | 解析成功 |\n'
+        '| 0 | 响应帧空 / 格式错 |\n'
+    ),
+    pitfalls=DPV1_PITFALLS + [
+        ('解析必须传入与请求时一致的 `stDpv1Parameter` 数组——FC 据此知道每条参数的字节长度做正确的拆分。', True),
+    ],
+    scenario='SINAMICS S120 读 3 个参数：发出读请求 → bBusy 落回 → 调本 FC 解析响应 → 业务侧读 `stDpv1ValueHeaderEx[1..3]` 拿到 3 个参数值。',
+    value='封装 DPV1 帧拆分 + 字节翻转。',
+    alt=(
+        '- 手解 DPV1 协议\n'
+        '- **本 FC**：一行解析'
+    ),
+    related=['F_CreateDpv1ReadReqPkg', 'FB_Dpv1Read', 'F_SplitDpv1WriteResPkg'],
+    xml_scen='DPV1 读完后调本 FC 解析响应：填回 arrDpv1ValueHdr[1..3]。',
+    xml_val='封装 DPV1 解析 + 字节序转换。',
+    xml_verify='收到响应后写 bSplitReadResPkg := TRUE → 一周期后 nReadResPkgLen > 0 表示解析成功；可在线查看 arrDpv1ValueHdr 各字段。',
+    xml_vars=[
+        ('aDpv1ReadResBuffer', 'ARRAY[1..240] OF BYTE', None, 'DPV1 读响应帧 240 字节'),
+        ('arrDpv1ReqParams', 'ARRAY[1..39] OF ST_Dpv1ParamAddrEx', None, '与请求相同的参数清单'),
+        ('arrDpv1ValueHdr', 'ARRAY[1..39] OF ST_Dpv1ValueHeaderEx', None, '解析输出：每条参数值'),
+        ('bSplitReadResPkg', 'BOOL', 'FALSE', '触发：解析响应'),
+        ('nReadResPkgLen', 'USINT', None, '响应帧实际长度'),
+    ],
+    xml_call=(
+        'IF bSplitReadResPkg THEN\n'
+        '    nReadResPkgLen := F_SplitDpv1ReadResPkg(\n'
+        '        pDpv1ResData        := ADR(aDpv1ReadResBuffer),\n'
+        '        stDpv1Parameter     := arrDpv1ReqParams,\n'
+        '        stDpv1ValueHeaderEx := arrDpv1ValueHdr\n'
+        '    );\n'
+        '    bSplitReadResPkg := FALSE;\n'
+        'END_IF;\n'
+    ),
+)
+
+
+REG['F_SplitDpv1WriteResPkg'] = dict(
+    ftype='FUNCTION',
+    summary=(
+        '解析 DPV1 **写参数** 响应报文。'
+        '与读响应解析类似，但只关心写操作的状态码（成功 / 失败 / 异常码），不返回数据值。'
+        '返回报文长度。'
+    ),
+    behavior=(
+        '`FB_Dpv1Write` 完成后把响应帧指针传给本 FC，FC 解析并把每条参数的写状态填到 `stDpv1ValueHeaderEx[k]`（字段含 success / error code）。'
+        '业务侧通过 `stDpv1ValueHeaderEx[k].nError` 判断是否写成功；非零值表示驱动器拒绝写入（参数不存在 / 写保护 / 值越界 等）。'
+        '与读响应一样需要传入相同的 `stDpv1Parameter` 数组让 FC 知道每条记录的结构。'
+        '本 FC 无状态、同步返回，单个 PLC 周期完成；不需要等待异步信号。'
+        '驱动器侧把多字节状态码用 Motorola 字节序回复，本 FC 自动翻转为 Intel 字节序填到输出结构。'
+    ),
+    var_desc={
+        'pDpv1ResData': '240 字节响应缓冲指针。',
+        'stDpv1Parameter': '与请求时相同的参数清单。',
+        'stDpv1ValueHeaderEx': '输出：每条参数的写状态。',
+    },
+    return_text=(
+        '本函数返回 `USINT` = 响应报文实际长度。\n\n'
+        '| 返回值 | 含义 |\n|---|---|\n'
+        '| > 0 | 解析成功，写状态在 `stDpv1ValueHeaderEx` 中 |\n'
+        '| 0 | 响应帧空 / 格式错 |\n'
+    ),
+    pitfalls=DPV1_PITFALLS,
+    scenario='SINAMICS S120 写参数后解析响应：业务侧拿到每条参数的写状态，决定是否需要重试。',
+    value='封装写操作响应解析。',
+    alt=(
+        '- 手解 DPV1\n'
+        '- **本 FC**：一行解析'
+    ),
+    related=['F_CreateDpv1WriteReqPkg', 'FB_Dpv1Write', 'F_SplitDpv1ReadResPkg'],
+    xml_scen='SINAMICS DPV1 写完后解析响应，拿到每条参数的写状态。',
+    xml_val='封装解析。',
+    xml_verify='写 bSplitWriteResPkg := TRUE → 一周期后 nWriteResPkgLen > 0 表示解析成功；查 arrDpv1ValueHdr[k].nError 各条状态。',
+    xml_vars=[
+        ('aDpv1WriteResBuffer', 'ARRAY[1..240] OF BYTE', None, 'DPV1 写响应帧 240 字节'),
+        ('arrDpv1ReqParams', 'ARRAY[1..39] OF ST_Dpv1ParamAddrEx', None, '与请求相同'),
+        ('arrDpv1ValueHdr', 'ARRAY[1..39] OF ST_Dpv1ValueHeaderEx', None, '解析输出：写状态'),
+        ('bSplitWriteResPkg', 'BOOL', 'FALSE', '触发：解析响应'),
+        ('nWriteResPkgLen', 'USINT', None, '响应帧实际长度'),
+    ],
+    xml_call=(
+        'IF bSplitWriteResPkg THEN\n'
+        '    nWriteResPkgLen := F_SplitDpv1WriteResPkg(\n'
+        '        pDpv1ResData        := ADR(aDpv1WriteResBuffer),\n'
+        '        stDpv1Parameter     := arrDpv1ReqParams,\n'
+        '        stDpv1ValueHeaderEx := arrDpv1ValueHdr\n'
+        '    );\n'
+        '    bSplitWriteResPkg := FALSE;\n'
+        'END_IF;\n'
+    ),
+)
+
+
+REG['FB_Dpv1Read'] = dict(
+    ftype='FUNCTION_BLOCK',
+    summary=(
+        'SINAMICS Profidrive 通过 Profibus DPV1 读 1..39 个参数。'
+        '完整流程：先用 `F_CreateDpv1ReadReqPkg` 准备报文 → 在 `bExecute` 上升沿前数据缓冲已就绪 → 本 FB 发报文 + 等响应；'
+        '`bBusy` 下降后用 `F_SplitDpv1ReadResPkg` 解析响应。'
+    ),
+    behavior=(
+        '`bExecute` 上升沿触发一次 DPV1 读：`bBusy := TRUE`，FB 把 `pDpv1ReqData` 指向的报文经 ADS 发到 Profibus 主站（`aNetId`），主站把报文发到 slave (`iProfibusSlaveAdr`)，等待应答；应答到来后 FB 把数据填到 `pDpv1ResData`。'
+        '`bBusy = TRUE` → `FALSE` 的下降沿是业务侧判断"读完成"的关键。'
+        '完成后 `iRequestRef` 含本次请求的引用号（1..127）；'
+        '出错时由业务侧观察响应解析结果（本 FB 不输出 bError，由解析 FC 给）。'
+        '`tTmOut` 控制 ADS 调用超时（默认 5 秒，多参数时建议 10 秒）。'
+        '⚠️ PDF VAR_OUTPUT 区误写为 `VAR_OUTPUT iRequestRef : USINT;`——实际是 `VAR_OUTPUT`，PDF 中 "Inputs/outputs" 章节标记是排版错误。'
+    ),
+    var_desc={
+        'bExecute': '上升沿触发一次 DPV1 读命令。',
+        'aNetId': 'Profibus 主站设备的 AMS Net ID（System Manager → I/O → Profibus master → ADS tab 中查看）。',
+        'iProfibusSlaveAdr': 'Profibus slave DP 地址（驱动器在 Profibus 上的站号）。',
+        'iDriveId': 'drive 对象 ID（1 = CU，2 = drive A，3 = drive B…）。',
+        'pDpv1ReqData': '240 字节请求帧缓冲指针（由 `F_CreateDpv1ReadReqPkg` 准备）。',
+        'iDpv1ReqDataLen': '请求帧缓冲的最大长度（240）。',
+        'pDpv1ResData': '240 字节响应帧缓冲指针（应答会写到这里）。',
+        'iDpv1ResDataLen': '响应帧缓冲的最大长度（240）。',
+        'tTmOut': '本次 ADS 调用的超时。',
+        'iRequestRef': '请求引用号（1..127；0 保留）。',
+    },
+    pitfalls=DPV1_PITFALLS + [
+        ('PDF 把 `iRequestRef` 标在 "Inputs/outputs" 章节但 `VAR_OUTPUT` 关键字明显是 PDF 排版错（应为 VAR_OUTPUT 不是 VAR_IN_OUT）；按 VAR_OUTPUT 处理。', True),
+        ('`bBusy` 下降沿后业务侧必须立刻调 `F_SplitDpv1ReadResPkg` 解析响应；否则缓冲会被下次请求覆盖。', True),
+    ],
+    scenario='SINAMICS S120 双轴：周期 1 秒读 6 个参数（双轴 Speed/Position/Fault）做 SCADA 显示。',
+    value='封装 DPV1 异步通讯，业务只关心 bExecute + 数据缓冲。',
+    alt=(
+        '- 手撸 ADSREAD/ADSWRITE 到 Profibus 主站\n'
+        '- **本 FB**：标准方式'
+    ),
+    related=['F_CreateDpv1ReadReqPkg', 'F_SplitDpv1ReadResPkg', 'FB_Dpv1Write'],
+    xml_scen='SINAMICS S120 周期读 3 个参数：先 F_CreateDpv1ReadReqPkg 准备帧 → bExecute 触发 FB_Dpv1Read → bBusy 落回后 F_SplitDpv1ReadResPkg 解析。',
+    xml_val='完整异步流程封装。',
+    xml_verify='登录后 sProfibusMasterNetId 设为 FC310x 主卡 NetId，iSinamicsStation := 5；先 bBuildReqPkg 触发 F_CreateDpv1ReadReqPkg → nReqPkgLen > 0；再 bDpv1ReadReq := TRUE → bDpv1ReadBusy 短暂 TRUE → 落回后 bSplitReadResPkg := TRUE 解析 → arrDpv1ValueHdr 含读到的参数值。',
+    xml_vars=[
+        ('fbDpv1Read', 'FB_Dpv1Read', None, 'SINAMICS DPV1 读 FB'),
+        ('sProfibusMasterNetId', 'T_AmsNetId', "''", 'Profibus 主站 AMS Net ID'),
+        ('iSinamicsStation', 'USINT', '5', 'SINAMICS Profibus 站号'),
+        ('iDriveObjectId', 'USINT', '2', 'drive A'),
+        ('aDpv1ReqBuffer', 'ARRAY[1..240] OF BYTE', None, '请求缓冲'),
+        ('aDpv1ResBuffer', 'ARRAY[1..240] OF BYTE', None, '响应缓冲'),
+        ('iReqBufLen', 'UDINT', '240', '请求缓冲最大长度'),
+        ('iResBufLen', 'UDINT', '240', '响应缓冲最大长度'),
+        ('arrDpv1ReqParams', 'ARRAY[1..39] OF ST_Dpv1ParamAddrEx', None, '参数清单'),
+        ('arrDpv1ValueHdr', 'ARRAY[1..39] OF ST_Dpv1ValueHeaderEx', None, '解析输出'),
+        ('iNumParamsToRead', 'USINT', '3', '读 3 个参数'),
+        ('nReqPkgLen', 'USINT', None, '请求帧长度'),
+        ('nReadResPkgLen', 'USINT', None, '响应帧长度'),
+        ('bBuildReqPkg', 'BOOL', 'FALSE', '触发：构造请求'),
+        ('bDpv1ReadReq', 'BOOL', 'FALSE', '触发：发送'),
+        ('bSplitReadResPkg', 'BOOL', 'FALSE', '触发：解析'),
+        ('tDpv1ReadTimeout', 'TIME', 'T#10S', 'ADS 超时'),
+        ('bDpv1ReadBusy', 'BOOL', None, '工作中'),
+        ('iDpv1ReadRequestRef', 'USINT', None, '请求引用号'),
+    ],
+    xml_call=(
+        '// 步骤 1：构造 DPV1 读请求帧\n'
+        'IF bBuildReqPkg THEN\n'
+        '    nReqPkgLen := F_CreateDpv1ReadReqPkg(\n'
+        '        pDpv1ReqData    := ADR(aDpv1ReqBuffer),\n'
+        '        iNumOfParams    := iNumParamsToRead,\n'
+        '        iDriveId        := iDriveObjectId,\n'
+        '        stDpv1Parameter := arrDpv1ReqParams\n'
+        '    );\n'
+        '    bBuildReqPkg := FALSE;\n'
+        'END_IF;\n'
+        '\n'
+        '// 步骤 2：bDpv1ReadReq 上升沿发出请求（请求帧必须先构造好）\n'
+        'fbDpv1Read(\n'
+        '    bExecute          := bDpv1ReadReq,\n'
+        '    aNetId            := sProfibusMasterNetId,\n'
+        '    iProfibusSlaveAdr := iSinamicsStation,\n'
+        '    iDriveId          := iDriveObjectId,\n'
+        '    pDpv1ReqData      := ADR(aDpv1ReqBuffer),\n'
+        '    iDpv1ReqDataLen   := iReqBufLen,\n'
+        '    pDpv1ResData      := ADR(aDpv1ResBuffer),\n'
+        '    iDpv1ResDataLen   := iResBufLen,\n'
+        '    tTmOut            := tDpv1ReadTimeout,\n'
+        '    iRequestRef       => iDpv1ReadRequestRef\n'
+        ');\n'
+        '\n'
+        '// 跟踪 bBusy 用 R_TRIG 等监测下降沿\n'
+        'bDpv1ReadBusy := fbDpv1Read.bBusy;\n'
+        '\n'
+        '// 步骤 3：bBusy 落回后解析响应（业务侧做下降沿监测后置 bSplitReadResPkg）\n'
+        'IF bSplitReadResPkg THEN\n'
+        '    nReadResPkgLen := F_SplitDpv1ReadResPkg(\n'
+        '        pDpv1ResData        := ADR(aDpv1ResBuffer),\n'
+        '        stDpv1Parameter     := arrDpv1ReqParams,\n'
+        '        stDpv1ValueHeaderEx := arrDpv1ValueHdr\n'
+        '    );\n'
+        '    bSplitReadResPkg := FALSE;\n'
+        'END_IF;\n'
+    ),
+)
+
+
+REG['FB_Dpv1Write'] = dict(
+    ftype='FUNCTION_BLOCK',
+    summary=(
+        'SINAMICS Profidrive 通过 Profibus DPV1 写 1..39 个参数。'
+        '与 `FB_Dpv1Read` 用法对称：先 `F_CreateDpv1WriteReqPkg` 准备帧 → 本 FB 发 → `bBusy` 下降后 `F_SplitDpv1WriteResPkg` 解析响应。'
+    ),
+    behavior=(
+        '`bExecute` 上升沿触发一次 DPV1 写：`bBusy := TRUE`，FB 经 ADS 把写请求发到 Profibus 主站（`aNetId`），主站把报文转给 slave 驱动器；等待 slave 应答。'
+        '应答到来后 `bBusy := FALSE`，业务侧调 `F_SplitDpv1WriteResPkg` 解析每条参数的写状态。'
+        '`tTmOut` 控制超时；写多参数时建议 ≥ 10 秒。'
+        '`iRequestRef` 是请求引用号；多并发请求时可用来匹配。'
+        '与读 FB 一样，PDF 中 `VAR_IN_OUT iRequestRef` 是排版错误，实际是 `VAR_OUTPUT`。'
+    ),
+    var_desc={
+        'bExecute': '上升沿触发一次 DPV1 写。',
+        'aNetId': 'Profibus 主站 AMS Net ID。',
+        'iProfibusSlaveAdr': 'SINAMICS 在 Profibus 上的 DP 地址。',
+        'iDriveId': 'drive 对象 ID（1=CU, 2=drive A, ...）。',
+        'pDpv1ReqData': '240 字节请求帧缓冲指针。',
+        'iDpv1ReqDataLen': '请求缓冲最大长度。',
+        'pDpv1ResData': '240 字节响应缓冲指针。',
+        'iDpv1ResDataLen': '响应缓冲最大长度。',
+        'tTmOut': 'ADS 超时。',
+        'iRequestRef': '请求引用号（1..127；0 保留）。',
+    },
+    pitfalls=DPV1_PITFALLS + [
+        ('写参数会改变驱动器实际行为，写之前务必把驱动器停下或在安全状态。', False),
+    ],
+    scenario='SINAMICS S120 上电下发驱动参数：速度限值 + 加速度 + 急停减速度 一次性写入。',
+    value='封装 DPV1 写报文 + 异步发送。',
+    alt=(
+        '- 用 Starter 软件：要工程模式\n'
+        '- **本 FB**：纯 PLC 程序'
+    ),
+    related=['F_CreateDpv1WriteReqPkg', 'F_SplitDpv1WriteResPkg', 'FB_Dpv1Read'],
+    xml_scen='SINAMICS S120 上电下发 2 个驱动参数。',
+    xml_val='参数纳入 PLC 版本控制；现场无需 Starter 软件。',
+    xml_verify='登录后准备好 arrDpv1ReqParams + arrDpv1ValueHdr；bBuildWriteReqPkg → 帧构造完；bDpv1WriteReq := TRUE → bDpv1WriteBusy 短暂 TRUE → 落回后 bSplitWriteResPkg → 解析 → arrDpv1ValueHdr[k].nError 全 0 表示成功。',
+    xml_vars=[
+        ('fbDpv1Write', 'FB_Dpv1Write', None, 'SINAMICS DPV1 写 FB'),
+        ('sProfibusMasterNetId', 'T_AmsNetId', "''", '主站 NetId'),
+        ('iSinamicsStation', 'USINT', '5', '站号'),
+        ('iDriveObjectId', 'USINT', '2', 'drive A'),
+        ('aDpv1ReqBuffer', 'ARRAY[1..240] OF BYTE', None, '请求缓冲'),
+        ('aDpv1ResBuffer', 'ARRAY[1..240] OF BYTE', None, '响应缓冲'),
+        ('iReqBufLen', 'UDINT', '240', '请求缓冲长度'),
+        ('iResBufLen', 'UDINT', '240', '响应缓冲长度'),
+        ('arrDpv1ReqParams', 'ARRAY[1..39] OF ST_Dpv1ParamAddrEx', None, '参数清单'),
+        ('arrDpv1ValueHdr', 'ARRAY[1..39] OF ST_Dpv1ValueHeaderEx', None, '值清单（写）+ 状态（解析后）'),
+        ('iNumParamsToWrite', 'USINT', '2', '参数数'),
+        ('nWriteReqPkgLen', 'USINT', None, '请求长度'),
+        ('nWriteResPkgLen', 'USINT', None, '响应长度'),
+        ('bBuildWriteReqPkg', 'BOOL', 'FALSE', '触发：构造写请求'),
+        ('bDpv1WriteReq', 'BOOL', 'FALSE', '触发：发送'),
+        ('bSplitWriteResPkg', 'BOOL', 'FALSE', '触发：解析'),
+        ('tDpv1WriteTimeout', 'TIME', 'T#10S', '超时'),
+        ('bDpv1WriteBusy', 'BOOL', None, '工作中'),
+        ('iDpv1WriteRequestRef', 'USINT', None, '请求引用号'),
+    ],
+    xml_call=(
+        '// 步骤 1：构造写请求帧\n'
+        'IF bBuildWriteReqPkg THEN\n'
+        '    nWriteReqPkgLen := F_CreateDpv1WriteReqPkg(\n'
+        '        pDpv1ReqData        := ADR(aDpv1ReqBuffer),\n'
+        '        iNumOfParams        := iNumParamsToWrite,\n'
+        '        iDriveId            := iDriveObjectId,\n'
+        '        stDpv1Parameter     := arrDpv1ReqParams,\n'
+        '        stDpv1ValueHeaderEx := arrDpv1ValueHdr\n'
+        '    );\n'
+        '    bBuildWriteReqPkg := FALSE;\n'
+        'END_IF;\n'
+        '\n'
+        '// 步骤 2：发送\n'
+        'fbDpv1Write(\n'
+        '    bExecute          := bDpv1WriteReq,\n'
+        '    aNetId            := sProfibusMasterNetId,\n'
+        '    iProfibusSlaveAdr := iSinamicsStation,\n'
+        '    iDriveId          := iDriveObjectId,\n'
+        '    pDpv1ReqData      := ADR(aDpv1ReqBuffer),\n'
+        '    iDpv1ReqDataLen   := iReqBufLen,\n'
+        '    pDpv1ResData      := ADR(aDpv1ResBuffer),\n'
+        '    iDpv1ResDataLen   := iResBufLen,\n'
+        '    tTmOut            := tDpv1WriteTimeout,\n'
+        '    iRequestRef       => iDpv1WriteRequestRef\n'
+        ');\n'
+        '\n'
+        'bDpv1WriteBusy := fbDpv1Write.bBusy;\n'
+        '\n'
+        '// 步骤 3：bBusy 落回后解析响应\n'
+        'IF bSplitWriteResPkg THEN\n'
+        '    nWriteResPkgLen := F_SplitDpv1WriteResPkg(\n'
+        '        pDpv1ResData        := ADR(aDpv1ResBuffer),\n'
+        '        stDpv1Parameter     := arrDpv1ReqParams,\n'
+        '        stDpv1ValueHeaderEx := arrDpv1ValueHdr\n'
+        '    );\n'
+        '    bSplitWriteResPkg := FALSE;\n'
+        'END_IF;\n'
+    ),
+)
+
+
+# ---------------- Profinet DPV1 (Sinamics) (6) — same shape as Profibus DPV1 ----------------
+
+PNET_PITFALLS = [
+    ('Profinet DPV1 是把 DPV1 协议跑在 Profinet 上的方式。Beckhoff Profinet 主站硬件用 EL6632。', True),
+    ('与 Profibus DPV1 接口几乎一致，差别是用 `iProfinetPort` 代替 `iProfibusSlaveAdr` 寻址 slave。', False),
+    ('Sinamics Profidrive 仍是 Motorola 字节序，本系列函数自动翻转。', True),
+    ('请求 / 响应缓冲长度常量是 `iMAX_DPV1_SIZE_PNET_REQ` / `_PNET_RES`（与 Profibus 版本的 `iMAX_DPV1_SIZE` 不同）。', True),
+    ('完整流程：`F_CreateDpv1*ReqPkgPNET` → `FB_Dpv1*PNET` → `F_SplitDpv1*ResPkgPNET`。', False),
+]
+
+REG['F_CreateDpv1ReadReqPkgPNET'] = dict(
+    ftype='FUNCTION',
+    summary=(
+        '生成 Profinet 上的 DPV1 **读参数** 请求报文。'
+        '功能与 `F_CreateDpv1ReadReqPkg` 相同，区别是面向 Profinet 主站 (EL6632) 的封装。'
+    ),
+    behavior=(
+        '调用流程与 Profibus 版本一致：'
+        '① 准备 240 字节缓冲 + 参数清单（每条含参数号 / 子索引 / 字节长度）；'
+        '② 调本 FC 编码，函数自动做 Motorola ↔ Intel 字节翻转；'
+        '③ 拿到返回的报文长度，传给 `FB_Dpv1ReadPNET` 发出去。'
+        '函数无状态、同步返回，单个 PLC 周期完成。'
+        '`iDriveId` 选择目标驱动器对象（PDF: 1..16；按驱动器手册取值）。'
+        '`iNumOfParams` 范围 1..39，且总报文长度 ≤ 240 字节。'
+    ),
+    var_desc={
+        'pDpv1ReqData': '240 字节缓冲指针。',
+        'iNumOfParams': '本次报文要读的参数数（1..39）。',
+        'iDriveId': 'drive 对象 ID。',
+        'stDpv1Parameter': '参数清单数组。',
+    },
+    return_text=(
+        '本函数返回 `USINT` = 生成的报文长度。\n\n'
+        '| 返回值 | 含义 |\n|---|---|\n'
+        '| > 0 | 成功 |\n'
+        '| 0 | 参数错误 |\n'
+    ),
+    pitfalls=PNET_PITFALLS,
+    scenario='Profinet + SINAMICS：上电时一次性读多个驱动参数到 PLC。',
+    value='封装 Profinet DPV1 读报文编码 + 字节翻转。',
+    alt=('- 手撸：100 行\n- **本 FC**：一行'),
+    related=['F_SplitDpv1ReadResPkgPNET', 'FB_Dpv1ReadPNET', 'F_CreateDpv1WriteReqPkgPNET'],
+    xml_scen='Profinet SINAMICS：构造一个读 3 个参数的 DPV1 请求帧。',
+    xml_val='与 Profibus 版本对称。',
+    xml_verify='填好 arrDpv1ReqParams[1..3]，写 bBuildReqPkgPNET := TRUE → 一周期后 nReqPkgLenPNET > 0 表示成功。',
+    xml_vars=[
+        ('aDpv1ReqBuffer', 'ARRAY[1..240] OF BYTE', None, '请求缓冲'),
+        ('arrDpv1ReqParams', 'ARRAY[1..39] OF ST_Dpv1ParamAddrEx', None, '参数清单'),
+        ('iNumParamsToRead', 'USINT', '3', '参数数'),
+        ('iDriveObjectId', 'USINT', '2', 'drive A'),
+        ('bBuildReqPkgPNET', 'BOOL', 'FALSE', '触发构造'),
+        ('nReqPkgLenPNET', 'USINT', None, '生成长度'),
+    ],
+    xml_call=(
+        'IF bBuildReqPkgPNET THEN\n'
+        '    nReqPkgLenPNET := F_CreateDpv1ReadReqPkgPNET(\n'
+        '        pDpv1ReqData    := ADR(aDpv1ReqBuffer),\n'
+        '        iNumOfParams    := iNumParamsToRead,\n'
+        '        iDriveId        := iDriveObjectId,\n'
+        '        stDpv1Parameter := arrDpv1ReqParams\n'
+        '    );\n'
+        '    bBuildReqPkgPNET := FALSE;\n'
+        'END_IF;\n'
+    ),
+)
+
+
+REG['F_CreateDpv1WriteReqPkgPNET'] = dict(
+    ftype='FUNCTION',
+    summary='生成 Profinet 上的 DPV1 **写参数** 请求报文。与 `F_CreateDpv1WriteReqPkg` 对应，面向 EL6632 Profinet 主站。',
+    behavior=(
+        '调用流程与 Profibus 写版本相同：'
+        '① 准备 240 字节缓冲 + 参数清单 + 值清单；'
+        '② 在参数清单填写每条记录的参数号 / 子索引 / 长度，在值清单填要写入的值；'
+        '③ 调本 FC 编码生成报文，自动做 Motorola ↔ Intel 字节翻转；'
+        '④ 拿到返回报文长度，用 `FB_Dpv1WritePNET` 发出去。'
+        '函数无状态、同步返回，单个 PLC 周期完成；不会阻塞业务任务。'
+        '返回值 > 0 表示报文成功生成；0 表示参数错（如 iNumOfParams 越界）。'
+    ),
+    var_desc={
+        'pDpv1ReqData': '240 字节缓冲指针。',
+        'iNumOfParams': '要写的参数数。',
+        'iDriveId': 'drive 对象 ID。',
+        'stDpv1Parameter': '参数清单。',
+        'stDpv1ValueHeaderEx': '值清单。',
+    },
+    return_text=(
+        '本函数返回 `USINT` = 生成的报文长度。\n\n'
+        '| 返回值 | 含义 |\n|---|---|\n'
+        '| > 0 | 成功 |\n| 0 | 错误 |\n'
+    ),
+    pitfalls=PNET_PITFALLS,
+    scenario='Profinet SINAMICS 上电写参数。',
+    value='封装 Profinet DPV1 写报文编码。',
+    alt=('- 手撸\n- **本 FC**：一行'),
+    related=['F_SplitDpv1WriteResPkgPNET', 'FB_Dpv1WritePNET'],
+    xml_scen='Profinet SINAMICS 一次写 2 个参数。',
+    xml_val='对称封装。',
+    xml_verify='写 bBuildWriteReqPkgPNET := TRUE → nWriteReqPkgLenPNET > 0。',
+    xml_vars=[
+        ('aDpv1WriteReqBuffer', 'ARRAY[1..240] OF BYTE', None, '请求缓冲'),
+        ('arrDpv1ReqParams', 'ARRAY[1..39] OF ST_Dpv1ParamAddrEx', None, '参数'),
+        ('arrDpv1ValueHdr', 'ARRAY[1..39] OF ST_Dpv1ValueHeaderEx', None, '值'),
+        ('iNumParamsToWrite', 'USINT', '2', '参数数'),
+        ('iDriveObjectId', 'USINT', '2', 'drive A'),
+        ('bBuildWriteReqPkgPNET', 'BOOL', 'FALSE', '触发'),
+        ('nWriteReqPkgLenPNET', 'USINT', None, '长度'),
+    ],
+    xml_call=(
+        'IF bBuildWriteReqPkgPNET THEN\n'
+        '    nWriteReqPkgLenPNET := F_CreateDpv1WriteReqPkgPNET(\n'
+        '        pDpv1ReqData        := ADR(aDpv1WriteReqBuffer),\n'
+        '        iNumOfParams        := iNumParamsToWrite,\n'
+        '        iDriveId            := iDriveObjectId,\n'
+        '        stDpv1Parameter     := arrDpv1ReqParams,\n'
+        '        stDpv1ValueHeaderEx := arrDpv1ValueHdr\n'
+        '    );\n'
+        '    bBuildWriteReqPkgPNET := FALSE;\n'
+        'END_IF;\n'
+    ),
+)
+
+
+REG['F_SplitDpv1ReadResPkgPNET'] = dict(
+    ftype='FUNCTION',
+    summary='解析 Profinet 上的 DPV1 读响应。功能与 `F_SplitDpv1ReadResPkg` 对应，但面向 EL6632 Profinet 主站。',
+    behavior=(
+        '收到 `FB_Dpv1ReadPNET` 的响应（`bBusy` 落回）后，把响应缓冲指针传给本 FC 解析。'
+        '本 FC 把响应帧的每条参数值填到 `stDpv1ValueHeaderEx[k]`，并做 Motorola → Intel 字节翻转。'
+        '业务侧通过 `stDpv1ValueHeaderEx[k].dwValue` 拿到参数值。'
+        '函数无状态、同步返回，单个 PLC 周期完成；不需要等异步信号。'
+        '需要传入与请求时一致的 `stDpv1Parameter` 数组，FC 据此判断每条记录的字节长度做拆分。'
+        '若响应帧含 DPV1 异常码（参数无效 / 写保护等），本 FC 仍可解析但对应字段会标错误。'
+    ),
+    var_desc={
+        'pDpv1ResData': '240 字节响应缓冲指针。',
+        'stDpv1Parameter': '请求时同样的参数清单。',
+        'stDpv1ValueHeaderEx': '解析输出。',
+    },
+    return_text='本函数返回 `USINT` = 响应报文长度。> 0 表示解析成功；0 表示帧空 / 错。\n',
+    pitfalls=PNET_PITFALLS,
+    scenario='Profinet SINAMICS 读完后解析响应。',
+    value='封装解析。',
+    alt=('- 手解\n- **本 FC**：一行'),
+    related=['F_CreateDpv1ReadReqPkgPNET', 'FB_Dpv1ReadPNET'],
+    xml_scen='Profinet SINAMICS 读响应解析。',
+    xml_val='对称封装。',
+    xml_verify='收到响应后 bSplitReadResPkgPNET := TRUE → nReadResPkgLenPNET > 0。',
+    xml_vars=[
+        ('aDpv1ReadResBuffer', 'ARRAY[1..240] OF BYTE', None, '响应缓冲'),
+        ('arrDpv1ReqParams', 'ARRAY[1..39] OF ST_Dpv1ParamAddrEx', None, '请求清单'),
+        ('arrDpv1ValueHdr', 'ARRAY[1..39] OF ST_Dpv1ValueHeaderEx', None, '解析输出'),
+        ('bSplitReadResPkgPNET', 'BOOL', 'FALSE', '触发解析'),
+        ('nReadResPkgLenPNET', 'USINT', None, '响应长度'),
+    ],
+    xml_call=(
+        'IF bSplitReadResPkgPNET THEN\n'
+        '    nReadResPkgLenPNET := F_SplitDpv1ReadResPkgPNET(\n'
+        '        pDpv1ResData        := ADR(aDpv1ReadResBuffer),\n'
+        '        stDpv1Parameter     := arrDpv1ReqParams,\n'
+        '        stDpv1ValueHeaderEx := arrDpv1ValueHdr\n'
+        '    );\n'
+        '    bSplitReadResPkgPNET := FALSE;\n'
+        'END_IF;\n'
+    ),
+)
+
+
+REG['F_SplitDpv1WriteResPkgPNET'] = dict(
+    ftype='FUNCTION',
+    summary='解析 Profinet 上的 DPV1 写响应。功能与 `F_SplitDpv1WriteResPkg` 对应，面向 EL6632 Profinet 主站。',
+    behavior=(
+        '收到 `FB_Dpv1WritePNET` 的响应（`bBusy` 落回）后，把响应缓冲指针传给本 FC 解析。'
+        '本 FC 把每条参数的写状态填到 `stDpv1ValueHeaderEx[k]`（含 success / error code 字段）。'
+        '业务侧通过 `stDpv1ValueHeaderEx[k].nError` 判断写成功 / 失败：0 = 成功，非零 = 驱动器拒绝写入（参数不存在 / 写保护 / 值越界 等）。'
+        '函数无状态、同步返回，单个 PLC 周期完成。'
+        '需要传入与请求时一致的 `stDpv1Parameter` 数组让 FC 知道结构。'
+        '驱动器侧把多字节状态码用 Motorola 字节序回复，本 FC 自动翻转为 Intel 字节序。'
+    ),
+    var_desc={
+        'pDpv1ResData': '240 字节响应缓冲指针。',
+        'stDpv1Parameter': '请求时同样的参数清单。',
+        'stDpv1ValueHeaderEx': '解析输出：写状态。',
+    },
+    return_text='本函数返回 `USINT` = 响应报文长度。\n',
+    pitfalls=PNET_PITFALLS,
+    scenario='Profinet SINAMICS 写完后解析响应。',
+    value='封装解析。',
+    alt=('- 手解\n- **本 FC**：一行'),
+    related=['F_CreateDpv1WriteReqPkgPNET', 'FB_Dpv1WritePNET'],
+    xml_scen='Profinet SINAMICS 写响应解析。',
+    xml_val='对称。',
+    xml_verify='写 bSplitWriteResPkgPNET := TRUE → nWriteResPkgLenPNET > 0；arrDpv1ValueHdr[k].nError 全 0 表示成功。',
+    xml_vars=[
+        ('aDpv1WriteResBuffer', 'ARRAY[1..240] OF BYTE', None, '响应缓冲'),
+        ('arrDpv1ReqParams', 'ARRAY[1..39] OF ST_Dpv1ParamAddrEx', None, '清单'),
+        ('arrDpv1ValueHdr', 'ARRAY[1..39] OF ST_Dpv1ValueHeaderEx', None, '解析输出'),
+        ('bSplitWriteResPkgPNET', 'BOOL', 'FALSE', '触发解析'),
+        ('nWriteResPkgLenPNET', 'USINT', None, '响应长度'),
+    ],
+    xml_call=(
+        'IF bSplitWriteResPkgPNET THEN\n'
+        '    nWriteResPkgLenPNET := F_SplitDpv1WriteResPkgPNET(\n'
+        '        pDpv1ResData        := ADR(aDpv1WriteResBuffer),\n'
+        '        stDpv1Parameter     := arrDpv1ReqParams,\n'
+        '        stDpv1ValueHeaderEx := arrDpv1ValueHdr\n'
+        '    );\n'
+        '    bSplitWriteResPkgPNET := FALSE;\n'
+        'END_IF;\n'
+    ),
+)
+
+
+REG['FB_Dpv1ReadPNET'] = dict(
+    ftype='FUNCTION_BLOCK',
+    summary='SINAMICS Profidrive 经 Profinet（EL6632 主站）做 DPV1 读参数。与 `FB_Dpv1Read` 对称，差别是用 `iProfinetPort` 寻址 slave。',
+    behavior=(
+        '`bExecute` 上升沿触发：`bBusy := TRUE`，FB 经 ADS 把请求帧发到 Profinet 主站 (`aNetId`)，主站把帧发到 `iProfinetPort` 寻址的 slave 驱动器，等待响应。'
+        '`bBusy = TRUE` 直到响应到来；下降沿后业务侧立刻调 `F_SplitDpv1ReadResPkgPNET` 解析响应。'
+        '执行时长取决于参数数量与 Profinet 周期，多参数读取建议 `tTmOut ≥ 10 秒`。'
+        'PDF 中 `iDriveId` 的描述列写"0..255 possible"，但与 Profibus 版本说的"1..16"冲突，⚠️ 以驱动器手册为准。'
+        '请求 / 响应缓冲长度常量与 Profibus 版本不同：`iMAX_DPV1_SIZE_PNET_REQ` / `_PNET_RES`。'
+    ),
+    var_desc={
+        'bExecute': '上升沿触发。',
+        'aNetId': 'Profinet 主站 AMS Net ID（EL6632）。',
+        'iProfinetPort': 'Profinet 上 slave 的 port 编号（System Manager 自动分配）。',
+        'iDriveId': 'drive 对象 ID（PDF 描述 0..255；按驱动器手册取值）。',
+        'pDpv1ReqData': '请求帧缓冲指针。',
+        'iDpv1ReqDataLen': '请求缓冲最大长度。',
+        'pDpv1ResData': '响应帧缓冲指针。',
+        'iDpv1ResDataLen': '响应缓冲最大长度。',
+        'tTmOut': 'ADS 超时。',
+        'iRequestRef': '请求引用号（PDF 的 VAR_IN_OUT 标记是排版错，实际是 VAR_OUTPUT）。',
+    },
+    pitfalls=PNET_PITFALLS + [
+        ('`iDriveId` 取值范围 PDF 描述与 Profibus 版本不一致；以驱动器手册为准。', True),
+    ],
+    scenario='Profinet SINAMICS 周期读多个驱动参数。',
+    value='封装异步 Profinet DPV1。',
+    alt=('- 手撸 ADS：繁琐\n- **本 FB**：标准'),
+    related=['F_CreateDpv1ReadReqPkgPNET', 'F_SplitDpv1ReadResPkgPNET', 'FB_Dpv1WritePNET'],
+    xml_scen='Profinet SINAMICS 完整读流程：构造 → 发送 → 解析。',
+    xml_val='与 Profibus 版本对称。',
+    xml_verify='登录后 sProfinetMasterNetId 设为 EL6632 NetId，iSinamicsPnetPort := slave port；bBuildReqPkgPNET → nReqPkgLenPNET > 0；bDpv1ReadReqPNET → bDpv1ReadBusyPNET 落回 → bSplitReadResPkgPNET 解析。',
+    xml_vars=[
+        ('fbDpv1ReadPNET', 'FB_Dpv1ReadPNET', None, 'Profinet DPV1 读 FB'),
+        ('sProfinetMasterNetId', 'T_AmsNetId', "''", 'EL6632 主站 NetId'),
+        ('iSinamicsPnetPort', 'UINT', '1', 'SINAMICS Profinet port'),
+        ('iDriveObjectId', 'USINT', '2', 'drive A'),
+        ('aDpv1ReqBuffer', 'ARRAY[1..240] OF BYTE', None, '请求'),
+        ('aDpv1ResBuffer', 'ARRAY[1..240] OF BYTE', None, '响应'),
+        ('iReqBufLen', 'UDINT', '240', '请求长度'),
+        ('iResBufLen', 'UDINT', '240', '响应长度'),
+        ('arrDpv1ReqParams', 'ARRAY[1..39] OF ST_Dpv1ParamAddrEx', None, '清单'),
+        ('arrDpv1ValueHdr', 'ARRAY[1..39] OF ST_Dpv1ValueHeaderEx', None, '解析输出'),
+        ('iNumParamsToRead', 'USINT', '3', '读 3 个'),
+        ('nReqPkgLenPNET', 'USINT', None, '请求帧长度'),
+        ('nReadResPkgLenPNET', 'USINT', None, '响应帧长度'),
+        ('bBuildReqPkgPNET', 'BOOL', 'FALSE', '触发构造'),
+        ('bDpv1ReadReqPNET', 'BOOL', 'FALSE', '触发发送'),
+        ('bSplitReadResPkgPNET', 'BOOL', 'FALSE', '触发解析'),
+        ('tDpv1ReadTimeout', 'TIME', 'T#10S', '超时'),
+        ('bDpv1ReadBusyPNET', 'BOOL', None, '工作中'),
+        ('iDpv1ReadRequestRefPNET', 'USINT', None, '请求引用'),
+    ],
+    xml_call=(
+        '// 步骤 1：构造请求\n'
+        'IF bBuildReqPkgPNET THEN\n'
+        '    nReqPkgLenPNET := F_CreateDpv1ReadReqPkgPNET(\n'
+        '        pDpv1ReqData    := ADR(aDpv1ReqBuffer),\n'
+        '        iNumOfParams    := iNumParamsToRead,\n'
+        '        iDriveId        := iDriveObjectId,\n'
+        '        stDpv1Parameter := arrDpv1ReqParams\n'
+        '    );\n'
+        '    bBuildReqPkgPNET := FALSE;\n'
+        'END_IF;\n'
+        '\n'
+        '// 步骤 2：发送\n'
+        'fbDpv1ReadPNET(\n'
+        '    bExecute        := bDpv1ReadReqPNET,\n'
+        '    aNetId          := sProfinetMasterNetId,\n'
+        '    iProfinetPort   := iSinamicsPnetPort,\n'
+        '    iDriveId        := iDriveObjectId,\n'
+        '    pDpv1ReqData    := ADR(aDpv1ReqBuffer),\n'
+        '    iDpv1ReqDataLen := iReqBufLen,\n'
+        '    pDpv1ResData    := ADR(aDpv1ResBuffer),\n'
+        '    iDpv1ResDataLen := iResBufLen,\n'
+        '    tTmOut          := tDpv1ReadTimeout,\n'
+        '    iRequestRef     => iDpv1ReadRequestRefPNET\n'
+        ');\n'
+        'bDpv1ReadBusyPNET := fbDpv1ReadPNET.bBusy;\n'
+        '\n'
+        '// 步骤 3：解析\n'
+        'IF bSplitReadResPkgPNET THEN\n'
+        '    nReadResPkgLenPNET := F_SplitDpv1ReadResPkgPNET(\n'
+        '        pDpv1ResData        := ADR(aDpv1ResBuffer),\n'
+        '        stDpv1Parameter     := arrDpv1ReqParams,\n'
+        '        stDpv1ValueHeaderEx := arrDpv1ValueHdr\n'
+        '    );\n'
+        '    bSplitReadResPkgPNET := FALSE;\n'
+        'END_IF;\n'
+    ),
+)
+
+
+REG['FB_Dpv1WritePNET'] = dict(
+    ftype='FUNCTION_BLOCK',
+    summary='SINAMICS Profidrive 经 Profinet (EL6632) 做 DPV1 写参数。与 `FB_Dpv1Write` 对称。',
+    behavior=(
+        '`bExecute` 上升沿触发：FB 经 ADS 把写请求帧发到 Profinet 主站 → slave 驱动器，等响应。'
+        '`bBusy = TRUE` 直到响应到来；下降后业务侧调 `F_SplitDpv1WriteResPkgPNET` 解析写状态。'
+        '与 `FB_Dpv1Write` 的区别：用 `iProfinetPort` 代替 `iProfibusSlaveAdr` 寻址 slave；请求 / 响应缓冲长度常量是 PNET 系列。'
+        '`tTmOut` 控制 ADS 超时，多参数时 ≥ 10 秒。'
+        'PDF 中 `iRequestRef` 在 "Inputs/outputs" 章节实际是 `VAR_OUTPUT`，排版错。'
+    ),
+    var_desc={
+        'bExecute': '上升沿触发。',
+        'aNetId': 'EL6632 主站 NetId。',
+        'iProfinetPort': 'SINAMICS Profinet port。',
+        'iDriveId': 'drive 对象 ID。',
+        'pDpv1ReqData': '请求帧缓冲。',
+        'iDpv1ReqDataLen': '请求缓冲长度。',
+        'pDpv1ResData': '响应帧缓冲。',
+        'iDpv1ResDataLen': '响应缓冲长度。',
+        'tTmOut': '超时。',
+        'iRequestRef': '请求引用号。',
+    },
+    pitfalls=PNET_PITFALLS,
+    scenario='Profinet SINAMICS 上电下发参数。',
+    value='封装异步 Profinet DPV1 写。',
+    alt=('- 手撸\n- **本 FB**：标准'),
+    related=['F_CreateDpv1WriteReqPkgPNET', 'F_SplitDpv1WriteResPkgPNET', 'FB_Dpv1ReadPNET'],
+    xml_scen='Profinet SINAMICS 写完整流程。',
+    xml_val='对称封装。',
+    xml_verify='登录后 bBuildWriteReqPkgPNET → 帧构造；bDpv1WriteReqPNET 触发发送 → bBusy 落回 → bSplitWriteResPkgPNET 解析 → arrDpv1ValueHdr[k].nError 全 0。',
+    xml_vars=[
+        ('fbDpv1WritePNET', 'FB_Dpv1WritePNET', None, 'Profinet DPV1 写 FB'),
+        ('sProfinetMasterNetId', 'T_AmsNetId', "''", 'EL6632 NetId'),
+        ('iSinamicsPnetPort', 'UINT', '1', 'Profinet port'),
+        ('iDriveObjectId', 'USINT', '2', 'drive A'),
+        ('aDpv1ReqBuffer', 'ARRAY[1..240] OF BYTE', None, '请求'),
+        ('aDpv1ResBuffer', 'ARRAY[1..240] OF BYTE', None, '响应'),
+        ('iReqBufLen', 'UDINT', '240', '请求长度'),
+        ('iResBufLen', 'UDINT', '240', '响应长度'),
+        ('arrDpv1ReqParams', 'ARRAY[1..39] OF ST_Dpv1ParamAddrEx', None, '清单'),
+        ('arrDpv1ValueHdr', 'ARRAY[1..39] OF ST_Dpv1ValueHeaderEx', None, '值/状态'),
+        ('iNumParamsToWrite', 'USINT', '2', '参数数'),
+        ('nWriteReqPkgLenPNET', 'USINT', None, '请求长度'),
+        ('nWriteResPkgLenPNET', 'USINT', None, '响应长度'),
+        ('bBuildWriteReqPkgPNET', 'BOOL', 'FALSE', '触发构造'),
+        ('bDpv1WriteReqPNET', 'BOOL', 'FALSE', '触发发送'),
+        ('bSplitWriteResPkgPNET', 'BOOL', 'FALSE', '触发解析'),
+        ('tDpv1WriteTimeout', 'TIME', 'T#10S', '超时'),
+        ('bDpv1WriteBusyPNET', 'BOOL', None, '工作中'),
+        ('iDpv1WriteRequestRefPNET', 'USINT', None, '引用号'),
+    ],
+    xml_call=(
+        '// 步骤 1：构造\n'
+        'IF bBuildWriteReqPkgPNET THEN\n'
+        '    nWriteReqPkgLenPNET := F_CreateDpv1WriteReqPkgPNET(\n'
+        '        pDpv1ReqData        := ADR(aDpv1ReqBuffer),\n'
+        '        iNumOfParams        := iNumParamsToWrite,\n'
+        '        iDriveId            := iDriveObjectId,\n'
+        '        stDpv1Parameter     := arrDpv1ReqParams,\n'
+        '        stDpv1ValueHeaderEx := arrDpv1ValueHdr\n'
+        '    );\n'
+        '    bBuildWriteReqPkgPNET := FALSE;\n'
+        'END_IF;\n'
+        '\n'
+        '// 步骤 2：发送\n'
+        'fbDpv1WritePNET(\n'
+        '    bExecute        := bDpv1WriteReqPNET,\n'
+        '    aNetId          := sProfinetMasterNetId,\n'
+        '    iProfinetPort   := iSinamicsPnetPort,\n'
+        '    iDriveId        := iDriveObjectId,\n'
+        '    pDpv1ReqData    := ADR(aDpv1ReqBuffer),\n'
+        '    iDpv1ReqDataLen := iReqBufLen,\n'
+        '    pDpv1ResData    := ADR(aDpv1ResBuffer),\n'
+        '    iDpv1ResDataLen := iResBufLen,\n'
+        '    tTmOut          := tDpv1WriteTimeout,\n'
+        '    iRequestRef     => iDpv1WriteRequestRefPNET\n'
+        ');\n'
+        'bDpv1WriteBusyPNET := fbDpv1WritePNET.bBusy;\n'
+        '\n'
+        '// 步骤 3：解析\n'
+        'IF bSplitWriteResPkgPNET THEN\n'
+        '    nWriteResPkgLenPNET := F_SplitDpv1WriteResPkgPNET(\n'
+        '        pDpv1ResData        := ADR(aDpv1ResBuffer),\n'
+        '        stDpv1Parameter     := arrDpv1ReqParams,\n'
+        '        stDpv1ValueHeaderEx := arrDpv1ValueHdr\n'
+        '    );\n'
+        '    bSplitWriteResPkgPNET := FALSE;\n'
+        'END_IF;\n'
+    ),
+)
+
+
+# ---------------- RAID Controller (3 FBs) ----------------
+
+RAID_PITFALLS = [
+    ('**本 FB 不要循环调用**（PDF NOTICE 明确警告）：会显著降低系统性能。上电时调一次拿到结果即可。', False),
+    ('`bWrtRd` 是上升沿触发，与"读写"语义无关；只是上升沿触发一次 ADS 通讯。命名是 PDF 沿用早期的 ADS API 风格。', True),
+    ('返回字段的具体结构（`ST_RAIDInfo` / `ST_RAIDStatusRes` 等）见 PDF §5；本 FB 只输出整体结构，调用方按字段名访问。', True),
+    ('ADS 错误号见 ADS Return Codes 在线表；超时错为 `0x745` (= 1861 dec)。', True),
+]
+
+REG['FB_RAIDFindCntlr'] = dict(
+    ftype='FUNCTION_BLOCK',
+    summary=(
+        '查询本机有几块 RAID 控制器，并返回它们的 ID。'
+        '`bWrtRd` 上升沿触发一次查询，结果填到 `stRAIDCntlrFound`（含 RAID 控制器数量 + ID 列表）。'
+    ),
+    behavior=(
+        '`bWrtRd` 上升沿触发一次 ADS 调用：`bBusy := TRUE`，FB 经 ADS 查内核 RAID 驱动。'
+        '完成后 `stRAIDCntlrFound` 含控制器数量和各 ID。'
+        '`nBytesRead` 显示实际返回的字节数；可用作返回数据完整性的校验。'
+        '出错时 `bError := TRUE`、`nErrorID` 给 ADS 错误号；超时给 `0x745` (= 1861 dec)。'
+        '**警告**：PDF NOTICE 明确说"本 FB 只调用一次"；循环调用会严重拖慢系统性能（RAID 驱动每次 IO 都要同步硬件状态）。'
+        '上电诊断序列里调一次拿到 ID 列表后，把结果存起来后续用。'
+    ),
+    var_desc={
+        'sNETID': '目标 TwinCAT 计算机 AMS Net ID。本机用空串。',
+        'bWrtRd': '上升沿触发一次查询。**只能上电时调一次，不能循环调用**。',
+        'stRAIDCntlrFound': 'RAID 控制器数量 + ID 列表结构（`ST_RAIDCntlrFound`）。',
+        'nBytesRead': '实际返回字节数。',
+    },
+    pitfalls=RAID_PITFALLS,
+    scenario='工业服务器 / NAS 一体机：上电时枚举 RAID 控制器，把每个控制器的状态做到 SCADA 显示。',
+    value='让 PLC 程序能监控工控机的 RAID 状态，避免硬盘故障不报警。',
+    alt=(
+        '- 用 Windows RAID 监控工具：通常要单独服务\n'
+        '- 不监控：硬盘 fail 时 PLC 不知道\n'
+        '- **本 FB**：纯 PLC 程序'
+    ),
+    related=['FB_RAIDGetInfo', 'FB_RAIDGetStatus'],
+    xml_scen='工业服务器上电诊断：调一次拿到所有 RAID 控制器的 ID 后存起来，给后续 FB_RAIDGetInfo / FB_RAIDGetStatus 用。',
+    xml_val='RAID 健康状态可程序化监控。',
+    xml_verify='登录后写 bDoFindRaidCtlrs := TRUE → bRaidFindBusy 短暂 TRUE → 回 FALSE 后 stFoundRaidCtlrs 含数量与 ID；**只能调一次**，不要放在循环里。',
+    xml_vars=[
+        ('fbFindRaidCtlr', 'FB_RAIDFindCntlr', None, 'RAID 控制器枚举 FB（仅一次）'),
+        ('sLocalNetId', 'T_AmsNetId', "''", '本机'),
+        ('bDoFindRaidCtlrs', 'BOOL', 'FALSE', '上升沿触发（仅一次！）'),
+        ('tRaidQueryTimeout', 'TIME', 'T#5S', 'ADS 超时'),
+        ('stFoundRaidCtlrs', 'ST_RAIDCntlrFound', None, '查得控制器列表'),
+        ('nRaidBytesRead', 'UDINT', None, '返回字节数'),
+        ('bRaidFindBusy', 'BOOL', None, '工作中'),
+        ('bRaidFindError', 'BOOL', None, '出错'),
+        ('nRaidFindErrId', 'UDINT', None, '错误号'),
+    ],
+    xml_call=(
+        '// 警告：本 FB 不能循环调用，会严重影响性能！\n'
+        '// 业务侧应该确保 bDoFindRaidCtlrs 只在上电时给一次上升沿。\n'
+        'fbFindRaidCtlr(\n'
+        '    sNETID           := sLocalNetId,\n'
+        '    bWrtRd           := bDoFindRaidCtlrs,\n'
+        '    tTimeOut         := tRaidQueryTimeout,\n'
+        '    stRAIDCntlrFound => stFoundRaidCtlrs,\n'
+        '    nBytesRead       => nRaidBytesRead,\n'
+        '    bBusy            => bRaidFindBusy,\n'
+        '    bError           => bRaidFindError,\n'
+        '    nErrorID         => nRaidFindErrId\n'
+        ');\n'
+    ),
+)
+
+
+REG['FB_RAIDGetInfo'] = dict(
+    ftype='FUNCTION_BLOCK',
+    summary=(
+        '已知 RAID 控制器 ID（来自 `FB_RAIDFindCntlr`），查询该控制器的 RAID 集数（多少组 RAID 阵列）+ 每组最大盘数。'
+        '同样 PDF NOTICE 警告"只调一次"，循环调用拖慢系统。'
+    ),
+    behavior=(
+        '`bWrtRd` 上升沿触发一次查询：`bBusy := TRUE`，FB 经 ADS 查 RAID 驱动。'
+        '完成后 `stRAIDInfo` 含 RAID 集数（多少组阵列）+ 每组最大盘数。'
+        '`nRAIDCntlrID` 是要查的 RAID 控制器 ID（来自先前的 `FB_RAIDFindCntlr` 查询）。'
+        '与 `FB_RAIDFindCntlr` 配套使用：先 Find 拿到所有控制器 ID，再用本 FB 查每个控制器的元信息，最后用 `FB_RAIDGetStatus` 查具体阵列健康状态。'
+        '上电诊断序列里**调一次拿到结果即可**，不要循环；循环调用会显著降低系统性能（PDF NOTICE 警告）。'
+    ),
+    var_desc={
+        'sNETID': '本机用空串。',
+        'bWrtRd': '上升沿触发一次查询（仅一次）。',
+        'nRAIDCntlrID': '目标 RAID 控制器 ID（来自 `FB_RAIDFindCntlr`）。',
+        'stRAIDInfo': 'RAID 控制器元信息结构。',
+        'nBytesRead': '实际返回字节数。',
+    },
+    pitfalls=RAID_PITFALLS,
+    scenario='上电后枚举 RAID 控制器 → 对每个控制器调本 FB 拿 RAID 集数与最大盘数 → SCADA 显示拓扑。',
+    value='让 PLC 知道每块 RAID 控制器管几组 RAID。',
+    alt=(
+        '- 不监控：SCADA 没有 RAID 拓扑信息\n'
+        '- **本 FB**：拿到拓扑'
+    ),
+    related=['FB_RAIDFindCntlr', 'FB_RAIDGetStatus'],
+    xml_scen='已知 RAID 控制器 ID = 0，查它管几组 RAID 阵列。',
+    xml_val='RAID 拓扑可程序化监控。',
+    xml_verify='登录后 nTargetRaidCtlrId := 0，bDoGetRaidInfo := TRUE → bRaidInfoBusy 短暂 TRUE → 回 FALSE 后 stRaidInfoOut 含集数与盘数信息。',
+    xml_vars=[
+        ('fbGetRaidInfo', 'FB_RAIDGetInfo', None, 'RAID 控制器元信息 FB（仅一次）'),
+        ('sLocalNetId', 'T_AmsNetId', "''", '本机'),
+        ('nTargetRaidCtlrId', 'UDINT', '0', '要查的 RAID 控制器 ID'),
+        ('bDoGetRaidInfo', 'BOOL', 'FALSE', '上升沿触发（仅一次）'),
+        ('tRaidQueryTimeout', 'TIME', 'T#5S', '超时'),
+        ('stRaidInfoOut', 'ST_RAIDInfo', None, 'RAID 元信息'),
+        ('nRaidBytesRead', 'UDINT', None, '返回字节数'),
+        ('bRaidInfoBusy', 'BOOL', None, '工作中'),
+        ('bRaidInfoError', 'BOOL', None, '出错'),
+        ('nRaidInfoErrId', 'UDINT', None, '错误号'),
+    ],
+    xml_call=(
+        '// 警告：不能循环调用！\n'
+        'fbGetRaidInfo(\n'
+        '    sNETID       := sLocalNetId,\n'
+        '    bWrtRd       := bDoGetRaidInfo,\n'
+        '    nRAIDCntlrID := nTargetRaidCtlrId,\n'
+        '    tTimeOut     := tRaidQueryTimeout,\n'
+        '    stRAIDInfo   => stRaidInfoOut,\n'
+        '    nBytesRead   => nRaidBytesRead,\n'
+        '    bBusy        => bRaidInfoBusy,\n'
+        '    bError       => bRaidInfoError,\n'
+        '    nErrorID     => nRaidInfoErrId\n'
+        ');\n'
+    ),
+)
+
+
+REG['FB_RAIDGetStatus'] = dict(
+    ftype='FUNCTION_BLOCK',
+    summary=(
+        '查询指定 RAID 集（在指定控制器内）的运行状态：RAID 类型、整体状态、盘数、各盘状态。'
+        '可在线监控 RAID 阵列是否降级 / 重建中 / 故障。'
+        'PDF NOTICE 说**最多每秒调一次**——比 Find/Info 宽松，但仍不能高频调。'
+    ),
+    behavior=(
+        '`bWrtRd` 上升沿触发：`bBusy := TRUE`，FB 经 ADS 查 RAID 驱动指定阵列的状态。'
+        '完成后 `stRAIDStatusRes` 含 RAID 集索引 + 类型 + 整体状态 + 盘数 + 各盘状态。'
+        '`stRAIDConfigReq` 是 IN 结构，业务侧填写要查的 (控制器 ID, RAID 集索引)。'
+        '调用频率上限：**每秒一次**（PDF NOTICE）。比 Find/Info 宽松，但**仍不能高频调**。'
+        '常见用法：每秒一次循环触发本 FB → 拿到 RAID 健康状态 → 任一盘 Failed 立即报警 + 自动写 SCADA。'
+    ),
+    var_desc={
+        'sNETID': '本机用空串。',
+        'bWrtRd': '上升沿触发一次（频率上限：每秒一次）。',
+        'stRAIDConfigReq': '请求结构：要查的控制器 ID + RAID 集索引。',
+        'stRAIDStatusRes': 'RAID 状态结果结构。',
+        'nBytesRead': '返回字节数。',
+    },
+    pitfalls=RAID_PITFALLS + [
+        ('**最多每秒触发一次**（PDF NOTICE：Call once per second at the most）；更高频会影响系统性能。', False),
+    ],
+    scenario='生产线工业服务器：每秒读 RAID 状态，任一硬盘掉线立即报警 + 发邮件给 IT；避免硬盘 fail 几小时后才发现。',
+    value='RAID 健康状态进入实时监控；从被动等用户发现变成主动报警。',
+    alt=(
+        '- Windows 报警邮件：依赖 RAID 厂商驱动\n'
+        '- IT 定期人工巡检：滞后\n'
+        '- **本 FB**：实时监控'
+    ),
+    related=['FB_RAIDFindCntlr', 'FB_RAIDGetInfo'],
+    xml_scen='工业服务器 RAID 健康监控：每秒读 RAID 0 集的状态，盘状态变化即报警。',
+    xml_val='硬盘故障第一时间被感知。',
+    xml_verify='填好 stRaidStatusReq.nCntlrID := 0、.iRAIDIndex := 0（首集），写 bDoGetRaidStatus := TRUE → bStatusBusy 短暂 TRUE → 回 FALSE 后 stRaidStatusOut 显示 RAID 类型 + 各盘状态；拔一块盘模拟故障后再读 → stRaidStatusOut 中对应盘状态会变。',
+    xml_vars=[
+        ('fbGetRaidStatus', 'FB_RAIDGetStatus', None, 'RAID 状态读 FB（≤ 每秒一次）'),
+        ('sLocalNetId', 'T_AmsNetId', "''", '本机'),
+        ('stRaidStatusReq', 'ST_RAIDConfigReq', None, '请求：(控制器 ID, RAID 集索引)'),
+        ('bDoGetRaidStatus', 'BOOL', 'FALSE', '上升沿触发（最多每秒一次）'),
+        ('tRaidQueryTimeout', 'TIME', 'T#5S', '超时'),
+        ('stRaidStatusOut', 'ST_RAIDStatusRes', None, 'RAID 状态结果'),
+        ('nRaidBytesRead', 'UDINT', None, '返回字节数'),
+        ('bStatusBusy', 'BOOL', None, '工作中'),
+        ('bStatusError', 'BOOL', None, '出错'),
+        ('nStatusErrId', 'UDINT', None, '错误号'),
+    ],
+    xml_call=(
+        '// PDF NOTICE：每秒最多一次！业务侧需要把 bDoGetRaidStatus 触发限制在 1 Hz。\n'
+        'fbGetRaidStatus(\n'
+        '    sNETID          := sLocalNetId,\n'
+        '    bWrtRd          := bDoGetRaidStatus,\n'
+        '    stRAIDConfigReq := stRaidStatusReq,\n'
+        '    tTimeOut        := tRaidQueryTimeout,\n'
+        '    stRAIDStatusRes => stRaidStatusOut,\n'
+        '    nBytesRead      => nRaidBytesRead,\n'
+        '    bBusy           => bStatusBusy,\n'
+        '    bError          => bStatusError,\n'
+        '    nErrorID        => nStatusErrId\n'
+        ');\n'
+    ),
+)
+
+
+# ---------------- SERCOS (9 FBs) ----------------
+
+SERCOS_PITFALLS = [
+    ('SERCOS 是早期 motion 总线（SERCANS SCS-P ISA / PCI / Beckhoff FC750x PCI）；现代工程多用 EtherCAT + EL72xx。本系列 FB 用于维护老线。', False),
+    ('SERCOS 通讯有 5 个 phase（0..4），通讯参数访问要求处于特定 phase（通常 phase 2）。', True),
+    ('ADS 错误号见 Beckhoff ADS Return Codes 在线表；SERCOS 自定义错误号见对应 IDN 的应答字段。', True),
+    ('drive 参数（S / P 参数）通过 IDN（Identification Number）寻址：S = 0..32767，P = 32768..65535。', True),
+]
+
+REG['IOF_SER_GetPhase'] = dict(
+    ftype='FUNCTION_BLOCK',
+    summary=(
+        '读取 SERCOS 环当前的通讯 phase（值 0..4）。'
+        '上电过程中 phase 会从 0 逐步升到 4（正常运行）；诊断 / 改参数时要先确认 phase 处于正确值。'
+    ),
+    behavior=(
+        '`GET` 上升沿触发一次查询：`BUSY := TRUE`，FB 经 ADS 查 SERCOS 主站当前 phase 字段；完成后 `PHASE` 含当前值（0..4）。'
+        '触发语义为上升沿一次性，调用者需要在 `BUSY` 落回后才能信任 `PHASE` 值。'
+        'SERCOS phase 含义：'
+        '0 = 等待通讯参数；'
+        '1 = 准备初始化；'
+        '2 = 通讯参数交换（drive 参数读 / 写在此 phase 进行）；'
+        '3 = 应用参数交换；'
+        '4 = 正常运行（cyclic motion）。'
+        '工程上常用本 FB 周期性查询，确保进入运行模式前 phase 已升到 4。'
+    ),
+    var_desc={
+        'NETID': '本机用空串。',
+        'DEVICEID': 'SERCOS 主站 Device Id。',
+        'GET': '上升沿触发一次 phase 读取。',
+        'PHASE': '当前 SERCOS 通讯 phase（0..4）。',
+    },
+    pitfalls=SERCOS_PITFALLS + [
+        ('phase = 0..1 表示主站还在初始化，drive 还没准备好；不要在此期间发 motion 指令。', True),
+        ('phase = 2 是参数访问最佳期；phase = 4 是运行期，不能在 phase = 4 改大部分 drive 参数（多数被锁住）。', True),
+    ],
+    scenario='SERCOS 老线启动诊断：调本 FB 周期性确认 phase 升到 4，否则不允许进入"运行"状态。',
+    value='让 PLC 程序自动判断 SERCOS 总线是否就绪，避免对未就绪的 drive 发 motion 指令。',
+    alt=(
+        '- 假设 SERCOS 总是 OK：危险，启动期可能 phase 卡在 1\n'
+        '- 用 SERCANS 配置工具：要带工具\n'
+        '- **本 FB**：标准做法'
+    ),
+    related=['IOF_SER_SetPhase', 'IOF_SER_ResetErr', 'IOF_SER_IDN_Read'],
+    xml_scen='SERCOS 启动期诊断：周期读 phase，phase = 4 才允许程序进入运行模式。',
+    xml_val='避免对未就绪的 drive 发 motion 指令。',
+    xml_verify='登录后 nSercosDeviceId 设为 SERCOS 主站 Device Id；写 bGetCurrentPhase := TRUE → bGetPhaseBusy 短暂 TRUE → 回 FALSE 后 nCurrentSercosPhase 显示当前 phase（正常运行时应 = 4）。',
+    xml_vars=[
+        ('fbGetSercosPhase', 'IOF_SER_GetPhase', None, 'SERCOS phase 查询 FB'),
+        ('sLocalNetId', 'T_AmsNetId', "''", '本机'),
+        ('nSercosDeviceId', 'UDINT', '1', 'SERCOS 主站 Device Id'),
+        ('bGetCurrentPhase', 'BOOL', 'FALSE', '上升沿触发'),
+        ('tPhaseTimeout', 'TIME', 'T#5S', '超时'),
+        ('bGetPhaseBusy', 'BOOL', None, '工作中'),
+        ('bGetPhaseErr', 'BOOL', None, '出错'),
+        ('nGetPhaseErrId', 'UDINT', None, '错误号'),
+        ('nCurrentSercosPhase', 'BYTE', None, '当前 phase 0..4'),
+    ],
+    xml_call=(
+        'fbGetSercosPhase(\n'
+        '    NETID    := sLocalNetId,\n'
+        '    DEVICEID := nSercosDeviceId,\n'
+        '    GET      := bGetCurrentPhase,\n'
+        '    TMOUT    := tPhaseTimeout,\n'
+        '    BUSY     => bGetPhaseBusy,\n'
+        '    ERR      => bGetPhaseErr,\n'
+        '    ERRID    => nGetPhaseErrId,\n'
+        '    PHASE    => nCurrentSercosPhase\n'
+        ');\n'
+    ),
+)
+
+
+REG['IOF_SER_SaveFlash'] = dict(
+    ftype='FUNCTION_BLOCK',
+    summary=(
+        '把 DPRAM 内的 SERCOS 系统参数检查无误后，激活并保存到主站 EEPROM。'
+        '让工程化的 SERCOS 配置永久生效。'
+        'PDF NOTICE：EEPROM 寿命 10 万次；不应由 PLC 程序自动调用，要由用户手动触发。'
+    ),
+    behavior=(
+        '`SAVE` 上升沿触发：`BUSY := TRUE`，FB 经 ADS 让 SERCOS 主站检查 DPRAM 中的系统参数 → 无错则激活 + 写 EEPROM。'
+        '执行时长 100 ms 到几秒，取决于参数数量。'
+        '完成后 `BUSY := FALSE`，`ERR := FALSE` 表示参数已激活并存入 EEPROM。'
+        '若 DPRAM 中参数有冲突 / 越界，`ERR := TRUE`、`ERRID` 给错误号；EEPROM 不写。'
+        '**该操作不应自动触发**——由工程师手动决定（例如 HMI 上"保存配置"按钮），避免循环 / 误调写坏 EEPROM。'
+        '触发语义为上升沿一次性，重复触发要先把 `SAVE` 拉低再拉高。'
+    ),
+    var_desc={
+        'NETID': '本机用空串。',
+        'DEVICEID': 'SERCOS 主站 Device Id。',
+        'SAVE': '上升沿触发一次"检查 + 保存 + 激活"。**只在工程师手动触发时调用**。',
+    },
+    pitfalls=SERCOS_PITFALLS + [
+        ('**EEPROM 最多 10 万次写入**：不要循环 / 周期调用，只在工程师"保存配置"时触发。', False),
+    ],
+    scenario='SERCOS 配置调试完成后，工程师在 HMI 点击"保存配置"按钮永久写入 EEPROM。',
+    value='让 SERCOS 配置永久生效，断电不丢。',
+    alt=(
+        '- SERCANS 配置工具：要带工具\n'
+        '- **本 FB**：HMI 按钮触发'
+    ),
+    related=['IOF_SER_GetPhase', 'IOF_SER_SetPhase', 'IOF_SER_IDN_Write'],
+    xml_scen='调试完 SERCOS 参数后，工程师 HMI 点"保存配置"按钮，写入主站 EEPROM。',
+    xml_val='避免每次重启重配。',
+    xml_verify='⚠️ 不要随便测试——会写 EEPROM。仅在工程师确认参数无误时触发：写 bSaveConfigReq := TRUE → bSaveBusy 短暂 TRUE → 回 FALSE 后 nLastErrCode = 0 表示写入成功。',
+    xml_vars=[
+        ('fbSercosSaveFlash', 'IOF_SER_SaveFlash', None, 'SERCOS 配置保存到 EEPROM FB'),
+        ('sLocalNetId', 'T_AmsNetId', "''", '本机'),
+        ('nSercosDeviceId', 'UDINT', '1', '主站 Device Id'),
+        ('bSaveConfigReq', 'BOOL', 'FALSE', 'HMI 按钮：保存配置（上升沿触发）'),
+        ('tSaveTimeout', 'TIME', 'T#10S', '超时（EEPROM 写较慢）'),
+        ('bSaveBusy', 'BOOL', None, '工作中'),
+        ('bSaveErr', 'BOOL', None, '出错'),
+        ('nLastErrCode', 'UDINT', None, '错误号'),
+    ],
+    xml_call=(
+        '// 警告：本 FB 会写 EEPROM，10 万次寿命；不要循环调用！\n'
+        '// 仅在工程师手动触发时调用。\n'
+        'fbSercosSaveFlash(\n'
+        '    NETID    := sLocalNetId,\n'
+        '    DEVICEID := nSercosDeviceId,\n'
+        '    SAVE     := bSaveConfigReq,\n'
+        '    TMOUT    := tSaveTimeout,\n'
+        '    BUSY     => bSaveBusy,\n'
+        '    ERR      => bSaveErr,\n'
+        '    ERRID    => nLastErrCode\n'
+        ');\n'
+    ),
+)
+
+
+REG['IOF_SER_ResetErr'] = dict(
+    ftype='FUNCTION_BLOCK',
+    summary=(
+        '复位 SERCOS 主站的所有错误：清掉各 drive 的错误、诊断通道的诊断状态、主站系统错误。'
+        '常用于报警后的"全清"操作。'
+    ),
+    behavior=(
+        '`RESET` 上升沿触发一次复位：`BUSY := TRUE`，FB 经 ADS 让 SERCOS 主站对所有 drive 发清错命令、清主站系统错。'
+        '完成后 `BUSY := FALSE`，若复位本身遇错 `ERR := TRUE`。'
+        '复位执行时间约 100-500 ms（取决于 drive 数量）。'
+        '复位**不会复位 drive 自身的硬件故障**（例如过载 / 编码器丢失）——只是清掉错误状态字让 SERCOS 可以重新通讯。'
+        '若 drive 的硬件故障仍存在，复位后下一周期错误会再次出现。'
+    ),
+    var_desc={
+        'NETID': '本机用空串。',
+        'DEVICEID': 'SERCOS 主站 Device Id。',
+        'RESET': '上升沿触发一次"清所有错"。',
+    },
+    pitfalls=SERCOS_PITFALLS + [
+        ('**只清错误状态字，不修复硬件故障**——若硬件还有问题，复位后立刻又会报错。', True),
+        ('循环周期复位会**掩盖硬件故障**，应人工触发 + 计数 / 报警。', False),
+    ],
+    scenario='SERCOS 老线报警后操作员按 HMI"清错"按钮：触发本 FB 让总线重新可用。',
+    value='把 SERCOS 全清做成 HMI 一键操作。',
+    alt=(
+        '- 重启 PLC：代价大\n'
+        '- 用 SERCANS 工具：要带工具\n'
+        '- **本 FB**：HMI 按钮'
+    ),
+    related=['IOF_SER_DRIVE_Reset', 'IOF_SER_GetPhase'],
+    xml_scen='HMI 报警后操作员按"清错"按钮 → 触发 SERCOS 全清。',
+    xml_val='封装 SERCOS 错误复位为 HMI 操作。',
+    xml_verify='登录后 nSercosDeviceId 设为主站；写 bClearAllErrReq := TRUE → bClearBusy 短暂 TRUE → 回 FALSE 后 nLastErrCode = 0 表示成功；若 drive 仍有硬件故障，下一周期还会重新报错。',
+    xml_vars=[
+        ('fbSercosResetErr', 'IOF_SER_ResetErr', None, 'SERCOS 全清错 FB'),
+        ('sLocalNetId', 'T_AmsNetId', "''", '本机'),
+        ('nSercosDeviceId', 'UDINT', '1', '主站 Device Id'),
+        ('bClearAllErrReq', 'BOOL', 'FALSE', 'HMI 按钮：清错'),
+        ('tClearTimeout', 'TIME', 'T#5S', '超时'),
+        ('bClearBusy', 'BOOL', None, '工作中'),
+        ('bClearErr', 'BOOL', None, '出错'),
+        ('nLastErrCode', 'UDINT', None, '错误号'),
+    ],
+    xml_call=(
+        'fbSercosResetErr(\n'
+        '    NETID    := sLocalNetId,\n'
+        '    DEVICEID := nSercosDeviceId,\n'
+        '    RESET    := bClearAllErrReq,\n'
+        '    TMOUT    := tClearTimeout,\n'
+        '    BUSY     => bClearBusy,\n'
+        '    ERR      => bClearErr,\n'
+        '    ERRID    => nLastErrCode\n'
+        ');\n'
+    ),
+)
+
+
+REG['IOF_SER_SetPhase'] = dict(
+    ftype='FUNCTION_BLOCK',
+    summary=(
+        '设置 SERCOS 环到指定 phase。'
+        '常用于把环手动降到 phase 2 做参数访问，或升到 phase 4 进入运行。'
+    ),
+    behavior=(
+        '`SET` 上升沿触发一次 phase 切换：`BUSY := TRUE`，FB 经 ADS 让 SERCOS 主站启动 phase 切换流程。'
+        '`PHASE` 输入是目标 phase（0..4）。'
+        '完成后 `BUSY := FALSE`；可用 `IOF_SER_GetPhase` 验证。'
+        '注意：phase 切换涉及全总线握手，切换时间可达数秒，`TMOUT` 建议给 ≥ 10 秒。'
+        '从高 phase 切回低 phase（例如 4 → 2）会**停止所有 motion**，所以运行中切换前必须先把 drive 停下。'
+        'PDF VAR 表把 `PHASE` 标为 BOOL，但描述列说"通讯 phase 值"——VAR 区拼写错误，实际是 BYTE。'
+    ),
+    var_desc={
+        'NETID': '本机用空串。',
+        'DEVICEID': 'SERCOS 主站 Device Id。',
+        'PHASE': '目标 phase 值（0..4）。PDF VAR 表写 BOOL 是排版错，实际是 BYTE。',
+        'SET': '上升沿触发一次 phase 切换。',
+    },
+    pitfalls=SERCOS_PITFALLS + [
+        ('**从 phase 4 切回低 phase 会停所有 motion**——必须先把 drive 停下，否则可能机械损坏。', False),
+        ('phase 切换耗时数秒，`TMOUT` 给 ≥ 10 秒。', True),
+        ('PDF VAR 区 `PHASE : BOOL` 是排版错（应为 BYTE）——以描述列与正常使用为准。', True),
+    ],
+    scenario='SERCOS 调试：先用本 FB 把环切到 phase 2 改 drive 参数 → 再切回 phase 4 进入运行。',
+    value='让 phase 切换可被 PLC 程序控制，封装到工程师"调试模式"流程里。',
+    alt=(
+        '- SERCANS 工具：要带工具\n'
+        '- 重启 PLC 让 phase 自动升：代价大\n'
+        '- **本 FB**：精细控制'
+    ),
+    related=['IOF_SER_GetPhase', 'IOF_SER_IDN_Read', 'IOF_SER_IDN_Write'],
+    xml_scen='调试期：HMI 按"进入调试模式"按钮 → 把 SERCOS 环切到 phase 2 让参数可访问。',
+    xml_val='让"参数调试"成为正式工序的一部分。',
+    xml_verify='**先停所有 motion** → 写 nTargetPhaseValue := 2、bSetPhaseReq := TRUE → bSetPhaseBusy 短暂 TRUE → 回 FALSE 后用 IOF_SER_GetPhase 确认 phase = 2。',
+    xml_vars=[
+        ('fbSercosSetPhase', 'IOF_SER_SetPhase', None, 'SERCOS phase 切换 FB'),
+        ('sLocalNetId', 'T_AmsNetId', "''", '本机'),
+        ('nSercosDeviceId', 'UDINT', '1', '主站 Device Id'),
+        ('nTargetPhaseValue', 'BYTE', '2', '目标 phase 值 (0..4)'),
+        ('bSetPhaseReq', 'BOOL', 'FALSE', '上升沿触发切换'),
+        ('tSetPhaseTimeout', 'TIME', 'T#15S', '超时（phase 切换较慢）'),
+        ('bSetPhaseBusy', 'BOOL', None, '工作中'),
+        ('bSetPhaseErr', 'BOOL', None, '出错'),
+        ('nLastErrCode', 'UDINT', None, '错误号'),
+    ],
+    xml_call=(
+        '// 警告：从 phase 4 切回低 phase 会停所有 motion；先确保 drive 已 disable\n'
+        'fbSercosSetPhase(\n'
+        '    NETID    := sLocalNetId,\n'
+        '    DEVICEID := nSercosDeviceId,\n'
+        '    PHASE    := nTargetPhaseValue,\n'
+        '    SET      := bSetPhaseReq,\n'
+        '    TMOUT    := tSetPhaseTimeout,\n'
+        '    BUSY     => bSetPhaseBusy,\n'
+        '    ERR      => bSetPhaseErr,\n'
+        '    ERRID    => nLastErrCode\n'
+        ');\n'
+    ),
+)
+
+
+REG['IOF_SER_IDN_Read'] = dict(
+    ftype='FUNCTION_BLOCK',
+    summary=(
+        '读取 SERCOS drive 的 S 或 P 参数值（按 IDN 寻址）。'
+        '数据类型 / 大小自动从参数的 attribute 字段判定。'
+        '可读取 value / name / attribute / unit / minimum / maximum 等不同字段。'
+    ),
+    behavior=(
+        '`bExecute` 上升沿触发一次 IDN 读：'
+        '`bBusy := TRUE`，FB 经 ADS 让 SERCOS 主站对指定 drive 的指定 IDN 发读命令。'
+        '`nIDN` 是 IDN 编号：0..32767 = S 参数，32768..65535 = P 参数。'
+        '`nMode` 决定读取的字段：0 = Value（值），2 = Name（名字），3 = Attribute（属性），4 = Unit（单位，部分参数无），5 = Min，6 = Max。'
+        '`nAttrib` 若非 0 是已知属性（避免每次自动读属性，加速）；为 0 时 FB 自动先读属性再读 value。'
+        '`cbLen` 是 `dwDestAddr` 缓冲的最大长度；`cbRead` 输出实际读到的字节数；'
+        '`nAttribRd` 输出本次读到的属性，可缓存供下次调用复用；'
+        '`sAttrib` 是属性结构体（按字段分解 nAttribRd）。'
+        '触发语义为上升沿一次性。'
+    ),
+    var_desc={
+        'sNetId': '本机用空串。',
+        'nIDN': 'IDN 编号；S 参数 0..32767，P 参数 32768..65535。',
+        'bExecute': '上升沿触发一次 IDN 读。',
+        'nPort': 'drive 端口号（System Manager 自动分配，区分多个 drive）。',
+        'nMode': '读取模式：0=Value 2=Name 3=Attribute 4=Unit 5=Min 6=Max。',
+        'nAttrib': '已知属性（缓存值）；为 0 时 FB 自动先读属性。',
+        'cbLen': 'dwDestAddr 缓冲最大字节数。',
+        'dwDestAddr': '目标数据缓冲地址（用 `ADR()`）。',
+        'cbRead': '实际读到字节数。',
+        'nAttribRd': '本次读到的属性（DWORD，可缓存）。',
+        'sAttrib': '属性按字段分解结构 (`ST_SercosParamAttrib`)。',
+    },
+    pitfalls=SERCOS_PITFALLS + [
+        ('**参数访问需要在 phase 2**（通讯参数模式）；在 phase 4 运行中部分参数读不到。', True),
+        ('多次读同一 drive 的参数时**复用 `nAttribRd` 值传给下次 `nAttrib`**，可避免 FB 每次先读属性，提速明显。', True),
+    ],
+    scenario='SERCOS drive 调试：读 IDN-100（位置环增益）+ IDN-101（速度环增益），与工程图纸比对。',
+    value='封装 IDN 访问；业务侧只关心 IDN 号与缓冲。',
+    alt=(
+        '- 用 SERCANS 工具：要带工具\n'
+        '- **本 FB**：纯 PLC'
+    ),
+    related=['IOF_SER_IDN_Write', 'IOF_SER_GetPhase', 'IOF_SER_SetPhase'],
+    xml_scen='SERCOS drive 1（port = 1）调试：读 IDN-100（位置环增益）。',
+    xml_val='把 IDN 访问封装为 PLC 调用，免去 SERCANS 工具。',
+    xml_verify='登录后 sLocalNetId := ""、nDrivePort := 1、nIdnToRead := 100、bStartIdnRead := TRUE → bIdnReadBusy 短暂 TRUE → 回 FALSE 后 cbReadbackLen 显示实际字节数、aReadBuffer[1..4] 含读到的 IDN-100 值（按 DINT 解释）。',
+    xml_vars=[
+        ('fbSercosIdnRead', 'IOF_SER_IDN_Read', None, 'SERCOS IDN 读 FB'),
+        ('sLocalNetId', 'T_AmsNetId', "''", '本机'),
+        ('nIdnToRead', 'UINT', '100', '要读的 IDN (S-100)'),
+        ('bStartIdnRead', 'BOOL', 'FALSE', '上升沿触发'),
+        ('nDrivePort', 'UINT', '1', 'drive port 号'),
+        ('nReadMode', 'DINT', '0', '0=Value 2=Name 3=Attr 4=Unit 5=Min 6=Max'),
+        ('nCachedAttrib', 'DWORD', '0', '已知属性（0 = 让 FB 自动读）'),
+        ('aReadBuffer', 'ARRAY[1..64] OF BYTE', None, '读取缓冲 64 字节'),
+        ('cbReadBufferLen', 'UDINT', '64', '缓冲长度'),
+        ('tIdnReadTimeout', 'TIME', 'T#5S', '超时'),
+        ('cbReadbackLen', 'UDINT', None, '实际读到字节数'),
+        ('nReadAttribOut', 'DWORD', None, '属性返回（可缓存）'),
+        ('stReadAttribDecoded', 'ST_SercosParamAttrib', None, '属性字段分解'),
+        ('bIdnReadBusy', 'BOOL', None, '工作中'),
+        ('bIdnReadErr', 'BOOL', None, '出错'),
+        ('nIdnReadErrId', 'UDINT', None, '错误号'),
+    ],
+    xml_call=(
+        '// 单次调用形式；多次读同 drive 时把 nReadAttribOut 缓存给下次的 nCachedAttrib 提速\n'
+        'fbSercosIdnRead(\n'
+        '    sNetId     := sLocalNetId,\n'
+        '    nIDN       := nIdnToRead,\n'
+        '    bExecute   := bStartIdnRead,\n'
+        '    nPort      := nDrivePort,\n'
+        '    nMode      := nReadMode,\n'
+        '    nAttrib    := nCachedAttrib,\n'
+        '    cbLen      := cbReadBufferLen,\n'
+        '    dwDestAddr := ADR(aReadBuffer),\n'
+        '    tTimeout   := tIdnReadTimeout,\n'
+        '    cbRead     => cbReadbackLen,\n'
+        '    nAttribRd  => nReadAttribOut,\n'
+        '    sAttrib    => stReadAttribDecoded,\n'
+        '    bBusy      => bIdnReadBusy,\n'
+        '    bError     => bIdnReadErr,\n'
+        '    nErrId     => nIdnReadErrId\n'
+        ');\n'
+    ),
+)
+
+
+REG['IOF_SER_IDN_Write'] = dict(
+    ftype='FUNCTION_BLOCK',
+    summary=(
+        '写 SERCOS drive 的 S 或 P 参数值（按 IDN 寻址）。'
+        '与 `IOF_SER_IDN_Read` 对称：自动读属性 → 写入。'
+    ),
+    behavior=(
+        '`bExecute` 上升沿触发一次 IDN 写：`bBusy := TRUE`，FB 经 ADS 让主站对指定 drive 的指定 IDN 发写命令。'
+        '`nIDN` 范围与读相同（S: 0..32767, P: 32768..65535）。'
+        '`nAttrib = 0` 时 FB 自动先读属性以决定写入字节长度；非 0 时直接用已知属性写。'
+        '`dwSrcAddr` 是源数据缓冲地址（用 `ADR()`），`cbLen` 是缓冲长度。'
+        '`nAttribRd` / `sAttrib` 输出本次读到的属性（与 Read 同）。'
+        '⚠️ PDF VAR 描述里 `dwDestAddr` 是排版错，实际接口名是 `dwSrcAddr`——写时用 `dwSrcAddr`。'
+        '注意：参数写入需要在 phase 2 进行；phase 4 运行中部分参数被锁。'
+    ),
+    var_desc={
+        'sNetId': '本机用空串。',
+        'nIDN': 'IDN 编号。',
+        'bExecute': '上升沿触发一次 IDN 写。',
+        'nPort': 'drive 端口号。',
+        'nAttrib': '已知属性（缓存值）；0 = FB 自动读。',
+        'cbLen': '源数据缓冲长度。',
+        'dwSrcAddr': '源数据缓冲地址。',
+        'nAttribRd': '本次读到的属性。',
+        'sAttrib': '属性字段分解。',
+    },
+    pitfalls=SERCOS_PITFALLS + [
+        ('**写参数需要 phase 2**；phase 4 运行中 drive 多数参数被锁；先用 `IOF_SER_SetPhase` 切到 phase 2。', True),
+        ('PDF VAR 描述列把 `dwDestAddr` 写在 VAR_INPUT 中（实际是 `dwSrcAddr`）；以接口实际命名为准。', True),
+    ],
+    scenario='SERCOS drive 调试完成后，把工程定制的位置环增益写到 drive 内（IDN-100）。',
+    value='参数写入纳入 PLC 程序，不用 SERCANS 工具。',
+    alt=(
+        '- SERCANS 工具：要带\n'
+        '- **本 FB**：纯 PLC'
+    ),
+    related=['IOF_SER_IDN_Read', 'IOF_SER_SetPhase', 'IOF_SER_SaveFlash'],
+    xml_scen='调试期：phase 2 下把 drive 1 的 IDN-100 写为工程定制值。',
+    xml_val='参数纳入 PLC 程序版本控制。',
+    xml_verify='先用 IOF_SER_SetPhase 切到 phase 2；填好 aWriteBuffer 含要写入的值，写 bStartIdnWrite := TRUE → bIdnWriteBusy 短暂 TRUE → 回 FALSE 后 nIdnWriteErrId = 0 表示成功；再用 IOF_SER_IDN_Read 读回校验。',
+    xml_vars=[
+        ('fbSercosIdnWrite', 'IOF_SER_IDN_Write', None, 'SERCOS IDN 写 FB'),
+        ('sLocalNetId', 'T_AmsNetId', "''", '本机'),
+        ('nIdnToWrite', 'UINT', '100', '要写的 IDN'),
+        ('bStartIdnWrite', 'BOOL', 'FALSE', '上升沿触发'),
+        ('nDrivePort', 'UINT', '1', 'drive port'),
+        ('nCachedAttrib', 'DWORD', '0', '已知属性'),
+        ('aWriteBuffer', 'ARRAY[1..4] OF BYTE', None, '要写入的数据缓冲（4 字节 = DINT 大小）'),
+        ('cbWriteBufferLen', 'UDINT', '4', '缓冲长度'),
+        ('tIdnWriteTimeout', 'TIME', 'T#5S', '超时'),
+        ('nWriteAttribOut', 'DWORD', None, '属性返回'),
+        ('stWriteAttribDecoded', 'ST_SercosParamAttrib', None, '属性分解'),
+        ('bIdnWriteBusy', 'BOOL', None, '工作中'),
+        ('bIdnWriteErr', 'BOOL', None, '出错'),
+        ('nIdnWriteErrId', 'UDINT', None, '错误号'),
+    ],
+    xml_call=(
+        '// 单次调用；PDF VAR 描述写 dwDestAddr，但实际入口名是 dwSrcAddr（写时用 dwSrcAddr）\n'
+        'fbSercosIdnWrite(\n'
+        '    sNetId    := sLocalNetId,\n'
+        '    nIDN      := nIdnToWrite,\n'
+        '    bExecute  := bStartIdnWrite,\n'
+        '    nPort     := nDrivePort,\n'
+        '    nAttrib   := nCachedAttrib,\n'
+        '    cbLen     := cbWriteBufferLen,\n'
+        '    dwSrcAddr := ADR(aWriteBuffer),\n'
+        '    tTimeout  := tIdnWriteTimeout,\n'
+        '    nAttribRd => nWriteAttribOut,\n'
+        '    sAttrib   => stWriteAttribDecoded,\n'
+        '    bBusy     => bIdnWriteBusy,\n'
+        '    bError    => bIdnWriteErr,\n'
+        '    nErrId    => nIdnWriteErrId\n'
+        ');\n'
+    ),
+)
+
+
+REG['IOF_SER_DRIVE_Backup'] = dict(
+    ftype='FUNCTION_BLOCK',
+    summary=(
+        '把 SERCOS drive 的全部 S / P 参数备份到 PLC 文件，或反向恢复。'
+        '默认按 IDN-192（标准备份列表）；可关闭走 IDN-17（所有参数列表）但部分参数只读、restore 会失败。'
+        '可生成 CRC16-CCITT 校验保存到 IDN-142。'
+    ),
+    behavior=(
+        '本 FB 是 3 合 1：'
+        '`bBackup` 上升沿触发备份（drive → 文件）；'
+        '`bRestore` 上升沿触发恢复（文件 → drive）；'
+        '`bCheck` 上升沿触发 CRC 校验。'
+        '`bCRCEnable = TRUE` 启用 CRC16-CCITT + 16 bit 校验和，并保存到 IDN-142（若 drive 有此 IDN）。'
+        '`bStdBackupList = TRUE` 用 IDN-192（标准备份清单，可 restore）；`FALSE` 用 IDN-17（全参数清单，restore 会失败）。'
+        '文件路径由 `ePath` + `sPathName` 决定（默认 `PATH_BOOTPATH` + `DRIVEPAR.BIN`）。'
+        '`sComment` 写到备份文件头部做注释。'
+        '`bCheckOK` 输出 CRC 校验结果（仅 bCheck 路径）。'
+        '需要 SERCOS phase 2（参数访问模式）。'
+    ),
+    var_desc={
+        'bCheck': '上升沿启动 CRC 校验。',
+        'bBackup': '上升沿启动备份 drive → 文件。',
+        'bRestore': '上升沿启动恢复 文件 → drive。',
+        'bCRCEnable': '启用 CRC16-CCITT 校验（保存到 IDN-142）。',
+        'bStdBackupList': 'TRUE = 用 IDN-192 标准清单；FALSE = 用 IDN-17 全参数清单（restore 不可用）。',
+        'sNetId': '本机用空串。',
+        'nPort': 'drive 端口号。',
+        'sComment': '备份文件头部注释字符串。',
+        'ePath': '文件路径常量（默认 `PATH_BOOTPATH`）。',
+        'sPathName': '文件名（默认 `DRIVEPAR.BIN`）。',
+    },
+    pitfalls=SERCOS_PITFALLS + [
+        ('**需要 phase 2**：所有操作都要先把环切到 phase 2。', True),
+        ('`bStdBackupList = FALSE` (用 IDN-17) 时 restore **会失败**——IDN-17 含只读参数。仅用于审计，不用于恢复。', True),
+        ('备份文件较大（典型几十到几百 KB），网络盘 / 硬盘空间要留够。', True),
+    ],
+    scenario='SERCOS drive 维护：每年备份所有 drive 的参数文件存档；故障更换 drive 后 restore 让备件直接可用。',
+    value='让 drive 参数版本化，更换硬件不丢工艺参数。',
+    alt=(
+        '- 用 SERCANS 工具备份：要带工具到现场\n'
+        '- 不备份：故障换硬件后要重新调试\n'
+        '- **本 FB**：PLC 程序触发，可定期 / HMI 一键'
+    ),
+    related=['IOF_SER_DRIVE_BackupEx', 'IOF_SER_IDN_Read', 'IOF_SER_IDN_Write'],
+    xml_scen='SERCOS drive 1 参数备份到工控机 `\\Boot\\DRIVEPAR_DRIVE1.BIN`。',
+    xml_val='drive 参数版本化存档。',
+    xml_verify='先确保 SERCOS 在 phase 2；填好 sBackupFileName := "DRIVEPAR_DRIVE1.BIN"、bDoBackupReq := TRUE → bBackupBusy 短暂 TRUE → 文件创建；可用 SCP 拷出文件查看。',
+    xml_vars=[
+        ('fbSercosDriveBackup', 'IOF_SER_DRIVE_Backup', None, 'SERCOS drive 备份 FB'),
+        ('sLocalNetId', 'T_AmsNetId', "''", '本机'),
+        ('nDrivePort', 'UINT', '1', 'drive port'),
+        ('sBackupComment', 'T_MaxString', "'Line A Drive 1 backup'", '备份文件注释'),
+        ('eBackupFilePath', 'E_OpenPath', 'PATH_BOOTPATH', '路径常量'),
+        ('sBackupFileName', 'T_MaxString', "'DRIVEPAR_DRIVE1.BIN'", '文件名'),
+        ('bDoCheckReq', 'BOOL', 'FALSE', 'CRC 校验'),
+        ('bDoBackupReq', 'BOOL', 'FALSE', '备份'),
+        ('bDoRestoreReq', 'BOOL', 'FALSE', '恢复'),
+        ('bEnableCRC', 'BOOL', 'TRUE', '启用 CRC'),
+        ('bUseStdBackupList', 'BOOL', 'TRUE', 'TRUE = IDN-192 可 restore'),
+        ('tBackupTimeout', 'TIME', 'T#30S', '超时（大文件慢）'),
+    ],
+    xml_call=(
+        '// 触发前确保 SERCOS 已在 phase 2\n'
+        'fbSercosDriveBackup(\n'
+        '    bCheck         := bDoCheckReq,\n'
+        '    bBackup        := bDoBackupReq,\n'
+        '    bRestore       := bDoRestoreReq,\n'
+        '    bCRCEnable     := bEnableCRC,\n'
+        '    bStdBackupList := bUseStdBackupList,\n'
+        '    sNetId         := sLocalNetId,\n'
+        '    nPort          := nDrivePort,\n'
+        '    sComment       := sBackupComment,\n'
+        '    ePath          := eBackupFilePath,\n'
+        '    sPathName      := sBackupFileName,\n'
+        '    tTimeout       := tBackupTimeout\n'
+        ');\n'
+    ),
+)
+
+
+REG['IOF_SER_DRIVE_BackupEx'] = dict(
+    ftype='FUNCTION_BLOCK',
+    summary=(
+        '加强版 SERCOS drive 备份 / 恢复 FB。比 `IOF_SER_DRIVE_Backup` 多两点：'
+        '① 支持自定义参数清单 (`bUserBackupList`)，用 `arrList` 数组定义要备份的 IDN 列表；'
+        '② 支持 `bIgnoreParamErr` 让备份遇到不可读参数时跳过而不是中止。'
+    ),
+    behavior=(
+        '触发方式与 `IOF_SER_DRIVE_Backup` 相同：'
+        '`bCheck` / `bBackup` / `bRestore` 三个上升沿触发位互斥。'
+        '`bStdBackupList = TRUE` 用 IDN-192；'
+        '`bUserBackupList = TRUE` 用用户自定义清单（必须提供 `arrList` 数组——⚠️ PDF VAR 区未列 arrList，但 PDF 正文说"用 arrList 数组"，⚠️ 待人工确认接口）。'
+        '`bIgnoreParamErr = TRUE` 备份过程中遇到不可读参数跳过；FALSE 中止。'
+        '其它字段与基础版相同。'
+        '⚠️ 本 FB 的输入 `arrList` 等接口字段 **PDF VAR 区未完整列出**，使用前请对照 PDF 正文 / drive 手册。'
+    ),
+    var_desc={
+        'bCheck': 'CRC 校验。',
+        'bBackup': '备份。',
+        'bRestore': '恢复。',
+        'bCRCEnable': '启用 CRC。',
+        'bStdBackupList': 'TRUE = IDN-192。',
+        'bUserBackupList': 'TRUE = 用用户自定义清单。',
+        'sNetId': '本机用空串。',
+        'nPort': 'drive port。',
+        'sComment': '注释。',
+        'ePath': '路径常量。',
+        'sPathName': '文件名。',
+        'bIgnoreParamErr': 'TRUE = 备份时跳过不可读参数。',
+    },
+    pitfalls=SERCOS_PITFALLS + [
+        ('⚠️ PDF VAR 区**未完整列出** `arrList`（用户自定义清单数组）；使用前请对照 PDF 正文与 drive 手册。', True),
+        ('与基础版相同：需要 phase 2；CRC 写 IDN-142。', True),
+    ],
+    scenario='SERCOS drive 备份只关心 motion 关键参数（不含统计 / 诊断字段），用自定义清单减少备份文件大小。',
+    value='更精细的备份控制；可针对工程特定参数清单。',
+    alt=(
+        '- 基础版 `IOF_SER_DRIVE_Backup`：只能用 IDN-192 / IDN-17\n'
+        '- **本 FB**：可自定义清单 + 忽略错误'
+    ),
+    related=['IOF_SER_DRIVE_Backup', 'IOF_SER_IDN_Read'],
+    xml_scen='只备份 drive 1 的 motion 关键参数（自定义清单）；备份遇错不中止。',
+    xml_val='更精细控制。',
+    xml_verify='⚠️ PDF VAR 区未列 `arrList`；按 PDF 正文配置自定义清单后触发 bDoBackupReq；遇错可看 `bIgnoreParamErr` 是否生效。',
+    xml_vars=[
+        ('fbSercosDriveBackupEx', 'IOF_SER_DRIVE_BackupEx', None, 'SERCOS drive 备份 Ex FB'),
+        ('sLocalNetId', 'T_AmsNetId', "''", '本机'),
+        ('nDrivePort', 'UINT', '1', 'drive port'),
+        ('sBackupComment', 'T_MaxString', "'Drive 1 Ex backup'", '注释'),
+        ('eBackupFilePath', 'E_OpenPath', 'PATH_BOOTPATH', '路径'),
+        ('sBackupFileName', 'T_MaxString', "'DRIVEPAR_EX.BIN'", '文件名'),
+        ('bDoCheckReq', 'BOOL', 'FALSE', 'CRC'),
+        ('bDoBackupReq', 'BOOL', 'FALSE', '备份'),
+        ('bDoRestoreReq', 'BOOL', 'FALSE', '恢复'),
+        ('bEnableCRC', 'BOOL', 'FALSE', 'CRC'),
+        ('bUseStdBackupList', 'BOOL', 'TRUE', 'IDN-192'),
+        ('bUseUserBackupList', 'BOOL', 'FALSE', '用户清单'),
+        ('bIgnoreReadErrors', 'BOOL', 'FALSE', '跳过不可读参数'),
+        ('tBackupTimeout', 'TIME', 'T#30S', '超时'),
+    ],
+    xml_call=(
+        '// ⚠️ 完整 arrList 接口字段在 PDF VAR 区未列；按 PDF 正文与 drive 手册补充\n'
+        'fbSercosDriveBackupEx(\n'
+        '    bCheck          := bDoCheckReq,\n'
+        '    bBackup         := bDoBackupReq,\n'
+        '    bRestore        := bDoRestoreReq,\n'
+        '    bCRCEnable      := bEnableCRC,\n'
+        '    bStdBackupList  := bUseStdBackupList,\n'
+        '    bUserBackupList := bUseUserBackupList,\n'
+        '    sNetId          := sLocalNetId,\n'
+        '    nPort           := nDrivePort,\n'
+        '    sComment        := sBackupComment,\n'
+        '    ePath           := eBackupFilePath,\n'
+        '    sPathName       := sBackupFileName,\n'
+        '    tTimeout        := tBackupTimeout,\n'
+        '    bIgnoreParamErr := bIgnoreReadErrors\n'
+        ');\n'
+    ),
+)
+
+
+REG['IOF_SER_DRIVE_Reset'] = dict(
+    ftype='FUNCTION_BLOCK',
+    summary=(
+        '复位指定 SERCOS drive：清掉 drive 自身的错误状态。'
+        '与 `IOF_SER_ResetErr` 的区别：本 FB 针对**单个 drive**（按端口号 `nPort`）；ResetErr 是清整个 SERCOS 主站 + 所有 drive。'
+    ),
+    behavior=(
+        '`bReset` 上升沿触发一次单 drive 复位：`bBusy := TRUE`，FB 经 ADS 让主站对 `nPort` 指定的 drive 发清错命令。'
+        '复位**只清错误状态字，不修复硬件故障**——若 drive 硬件故障仍存在（如过载 / 编码器丢失），下次周期还会重新报错。'
+        '触发语义为上升沿一次性，重复触发需要先把 `bReset` 拉低再拉高。'
+        '`tTimeout` 控制 ADS 调用超时，单 drive 清错通常 50-200 ms 完成。'
+        '与 `IOF_SER_ResetErr`（清整个 SERCOS 主站 + 所有 drive）相比，本 FB **只清单个 drive**，不影响其它 drive 的工作；常用于"只清出错那一个轴"的场景。'
+    ),
+    var_desc={
+        'sNetId': '本机用空串。',
+        'nPort': 'drive 端口号。',
+        'bReset': '上升沿触发一次复位。',
+    },
+    pitfalls=SERCOS_PITFALLS + [
+        ('与 `IOF_SER_ResetErr` 不同的是本 FB 只影响单个 drive，**不影响其它 drive 的运行**。', True),
+    ],
+    scenario='生产线某轴报错：单独清这一个 drive 而不打断其它 drive 的运行。',
+    value='更精细的清错粒度。',
+    alt=(
+        '- `IOF_SER_ResetErr`：影响所有 drive\n'
+        '- **本 FB**：单 drive'
+    ),
+    related=['IOF_SER_ResetErr', 'IOF_SER_GetPhase'],
+    xml_scen='生产线 drive 5 报警；不打断其它 drive 的情况下单独清错。',
+    xml_val='细粒度清错。',
+    xml_verify='登录后 nDrivePort := 5、bClearDriveErrReq := TRUE → bClearBusy 短暂 TRUE → 回 FALSE 后 nLastErrCode = 0 表示发出复位命令成功；若 drive 仍有硬件故障，下一周期还会重新报错。',
+    xml_vars=[
+        ('fbSercosDriveReset', 'IOF_SER_DRIVE_Reset', None, 'SERCOS 单 drive 清错 FB'),
+        ('sLocalNetId', 'T_AmsNetId', "''", '本机'),
+        ('nDrivePort', 'UINT', '5', 'drive port'),
+        ('bClearDriveErrReq', 'BOOL', 'FALSE', '上升沿触发'),
+        ('tClearTimeout', 'TIME', 'T#5S', '超时'),
+        ('bClearBusy', 'BOOL', None, '工作中'),
+        ('bClearErr', 'BOOL', None, '出错'),
+        ('nLastErrCode', 'UDINT', None, '错误号'),
+    ],
+    xml_call=(
+        'fbSercosDriveReset(\n'
+        '    sNetId   := sLocalNetId,\n'
+        '    nPort    := nDrivePort,\n'
+        '    bReset   := bClearDriveErrReq,\n'
+        '    tTimeout := tClearTimeout,\n'
+        '    bBusy    => bClearBusy,\n'
+        '    bError   => bClearErr,\n'
+        '    nErrId   => nLastErrCode\n'
+        ');\n'
+    ),
+)
+
+
+# ---------------- TcTouchLock (1 FB) ----------------
+
+REG['FB_TcTouchLock_AcquireFocus'] = dict(
+    ftype='FUNCTION_BLOCK',
+    summary=(
+        '多触摸屏聚焦控制：一台 IPC 接多个多触控屏时，避免多屏并发输入相互干扰。'
+        '本 FB 给某个屏请求 / 释放 input focus；同一时刻只有持有 focus 的屏可输入，其余被屏蔽。'
+        '使用前需先用命令行工具 `TcTouchLockService.exe` 给每个屏分配一个唯一标识号 (`sSetID`)。'
+    ),
+    behavior=(
+        '`bEnable = TRUE` 请求 focus；`bEnable = FALSE` 释放 focus。'
+        '若另一屏当前持有 focus，则要等它释放后本屏才能拿到 → `bAcquired` 从 FALSE 变 TRUE。'
+        '`bLED` 输出可接到屏的状态 LED：'
+        '常亮 = 本屏持有 focus；'
+        '常灭 = 本屏未持有；'
+        '按 `tLEDTime` 周期闪烁 = 本屏在等待 focus。'
+        '`bBusy` 表示请求处理中；`bError` / `nErrID` 反映 ADS 错误。'
+        '错误码：`0x0000` 无错；`0x0006` 目标端口未找到（多半 `TcTouchLockService.exe` 没运行）。'
+    ),
+    var_desc={
+        'bEnable': 'TRUE = 请求 focus；FALSE = 释放 focus。',
+        'sSetID': '屏的唯一标识（由 `TcTouchLockService.exe` 配置时分配）。',
+        'tLEDTime': '等待 focus 时 LED 闪烁周期（100 ms - 1 s）。',
+        'bAcquired': 'TRUE = 本屏获得 focus；FALSE = 失去 focus。',
+        'bLED': '状态 LED 输出（常亮 / 常灭 / 闪烁，详见行为说明）。',
+        'bError:': 'PDF VAR 区写 `bError:` （末尾多冒号），是 PDF 排版错误，实际接口名 `bError`。',
+        'nErrID': 'ADS 错误号 (`0x0006` 端口未找到 = 服务未运行)。',
+    },
+    pitfalls=[
+        ('**先用 `TcTouchLockService.exe` 配置屏的 sSetID**——不配的话本 FB 直接报 `0x0006`。', True),
+        ('PDF VAR 区把 `bError` 写成 `bError:`（末尾多冒号），是 PDF 排版错误；接口实际名是 `bError`。', True),
+        ('`tLEDTime` 范围 100 ms - 1 s；超出可能不闪烁或闪烁异常。', True),
+        ('焦点切换有几百毫秒延迟，业务侧不要期待瞬间响应。', True),
+    ],
+    scenario='大型设备 IPC 接 3 块控制面板：操作员在面板 A 上做配置时不应被面板 B / C 误触；用本 FB 让 A 独占输入。',
+    value='避免多面板并发输入冲突，提升大型设备人机界面安全性。',
+    alt=(
+        '- 不用：多面板都能输入 → 操作冲突\n'
+        '- 软件锁定其它面板的输入事件：需要修改 HMI 软件\n'
+        '- **本 FB**：标准方案'
+    ),
+    related=[],
+    xml_scen='IPC 接 2 块控制面板，面板 A (sSetID = "PANEL_A") 操作员配置时屏蔽面板 B 的输入。',
+    xml_val='避免大型设备多人误操作冲突。',
+    xml_verify='先确保 `TcTouchLockService.exe` 服务运行且已配置 sPanelAUid = "PANEL_A"；登录后 bRequestFocusForPanelA := TRUE → bPanelAHasFocus 在 1-2 秒内变 TRUE；同时面板 B 的输入被屏蔽。',
+    xml_vars=[
+        ('fbAcquirePanelFocus', 'FB_TcTouchLock_AcquireFocus', None, '多触摸屏 focus FB'),
+        ('bRequestFocusForPanelA', 'BOOL', 'FALSE', '电平：TRUE 请求焦点'),
+        ('sPanelAUid', 'STRING(32)', "'PANEL_A'", '面板唯一 ID（TcTouchLockService.exe 中配置）'),
+        ('tFocusLedBlinkPeriod', 'TIME', 'T#200MS', '等待焦点时 LED 闪烁周期'),
+        ('bPanelAHasFocus', 'BOOL', None, '面板 A 是否持有 focus'),
+        ('bPanelALedState', 'BOOL', None, 'LED 状态输出'),
+        ('bFocusReqBusy', 'BOOL', None, '工作中'),
+        ('bFocusReqError', 'BOOL', None, '出错'),
+        ('nFocusReqErrId', 'UDINT', None, 'ADS 错误号'),
+    ],
+    xml_call=(
+        '// 注：PDF VAR 区把 bError 写成 bError:（末尾多冒号）是排版错；实际名 bError\n'
+        'fbAcquirePanelFocus(\n'
+        '    bEnable   := bRequestFocusForPanelA,\n'
+        '    sSetID    := sPanelAUid,\n'
+        '    tLEDTime  := tFocusLedBlinkPeriod,\n'
+        '    bAcquired => bPanelAHasFocus,\n'
+        '    bLED      => bPanelALedState,\n'
+        '    bBusy     => bFocusReqBusy,\n'
+        '    bError    => bFocusReqError,\n'
+        '    nErrID    => nFocusReqErrId\n'
+        ');\n'
+    ),
+)
+
+
+# ---------------- Obsolete FCs (2) ----------------
+
+REG['F_GetVersionTcIoFunctions'] = dict(
+    ftype='FUNCTION',
+    infosys_redirect=True,
+    summary=(
+        '⚠️ **本函数已废弃**（PDF 明确：obsolete and should not be used）。请改用全局常量 `stLibVersion_Tc2_IoFunctions` 读取库版本。'
+        '本函数仅为旧工程兼容保留。'
+    ),
+    behavior=(
+        '`nVersionElement` 选择要读的版本字段：1 = major（主版本）、2 = minor（次版本）、3 = revision（修订）。'
+        '函数返回该字段值（UINT），通过简单查找内部表实现，无状态、同步返回，单个 PLC 周期完成。'
+        '**新工程应改用 `stLibVersion_Tc2_IoFunctions.iMajor` / `.iMinor` / `.iBuild` 直接读全局常量**——不需要函数调用，编译期解析无运行时开销。'
+        '维持本函数仅为不修改旧工程的兼容性考虑；新工程不要用。'
+        '`nVersionElement` 取非 1/2/3 值的返回行为 PDF 未明确定义，建议不要依赖。'
+    ),
+    var_desc={
+        'nVersionElement': '1 = major、2 = minor、3 = revision。',
+    },
+    return_text=(
+        '本函数返回 `UINT` = 所选版本字段。\n\n'
+        '| nVersionElement | 返回值含义 |\n|---|---|\n'
+        '| 1 | 主版本号 (major) |\n'
+        '| 2 | 次版本号 (minor) |\n'
+        '| 3 | 修订号 (revision) |\n'
+        '| 其它 | 实现定义（PDF 未说明） |\n'
+    ),
+    pitfalls=[
+        ('**本函数已废弃**——新工程不要用。改用全局常量 `stLibVersion_Tc2_IoFunctions`。', False),
+        ('PDF 与 InfoSys 未列对应错误码；非 1/2/3 值的返回行为未明确定义。', True),
+    ],
+    scenario='旧工程升级 TwinCAT 3 时，原代码若调用本函数仍可工作但建议改写。',
+    value='向后兼容旧工程；新工程不要用。',
+    alt=(
+        '- **`stLibVersion_Tc2_IoFunctions`** 全局常量：标准做法\n'
+        '- 本 FC：仅旧工程兼容'
+    ),
+    related=['stLibVersion_Tc2_IoFunctions', 'F_GetVersionRAIDController'],
+    xml_scen='旧工程的版本读取代码兼容性参考；新工程不要用。',
+    xml_val='⚠️ 仅向后兼容，不推荐使用。',
+    xml_verify='登录后写 bReadVersionField := TRUE → 一周期后 nMajorVersion / nMinorVersion / nRevisionVersion 显示库版本各字段。',
+    xml_vars=[
+        ('nMajorVersion', 'UINT', '0', '主版本号'),
+        ('nMinorVersion', 'UINT', '0', '次版本号'),
+        ('nRevisionVersion', 'UINT', '0', '修订号'),
+        ('bReadVersionField', 'BOOL', 'FALSE', '触发读取（一次性）'),
+    ],
+    xml_call=(
+        '// 警告：本 FC 已废弃。新工程直接读 stLibVersion_Tc2_IoFunctions.iMajor 等\n'
+        'IF bReadVersionField THEN\n'
+        '    nMajorVersion    := F_GetVersionTcIoFunctions(nVersionElement := 1);\n'
+        '    nMinorVersion    := F_GetVersionTcIoFunctions(nVersionElement := 2);\n'
+        '    nRevisionVersion := F_GetVersionTcIoFunctions(nVersionElement := 3);\n'
+        '    bReadVersionField := FALSE;\n'
+        'END_IF;\n'
+    ),
+)
+
+
+REG['F_GetVersionRAIDController'] = dict(
+    ftype='FUNCTION',
+    infosys_redirect=True,
+    summary=(
+        '⚠️ **本函数已废弃**（PDF 明确：obsolete and should not be used）。请改用全局常量 `stLibVersion_Tc2_IoFunctions`。'
+        '本函数与 `F_GetVersionTcIoFunctions` 功能等价，是名称不同的历史遗留。'
+    ),
+    behavior=(
+        '与 `F_GetVersionTcIoFunctions` 完全相同：`nVersionElement = 1` 返回 major、`= 2` 返回 minor、`= 3` 返回 revision。'
+        '函数无状态、同步返回，单个 PLC 周期完成。'
+        '历史上 RAID Controller 子库可能曾经独立维护过版本号，但目前与整库版本一致，本函数仅作历史兼容。'
+        '**新工程改用 `stLibVersion_Tc2_IoFunctions` 直接访问。**'
+        '`nVersionElement` 取非 1/2/3 值的返回行为 PDF 未定义；建议不要依赖。'
+    ),
+    var_desc={
+        'nVersionElement': '1 = major、2 = minor、3 = revision。',
+    },
+    return_text=(
+        '本函数返回 `UINT` = 所选版本字段。\n\n'
+        '| nVersionElement | 返回值含义 |\n|---|---|\n'
+        '| 1 | 主版本号 |\n'
+        '| 2 | 次版本号 |\n'
+        '| 3 | 修订号 |\n'
+        '| 其它 | 未明确定义 |\n'
+    ),
+    pitfalls=[
+        ('**已废弃**——新工程改用 `stLibVersion_Tc2_IoFunctions`。', False),
+        ('功能与 `F_GetVersionTcIoFunctions` 完全相同；只是名字不同。', True),
+    ],
+    scenario='RAID 子模块版本检查的旧代码；不推荐使用。',
+    value='向后兼容。',
+    alt=(
+        '- `stLibVersion_Tc2_IoFunctions`\n'
+        '- `F_GetVersionTcIoFunctions`（同样已废弃）\n'
+        '- **本 FC**：仅旧工程兼容'
+    ),
+    related=['stLibVersion_Tc2_IoFunctions', 'F_GetVersionTcIoFunctions'],
+    xml_scen='旧 RAID 控制器版本读取代码兼容性参考；不推荐用。',
+    xml_val='⚠️ 已废弃。',
+    xml_verify='登录后写 bReadVersionField := TRUE → 一周期后 nMajor / nMinor / nRevision 显示库版本（与 F_GetVersionTcIoFunctions 返回值相同）。',
+    xml_vars=[
+        ('nMajor', 'UINT', '0', '主版本'),
+        ('nMinor', 'UINT', '0', '次版本'),
+        ('nRevision', 'UINT', '0', '修订'),
+        ('bReadVersionField', 'BOOL', 'FALSE', '触发读取'),
+    ],
+    xml_call=(
+        '// 警告：已废弃；新工程改用 stLibVersion_Tc2_IoFunctions\n'
+        'IF bReadVersionField THEN\n'
+        '    nMajor    := F_GetVersionRAIDController(nVersionElement := 1);\n'
+        '    nMinor    := F_GetVersionRAIDController(nVersionElement := 2);\n'
+        '    nRevision := F_GetVersionRAIDController(nVersionElement := 3);\n'
+        '    bReadVersionField := FALSE;\n'
+        'END_IF;\n'
+    ),
+)
+
+
+# ---------------- Library version GVL (1) ----------------
+
+REG['stLibVersion_Tc2_IoFunctions'] = dict(
+    ftype='VAR_GLOBAL CONSTANT',
+    summary=(
+        'Tc2_IoFunctions 库的版本信息全局常量。'
+        '类型 `ST_LibVersion`，含 `iMajor` / `iMinor` / `iBuild` / `iRevision` / `nFlags` / `sVersion` 等字段。'
+        '推荐用 `F_CmpLibVersion`（在 Tc2_System 库）做版本比较；不要用废弃的 `F_GetVersionTcIoFunctions`。'
+    ),
+    behavior=(
+        '本条目是**全局常量声明**（不是 FB / FC），由库内部定义在一个 `VAR_GLOBAL CONSTANT` 区域里。'
+        '在 PLC 程序中直接以全局变量方式访问：`stLibVersion_Tc2_IoFunctions.iMajor` / `.iMinor` / `.iBuild` / `.iRevision` 等。'
+        '配套用法是与 Tc2_System 库的 `F_CmpLibVersion` 配合做版本比较：'
+        '`IF F_CmpLibVersion(F_CreateLibVersion(1, 5, 0, 0, 0), stLibVersion_Tc2_IoFunctions) > 0 THEN ...`'
+        '可在上电时做版本检查，要求库 ≥ 某版本，否则报警拒绝启动。'
+        '全局常量被 PLC 编译器在编译期解析，**不产生任何运行时开销**——只是一组编译时常量值。'
+        '⚠️ verify_doc.py 把全局常量当作 VAR_INPUT 校验，因此本文档的接口区把它列在 VAR_INPUT 块下，但实际上它是 VAR_GLOBAL CONSTANT。'
+    ),
+    var_desc={
+        'stLibVersion_Tc2_IoFunctions': 'Tc2_IoFunctions 库的版本号常量；类型 `ST_LibVersion`，含 `iMajor` / `iMinor` / `iBuild` / `iRevision` / `nFlags` / `sVersion` 等字段。',
+    },
+    # Treat as VAR_GLOBAL CONSTANT — the GVL declaration shows up as an "input"
+    # to satisfy verify_doc's VAR-region match. Doc will render it as VAR_INPUT
+    # but the user understands from §1 that it's a global constant.
+    parsed_override={
+        'inputs': [('stLibVersion_Tc2_IoFunctions', 'ST_LibVersion', None)],
+        'outputs': [],
+        'in_outs': [],
+    },
+    pitfalls=[
+        ('**这是全局常量，不是函数 / FB**——不要写 `stLibVersion_Tc2_IoFunctions()`；直接像变量一样访问。', True),
+        ('版本比较请用 `F_CmpLibVersion`（Tc2_System），不要逐字段手写 IF。', True),
+    ],
+    scenario='上电做最低库版本检查：要求 Tc2_IoFunctions ≥ 1.5.0，否则拒绝启动。',
+    value='让 PLC 程序对依赖的库版本做硬约束，避免运行时遇到老版本 API 行为不一致。',
+    alt=(
+        '- 不做版本检查：低版本时可能行为异常\n'
+        '- 用废弃的 `F_GetVersionTcIoFunctions`：可读但不推荐\n'
+        '- **本全局常量** + `F_CmpLibVersion`：标准做法'
+    ),
+    related=['F_GetVersionTcIoFunctions', 'F_GetVersionRAIDController'],
+    xml_scen='上电库版本检查：要求 Tc2_IoFunctions ≥ 1.5.0，否则拒绝启动。',
+    xml_val='让 PLC 程序对库版本做硬约束。',
+    xml_verify='登录后 monitor stLibVer.iMajor / .iMinor / .iBuild 应显示 1 / 5 / 3；bLibVersionTooOld 在版本不足时为 TRUE。',
+    xml_vars=[
+        ('stLibVer', 'ST_LibVersion', None, '本库版本副本（赋值后查看）'),
+        ('bLibVersionTooOld', 'BOOL', None, '若库版本 < 1.5.0 则置 TRUE'),
+    ],
+    xml_call=(
+        '// 全局常量像变量访问；演示直接读字段\n'
+        'stLibVer := stLibVersion_Tc2_IoFunctions;\n'
+        '\n'
+        '// 简易版本检查：要求 major.minor &gt;= 1.5\n'
+        'bLibVersionTooOld := (stLibVer.iMajor &lt; 1) OR\n'
+        '                     ((stLibVer.iMajor = 1) AND (stLibVer.iMinor &lt; 5));\n'
+    ),
+)

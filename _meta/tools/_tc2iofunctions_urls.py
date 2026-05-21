@@ -80,9 +80,10 @@ URLS = {
     "FB_TcTouchLock_AcquireFocus": "https://infosys.beckhoff.com/content/1033/tcplclib_tc2_iofunctions/6811367563.html",
     # Library version GVL
     "stLibVersion_Tc2_IoFunctions": "https://infosys.beckhoff.com/content/1033/tcplclib_tc2_iofunctions/59267851.html",
-    # Obsolete FCs (no dedicated infosys topic page)
-    "F_GetVersionTcIoFunctions": "⚠️ not-on-infosys",
-    "F_GetVersionRAIDController": "⚠️ not-on-infosys",
+    # Obsolete FCs (no dedicated infosys topic page; redirect to Library version page
+    # which lists these as obsolete)
+    "F_GetVersionTcIoFunctions": "https://infosys.beckhoff.com/content/1033/tcplclib_tc2_iofunctions/59267851.html",
+    "F_GetVersionRAIDController": "https://infosys.beckhoff.com/content/1033/tcplclib_tc2_iofunctions/59267851.html",
 }
 
 
