@@ -225,7 +225,10 @@ _PLACEHOLDER_PHRASES = (
 
 _CJK_RE = re.compile(r"[一-鿿]")
 _INFOSYS_TOPIC_RE = re.compile(
-    r"https?://infosys\.beckhoff\.com/content/\d+/tcplclib_[a-z0-9_]+/\d+\.html"
+    # Beckhoff InfoSys uses two URL slugs depending on the library:
+    #   tcplclib_<lower>            — most TwinCAT 3 libs (e.g. tcplclib_tc2_mc2)
+    #   tcplclib<lower>             — some legacy / NC libs (e.g. tcplclibmc2_camming)
+    r"https?://infosys\.beckhoff\.com/content/\d+/tcplclib[a-z0-9_]+/\d+\.html"
 )
 _INFOSYS_CHECKED_OK_RE = re.compile(
     r"(?:✅\s*\d{4}-\d{2}-\d{2}|⚠️\s*not-on-infosys)"
