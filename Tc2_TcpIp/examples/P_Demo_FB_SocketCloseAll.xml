@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project xmlns="http://www.plcopen.org/xml/tc6_0200">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-21T07:00:00"/>
+  <contentHeader name="Tc2_TcpIp.FB_SocketCloseAll Demo" modificationDateTime="2026-05-21T07:00:00">
+    <coordinateInfo><fbd><scaling x="1" y="1"/></fbd><ld><scaling x="1" y="1"/></ld><sfc><scaling x="1" y="1"/></sfc></coordinateInfo>
+  </contentHeader>
+  <types>
+    <dataTypes/>
+    <pous>
+      <pou name="P_Demo_FB_SocketCloseAll" pouType="program">
+        <interface>
+          <localVars>
+            <variable name="fbSocketCloseAll"><type><derived name="FB_SocketCloseAll"/></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">启动期 socket 兜底清理实例</xhtml></documentation></variable>
+            <variable name="bCloseAllOnStart"><initialValue><simpleValue value="TRUE"/></initialValue><type><BOOL/></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">初值必须是 TRUE：保证 PLC 启动那一刻 IF 分支触发一次</xhtml></documentation></variable>
+            <variable name="bBusyCleanup"><type><BOOL/></type></variable>
+            <variable name="bCleanupError"><type><BOOL/></type></variable>
+            <variable name="nCleanupErrId"><type><UDINT/></type></variable>
+            <variable name="bSocketsReady"><type><BOOL/></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">清理完成后置位，业务 socket FB 才允许开始</xhtml></documentation></variable>
+          </localVars>
+        </interface>
+        <body>
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：CX5020 工控机的某个 PLC 运行时反复被 Download / PLC Reset 调试；
+//       每次重来时 TwinCAT TCP/IP Connection Server 仍持有上一轮的 socket。
+//       本例程在 PLC 启动那一刻执行一次清理，把"幽灵句柄"释放。
+//
+// 价值：避免开发期反复 Download 之后 FB_SocketConnect 报 NOMOREENTRIES。
+//       这是所有 Tc2_TcpIp 工程几乎必备的样板。
+//
+// 验证步骤：
+//   1. 工程里先跑几次 FB_SocketConnect/Listen 不调 Close，再 PLC Reset
+//   2. 不加本例程：再次 Connect 会逐渐报 0x00008001 (NOMOREENTRIES)
+//   3. 加入本例程：每次启动看到 bBusyCleanup 短暂为 TRUE，然后 bSocketsReady=TRUE
+//      → 即使先前漏关也能清干净
+//   4. 在线 monitor bCloseAllOnStart：上电后应被清成 FALSE 并保持 FALSE
+// =============================================================================
+
+// 关键纪律：bCloseAllOnStart 必须用 BOOL := TRUE 初值，靠它一次性触发。
+// 同一 PLC runtime 同一任务里整个工程只跑一次（不要在多个 POU 里都放一份）。
+IF bCloseAllOnStart THEN
+    bCloseAllOnStart := FALSE;
+    fbSocketCloseAll(
+        sSrvNetId := '',
+        bExecute  := TRUE,
+        tTimeout  := T#10S,
+        bBusy     =&gt; bBusyCleanup,
+        bError    =&gt; bCleanupError,
+        nErrId    =&gt; nCleanupErrId
+    );
+ELSE
+    // 必须每周期都调（PDF 例程要求），否则 FB 内部状态机不推进
+    fbSocketCloseAll(
+        bExecute  := FALSE,
+        bBusy     =&gt; bBusyCleanup,
+        bError    =&gt; bCleanupError,
+        nErrId    =&gt; nCleanupErrId
+    );
+END_IF;
+
+// bSocketsReady 一旦置 TRUE 后保持，业务 FB 才允许开始
+IF NOT bBusyCleanup THEN
+    bSocketsReady := TRUE;
+END_IF;
+</xhtml></ST>
+        </body>
+      </pou>
+    </pous>
+  </types>
+  <instances><configurations/></instances>
+</project>

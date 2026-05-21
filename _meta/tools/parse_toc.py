@@ -191,6 +191,24 @@ def parse(lib: str) -> list[dict]:
             current_category = None
             continue
 
+        # Some PDFs (notably TF product manuals like Tc2_TcpIp's TF6310 doc) put
+        # the "PLC API" chapter at depth-1 and split into "Function blocks" /
+        # "Functions" / "Global constants" at depth-2. In that layout the
+        # depth-2 entries themselves are group labels (with depth-3 leaves).
+        # Promote them to group_kind here. Also re-detect at depth-2 transitions
+        # (FB → FC etc.) within the same chapter.
+        if depth == 2:
+            gk = classify_group(title)
+            if gk is not None and "data type" not in title.lower():
+                current_group = title
+                current_group_kind = gk
+                current_category = title
+                continue
+            # "Data types" depth-2 chapter — skip its depth-3 children entirely
+            if "data type" in title.lower():
+                current_group_kind = None
+                continue
+
         if current_group_kind is None:
             continue
 
@@ -250,6 +268,22 @@ def parse(lib: str) -> list[dict]:
 
         if depth >= 3:
             if not looks_like_leaf_name(title):
+                # Special case: GVL group at depth-3 with a category-label title
+                # (e.g. Tc2_TcpIp §5.4.1 "Library version"). The actual constant
+                # identifier lives in the section body — recover it.
+                if current_group_kind == "GVL":
+                    nm = gvl_constant_in_section(sec)
+                    if nm:
+                        entries.append(
+                            {
+                                "section": sec,
+                                "name": nm,
+                                "type": "GVL",
+                                "category": current_category or current_group,
+                                "page": page,
+                                "depth": depth,
+                            }
+                        )
                 continue
             # If under an OO parent, mark child as method.
             entry_type = current_group_kind

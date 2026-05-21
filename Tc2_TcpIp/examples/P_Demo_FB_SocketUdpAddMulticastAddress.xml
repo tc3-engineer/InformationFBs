@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project xmlns="http://www.plcopen.org/xml/tc6_0200">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-21T07:00:00"/>
+  <contentHeader name="Tc2_TcpIp.FB_SocketUdpAddMulticastAddress Demo" modificationDateTime="2026-05-21T07:00:00">
+    <coordinateInfo><fbd><scaling x="1" y="1"/></fbd><ld><scaling x="1" y="1"/></ld><sfc><scaling x="1" y="1"/></sfc></coordinateInfo>
+  </contentHeader>
+  <types>
+    <dataTypes/>
+    <pous>
+      <pou name="P_Demo_FB_SocketUdpAddMulticastAddress" pouType="program">
+        <interface>
+          <localVars>
+            <variable name="fbCreateMulticastSocket"><type><derived name="FB_SocketUdpCreate"/></type></variable>
+            <variable name="fbJoinGroup"><type><derived name="FB_SocketUdpAddMulticastAddress"/></type></variable>
+            <variable name="fbReceiveMulticast"><type><derived name="FB_SocketUdpReceiveFrom"/></type></variable>
+            <variable name="fbPollTON"><type><derived name="TON"/></type></variable>
+            <variable name="bRequestCreate"><type><BOOL/></type></variable>
+            <variable name="bCreateBusy"><type><BOOL/></type></variable>
+            <variable name="bCreateError"><type><BOOL/></type></variable>
+            <variable name="nCreateErrId"><type><UDINT/></type></variable>
+            <variable name="hUdpSocket"><type><derived name="T_HSOCKET"/></type></variable>
+            <variable name="bRequestJoin"><type><BOOL/></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">socket 创建好后再 bRequestJoin := TRUE</xhtml></documentation></variable>
+            <variable name="sMulticastGroup"><initialValue><simpleValue value="'239.1.1.100'"/></initialValue><type><string><length>15</length></string></type></variable>
+            <variable name="bJoinBusy"><type><BOOL/></type></variable>
+            <variable name="bJoinError"><type><BOOL/></type></variable>
+            <variable name="nJoinErrId"><type><UDINT/></type></variable>
+            <variable name="bJoined"><type><BOOL/></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">业务标志：已加入组</xhtml></documentation></variable>
+            <variable name="abRxBuffer"><type><array><dimension lower="0" upper="1499"/><baseType><BYTE/></baseType></array></type></variable>
+            <variable name="bPollPulse"><type><BOOL/></type></variable>
+            <variable name="bRxBusy"><type><BOOL/></type></variable>
+            <variable name="bRxError"><type><BOOL/></type></variable>
+            <variable name="nRxErrId"><type><UDINT/></type></variable>
+            <variable name="sSenderHost"><type><derived name="T_IPv4Addr"/></type></variable>
+            <variable name="nSenderPort"><type><UDINT/></type></variable>
+            <variable name="nRecBytes"><type><UDINT/></type></variable>
+            <variable name="nMulticastPacketsReceived"><type><UDINT/></type></variable>
+          </localVars>
+        </interface>
+        <body>
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：PLC 订阅一个组播流（239.1.1.100:6000），如远程示教系统每秒推送
+//       一个组播配方更新包到所有在线 PLC；本 PLC 仅当订阅者一员。
+//
+// 价值：演示完整的多播订阅链路——Create → Join → ReceiveFrom 三步走，
+//       缺一不可。直接 Create 不 Join 也能 receive 单播 UDP 包但收不到
+//       多播包；本例程让"加入组"这一步的必要性可观察。
+//
+// 验证步骤：
+//   1. 在线 bRequestCreate := TRUE 创建 socket（hUdpSocket.handle 非 0）
+//   2. 在线 bRequestJoin := TRUE 加入组（bJoined 置 TRUE）
+//   3. 在另一台机器: ncat -u 239.1.1.100 6000 后输入 "RECIPE_v2\n"
+//      → nMulticastPacketsReceived +1
+//   4. 在 bJoined=FALSE 时多播包不会进 receive 队列（理论上）；
+//      实测可视实现而异，这里以 "Join 后能稳定收到" 作为验证目标
+// =============================================================================
+
+// 阶段 1：创建 UDP socket（端口与多播组相同）
+fbCreateMulticastSocket(
+    sSrvNetId := '',
+    sLocalHost := '0.0.0.0',
+    nLocalPort := 6000,
+    bExecute := bRequestCreate,
+    tTimeout := T#5S,
+    bBusy =&gt; bCreateBusy,
+    bError =&gt; bCreateError,
+    nErrId =&gt; nCreateErrId,
+    hSocket =&gt; hUdpSocket
+);
+
+// 阶段 2：加入多播组
+fbJoinGroup(
+    sSrvNetId      := '',
+    hSocket        := hUdpSocket,
+    sMulticastAddr := sMulticastGroup,
+    bExecute       := bRequestJoin,
+    tTimeout       := T#5S,
+    bBusy          =&gt; bJoinBusy,
+    bError         =&gt; bJoinError,
+    nErrId         =&gt; nJoinErrId
+);
+
+// 加入成功后置位 bJoined（供业务上层判断 ReceiveFrom 是否可信）
+IF NOT bJoinBusy AND NOT bJoinError AND bRequestJoin THEN
+    bJoined := TRUE;
+END_IF;
+
+// 阶段 3：周期 polling 收多播包
+fbPollTON(IN := NOT fbPollTON.Q, PT := T#100MS, Q =&gt; bPollPulse);
+fbReceiveMulticast(
+    sSrvNetId := '',
+    hSocket   := hUdpSocket,
+    cbLen     := SIZEOF(abRxBuffer),
+    pDest     := ADR(abRxBuffer),
+    bExecute  := bPollPulse,
+    tTimeout  := T#5S,
+    bBusy       =&gt; bRxBusy,
+    bError      =&gt; bRxError,
+    nErrId      =&gt; nRxErrId,
+    sRemoteHost =&gt; sSenderHost,
+    nRemotePort =&gt; nSenderPort,
+    nRecBytes   =&gt; nRecBytes
+);
+
+IF nRecBytes &gt; 0 THEN
+    nMulticastPacketsReceived := nMulticastPacketsReceived + 1;
+END_IF;
+</xhtml></ST>
+        </body>
+      </pou>
+    </pous>
+  </types>
+  <instances><configurations/></instances>
+</project>

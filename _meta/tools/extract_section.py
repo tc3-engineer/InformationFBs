@@ -90,7 +90,11 @@ _orig_extract = extract
 # artifact. We only consume an optional preceding short chapter-title line
 # when this Version line is actually present — otherwise we'd risk eating
 # real body content (e.g. the first declaration of a VAR_INPUT block).
-_VERSION_LINE = r"TE\d+\s+(?:\d+\s*)?Version:\s*[\d.]+\n"
+# Beckhoff PDFs use several page-header prefixes:
+#   "TE<digits>"  — Tc2_* / Tc3_* libraries (most TwinCAT 3 standard libs)
+#   "TF<digits>"  — TF product manuals (e.g. Tc2_TcpIp = TF6310; the
+#                   number+page often concatenates as "TF6310 3" or "TF631032")
+_VERSION_LINE = r"T[EF]\d+\s*(?:\d+\s*)?Version:\s*[\d.]+\n"
 # Form A: "=== PAGE N ===" marker + optional chapter title + Version line.
 _PAGE_HEADER_WITH_MARKER_RE = re.compile(
     r"\n?=== PAGE \d+ ===\n"

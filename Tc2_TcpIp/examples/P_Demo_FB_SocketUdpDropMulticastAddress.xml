@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project xmlns="http://www.plcopen.org/xml/tc6_0200">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-21T07:00:00"/>
+  <contentHeader name="Tc2_TcpIp.FB_SocketUdpDropMulticastAddress Demo" modificationDateTime="2026-05-21T07:00:00">
+    <coordinateInfo><fbd><scaling x="1" y="1"/></fbd><ld><scaling x="1" y="1"/></ld><sfc><scaling x="1" y="1"/></sfc></coordinateInfo>
+  </contentHeader>
+  <types>
+    <dataTypes/>
+    <pous>
+      <pou name="P_Demo_FB_SocketUdpDropMulticastAddress" pouType="program">
+        <interface>
+          <localVars>
+            <variable name="fbCreateMulticastSocket"><type><derived name="FB_SocketUdpCreate"/></type></variable>
+            <variable name="fbJoinOldGroup"><type><derived name="FB_SocketUdpAddMulticastAddress"/></type></variable>
+            <variable name="fbDropOldGroup"><type><derived name="FB_SocketUdpDropMulticastAddress"/></type></variable>
+            <variable name="fbJoinNewGroup"><type><derived name="FB_SocketUdpAddMulticastAddress"/></type></variable>
+            <variable name="bRequestCreate"><type><BOOL/></type></variable>
+            <variable name="bCreateBusy"><type><BOOL/></type></variable>
+            <variable name="bCreateError"><type><BOOL/></type></variable>
+            <variable name="nCreateErrId"><type><UDINT/></type></variable>
+            <variable name="hUdpSocket"><type><derived name="T_HSOCKET"/></type></variable>
+            <variable name="bRequestJoinOld"><type><BOOL/></type></variable>
+            <variable name="bJoinOldBusy"><type><BOOL/></type></variable>
+            <variable name="bJoinOldError"><type><BOOL/></type></variable>
+            <variable name="nJoinOldErrId"><type><UDINT/></type></variable>
+            <variable name="bRequestSwitch"><type><BOOL/></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">切换订阅：上升沿先 Drop 旧 再 Add 新</xhtml></documentation></variable>
+            <variable name="bDropBusy"><type><BOOL/></type></variable>
+            <variable name="bDropError"><type><BOOL/></type></variable>
+            <variable name="nDropErrId"><type><UDINT/></type></variable>
+            <variable name="bJoinNewBusy"><type><BOOL/></type></variable>
+            <variable name="bJoinNewError"><type><BOOL/></type></variable>
+            <variable name="nJoinNewErrId"><type><UDINT/></type></variable>
+            <variable name="bSwitchInProgress"><type><BOOL/></type></variable>
+            <variable name="bDropDone"><type><BOOL/></type></variable>
+            <variable name="rtrigSwitch"><type><derived name="R_TRIG"/></type></variable>
+          </localVars>
+        </interface>
+        <body>
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：PLC 当多播订阅者，订阅 239.1.1.100；班次切换时需要换订到 239.1.1.200。
+//       本例程演示"先 Drop 旧组、再 Add 新组"的安全切换流程，避免同时收两组
+//       重复数据。
+//
+// 价值：演示 Drop 与 Add 必须配对、且业务侧用 bSwitchInProgress 等串行标志
+//       保证 ADS 异步状态机一前一后跑完才进入下一步。
+//
+// 验证步骤：
+//   1. 在线 bRequestCreate := TRUE → hUdpSocket 创建
+//   2. 在线 bRequestJoinOld := TRUE → 加入 239.1.1.100
+//   3. 用 ncat -u 239.1.1.100 6000 发包，PLC 能收到
+//   4. 在线脉冲 bRequestSwitch := TRUE
+//      → bSwitchInProgress 期间：先 bDropBusy 闪烁、bDropDone 置 TRUE，
+//        再 bJoinNewBusy 闪烁完成
+//   5. 切换完成后只能收到 239.1.1.200 的包，原 239.1.1.100 不再收
+// =============================================================================
+
+// 阶段 1：创建 socket
+fbCreateMulticastSocket(
+    sSrvNetId := '', sLocalHost := '0.0.0.0', nLocalPort := 6000,
+    bExecute := bRequestCreate, tTimeout := T#5S,
+    bBusy =&gt; bCreateBusy, bError =&gt; bCreateError, nErrId =&gt; nCreateErrId,
+    hSocket =&gt; hUdpSocket);
+
+// 阶段 2：加入旧组（一次性）
+fbJoinOldGroup(
+    sSrvNetId := '', hSocket := hUdpSocket,
+    sMulticastAddr := '239.1.1.100',
+    bExecute := bRequestJoinOld, tTimeout := T#5S,
+    bBusy =&gt; bJoinOldBusy, bError =&gt; bJoinOldError, nErrId =&gt; nJoinOldErrId);
+
+// 阶段 3：切换 — 用 rtrig 把 bRequestSwitch 单脉冲转成 bSwitchInProgress 高电平
+rtrigSwitch(CLK := bRequestSwitch);
+IF rtrigSwitch.Q THEN
+    bSwitchInProgress := TRUE;
+    bDropDone := FALSE;
+END_IF;
+
+// 切换第 1 步：Drop 旧组（仅在 bSwitchInProgress AND NOT bDropDone 时跑）
+fbDropOldGroup(
+    sSrvNetId := '', hSocket := hUdpSocket,
+    sMulticastAddr := '239.1.1.100',
+    bExecute := bSwitchInProgress AND NOT bDropDone,
+    tTimeout := T#5S,
+    bBusy =&gt; bDropBusy, bError =&gt; bDropError, nErrId =&gt; nDropErrId);
+
+// Drop 完成后置位 bDropDone，让 Add 新组开始
+IF bSwitchInProgress AND NOT bDropDone AND NOT bDropBusy THEN
+    bDropDone := TRUE;
+END_IF;
+
+// 切换第 2 步：Add 新组（仅在 bDropDone 后跑）
+fbJoinNewGroup(
+    sSrvNetId := '', hSocket := hUdpSocket,
+    sMulticastAddr := '239.1.1.200',
+    bExecute := bSwitchInProgress AND bDropDone,
+    tTimeout := T#5S,
+    bBusy =&gt; bJoinNewBusy, bError =&gt; bJoinNewError, nErrId =&gt; nJoinNewErrId);
+
+// Add 完成 → 切换流程结束
+IF bSwitchInProgress AND bDropDone AND NOT bJoinNewBusy THEN
+    bSwitchInProgress := FALSE;
+END_IF;
+</xhtml></ST>
+        </body>
+      </pou>
+    </pous>
+  </types>
+  <instances><configurations/></instances>
+</project>

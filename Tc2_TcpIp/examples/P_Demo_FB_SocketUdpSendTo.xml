@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project xmlns="http://www.plcopen.org/xml/tc6_0200">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-21T07:00:00"/>
+  <contentHeader name="Tc2_TcpIp.FB_SocketUdpSendTo Demo" modificationDateTime="2026-05-21T07:00:00">
+    <coordinateInfo><fbd><scaling x="1" y="1"/></fbd><ld><scaling x="1" y="1"/></ld><sfc><scaling x="1" y="1"/></sfc></coordinateInfo>
+  </contentHeader>
+  <types>
+    <dataTypes/>
+    <pous>
+      <pou name="P_Demo_FB_SocketUdpSendTo" pouType="program">
+        <interface>
+          <localVars>
+            <variable name="fbCreateUdp"><type><derived name="FB_SocketUdpCreate"/></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">先建 UDP socket 给 SendTo 用</xhtml></documentation></variable>
+            <variable name="fbBroadcastHello"><type><derived name="FB_SocketUdpSendTo"/></type></variable>
+            <variable name="fbCadenceTON"><type><derived name="TON"/></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">2 秒一次广播节拍</xhtml></documentation></variable>
+            <variable name="bRequestCreate"><type><BOOL/></type></variable>
+            <variable name="bCreateBusy"><type><BOOL/></type></variable>
+            <variable name="bCreateError"><type><BOOL/></type></variable>
+            <variable name="nCreateErrId"><type><UDINT/></type></variable>
+            <variable name="hUdpSocket"><type><derived name="T_HSOCKET"/></type></variable>
+            <variable name="sPayload"><initialValue><simpleValue value="'HELLO,PLC_DISCOVER,V1'"/></initialValue><type><string><length>64</length></string></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">发现包内容，固定字串</xhtml></documentation></variable>
+            <variable name="bSendPulse"><type><BOOL/></type></variable>
+            <variable name="bSendBusy"><type><BOOL/></type></variable>
+            <variable name="bSendError"><type><BOOL/></type></variable>
+            <variable name="nSendErrId"><type><UDINT/></type></variable>
+            <variable name="nPacketsSent"><type><UDINT/></type></variable>
+            <variable name="bRtrigSent"><type><derived name="R_TRIG"/></type></variable>
+          </localVars>
+        </interface>
+        <body>
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：PLC 接入车间内网，需要发现网段中所有支持本协议的 HMI/PC：
+//       每 2 秒往 192.168.1.255:5005 广播一个 "HELLO" 包，监听该端口的设备
+//       会回 ack 包；本例程只演示发送侧。
+//
+// 价值：演示 UDP 广播——发送一行调用即完成，对比 TCP 必须先 Connect。
+//       验证"UDP 永远不会因对端不响应超时"（即使没人收，本 FB 仍 bError=FALSE）。
+//
+// 验证步骤：
+//   1. 在线 bRequestCreate := TRUE → hUdpSocket 创建
+//   2. 在另一台机器跑 ncat -ul 5005（监听 UDP 5005）
+//   3. 每 2 秒 ncat 端打印 "HELLO,PLC_DISCOVER,V1"
+//   4. nPacketsSent 每 2 秒 +1
+//   5. 关掉 ncat → nPacketsSent 继续 +1，bSendError 仍 FALSE（UDP 不感知）
+// =============================================================================
+
+// 阶段 1：创建 UDP socket
+fbCreateUdp(
+    sSrvNetId  := '',
+    sLocalHost := '0.0.0.0',
+    nLocalPort := 5004,
+    bExecute   := bRequestCreate,
+    tTimeout   := T#5S,
+    bBusy      =&gt; bCreateBusy,
+    bError     =&gt; bCreateError,
+    nErrId     =&gt; nCreateErrId,
+    hSocket    =&gt; hUdpSocket
+);
+
+// 阶段 2：2 秒一次脉冲触发广播
+fbCadenceTON(IN := NOT fbCadenceTON.Q, PT := T#2S, Q =&gt; bSendPulse);
+
+// 阶段 3：广播包发送（每 bSendPulse 上升沿一次）
+fbBroadcastHello(
+    sSrvNetId   := '',
+    hSocket     := hUdpSocket,
+    sRemoteHost := '192.168.1.255',
+    nRemotePort := 5005,
+    cbLen       := TO_UDINT(LEN(sPayload) + 1),
+    pSrc        := ADR(sPayload),
+    bExecute    := bSendPulse,
+    tTimeout    := T#5S,
+    bBusy       =&gt; bSendBusy,
+    bError      =&gt; bSendError,
+    nErrId      =&gt; nSendErrId
+);
+
+// 计数：bSendBusy 下降沿且无错时 +1
+bRtrigSent(CLK := NOT bSendBusy AND NOT bSendError);
+IF bRtrigSent.Q THEN
+    nPacketsSent := nPacketsSent + 1;
+END_IF;
+</xhtml></ST>
+        </body>
+      </pou>
+    </pous>
+  </types>
+  <instances><configurations/></instances>
+</project>

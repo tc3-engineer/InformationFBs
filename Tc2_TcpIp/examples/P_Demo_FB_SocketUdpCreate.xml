@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project xmlns="http://www.plcopen.org/xml/tc6_0200">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-21T07:00:00"/>
+  <contentHeader name="Tc2_TcpIp.FB_SocketUdpCreate Demo" modificationDateTime="2026-05-21T07:00:00">
+    <coordinateInfo><fbd><scaling x="1" y="1"/></fbd><ld><scaling x="1" y="1"/></ld><sfc><scaling x="1" y="1"/></sfc></coordinateInfo>
+  </contentHeader>
+  <types>
+    <dataTypes/>
+    <pous>
+      <pou name="P_Demo_FB_SocketUdpCreate" pouType="program">
+        <interface>
+          <localVars>
+            <variable name="fbCreateDiscoverySocket"><type><derived name="FB_SocketUdpCreate"/></type></variable>
+            <variable name="bRequestCreate"><type><BOOL/></type></variable>
+            <variable name="bCreateBusy"><type><BOOL/></type></variable>
+            <variable name="bCreateError"><type><BOOL/></type></variable>
+            <variable name="nCreateErrId"><type><UDINT/></type></variable>
+            <variable name="hDiscoverySocket"><type><derived name="T_HSOCKET"/></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">UDP 句柄；用于设备发现广播包收发</xhtml></documentation></variable>
+            <variable name="sActualLocalAddr"><type><string><length>15</length></string></type><documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">观察实际绑到的网卡 IP，验证 sLocalHost 解析行为</xhtml></documentation></variable>
+            <variable name="nActualLocalPort"><type><UDINT/></type></variable>
+          </localVars>
+        </interface>
+        <body>
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：PLC 在 0.0.0.0:5005 绑一个 UDP socket，准备做设备发现：广播 hello、
+//       收来自网段内 HMI 的回应。
+//
+// 价值：演示"显式 0.0.0.0 优于 ''"的纪律，并验证创建后用 hSocket.localAddr
+//       检查实际绑定 IP/端口——避免 PDF §5.1.8 警告的"断网时回环 127.0.0.1"
+//       这种隐形陷阱。
+//
+// 验证步骤：
+//   1. 在线 bRequestCreate := TRUE
+//      → bCreateBusy 短暂为 TRUE，落回；hDiscoverySocket.handle 非 0
+//   2. 观察 sActualLocalAddr 应为 '0.0.0.0'，nActualLocalPort 应为 5005
+//   3. 若改 sLocalHost := ''（空串）+ PLC 拔网线，重启
+//      → sActualLocalAddr 可能变成 '127.0.0.1'（PDF 警告的兜底行为）
+// =============================================================================
+
+// 创建 UDP socket
+fbCreateDiscoverySocket(
+    sSrvNetId  := '',
+    sLocalHost := '0.0.0.0',
+    nLocalPort := 5005,
+    bExecute   := bRequestCreate,
+    tTimeout   := T#5S,
+    bBusy      =&gt; bCreateBusy,
+    bError     =&gt; bCreateError,
+    nErrId     =&gt; nCreateErrId,
+    hSocket    =&gt; hDiscoverySocket
+);
+
+// 创建成功后把实际绑定结果暴露到上层变量，便于在线 monitor 校验
+IF NOT bCreateBusy AND NOT bCreateError AND hDiscoverySocket.handle &lt;&gt; 0 THEN
+    sActualLocalAddr := hDiscoverySocket.localAddr.sAddr;
+    nActualLocalPort := hDiscoverySocket.localAddr.nPort;
+END_IF;
+</xhtml></ST>
+        </body>
+      </pou>
+    </pous>
+  </types>
+  <instances><configurations/></instances>
+</project>
