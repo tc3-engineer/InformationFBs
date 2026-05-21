@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project xmlns="http://www.plcopen.org/xml/tc6_0200">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-21T00:00:00"/>
+  <contentHeader name="Tc2_MC2.MC_HaltPhasing Demo" modificationDateTime="2026-05-21T00:00:00">
+    <coordinateInfo>
+      <fbd><scaling x="1" y="1"/></fbd>
+      <ld><scaling x="1" y="1"/></ld>
+      <sfc><scaling x="1" y="1"/></sfc>
+    </coordinateInfo>
+  </contentHeader>
+  <types>
+    <dataTypes/>
+    <pous>
+      <pou name="P_Demo_MC_HaltPhasing" pouType="program">
+        <interface>
+          <localVars>
+            <variable name="fbStopPhasing"><type><derived name="MC_HaltPhasing"/></type></variable>
+            <variable name="axisMaster"><type><derived name="AXIS_REF"/></type></variable>
+            <variable name="axisColorPlate"><type><derived name="AXIS_REF"/></type></variable>
+            <variable name="rtStopTrig"><type><derived name="R_TRIG"/></type></variable>
+            <variable name="bRequestStop"><initialValue><simpleValue value="FALSE"/></initialValue><type><BOOL/></type></variable>
+            <variable name="bStopDone"><type><BOOL/></type></variable>
+            <variable name="bStopBusy"><type><BOOL/></type></variable>
+            <variable name="nErrorID"><type><UDINT/></type></variable>
+          </localVars>
+        </interface>
+        <body>
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：套色印刷启动相位调整后业务发现参数算错，需要让色版从轴的"相位调整
+//       速度"按 Jerk-limited 曲线平稳归零，避免色版瞬时抖动印废品。
+// 价值：相对 MC_AbortSuperposition 的瞬时中止，本 FB 给可控减速曲线工艺平顺；
+//       从轴耦合关系保留，主运动继续推进。
+// 验证：先用 MC_PhasingRelative 启动相位调整（外部 demo 假设已启动）；
+//       bRequestStop := TRUE → bStopBusy 立 TRUE；从轴叠加速度按 1000 mm/s²
+//       减速降到 0，bStopDone 短暂 TRUE；从轴仍按之前齿比跟主轴走。
+// =============================================================================
+
+rtStopTrig(CLK := bRequestStop);
+
+fbStopPhasing(
+    Execute      := rtStopTrig.Q,
+    Deceleration := 1000.0,
+    Jerk         := 10000.0,
+    BufferMode   := MC_Aborting,
+    Master       := axisMaster,
+    Slave        := axisColorPlate,
+    Done         =&gt; bStopDone,
+    Busy         =&gt; bStopBusy,
+    ErrorId      =&gt; nErrorID
+);
+</xhtml></ST>
+        </body>
+      </pou>
+    </pous>
+  </types>
+  <instances><configurations/></instances>
+</project>

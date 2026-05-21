@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project xmlns="http://www.plcopen.org/xml/tc6_0200">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-21T00:00:00"/>
+  <contentHeader name="Tc2_MC2.MC_GearInMultiMaster Demo" modificationDateTime="2026-05-21T00:00:00">
+    <coordinateInfo>
+      <fbd><scaling x="1" y="1"/></fbd>
+      <ld><scaling x="1" y="1"/></ld>
+      <sfc><scaling x="1" y="1"/></sfc>
+    </coordinateInfo>
+  </contentHeader>
+  <types>
+    <dataTypes/>
+    <pous>
+      <pou name="P_Demo_MC_GearInMultiMaster" pouType="program">
+        <interface>
+          <localVars>
+            <variable name="fbMultiGear"><type><derived name="MC_GearInMultiMaster"/></type></variable>
+            <variable name="axisXLeft"><type><derived name="AXIS_REF"/></type></variable>
+            <variable name="axisXRight"><type><derived name="AXIS_REF"/></type></variable>
+            <variable name="axisXUnused3"><type><derived name="AXIS_REF"/></type></variable>
+            <variable name="axisXUnused4"><type><derived name="AXIS_REF"/></type></variable>
+            <variable name="axisWorkpieceX"><type><derived name="AXIS_REF"/></type></variable>
+            <variable name="bEnableSync"><initialValue><simpleValue value="FALSE"/></initialValue><type><BOOL/></type></variable>
+            <variable name="bIsCoupled"><type><BOOL/></type></variable>
+            <variable name="nErrorID"><type><UDINT/></type></variable>
+          </localVars>
+        </interface>
+        <body>
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：龙门双驱机床 — 左右两根 X 伺服共同驱动横梁，要严格同步。把它们各
+//       0.5 齿比叠加到一根"工件 X 虚轴"上，业务只读虚轴位置即可。Master3/4
+//       未用，传空 AXIS_REF（ID = 0），齿比也置 0。
+// 价值：用单 FB 完成多主合成，业务不需要每周期 slave_target = sum(mi*ki)。
+// 验证：bEnableSync := TRUE → bIsCoupled 立 TRUE；
+//       让 axisXLeft 和 axisXRight 同速跑（外部 MoveVelocity 都设 100 mm/s），
+//       axisWorkpieceX.NcToPlc.ActVelo 应 = 100*0.5 + 100*0.5 = 100；
+//       让两根速度差 50 → 虚轴速度 = 50*0.5 + 100*0.5 = 75。
+// =============================================================================
+
+fbMultiGear(
+    Master1      := ADR(axisXLeft),
+    Master2      := ADR(axisXRight),
+    Master3      := ADR(axisXUnused3),
+    Master4      := ADR(axisXUnused4),
+    Enable       := bEnableSync,
+    GearRatio1   := 0.5,
+    GearRatio2   := 0.5,
+    GearRatio3   := 0.0,
+    GearRatio4   := 0.0,
+    Acceleration := 1000.0,
+    Deceleration := 0.0,
+    Jerk         := 0.0,
+    Slave        := axisWorkpieceX,
+    InGear       =&gt; bIsCoupled,
+    ErrorID      =&gt; nErrorID
+);
+</xhtml></ST>
+        </body>
+      </pou>
+    </pous>
+  </types>
+  <instances><configurations/></instances>
+</project>
