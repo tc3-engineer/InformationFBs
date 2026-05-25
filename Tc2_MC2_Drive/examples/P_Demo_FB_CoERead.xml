@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project xmlns="http://www.plcopen.org/xml/tc6_0200">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-21T00:00:00"/>
+  <contentHeader name="Tc2_MC2_Drive.FB_CoERead Demo" modificationDateTime="2026-05-21T00:00:00">
+    <coordinateInfo>
+      <fbd><scaling x="1" y="1"/></fbd>
+      <ld><scaling x="1" y="1"/></ld>
+      <sfc><scaling x="1" y="1"/></sfc>
+    </coordinateInfo>
+  </contentHeader>
+  <types>
+    <dataTypes/>
+    <pous>
+      <pou name="P_Demo_FB_CoERead" pouType="program">
+        <interface>
+          <localVars>
+            <variable name="fbCoERead">
+              <type><derived name="FB_CoERead"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">CoE 读对象 FB 实例</xhtml></documentation>
+            </variable>
+            <variable name="axisServo">
+              <type><derived name="AXIS_REF"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">AX8000 伺服轴轴引用；必须先在 System Manager 配好并 Link</xhtml></documentation>
+            </variable>
+            <variable name="rtCoEReadTrig">
+              <type><derived name="R_TRIG"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">把电平转上升沿</xhtml></documentation>
+            </variable>
+            <variable name="bCoEReadReq">
+              <initialValue><simpleValue value="FALSE"/></initialValue>
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">在线写 TRUE 触发一次读取</xhtml></documentation>
+            </variable>
+            <variable name="nVendorId">
+              <type><UDINT/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">读回的 Vendor ID（对象 16#1018 子索引 1）</xhtml></documentation>
+            </variable>
+            <variable name="bCoEReadBusy"><type><BOOL/></type></variable>
+            <variable name="bCoEReadError"><type><BOOL/></type></variable>
+            <variable name="nCoEReadAdsErr"><type><UINT/></type></variable>
+            <variable name="nCoEReadCanErr"><type><UINT/></type></variable>
+          </localVars>
+        </interface>
+        <body>
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：诊断界面要显示 AX8000 驱动器的设备身份信息。读对象字典 Identity
+//       对象 16#1018 的子索引 1（Vendor ID）。CoE 用 Index/SubIndex 寻址，
+//       和 AX5000 的 SoE IDN 是两套体系。
+//
+// 价值：1) Index/SubIndex 通用读任意 CoE 对象，免写一堆专用 FB
+//       2) 通过 AXIS_REF 关联轴，不必单独管理从站地址
+//       3) AdsErrId + CANopenErrId 双错误码区分"通信问题"和"对象访问问题"
+//
+// !! 注意：CoE 用于 AX8000/EL72xx 等；别把 SoE 的 IDN 当 Index 填。
+//
+// 验证步骤：
+//   1. System Manager 配好 AX8000 NC 轴并 Link 给 axisServo，引用 Tc2_MC2_Drive
+//   2. Import PLCopenXML 选本文件，加进 PlcTask，编译登录
+//   3. 在线写 bCoEReadReq := TRUE → bCoEReadBusy 置 TRUE
+//   4. 等 bCoEReadBusy 落回 FALSE 且 bCoEReadError = FALSE → nVendorId 应为
+//      Beckhoff 的 Vendor ID（16#00000002）
+//   5. 若 bCoEReadError = TRUE：看 nCoEReadAdsErr（通信/无 mailbox），
+//      nCoEReadCanErr（对象/子索引问题）
+// =============================================================================
+
+// 用 R_TRIG 把"持续按住的 TRUE"转成真正的上升沿
+rtCoEReadTrig(CLK := bCoEReadReq);
+
+// 单次调用：读单个子项 CompleteAccess=FALSE；pDstBuf/BufLen 配对指向 nVendorId
+// Axis 是 VAR_IN_OUT 必传；本 FB 无 Done，靠 Busy 落回 FALSE 判成功
+fbCoERead(
+    NetId          := '',
+    Index          := 16#1018,
+    SubIndex       := 1,
+    pDstBuf        := ADR(nVendorId),
+    BufLen         := SIZEOF(nVendorId),
+    Execute        := rtCoEReadTrig.Q,
+    Timeout        := DEFAULT_ADS_TIMEOUT,
+    CompleteAccess := FALSE,
+    Axis           := axisServo,
+    Busy           =&gt; bCoEReadBusy,
+    Error          =&gt; bCoEReadError,
+    AdsErrId       =&gt; nCoEReadAdsErr,
+    CANopenErrId   =&gt; nCoEReadCanErr
+);
+</xhtml></ST>
+        </body>
+      </pou>
+    </pous>
+  </types>
+  <instances><configurations/></instances>
+</project>

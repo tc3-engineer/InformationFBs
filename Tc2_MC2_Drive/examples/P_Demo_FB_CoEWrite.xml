@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project xmlns="http://www.plcopen.org/xml/tc6_0200">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-21T00:00:00"/>
+  <contentHeader name="Tc2_MC2_Drive.FB_CoEWrite Demo" modificationDateTime="2026-05-21T00:00:00">
+    <coordinateInfo>
+      <fbd><scaling x="1" y="1"/></fbd>
+      <ld><scaling x="1" y="1"/></ld>
+      <sfc><scaling x="1" y="1"/></sfc>
+    </coordinateInfo>
+  </contentHeader>
+  <types>
+    <dataTypes/>
+    <pous>
+      <pou name="P_Demo_FB_CoEWrite" pouType="program">
+        <interface>
+          <localVars>
+            <variable name="fbCoEWrite">
+              <type><derived name="FB_CoEWrite"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">CoE 写对象 FB 实例</xhtml></documentation>
+            </variable>
+            <variable name="axisServo">
+              <type><derived name="AXIS_REF"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">AX8000 伺服轴轴引用；必须先在 System Manager 配好并 Link</xhtml></documentation>
+            </variable>
+            <variable name="rtCoEWriteTrig">
+              <type><derived name="R_TRIG"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">把电平转上升沿</xhtml></documentation>
+            </variable>
+            <variable name="bCoEWriteReq">
+              <initialValue><simpleValue value="FALSE"/></initialValue>
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">在线写 TRUE 触发一次写入</xhtml></documentation>
+            </variable>
+            <variable name="nWriteValue">
+              <initialValue><simpleValue value="1"/></initialValue>
+              <type><UDINT/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">要写入的新对象值；写前确认对象可写且范围合法</xhtml></documentation>
+            </variable>
+            <variable name="bCoEWriteBusy"><type><BOOL/></type></variable>
+            <variable name="bCoEWriteError"><type><BOOL/></type></variable>
+            <variable name="nCoEWriteAdsErr"><type><UINT/></type></variable>
+            <variable name="nCoEWriteCanErr"><type><UINT/></type></variable>
+          </localVars>
+        </interface>
+        <body>
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：调试 AX8000 驱动器，需要把对象字典里某个可写配置对象写成新值。
+//       CoE 用 Index/SubIndex 寻址（这里以厂商区 16#8000 子索引 1 为例），
+//       和 AX5000 的 SoE 是两套体系。
+//
+// 价值：1) Index/SubIndex 通用写任意可写 CoE 对象，免写一堆专用 FB
+//       2) 对象常驻从站侧，写一次长期生效
+//       3) AdsErrId + CANopenErrId 双错误码区分"通信"和"只读/越界"
+//
+// !! 注意：CoE 对象写入是持久的，写错可能改变从站行为。写前确认 Index/SubIndex
+//          正确、对象可写、值类型大小匹配且范围合法（具体对象号查 AX8000 对象描述）。
+//
+// 验证步骤：
+//   1. System Manager 配好 AX8000 NC 轴并 Link 给 axisServo，引用 Tc2_MC2_Drive
+//   2. Import PLCopenXML 选本文件，加进 PlcTask，编译登录
+//   3. 把 Index/SubIndex 改成一个确实可写的对象，设好 nWriteValue
+//   4. 在线写 bCoEWriteReq := TRUE → bCoEWriteBusy 置 TRUE
+//   5. 等 bCoEWriteBusy 落回 FALSE 且 bCoEWriteError = FALSE 即写入成功，
+//      可用 FB_CoERead 回读验证
+//   6. 若 bCoEWriteError = TRUE：看 nCoEWriteAdsErr（通信），
+//      nCoEWriteCanErr（只读/越界/对象不存在）
+// =============================================================================
+
+// 用 R_TRIG 把"持续按住的 TRUE"转成真正的上升沿
+rtCoEWriteTrig(CLK := bCoEWriteReq);
+
+// 单次调用：单个子项 CompleteAccess=FALSE；pSrcBuf/BufLen 配对指向 nWriteValue
+// Axis 是 VAR_IN_OUT 必传；本 FB 无 Done，靠 Busy 落回 FALSE 判成功
+fbCoEWrite(
+    NetId          := '',
+    Index          := 16#8000,
+    SubIndex       := 1,
+    pSrcBuf        := ADR(nWriteValue),
+    BufLen         := SIZEOF(nWriteValue),
+    Execute        := rtCoEWriteTrig.Q,
+    Timeout        := DEFAULT_ADS_TIMEOUT,
+    CompleteAccess := FALSE,
+    Axis           := axisServo,
+    Busy           =&gt; bCoEWriteBusy,
+    Error          =&gt; bCoEWriteError,
+    AdsErrId       =&gt; nCoEWriteAdsErr,
+    CANopenErrId   =&gt; nCoEWriteCanErr
+);
+</xhtml></ST>
+        </body>
+      </pou>
+    </pous>
+  </types>
+  <instances><configurations/></instances>
+</project>

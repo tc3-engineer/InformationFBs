@@ -599,3 +599,17 @@
 2026-05-25T00:00:00Z | Tc2_MC2_FlyingSaw | axis_coupling                          | MC_GearInPos                             | verified | PDF + InfoSys cross-verified
 2026-05-25T00:00:00Z | Tc2_MC2_FlyingSaw | diagnostics                            | MC_ReadFlyingSawCharacteristics          | verified | PDF + InfoSys cross-verified
 2026-05-25T00:00:00Z | Tc2_MC2_FlyingSaw | data_types                             | MC_FlyingSawCharacValues                 | verified | PDF + InfoSys cross-verified
+2026-05-25T00:00:00Z | Tc2_MC2_Drive  | functions                                | F_GetVersionTcMc2Drive                   | verified | PDF + InfoSys cross-verified
+2026-05-25T00:00:00Z | Tc2_MC2_Drive  | general_beckhoff                         | FB_DeletePositionOffset                  | verified | PDF + InfoSys cross-verified
+2026-05-25T00:00:00Z | Tc2_MC2_Drive  | general_beckhoff                         | FB_BrakeControl                          | verified | PDF + InfoSys cross-verified
+2026-05-25T00:00:00Z | Tc2_MC2_Drive  | general_beckhoff                         | FB_SetPositionOffset                     | verified | PDF + InfoSys cross-verified
+2026-05-25T00:00:00Z | Tc2_MC2_Drive  | general_beckhoff                         | FB_ReadDriveInfo                         | verified | PDF + InfoSys cross-verified
+2026-05-25T00:00:00Z | Tc2_MC2_Drive  | general_beckhoff                         | FB_ParkAxis                              | verified | PDF + InfoSys cross-verified
+2026-05-25T00:00:00Z | Tc2_MC2_Drive  | general_soe                              | FB_SoERead                               | verified | PDF + InfoSys cross-verified
+2026-05-25T00:00:00Z | Tc2_MC2_Drive  | general_soe                              | FB_SoEWrite                              | verified | PDF + InfoSys cross-verified
+2026-05-25T00:00:00Z | Tc2_MC2_Drive  | general_soe                              | FB_SoEReset                              | verified | PDF + InfoSys cross-verified
+2026-05-25T00:00:00Z | Tc2_MC2_Drive  | general_soe                              | FB_SoEWritePassword                      | verified | PDF + InfoSys cross-verified
+2026-05-25T00:00:00Z | Tc2_MC2_Drive  | general_soe                              | FB_SoESetDataAccessMode                  | verified | PDF + InfoSys cross-verified
+2026-05-25T00:00:00Z | Tc2_MC2_Drive  | general_coe                              | FB_CoERead                               | verified | PDF + InfoSys cross-verified
+2026-05-25T00:00:00Z | Tc2_MC2_Drive  | general_coe                              | FB_CoEWrite                              | verified | PDF + InfoSys cross-verified
+2026-05-25T00:00:00Z | Tc2_MC2_Drive  | general_coe                              | FB_CoEExecuteCommand                     | verified | PDF + InfoSys cross-verified
