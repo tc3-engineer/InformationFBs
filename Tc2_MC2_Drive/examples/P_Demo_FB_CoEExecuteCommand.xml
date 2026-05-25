@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project xmlns="http://www.plcopen.org/xml/tc6_0200">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-21T00:00:00"/>
+  <contentHeader name="Tc2_MC2_Drive.FB_CoEExecuteCommand Demo" modificationDateTime="2026-05-21T00:00:00">
+    <coordinateInfo>
+      <fbd><scaling x="1" y="1"/></fbd>
+      <ld><scaling x="1" y="1"/></ld>
+      <sfc><scaling x="1" y="1"/></sfc>
+    </coordinateInfo>
+  </contentHeader>
+  <types>
+    <dataTypes/>
+    <pous>
+      <pou name="P_Demo_FB_CoEExecuteCommand" pouType="program">
+        <interface>
+          <localVars>
+            <variable name="fbCoECmd">
+              <type><derived name="FB_CoEExecuteCommand"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">CoE 执行命令 FB 实例</xhtml></documentation>
+            </variable>
+            <variable name="axisServo">
+              <type><derived name="AXIS_REF"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">AX8000 伺服轴轴引用；必须先在 System Manager 配好并 Link</xhtml></documentation>
+            </variable>
+            <variable name="rtCmdTrig">
+              <type><derived name="R_TRIG"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">把电平转上升沿</xhtml></documentation>
+            </variable>
+            <variable name="bExecCmdReq">
+              <initialValue><simpleValue value="FALSE"/></initialValue>
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">在线写 TRUE 触发一次命令执行</xhtml></documentation>
+            </variable>
+            <variable name="abCmdInput">
+              <type><array><dimension lower="0" upper="7"/><baseType><BYTE/></baseType></array></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">命令输入数据缓冲区；按具体命令对象文档填充</xhtml></documentation>
+            </variable>
+            <variable name="abCmdOutput">
+              <type><array><dimension lower="0" upper="7"/><baseType><BYTE/></baseType></array></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">命令输出数据缓冲区；执行完后含命令结果</xhtml></documentation>
+            </variable>
+            <variable name="bCmdBusy"><type><BOOL/></type></variable>
+            <variable name="bCmdError"><type><BOOL/></type></variable>
+            <variable name="nCmdErrorId"><type><UDINT/></type></variable>
+            <variable name="eCmdStatus">
+              <type><derived name="_E_CoECommandStatus"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">命令执行状态；含义查命令对象文档</xhtml></documentation>
+            </variable>
+          </localVars>
+        </interface>
+        <body>
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：触发 AX8000 一个 CoE 命令型对象（如编码器校准 / 参数自整定），这类
+//       对象不是简单写值，而要"发起后等驱动器执行完"。本 FB 内部承担轮询，
+//       完成后把结果写进输出缓冲区。
+//
+// 价值：1) 不必自己写"发起→反复读状态→判完成"的轮询状态机，一次调用搞定
+//       2) 同时支持命令输入参数和输出结果（双缓冲区）
+//       3) Status 反映命令执行进展
+//
+// !! 注意：本 FB 用于命令型对象（不是普通读写，那用 FB_CoEWrite/FB_CoERead）。
+//          错误输出叫 ErrorId 不是 AdsErrId。Index 和缓冲区结构按具体命令
+//          对象文档确定，这里用 8 字节通用缓冲示意。某些命令执行期间不要打断。
+//
+// 验证步骤：
+//   1. System Manager 配好 AX8000 NC 轴并 Link 给 axisServo，引用 Tc2_MC2_Drive
+//   2. Import PLCopenXML 选本文件，加进 PlcTask，编译登录
+//   3. 把 Index 与缓冲区内容换成目标命令对象文档规定的值
+//   4. 在线写 bExecCmdReq := TRUE → bCmdBusy 置 TRUE，观察 eCmdStatus 变化
+//   5. 等 bCmdBusy 落回 FALSE 且 bCmdError = FALSE → abCmdOutput 含命令结果
+//   6. 若 bCmdError = TRUE，看 nCmdErrorId 对照 ADS Return Codes 表
+// =============================================================================
+
+// 用 R_TRIG 把"持续按住的 TRUE"转成真正的上升沿
+rtCmdTrig(CLK := bExecCmdReq);
+
+// 单次调用：输入/输出缓冲区各自配对；Index 16#FB00 仅示意，按文档替换
+// Axis 是 VAR_IN_OUT 必传；本 FB 无 Done，靠 Busy 落回 FALSE 判完成
+fbCoECmd(
+    NetId     := '',
+    Index     := 16#FB00,
+    pSrcBuf   := ADR(abCmdInput),
+    SrcBufLen := SIZEOF(abCmdInput),
+    pDstBuf   := ADR(abCmdOutput),
+    DstBufLen := SIZEOF(abCmdOutput),
+    Execute   := rtCmdTrig.Q,
+    Timeout   := DEFAULT_ADS_TIMEOUT,
+    Axis      := axisServo,
+    Busy      =&gt; bCmdBusy,
+    Error     =&gt; bCmdError,
+    ErrorId   =&gt; nCmdErrorId,
+    Status    =&gt; eCmdStatus
+);
+</xhtml></ST>
+        </body>
+      </pou>
+    </pous>
+  </types>
+  <instances><configurations/></instances>
+</project>
