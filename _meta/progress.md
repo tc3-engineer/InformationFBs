@@ -589,3 +589,9 @@
 2026-05-21T11:30:00Z | Tc2_TcpIp      | functions                                | HSOCKET_TO_STRINGEX                      | verified | PDF + InfoSys cross-verified
 2026-05-21T11:30:00Z | Tc2_TcpIp      | functions                                | SOCKETADDR_TO_STRING                     | verified | PDF + InfoSys cross-verified
 2026-05-21T11:30:00Z | Tc2_TcpIp      | global_constants                         | stLibVersion_Tc2_TcpIp                   | verified | PDF + InfoSys cross-verified
+2026-05-25T00:00:00Z | Tc2_NcDrive    | general_soe                              | FB_SoEReset                              | verified | PDF + InfoSys cross-verified
+2026-05-25T00:00:00Z | Tc2_NcDrive    | general_soe                              | FB_SoEWritePassword                      | verified | PDF + InfoSys cross-verified
+2026-05-25T00:00:00Z | Tc2_NcDrive    | ax5000_soe                               | FB_SoEAX5000ReadActMainVoltage           | verified | PDF + InfoSys cross-verified
+2026-05-25T00:00:00Z | Tc2_NcDrive    | ax5000_soe                               | FB_SoEAX5000SetMotorCtrlWord             | verified | PDF + InfoSys cross-verified
+2026-05-25T00:00:00Z | Tc2_NcDrive    | ax5000_soe                               | FB_SoEAX5000FirmwareUpdate               | verified | PDF + InfoSys cross-verified
+2026-05-25T00:00:00Z | Tc2_NcDrive    | library_version                          | F_GetVersionTcNcDrive                    | verified | PDF + InfoSys cross-verified
