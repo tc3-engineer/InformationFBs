@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project xmlns="http://www.plcopen.org/xml/tc6_0200">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-21T00:00:00"/>
+  <contentHeader name="Tc2_MC2_Drive.FB_SoEAX5000FirmwareUpdate Demo" modificationDateTime="2026-05-21T00:00:00">
+    <coordinateInfo>
+      <fbd><scaling x="1" y="1"/></fbd>
+      <ld><scaling x="1" y="1"/></ld>
+      <sfc><scaling x="1" y="1"/></sfc>
+    </coordinateInfo>
+  </contentHeader>
+  <types>
+    <dataTypes/>
+    <pous>
+      <pou name="P_Demo_FB_SoEAX5000FirmwareUpdate" pouType="program">
+        <interface>
+          <localVars>
+            <variable name="fbFwUpdate">
+              <type><derived name="FB_SoEAX5000FirmwareUpdate"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">AX5000 固件更新 FB 实例</xhtml></documentation>
+            </variable>
+            <variable name="axisServo">
+              <type><derived name="AXIS_REF"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">AX5000 伺服轴轴引用；必须先在 System Manager 配好并 Link</xhtml></documentation>
+            </variable>
+            <variable name="rtFwTrig">
+              <type><derived name="R_TRIG"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">把电平转上升沿</xhtml></documentation>
+            </variable>
+            <variable name="bStartFwUpdate">
+              <initialValue><simpleValue value="FALSE"/></initialValue>
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">在线写 TRUE 触发一次固件更新（仅在受控停机窗口）</xhtml></documentation>
+            </variable>
+            <variable name="bFwBusy"><type><BOOL/></type></variable>
+            <variable name="bFwError"><type><BOOL/></type></variable>
+            <variable name="iFwAdsErr"><type><UINT/></type></variable>
+            <variable name="iFwSercosErr"><type><UINT/></type></variable>
+            <variable name="iFwDiagNumber"><type><UDINT/></type></variable>
+            <variable name="eFwState">
+              <type><derived name="E_FwUpdateState"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">固件更新状态；FwUpdateDone/NoFwUpdateRequired 为成功</xhtml></documentation>
+            </variable>
+            <variable name="iFwProgress"><type><INT/></type></variable>
+            <variable name="sFwSelectedFile"><type><string><length>255</length></string></type></variable>
+          </localVars>
+        </interface>
+        <body>
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：受控停机维护窗口里，把 AX5000 驱动器固件更新到工程要求的指定版本
+//       （v1.05_b0009）。FB 自动比对当前固件、找固件文件、刷写、恢复 EtherCAT
+//       状态，免人工逐台进 DriveManager 操作。
+//
+// 价值：1) 把整套固件升级流程封装成一个 FB，可纳入自动化升级脚本
+//       2) eFwUpdateState + iLoadProgress 全程反馈进度与结果
+//       3) 自动判断"已是目标版本则跳过"（NoFwUpdateRequired）
+//
+// !! 危险：更新期间 PLC/TwinCAT 不能停、EtherCAT 不能断、AX5000 不能断电，
+//          任何中断都可能损坏固件使端子不可用。只能在受控停机窗口触发。
+//
+// 验证步骤：
+//   1. System Manager 配好 AX5000 NC 轴并 Link 给 axisServo，引用 Tc2_MC2_Drive
+//   2. 确认固件文件存在于 sFirmwarePath（默认 FirmwarePool）
+//   3. Import PLCopenXML 选本文件，加进 PlcTask，编译登录
+//   4. 在受控停机状态下，在线写 bStartFwUpdate := TRUE
+//   5. 观察 eFwState：InProgress 期间 iFwProgress 走百分比；结束应为
+//      FwUpdateDone 或 NoFwUpdateRequired，bFwBusy 落回 FALSE
+//   6. 若 bFwError = TRUE：看 iFwAdsErr / iFwSercosErr / iFwDiagNumber，
+//      按 AX5000 手册恢复流程处理（不要简单重发）
+// =============================================================================
+
+// 用 R_TRIG 把"持续按住的 TRUE"转成真正的上升沿
+rtFwTrig(CLK := bStartFwUpdate);
+
+// 单次调用：版本字符串格式必须 vx.yy_bnnnn；Axis 是 VAR_IN_OUT 必传
+// 本 FB 无 Done，靠 bBusy 落回 FALSE + eFwState 判结果；注意 b/i/s 前缀命名
+fbFwUpdate(
+    sNetId                := '',
+    bExecute              := rtFwTrig.Q,
+    sFirmwareVersion      := 'v1.05_b0009',
+    sFirmwarePath         := 'C:\TwinCAT\Io\TcDriveManager\FirmwarePool',
+    tTimeout              := DEFAULT_ADS_TIMEOUT,
+    Axis                  := axisServo,
+    bBusy                 =&gt; bFwBusy,
+    bError                =&gt; bFwError,
+    iAdsErrId             =&gt; iFwAdsErr,
+    iSercosErrId          =&gt; iFwSercosErr,
+    iDiagNumber           =&gt; iFwDiagNumber,
+    eFwUpdateState        =&gt; eFwState,
+    iLoadProgress         =&gt; iFwProgress,
+    sSelectedFirmwareFile =&gt; sFwSelectedFile
+);
+</xhtml></ST>
+        </body>
+      </pou>
+    </pous>
+  </types>
+  <instances><configurations/></instances>
+</project>

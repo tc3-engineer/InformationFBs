@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project xmlns="http://www.plcopen.org/xml/tc6_0200">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-21T00:00:00"/>
+  <contentHeader name="Tc2_MC2_Drive.FB_SoEAX5000SetPositionOffset Demo" modificationDateTime="2026-05-21T00:00:00">
+    <coordinateInfo>
+      <fbd><scaling x="1" y="1"/></fbd>
+      <ld><scaling x="1" y="1"/></ld>
+      <sfc><scaling x="1" y="1"/></sfc>
+    </coordinateInfo>
+  </contentHeader>
+  <types>
+    <dataTypes/>
+    <pous>
+      <pou name="P_Demo_FB_SoEAX5000SetPositionOffset" pouType="program">
+        <interface>
+          <localVars>
+            <variable name="fbAX5000SetOffset">
+              <type><derived name="FB_SoEAX5000SetPositionOffset"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">AX5000 写位置偏置 FB 实例</xhtml></documentation>
+            </variable>
+            <variable name="axisServo">
+              <type><derived name="AXIS_REF"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">AX5000 伺服轴轴引用；必须先在 System Manager 配好并 Link</xhtml></documentation>
+            </variable>
+            <variable name="rtSetTrig">
+              <type><derived name="R_TRIG"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">把电平转上升沿</xhtml></documentation>
+            </variable>
+            <variable name="bSetOffsetReq">
+              <initialValue><simpleValue value="FALSE"/></initialValue>
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">在线写 TRUE 触发一次写偏置</xhtml></documentation>
+            </variable>
+            <variable name="lrNewActualPosition">
+              <initialValue><simpleValue value="0.0"/></initialValue>
+              <type><LREAL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">把当前点设为的新实际位置；0 = 设零点</xhtml></documentation>
+            </variable>
+            <variable name="bSetBusy"><type><BOOL/></type></variable>
+            <variable name="bSetError"><type><BOOL/></type></variable>
+            <variable name="nSetErrorID"><type><UDINT/></type></variable>
+          </localVars>
+        </interface>
+        <body>
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：AX5000 驱动的轴手动回到机械参考挡块后，把当前位置设为绝对零点
+//       （Position=0, Relative=FALSE），偏置存进驱动器内存，PLC 重启不丢。
+//
+// 价值：1) 偏置常驻 AX5000 侧，PLC 重启/工程下载不用重新找零
+//       2) AX5000 专用接口直达（也可用硬件无关的 FB_SetPositionOffset）
+//       3) 绝对/相对两种语义覆盖"设零"和"微调"
+//
+// !! 注意：Memory 必须与 DriveManager 里配的偏置存放位置一致；轴静止时写。
+//          本 FB 没有 NetId/Timeout 输入，接口比通用 SoE FB 更简。
+//
+// 验证步骤：
+//   1. System Manager 配好 AX5000 NC 轴并 Link 给 axisServo，引用 Tc2_MC2_Drive
+//   2. DriveManager 里把偏置存放位置配成"驱动器"，与本例 Memory 一致
+//   3. Import PLCopenXML 选本文件，加进 PlcTask，编译登录
+//   4. 手动把轴开到机械参考挡块，确认已静止
+//   5. 在线写 bSetOffsetReq := TRUE → bSetBusy 置 TRUE
+//   6. 等 bSetBusy 落回 FALSE 且 bSetError = FALSE 即写入成功，ActPos 应变 0
+//   7. 若 bSetError = TRUE，看 nSetErrorID 对照 ADS Return Codes 表
+// =============================================================================
+
+// 用 R_TRIG 把"持续按住的 TRUE"转成真正的上升沿
+rtSetTrig(CLK := bSetOffsetReq);
+
+// 单次调用：绝对模式把当前点设为 lrNewActualPosition，存驱动器内存
+// Axis 是 VAR_IN_OUT 必传；本 FB 无 Done，靠 Busy 落回 FALSE 判成功
+fbAX5000SetOffset(
+    Execute  := rtSetTrig.Q,
+    Position := lrNewActualPosition,
+    Relative := FALSE,
+    Feedback := ePositionOffsetFeedback1,
+    Memory   := ePositionOffsetMemory_Drive,
+    Axis     := axisServo,
+    Busy     =&gt; bSetBusy,
+    Error    =&gt; bSetError,
+    ErrorID  =&gt; nSetErrorID
+);
+</xhtml></ST>
+        </body>
+      </pou>
+    </pous>
+  </types>
+  <instances><configurations/></instances>
+</project>

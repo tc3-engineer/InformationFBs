@@ -613,3 +613,9 @@
 2026-05-25T00:00:00Z | Tc2_MC2_Drive  | general_coe                              | FB_CoERead                               | verified | PDF + InfoSys cross-verified
 2026-05-25T00:00:00Z | Tc2_MC2_Drive  | general_coe                              | FB_CoEWrite                              | verified | PDF + InfoSys cross-verified
 2026-05-25T00:00:00Z | Tc2_MC2_Drive  | general_coe                              | FB_CoEExecuteCommand                     | verified | PDF + InfoSys cross-verified
+2026-05-25T00:00:00Z | Tc2_MC2_Drive  | ax5000_soe                               | FB_SoEAX5000ReadActMainVoltage           | verified | PDF + InfoSys cross-verified
+2026-05-25T00:00:00Z | Tc2_MC2_Drive  | ax5000_soe                               | FB_SoEAX5000SetMotorCtrlWord             | verified | PDF + InfoSys cross-verified
+2026-05-25T00:00:00Z | Tc2_MC2_Drive  | ax5000_soe                               | FB_SoEAX5000FirmwareUpdate               | verified | PDF + InfoSys cross-verified
+2026-05-25T00:00:00Z | Tc2_MC2_Drive  | ax5000_soe                               | FB_SoEAX5000SetPositionOffset            | verified | PDF + InfoSys cross-verified
+2026-05-25T00:00:00Z | Tc2_MC2_Drive  | ax5000_soe                               | FB_SoEAX5000DeletePositionOffset         | verified | PDF + InfoSys cross-verified
+2026-05-25T00:00:00Z | Tc2_MC2_Drive  | ax5000_soe                               | FB_SoEAX5000ParkAxis                     | verified | PDF + InfoSys cross-verified
