@@ -619,3 +619,12 @@
 2026-05-25T00:00:00Z | Tc2_MC2_Drive  | ax5000_soe                               | FB_SoEAX5000SetPositionOffset            | verified | PDF + InfoSys cross-verified
 2026-05-25T00:00:00Z | Tc2_MC2_Drive  | ax5000_soe                               | FB_SoEAX5000DeletePositionOffset         | verified | PDF + InfoSys cross-verified
 2026-05-25T00:00:00Z | Tc2_MC2_Drive  | ax5000_soe                               | FB_SoEAX5000ParkAxis                     | verified | PDF + InfoSys cross-verified
+2026-05-25T00:00:00Z | Tc2_MC2_Drive  | ax8000_coe                               | FB_CoEAX8000BrakeControl                 | verified | PDF + InfoSys cross-verified
+2026-05-25T00:00:00Z | Tc2_MC2_Drive  | ax8000_coe                               | FB_CoEAX8000BrakeTest                    | verified | PDF + InfoSys cross-verified
+2026-05-25T00:00:00Z | Tc2_MC2_Drive  | ax8000_coe                               | FB_CoEAX8000SetPositionOffset            | verified | PDF + InfoSys cross-verified
+2026-05-25T00:00:00Z | Tc2_MC2_Drive  | ax8000_coe                               | FB_CoEAX8000DeletePositionOffset         | verified | PDF + InfoSys cross-verified
+2026-05-25T00:00:00Z | Tc2_MC2_Drive  | ax8000_coe                               | FB_CoEAX8000ParkAxis                     | verified | PDF + InfoSys cross-verified
+2026-05-25T00:00:00Z | Tc2_MC2_Drive  | el72xx_coe                               | FB_CoEEL72xxBrakeControl                 | verified | PDF + InfoSys cross-verified
+2026-05-25T00:00:00Z | Tc2_MC2_Drive  | el72xx_coe                               | FB_CoEEL72xxSetPositionOffset            | verified | PDF + InfoSys cross-verified
+2026-05-25T00:00:00Z | Tc2_MC2_Drive  | el72xx_coe                               | FB_CoEEL72xxDeletePositionOffset         | verified | PDF + InfoSys cross-verified
+2026-05-25T00:00:00Z | Tc2_MC2_Drive  | soe_parameter_access                     | S_0_IDNs                                 | verified | PDF single-source (not-on-infosys)
