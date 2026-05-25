@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project xmlns="http://www.plcopen.org/xml/tc6_0200">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-21T00:00:00"/>
+  <contentHeader name="Tc2_MC2_Drive.S_0_IDNs Demo" modificationDateTime="2026-05-21T00:00:00">
+    <coordinateInfo>
+      <fbd><scaling x="1" y="1"/></fbd>
+      <ld><scaling x="1" y="1"/></ld>
+      <sfc><scaling x="1" y="1"/></sfc>
+    </coordinateInfo>
+  </contentHeader>
+  <types>
+    <dataTypes/>
+    <pous>
+      <pou name="P_Demo_S_0_IDNs" pouType="program">
+        <interface>
+          <localVars>
+            <variable name="nIdnS00033">
+              <type><WORD/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">拼出的 IDN：S-0-0033</xhtml></documentation>
+            </variable>
+            <variable name="nIdnS00432">
+              <type><WORD/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">拼出的 IDN：S-0-0432（序列号）</xhtml></documentation>
+            </variable>
+            <variable name="nIdnS10005">
+              <type><WORD/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">拼出的 IDN：S-1-0005</xhtml></documentation>
+            </variable>
+          </localVars>
+        </interface>
+        <body>
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：用 Tc2_MC2_Drive 自带的 SoE IDN 基地址常量（S_0_IDNs / S_1_IDNs …）
+//       拼出几个常用 IDN，供后续 FB_SoERead / FB_SoEWrite 的 Idn 入参使用。
+//       基地址 + 十进制编号的写法比手填 16#00xx 更可读、更不易错。
+//
+// 价值：1) IDN 以"组 + 编号"可读形式出现，降低手算十六进制出错率
+//       2) 明确参数组归属（S-0 vs S-1），不会混组
+//       3) 用库自带常量，与库定义保持一致
+//
+// 验证步骤：
+//   1. 引用 Tc2_MC2_Drive 库
+//   2. Import PLCopenXML 选本文件，加进 PlcTask，编译登录
+//   3. 在线监视 nIdnS00033 应为 16#0021（= 33）、nIdnS00432 应为 16#01B0
+//      （= 432）、nIdnS10005 应为 16#1005
+//   4. 把这些 Idn 传给 FB_SoERead/FB_SoEWrite 即可访问对应 Sercos 参数
+// =============================================================================
+
+// 用基地址 + 十进制组内编号拼 IDN（n 是十进制，不是十六进制）
+nIdnS00033 := S_0_IDNs + 33;    // S-0 组第 33 号 = S-0-0033
+nIdnS00432 := S_0_IDNs + 432;   // S-0 组第 432 号 = S-0-0432（序列号）
+nIdnS10005 := S_1_IDNs + 5;     // S-1 组第 5 号 = S-1-0005
+</xhtml></ST>
+        </body>
+      </pou>
+    </pous>
+  </types>
+  <instances><configurations/></instances>
+</project>
