@@ -589,3 +589,13 @@
 2026-05-21T11:30:00Z | Tc2_TcpIp      | functions                                | HSOCKET_TO_STRINGEX                      | verified | PDF + InfoSys cross-verified
 2026-05-21T11:30:00Z | Tc2_TcpIp      | functions                                | SOCKETADDR_TO_STRING                     | verified | PDF + InfoSys cross-verified
 2026-05-21T11:30:00Z | Tc2_TcpIp      | global_constants                         | stLibVersion_Tc2_TcpIp                   | verified | PDF + InfoSys cross-verified
+2026-05-25T00:00:00Z | Tc2_MC2_Drive  | functions                                | F_GetVersionTcMc2Drive                   | verified | PDF + InfoSys cross-verified
+2026-05-25T00:00:00Z | Tc2_MC2_Drive  | general_beckhoff                         | FB_DeletePositionOffset                  | verified | PDF + InfoSys cross-verified
+2026-05-25T00:00:00Z | Tc2_MC2_Drive  | general_beckhoff                         | FB_BrakeControl                          | verified | PDF + InfoSys cross-verified
+2026-05-25T00:00:00Z | Tc2_MC2_Drive  | general_beckhoff                         | FB_SetPositionOffset                     | verified | PDF + InfoSys cross-verified
+2026-05-25T00:00:00Z | Tc2_MC2_Drive  | general_beckhoff                         | FB_ReadDriveInfo                         | verified | PDF + InfoSys cross-verified
+2026-05-25T00:00:00Z | Tc2_MC2_Drive  | general_beckhoff                         | FB_ParkAxis                              | verified | PDF + InfoSys cross-verified
+2026-05-25T00:00:00Z | Tc2_MC2_Drive  | general_soe                              | FB_SoERead                               | verified | PDF + InfoSys cross-verified
+2026-05-25T00:00:00Z | Tc2_MC2_Drive  | general_soe                              | FB_SoEWrite                              | verified | PDF + InfoSys cross-verified
+2026-05-25T00:00:00Z | Tc2_MC2_Drive  | general_soe                              | FB_SoEReset                              | verified | PDF + InfoSys cross-verified
+2026-05-25T00:00:00Z | Tc2_MC2_Drive  | general_soe                              | FB_SoEWritePassword                      | verified | PDF + InfoSys cross-verified

@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project xmlns="http://www.plcopen.org/xml/tc6_0200">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-21T00:00:00"/>
+  <contentHeader name="Tc2_MC2_Drive.FB_ReadDriveInfo Demo" modificationDateTime="2026-05-21T00:00:00">
+    <coordinateInfo>
+      <fbd><scaling x="1" y="1"/></fbd>
+      <ld><scaling x="1" y="1"/></ld>
+      <sfc><scaling x="1" y="1"/></sfc>
+    </coordinateInfo>
+  </contentHeader>
+  <types>
+    <dataTypes/>
+    <pous>
+      <pou name="P_Demo_FB_ReadDriveInfo" pouType="program">
+        <interface>
+          <localVars>
+            <variable name="fbReadInfo">
+              <type><derived name="FB_ReadDriveInfo"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">读驱动器信息 FB 实例</xhtml></documentation>
+            </variable>
+            <variable name="axisMain">
+              <type><derived name="AXIS_REF"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">主轴轴引用；必须先在 System Manager 配好并 Link</xhtml></documentation>
+            </variable>
+            <variable name="rtReadTrig">
+              <type><derived name="R_TRIG"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">把电平转上升沿</xhtml></documentation>
+            </variable>
+            <variable name="bReadInfoReq">
+              <initialValue><simpleValue value="FALSE"/></initialValue>
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">在线写 TRUE 触发一次读取</xhtml></documentation>
+            </variable>
+            <variable name="stDriveInfo">
+              <type><derived name="ST_DriveInfo"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">读回的驱动器寻址信息；Done 后有效</xhtml></documentation>
+            </variable>
+            <variable name="bInfoDone"><type><BOOL/></type></variable>
+            <variable name="bInfoBusy"><type><BOOL/></type></variable>
+            <variable name="bInfoError"><type><BOOL/></type></variable>
+            <variable name="nInfoErrorID"><type><UDINT/></type></variable>
+          </localVars>
+        </interface>
+        <body>
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：设备初始化阶段，从 NC 轴自动读出所连驱动器的 NetId / 从站地址 /
+//       设备类型，供后续 FB_SoERead / FB_CoERead 访问参数时使用，避免在
+//       代码里写死从站寻址信息。
+//
+// 价值：1) 代码不写死 NetId / SlaveAddress，跟着 System Manager 配置走
+//       2) 本 FB 有 Done 输出，Done 上升沿即"DriveInfo 就绪"，最直观
+//       3) DeviceType 可用于分支不同型号（SoE vs CoE）的逻辑
+//
+// 验证步骤：
+//   1. System Manager 配好 NC 轴并 Link 给 axisMain，引用 Tc2_MC2_Drive
+//   2. Import PLCopenXML 选本文件，加进 PlcTask，编译登录
+//   3. 在线写 bReadInfoReq := TRUE → bInfoBusy 置 TRUE
+//   4. 等 bInfoDone 置 TRUE → 展开 stDriveInfo 应看到 NetId / SlaveAddress /
+//      DeviceName / DeviceType 等字段被填上有效值
+//   5. 若 bInfoError = TRUE，看 nInfoErrorID 对照 ADS Return Codes 表
+//   6. 把 bReadInfoReq 拉回 FALSE 复位边沿；配置不变时初始化读一次即可
+// =============================================================================
+
+// 用 R_TRIG 把"持续按住的 TRUE"转成真正的上升沿
+rtReadTrig(CLK := bReadInfoReq);
+
+// 单次调用：本 FB 有 Done 输出，Axis 是 VAR_IN_OUT 必传
+fbReadInfo(
+    Execute   := rtReadTrig.Q,
+    Axis      := axisMain,
+    Done      =&gt; bInfoDone,
+    Busy      =&gt; bInfoBusy,
+    Error     =&gt; bInfoError,
+    ErrorID   =&gt; nInfoErrorID,
+    DriveInfo =&gt; stDriveInfo
+);
+</xhtml></ST>
+        </body>
+      </pou>
+    </pous>
+  </types>
+  <instances><configurations/></instances>
+</project>

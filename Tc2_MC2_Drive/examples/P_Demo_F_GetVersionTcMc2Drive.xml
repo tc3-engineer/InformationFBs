@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project xmlns="http://www.plcopen.org/xml/tc6_0200">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-21T00:00:00"/>
+  <contentHeader name="Tc2_MC2_Drive.F_GetVersionTcMc2Drive Demo" modificationDateTime="2026-05-21T00:00:00">
+    <coordinateInfo>
+      <fbd><scaling x="1" y="1"/></fbd>
+      <ld><scaling x="1" y="1"/></ld>
+      <sfc><scaling x="1" y="1"/></sfc>
+    </coordinateInfo>
+  </contentHeader>
+  <types>
+    <dataTypes/>
+    <pous>
+      <pou name="P_Demo_F_GetVersionTcMc2Drive" pouType="program">
+        <interface>
+          <localVars>
+            <variable name="nMajor">
+              <type><UINT/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">主版本号</xhtml></documentation>
+            </variable>
+            <variable name="nMinor">
+              <type><UINT/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">次版本号</xhtml></documentation>
+            </variable>
+            <variable name="nRevision">
+              <type><UINT/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">修订号</xhtml></documentation>
+            </variable>
+            <variable name="bVersionOk">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">库版本满足代码所需最低版本时为 TRUE</xhtml></documentation>
+            </variable>
+          </localVars>
+        </interface>
+        <body>
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：设备上电初始化阶段，校验目标 PLC 上链接的 Tc2_MC2_Drive 库版本是否
+//       满足本工程所需的最低版本（这里以"至少 1.14.x"为例）。多台设备批量
+//       部署同一套工程时，能在初始化期就发现"某台机器装的是旧库"。
+//
+// 价值：1) 把"引用了新版 FB 但目标机库太旧"的故障从运行期崩溃前移到初始化期
+//       2) 程序化版本断言，避免人工逐台查库管理器
+//       3) 纯函数同步调用，不占 ADS 通道、无超时风险
+//
+// 验证步骤：
+//   1. 引用 Tc2_MC2_Drive 库
+//   2. 右键 PLC 项目 → Import PLCopenXML → 选本文件
+//   3. 把 P_Demo_F_GetVersionTcMc2Drive 加进 PlcTask，编译登录
+//   4. 在线监视 nMajor / nMinor / nRevision，应与库管理器里显示的版本一致
+//      （例如库 1.14.2 → nMajor=1, nMinor=14, nRevision=2）
+//   5. 观察 bVersionOk：库版本 ≥ 1.14 时应为 TRUE
+// =============================================================================
+
+// 纯函数同步调用，一次只取一个版本元素，需调用三次拼出完整版本
+nMajor    := F_GetVersionTcMc2Drive(1);   // 1 = 主版本号
+nMinor    := F_GetVersionTcMc2Drive(2);   // 2 = 次版本号
+nRevision := F_GetVersionTcMc2Drive(3);   // 3 = 修订号
+
+// 版本断言：要求至少 1.14.x（主版本=1 且 次版本 &gt;= 14）
+IF (nMajor &gt; 1) OR ((nMajor = 1) AND (nMinor &gt;= 14)) THEN
+    bVersionOk := TRUE;
+ELSE
+    bVersionOk := FALSE;   // 库太旧，上层应据此报警并阻止启动
+END_IF;
+</xhtml></ST>
+        </body>
+      </pou>
+    </pous>
+  </types>
+  <instances><configurations/></instances>
+</project>

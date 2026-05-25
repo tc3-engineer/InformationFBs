@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project xmlns="http://www.plcopen.org/xml/tc6_0200">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-21T00:00:00"/>
+  <contentHeader name="Tc2_MC2_Drive.FB_DeletePositionOffset Demo" modificationDateTime="2026-05-21T00:00:00">
+    <coordinateInfo>
+      <fbd><scaling x="1" y="1"/></fbd>
+      <ld><scaling x="1" y="1"/></ld>
+      <sfc><scaling x="1" y="1"/></sfc>
+    </coordinateInfo>
+  </contentHeader>
+  <types>
+    <dataTypes/>
+    <pous>
+      <pou name="P_Demo_FB_DeletePositionOffset" pouType="program">
+        <interface>
+          <localVars>
+            <variable name="fbDeleteOffset">
+              <type><derived name="FB_DeletePositionOffset"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">删除位置偏置 FB 实例</xhtml></documentation>
+            </variable>
+            <variable name="axisRotaryTable">
+              <type><derived name="AXIS_REF"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">回转工作台轴引用；必须先在 System Manager 配好并 Link</xhtml></documentation>
+            </variable>
+            <variable name="rtClearTrig">
+              <type><derived name="R_TRIG"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">把电平转上升沿，避免 Execute 一直高</xhtml></documentation>
+            </variable>
+            <variable name="bClearOffsetReq">
+              <initialValue><simpleValue value="FALSE"/></initialValue>
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">在线写 TRUE 触发一次删除</xhtml></documentation>
+            </variable>
+            <variable name="bClearBusy"><type><BOOL/></type></variable>
+            <variable name="bClearError"><type><BOOL/></type></variable>
+            <variable name="nClearErrorID"><type><UDINT/></type></variable>
+          </localVars>
+        </interface>
+        <body>
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：回转工作台维修换了编码器，重新做机械找正前需要把上一次写进编码器
+//       数字铭牌里的位置偏置清掉，否则新找正会叠加在旧偏置上导致零点错位。
+//
+// 价值：1) 偏置存在编码器/驱动器侧，PLC 重启不丢；要清理时一个 FB 搞定
+//       2) 硬件无关：不管接的是 AX5000/AX8000/EL72xx 自动选 SoE/CoE 通道
+//       3) 不用人工进 DriveManager 逐台手动删
+//
+// 验证步骤：
+//   1. 在 System Manager 配好 NC 轴并 Link 给 axisRotaryTable
+//   2. 引用 Tc2_MC2_Drive 库
+//   3. 右键 PLC 项目 → Import PLCopenXML → 选本文件，加进 PlcTask，编译登录
+//   4. 确认轴处于静止（删除偏置会改变绝对位置参考）
+//   5. 在线写 bClearOffsetReq := TRUE → 应看到 bClearBusy 立刻 TRUE
+//   6. 等 bClearBusy 落回 FALSE 且 bClearError = FALSE 即删除成功
+//   7. 若 bClearError = TRUE，看 nClearErrorID 对照 ADS Return Codes 表
+//   8. 把 bClearOffsetReq 拉回 FALSE 复位边沿，下次再触发
+// =============================================================================
+
+// 用 R_TRIG 把"持续按住的 TRUE"转成真正的上升沿
+rtClearTrig(CLK := bClearOffsetReq);
+
+// 单次调用：Feedback 选反馈系统 1，Memory 选编码器铭牌；Axis 是 VAR_IN_OUT 必传
+// 注意本 FB 无 Done 输出，靠 Busy 落回 FALSE 且 Error=FALSE 判成功
+fbDeleteOffset(
+    Execute  := rtClearTrig.Q,
+    Feedback := ePositionOffsetFeedback1,
+    Memory   := ePositionOffsetMemory_Encoder,
+    Axis     := axisRotaryTable,
+    Busy     =&gt; bClearBusy,
+    Error    =&gt; bClearError,
+    ErrorID  =&gt; nClearErrorID
+);
+</xhtml></ST>
+        </body>
+      </pou>
+    </pous>
+  </types>
+  <instances><configurations/></instances>
+</project>
