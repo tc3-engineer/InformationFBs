@@ -595,3 +595,7 @@
 2026-05-25T00:00:00Z | Tc2_NcDrive    | ax5000_soe                               | FB_SoEAX5000SetMotorCtrlWord             | verified | PDF + InfoSys cross-verified
 2026-05-25T00:00:00Z | Tc2_NcDrive    | ax5000_soe                               | FB_SoEAX5000FirmwareUpdate               | verified | PDF + InfoSys cross-verified
 2026-05-25T00:00:00Z | Tc2_NcDrive    | library_version                          | F_GetVersionTcNcDrive                    | verified | PDF + InfoSys cross-verified
+2026-05-25T00:00:00Z | Tc2_MC2_FlyingSaw | axis_coupling                          | MC_GearInVelo                            | verified | PDF + InfoSys cross-verified
+2026-05-25T00:00:00Z | Tc2_MC2_FlyingSaw | axis_coupling                          | MC_GearInPos                             | verified | PDF + InfoSys cross-verified
+2026-05-25T00:00:00Z | Tc2_MC2_FlyingSaw | diagnostics                            | MC_ReadFlyingSawCharacteristics          | verified | PDF + InfoSys cross-verified
+2026-05-25T00:00:00Z | Tc2_MC2_FlyingSaw | data_types                             | MC_FlyingSawCharacValues                 | verified | PDF + InfoSys cross-verified
