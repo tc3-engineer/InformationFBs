@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_SerialLineControlADSErr_TO_TcEventEntry" Id="{9d140f0e-b316-5007-ae54-53467d6417ee}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_SerialLineControlADSErr_TO_TcEventEntry
+VAR
+    fbSerialLineADS : SerialLineControlADS;     // 错误来源:虚拟串口后台通信
+    bufTx           : ComBuffer;
+    bufRx           : ComBuffer;
+    stCfg           : ComSerialConfig := (ComPort := 3, Baudrate := 9600);
+    bConnect        : BOOL := TRUE;             // 尝试打开端口
+
+    bAdsError       : BOOL;                     // SerialLineControlADS 错误标志
+    nAdsErrId       : UDINT;                    // 错误码(UDINT,来源)
+    bPortOpened     : BOOL;
+    stEvent         : TcEventEntry;             // 转换结果(来自 Tc3_EventLogger)
+    bConverted      : BOOL;                     // 监控:转换是否成功
+    nConvCount      : UDINT;                       // 监控:成功转换次数
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景:用 USB 转串口(虚拟 COM)通信时,SerialLineControlADS 可能报"端口被占用"
+//       "USB 拔出""接收缓冲溢出"等错误,错误码是 UDINT(横跨 ADS/服务器/Win32/Linux)。
+//       要把它接入 TwinCAT 事件日志显示多语言明文。
+//
+// 价值:演示 SerialLineControlADSErr_TO_TcEventEntry 把 UDINT 错误码转成标准事件
+//       定义——注意它接 UDINT 而非枚举;只转换不发送,交给 Tc3_EventLogger 发送。
+//
+// 验证步骤:
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_SerialCom 和 Tc3_EventLogger(TcEventEntry 来自后者)
+//   3. 编译 → 登录 → 运行;制造错误(如把 ComPort 设成不存在的口号,或拔 USB)
+//      → bAdsError 变 TRUE,nAdsErrId != 0,bConverted 变 TRUE,nConvCount +1
+//      → 实际工程把 stEvent 交给 Tc3_EventLogger 发送即可在日志见明文
+// =============================================================================
+
+// 虚拟串口后台通信(此处仅取其错误输出;完整骨架见 P_Demo_SerialLineControlADS)
+fbSerialLineADS(
+    Connect    := bConnect,
+    SerialCfg  := stCfg,
+    NetId      := '',
+    Timeout    := DEFAULT_ADS_TIMEOUT,
+    TxBuffer   := bufTx,
+    RxBuffer   := bufRx,
+    PortOpened => bPortOpened,
+    Error      => bAdsError,
+    ErrorID    => nAdsErrId
+);
+
+// 一旦报错,把 UDINT 错误码直接转成事件定义
+IF bAdsError THEN
+    bConverted := SerialLineControlADSErr_TO_TcEventEntry(nErrorId := nAdsErrId, stEventEntry := stEvent);
+    IF bConverted THEN
+        nConvCount := nConvCount + 1;
+        // 实际工程:此处把 stEvent 交给 Tc3_EventLogger 发送
+    END_IF;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

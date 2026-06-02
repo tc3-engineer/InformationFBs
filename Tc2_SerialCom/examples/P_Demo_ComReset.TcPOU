@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_ComReset" Id="{19fd38aa-26a8-525d-99c0-c4657eb51ab3}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_ComReset
+VAR
+    fbComReset    : ComReset;
+    arrComIn      : PcComInData;                // 串口过程映像输入(链接到硬件)
+    arrComOut     : PcComOutData;               // 串口过程映像输出(链接到硬件)
+
+    bResetRequest : BOOL;                       // 在线置 TRUE 触发一次硬件复位
+    rtrigReset    : R_TRIG;
+    bResetDone    : BOOL;
+    bResetBusy    : BOOL;
+    bResetError   : BOOL;
+    eErrId        : ComError_t;
+    nResetCount   : UDINT;                        // 监控：成功复位次数
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：PLC 上电或通信卡死后，需要复位 PC 串口硬件、清空硬件收发缓冲，把端口
+//       恢复到干净状态再开始通信。
+//
+// 价值：演示 ComReset 的标准 Execute/Busy/Done/Error 状态机用法——硬件复位是
+//       边沿触发，且它只清硬件缓冲(PLC 软件 ComBuffer 要另用 ClearComBuffer)。
+//
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_SerialCom；把 arrComIn/arrComOut 链接到 COM 口过程映像
+//   3. 编译 → 登录 → 运行；在线把 bResetRequest 置 TRUE
+//      → bResetBusy 短暂为 TRUE，随后 bResetDone=TRUE、bResetError=FALSE
+//      → nResetCount +1；若 bResetError=TRUE，看 eErrId 判断映像类型/大小是否对
+// =============================================================================
+
+// R_TRIG 把电平变上升沿：每次置 TRUE 只复位一次(Execute 是边沿触发)
+rtrigReset(CLK := bResetRequest);
+
+fbComReset(
+    Execute   := rtrigReset.Q,
+    pComIn    := ADR(arrComIn),
+    pComOut   := ADR(arrComOut),
+    SizeComIn := SIZEOF(arrComIn),
+    Done      => bResetDone,
+    Busy      => bResetBusy,
+    Error     => bResetError,
+    ErrorID   => eErrId
+);
+
+// 复位成功完成那一周期累加计数
+IF bResetDone AND NOT bResetError THEN
+    nResetCount := nResetCount + 1;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

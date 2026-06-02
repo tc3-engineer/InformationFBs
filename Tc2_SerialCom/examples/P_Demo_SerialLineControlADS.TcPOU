@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_SerialLineControlADS" Id="{58438541-fe16-58d7-b5f5-57e6c8a0c54a}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_SerialLineControlADS
+VAR
+    fbSerialLineADS : SerialLineControlADS;     // 虚拟串口后台通信(走 ADS 服务器)
+    fbSendString    : SendString;
+    fbReceiveByte   : ReceiveByte;
+    bufTx           : ComBuffer;
+    bufRx           : ComBuffer;
+
+    // 打开本机 COM3(USB 转串口)，9600-8-N-1
+    stCfg           : ComSerialConfig := (ComPort := 3, Baudrate := 9600,
+                                          Parity := PARITY_NONE, DataBits := 8,
+                                          StopBits := STOPBITS_ONE);
+    bConnectPort    : BOOL;                      // 在线置 TRUE 打开端口
+    bPortOpened     : BOOL;
+    bAdsError       : BOOL;
+    nAdsErrId       : UDINT;
+    bAdsBusy        : BOOL;
+    nRxBufCount     : UDINT;                     // 监控：服务器接收缓冲积压
+    nTxBufCount     : UDINT;
+
+    bSendHello      : BOOL;                      // 在线置 TRUE 发一次 "HELLO\r\n"
+    rtrigSend       : R_TRIG;
+    bSendBusy       : BOOL;
+    byLastRx        : BYTE;
+    nRxCount        : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景:用一根 USB 转串口线接一台 RS232 仪表。它在系统里是虚拟 COM3,不在 EtherCAT/
+//       KL 总线上,所以不能用 SerialLineControl,必须用 SerialLineControlADS 经
+//       TcAdsSerialCommServer 打开端口收发。
+//
+// 价值:演示虚拟串口的完整生命周期——置 Connect 打开端口、等 PortOpened 再收发、
+//       监视 RxBufCount 防积压;改 Connect 不立即生效必须等 PortOpened 是核心纪律。
+//
+// 验证步骤:
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_SerialCom;确认本机存在虚拟 COM3(或改 stCfg.ComPort 为实际口号)
+//   3. 编译 → 登录 → 运行;在线把 bConnectPort 置 TRUE
+//      → 等 1~2 秒 bPortOpened 变 TRUE(注意不是立刻);bAdsError 应为 FALSE
+//      → 在线把 bSendHello 置 TRUE,对端收到 "HELLO" + 回车换行
+//      → 对端发数据,nRxCount 递增,byLastRx 显示最后字节;nRxBufCount 不应持续>1000
+//      → 把 bConnectPort 置 FALSE,等 bPortOpened 变 FALSE(端口释放)
+// =============================================================================
+
+// 后台通信:每周期调用;Connect 控制端口开关,改后须等 PortOpened
+fbSerialLineADS(
+    Connect    := bConnectPort,
+    SerialCfg  := stCfg,
+    NetId      := '',                           // 本机
+    Timeout    := DEFAULT_ADS_TIMEOUT,          // 默认 5s
+    TxBuffer   := bufTx,
+    RxBuffer   := bufRx,
+    PortOpened => bPortOpened,
+    Error      => bAdsError,
+    ErrorID    => nAdsErrId,
+    Busy       => bAdsBusy,
+    TxBufCount => nTxBufCount,
+    RxBufCount => nRxBufCount
+);
+
+// 仅在端口确实打开后才收发,避免对未开端口操作
+IF bPortOpened THEN
+    // 发送:上升沿发一次
+    rtrigSend(CLK := bSendHello);
+    IF rtrigSend.Q THEN
+        fbSendString(SendString := 'HELLO$R$L', TxBuffer := bufTx, Busy => bSendBusy);
+    END_IF;
+
+    // 接收:每周期读空 RxBuffer
+    REPEAT
+        fbReceiveByte(RXBuffer := bufRx);
+        IF fbReceiveByte.ByteReceived THEN
+            byLastRx := fbReceiveByte.ReceivedByte;
+            nRxCount := nRxCount + 1;
+        END_IF
+    UNTIL NOT fbReceiveByte.ByteReceived
+    END_REPEAT
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

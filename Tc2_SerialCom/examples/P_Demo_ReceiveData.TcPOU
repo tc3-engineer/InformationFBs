@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_ReceiveData" Id="{cad0c691-8156-59dc-979e-e906e88a0fb6}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_ReceiveData
+VAR
+    fbSerialLine  : SerialLineControl;          // 后台通信，填充 bufRx
+    fbReceiveData : ReceiveData;
+    bufRx         : ComBuffer;
+    bufTx         : ComBuffer;
+    arrComIn      : PcComInData;
+    arrComOut     : PcComOutData;
+    bErrLine      : BOOL;
+
+    abyFrame      : ARRAY[0..63] OF BYTE;        // 收到的一帧落点
+    asSuffix      : ARRAY[0..1] OF BYTE := [16#0D, 16#0A];   // 结束符 CR LF
+    bGotFrame     : BOOL;                        // 仅亮一个周期
+    nFrameLen     : UDINT;                        // 本帧字节数（含 CR LF）
+    bRxTimeout    : BOOL;
+    eErr          : ComError_t;
+    nGoodFrames   : UDINT;                         // 监控：累计完整帧数
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：电子称按行输出重量字符串"   1234.5 kg\r\n"，PLC 要按 CR/LF 断帧整帧取出，
+//       不能逐字节拼。用 ReceiveData 的"后缀=CR LF + 超时兜底"组合判帧。
+//
+// 价值：演示成帧接收的标准纪律——DataReceived 只亮一个周期必须当周期取数；
+//       完整帧要同时满足 RxTimeout=FALSE 且 Error=NOERROR 才算可信。
+//
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_SerialCom；把 arrComIn/arrComOut 链接到 COM 口过程映像
+//   3. 编译 → 登录 → 运行；用串口助手发"ABC\r\n"
+//      → bGotFrame 闪 1 个周期，nFrameLen=5，abyFrame[0..4]=41 42 43 0D 0A
+//      → 每收到一个完整(无超时、无错误)帧 nGoodFrames +1
+// =============================================================================
+
+// 后台通信：搬硬件字节进 bufRx
+fbSerialLine(
+    Mode      := ComSerialLineMode_t.SERIALLINEMODE_PC_COM_PORT,
+    pComIn    := ADR(arrComIn),
+    pComOut   := ADR(arrComOut),
+    SizeComIn := SIZEOF(arrComIn),
+    TxBuffer  := bufTx,
+    RxBuffer  := bufRx,
+    Error     => bErrLine
+);
+
+// 后缀=CR LF 判帧；Timeout 作为字符间隔兜底，避免半截帧永久卡 busy
+fbReceiveData(
+    pPrefix         := 0,                       // 无前缀，从首字符开始收
+    LenPrefix       := 0,
+    pSuffix         := ADR(asSuffix),
+    LenSuffix       := SIZEOF(asSuffix),
+    pReceiveData    := ADR(abyFrame),
+    SizeReceiveData := SIZEOF(abyFrame),
+    Timeout         := T#200MS,
+    Reset           := FALSE,
+    RXBuffer        := bufRx,
+    DataReceived    => bGotFrame,
+    busy            => ,
+    Error           => eErr,
+    RxTimeout       => bRxTimeout,
+    LenReceiveData  => nFrameLen
+);
+
+// 只有"收齐 + 后缀确实匹配 + 无错误"才计为可信完整帧
+IF bGotFrame AND NOT bRxTimeout AND (eErr = ComError_t.COMERROR_NOERROR) THEN
+    nGoodFrames := nGoodFrames + 1;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

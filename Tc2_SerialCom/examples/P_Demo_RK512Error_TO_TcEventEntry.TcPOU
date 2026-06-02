@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_RK512Error_TO_TcEventEntry" Id="{2e3f6e32-389c-53d6-8fe3-df35a3fd998b}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_RK512Error_TO_TcEventEntry
+VAR
+    fbRK512     : RK512;                        // 错误来源:RK512 协议功能块
+    DB5         : ARRAY[1..64] OF WORD;
+    bufTx       : ComBuffer;
+    bufRx       : ComBuffer;
+
+    bErr        : BOOL;                         // 主动模式错误标志
+    eErrId      : RK512_Error_t;                // 主动模式错误码(来源)
+    bErrRx      : BOOL;                         // 被动模式错误标志
+    eErrIdRx    : RK512_Error_t;                // 被动模式错误码(来源)
+    stEvent     : TcEventEntry;                 // 转换结果(来自 Tc3_EventLogger)
+    bConverted  : BOOL;                         // 监控:转换是否成功
+    nConvCount  : UDINT;                          // 监控:成功转换次数
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景:用 RK512 协议交换数据块时,可能报数据块未登记、报文超时、对端应答含错等错误。
+//       RK512 主动/被动两路各有错误码(ErrorId / ErrorIdRx),都要接入事件日志显示明文。
+//
+// 价值:演示 RK512Error_TO_TcEventEntry 把 RK512_Error_t 错误码转成标准事件定义——
+//       本例对主、被动两路错误都做转换;只转换不发送,交给 Tc3_EventLogger 发送。
+//
+// 验证步骤:
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_SerialCom 和 Tc3_EventLogger(TcEventEntry 来自后者)
+//   3. 编译 → 登录 → 运行;制造一次 RK512 错误(如对端访问未 DBconfig 的数据块)
+//      → bErr 或 bErrRx 变 TRUE,bConverted 变 TRUE,nConvCount +1
+//      → 实际工程把 stEvent 交给 Tc3_EventLogger 发送即可在日志见明文
+// =============================================================================
+
+// RK512 功能块(此处仅取其错误输出;完整收发骨架见 P_Demo_RK512)
+fbRK512(
+    Send         := FALSE,
+    Fetch        := FALSE,
+    DbAdr        := ADR(DB5),
+    DbSize       := SIZEOF(DB5),
+    RemoteDbNr   := 5,
+    NrOfBytes    := SIZEOF(DB5),
+    ByteOffset   := 0,
+    HighPriority := TRUE,
+    SwapWords    := FALSE,
+    TREA         := T#15S,
+    TxBuffer     := bufTx,
+    RxBuffer     := bufRx,
+    Error        => bErr,
+    ErrorId      => eErrId,
+    ErrorRx      => bErrRx,
+    ErrorIdRx    => eErrIdRx
+);
+
+// 主动模式错误转事件
+IF bErr THEN
+    bConverted := RK512Error_TO_TcEventEntry(eErrorId := eErrId, stEventEntry := stEvent);
+    IF bConverted THEN
+        nConvCount := nConvCount + 1;
+    END_IF;
+END_IF;
+
+// 被动模式错误转事件
+IF bErrRx THEN
+    bConverted := RK512Error_TO_TcEventEntry(eErrorId := eErrIdRx, stEventEntry := stEvent);
+    IF bConverted THEN
+        nConvCount := nConvCount + 1;
+    END_IF;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

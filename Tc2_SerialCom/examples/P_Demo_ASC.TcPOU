@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_ASC" Id="{e4d47c80-f437-5bff-aa10-303cc26627a7}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_ASC
+VAR
+    fbSerialLine : SerialLineControl;           // 后台通信(用于真正发出字节)
+    fbSendByte   : SendByte;
+    bufTx        : ComBuffer;
+    bufRx        : ComBuffer;
+    arrComIn     : PcComInData;
+    arrComOut    : PcComOutData;
+    bLineErr     : BOOL;
+
+    sCommand     : STRING := 'A';               // 单字符命令
+    byCode       : BYTE;                         // ASC 转出的 ASCII 码
+    bSendReq     : BOOL;                         // 在线置 TRUE 发一次
+    rtrigSend    : R_TRIG;
+    bSendBusy    : BOOL;
+    nSentCount   : UDINT;                          // 监控:发出次数
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景:协议里命令以字符形式定义(如启动命令字符 'A'),但底层要逐字节发送。用 ASC
+//       把字符转成 ASCII 字节,再交给 SendByte 发出。
+//
+// 价值:演示 ASC 把字符串首字符转字节(byCode)——这是"字符命令 → 字节发送"的常见
+//       桥接;可在线观察 byCode=16#41 且串口确实收到 0x41。
+//
+// 验证步骤:
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_SerialCom;把 arrComIn/arrComOut 链接到 COM 口过程映像
+//   3. 编译 → 登录 → 运行
+//      → 在线观察 byCode = 16#41 (字符 'A' 的 ASCII 码)
+//      → 在线把 bSendReq 置 TRUE,串口助手(HEX)收到 0x41,nSentCount +1
+// =============================================================================
+
+// 取字符 'A' 的 ASCII 码(纯函数,调用即返回)
+byCode := ASC(sCommand);
+
+// 后台通信引擎
+fbSerialLine(
+    Mode      := ComSerialLineMode_t.SERIALLINEMODE_PC_COM_PORT,
+    pComIn    := ADR(arrComIn),
+    pComOut   := ADR(arrComOut),
+    SizeComIn := SIZEOF(arrComIn),
+    TxBuffer  := bufTx,
+    RxBuffer  := bufRx,
+    Error     => bLineErr
+);
+
+// 上升沿把转出的字节发一次
+rtrigSend(CLK := bSendReq);
+IF rtrigSend.Q THEN
+    fbSendByte(SendByte := byCode, TxBuffer := bufTx, Busy => bSendBusy);
+    nSentCount := nSentCount + 1;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_stLibVersion_Tc2_SerialCom" Id="{df328fec-ebe1-564a-ad1c-78d03d9ffcf1}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_stLibVersion_Tc2_SerialCom
+VAR
+    bInit          : BOOL := TRUE;
+    sActualVersion : STRING;                    // HMI 显示用:Tc2_SerialCom 版本字串
+    iActualMajor   : INT;
+    iActualMinor   : INT;
+    bLibVersionOk  : BOOL;                      // TRUE = 满足业务要求的最低版本
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景:工程要求 Tc2_SerialCom >= 1.8.0。PLC 初始化时读取库版本常量校验,不达标就
+//       把 bLibVersionOk 留 FALSE,业务逻辑据此拒启动或提示"请升级 TF6340"。
+//
+// 价值:演示库版本运行时校验——避免"开发期用新版 TF6340、部署到工厂老机器上某功能块
+//       行为不同或符号缺失"这类事故。版本来自编译期内嵌的全局常量。
+//
+// 验证步骤:
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_SerialCom(本例自检版本,无需额外库;生产建议用 Tc2_System.F_CmpLibVersion)
+//   3. 编译 → 登录 → 运行
+//      → 在线观察 sActualVersion 应为 '1.8.1' 或类似;iActualMajor=1, iActualMinor=8
+//      → bLibVersionOk 应为 TRUE;若在老版 TF6340 上跑则为 FALSE
+// =============================================================================
+
+IF bInit THEN
+    bInit := FALSE;
+    // 字串版本:HMI 直接显示
+    sActualVersion := stLibVersion_Tc2_SerialCom.sVersion;
+    // 整型字段:精确比较
+    iActualMajor := stLibVersion_Tc2_SerialCom.iMajor;
+    iActualMinor := stLibVersion_Tc2_SerialCom.iMinor;
+    // 自家判断 >= 1.8.0(生产建议用 Tc2_System.F_CmpLibVersion 做完整 4 段比对)
+    bLibVersionOk := (iActualMajor > 1)
+                  OR (iActualMajor = 1 AND iActualMinor >= 8);
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_ComError_TO_TcEventEntry" Id="{2ea2c25a-73fb-5240-a904-d9f9644a72f3}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_ComError_TO_TcEventEntry
+VAR
+    fbSerialLine : SerialLineControl;           // 实际工程中错误来自它的 ErrorID
+    fbSendData   : SendData;
+    bufTx        : ComBuffer;
+    bufRx        : ComBuffer;
+    arrComIn     : PcComInData;
+    arrComOut    : PcComOutData;
+
+    eLineErrId   : ComError_t;                  // 后台通信错误码(来源)
+    bLineError   : BOOL;
+    stEvent      : TcEventEntry;                 // 转换结果(来自 Tc3_EventLogger)
+    bConverted   : BOOL;                         // 监控:转换是否成功
+    nConvCount   : UDINT;                          // 监控:成功转换次数
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景:串口后台通信 SerialLineControl 报错(ErrorID 为 ComError_t)时,要把它接入
+//       TwinCAT 事件日志,让 HMI 显示多语言明文,而不是裸错误码。
+//
+// 价值:演示 ComError_TO_TcEventEntry 把 ComError_t 错误码转成标准事件定义
+//       (TcEventEntry)——只转换不发送;拿到 stEvent 后交给 Tc3_EventLogger 发送。
+//
+// 验证步骤:
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_SerialCom 和 Tc3_EventLogger(TcEventEntry 来自后者)
+//   3. 把 arrComIn/arrComOut 链接到 COM 口过程映像
+//   4. 编译 → 登录 → 运行;制造一次通信错误(如拔线/参数错)使 eLineErrId != 0
+//      → bConverted 变 TRUE,stEvent 被填好,nConvCount +1
+//      → 实际工程把 stEvent 交给 Tc3_EventLogger 的 FB_TcMessage 发送即可在日志见明文
+// =============================================================================
+
+// 后台通信:产生 ComError_t 错误码(本例作为错误来源)
+fbSerialLine(
+    Mode      := ComSerialLineMode_t.SERIALLINEMODE_PC_COM_PORT,
+    pComIn    := ADR(arrComIn),
+    pComOut   := ADR(arrComOut),
+    SizeComIn := SIZEOF(arrComIn),
+    TxBuffer  := bufTx,
+    RxBuffer  := bufRx,
+    Error     => bLineError,
+    ErrorID   => eLineErrId
+);
+
+// 一旦报错,把 ComError_t 错误码转成事件定义
+IF bLineError THEN
+    bConverted := ComError_TO_TcEventEntry(eErrorId := eLineErrId, stEventEntry := stEvent);
+    IF bConverted THEN
+        nConvCount := nConvCount + 1;
+        // 实际工程:此处把 stEvent 交给 Tc3_EventLogger(如 FB_TcMessage.SetEventEntry + Send)
+    END_IF;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

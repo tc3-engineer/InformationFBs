@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_SendString" Id="{3393fb60-f211-513e-ab96-755f21b55b9a}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_SendString
+VAR
+    fbSerialLine : SerialLineControl;           // 后台通信，消费 bufTx
+    fbSendString : SendString;
+    bufTx        : ComBuffer;
+    bufRx        : ComBuffer;
+    arrComIn     : PcComInData;
+    arrComOut    : PcComOutData;
+    bErrLine     : BOOL;
+
+    sCommand     : STRING := 'START$R$L';       // "START" + CR + LF
+    bSendCommand : BOOL;                         // 在线置 TRUE 发一次
+    rtrigSend    : R_TRIG;
+    bSendBusy    : BOOL;
+    eErr         : ComError_t;
+    nCmdSent     : UDINT;                          // 监控：累计发出的命令条数
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：向一台命令行式仪表发文本命令，每条以 CR/LF 结尾，例如启动测量命令
+//       "START\r\n"。命令以 IEC 字符串字面量给出，转义 $R=CR、$L=LF。
+//
+// 价值：演示 SendString 直接传 STRING 即可发文本——无需指针、可用 CONCAT 动态
+//       组帧；务必把行结束符 $R$L 一起算进字符串，否则对端无法判断命令边界。
+//
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_SerialCom；把 arrComIn/arrComOut 链接到 COM 口过程映像
+//   3. 编译 → 登录 → 运行；用串口助手监视该口
+//      → 每次在线把 bSendCommand 置 TRUE，收到一行 "START" + 回车换行，nCmdSent +1
+// =============================================================================
+
+// 后台通信：把 bufTx 里的字节发往硬件
+fbSerialLine(
+    Mode      := ComSerialLineMode_t.SERIALLINEMODE_PC_COM_PORT,
+    pComIn    := ADR(arrComIn),
+    pComOut   := ADR(arrComOut),
+    SizeComIn := SIZEOF(arrComIn),
+    TxBuffer  := bufTx,
+    RxBuffer  := bufRx,
+    Error     => bErrLine
+);
+
+// 上升沿触发单次发送
+rtrigSend(CLK := bSendCommand);
+IF rtrigSend.Q THEN
+    fbSendString(
+        SendString := sCommand,
+        TxBuffer   := bufTx,
+        Busy       => bSendBusy,
+        Error      => eErr
+    );
+    IF (NOT bSendBusy) AND (eErr = ComError_t.COMERROR_NOERROR) THEN
+        nCmdSent := nCmdSent + 1;
+    END_IF;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

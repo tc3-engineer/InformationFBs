@@ -45,10 +45,10 @@
 |---|---|---|---|---|
 | Tc2_EtherCAT | 现行 | ~80 | ⏳ pending | EtherCAT 主从配置 |
 | Tc2_TcpIp | 1.5.2 | 24 | ✅ done (24/24) | TF6310 TCP/UDP/TLS socket（19 FB + 4 FC + 1 GVL；9 DUT 仅引用） |
-| Tc2_SerialCom | 现行 | ~20 | ⏳ pending | 串口通信（走 TF6340 别名） |
+| Tc2_SerialCom | 1.8.1 | 24 | ✅ done (24/24) | 串口通信 FB（收发/配置/后台通信/3964R+RK512）+ FC（ASC/CHR/错误转换）+ 版本 GVL；TF6340 |
 | Tc2_ModbusSrv | 1.6.4 | 21 | ✅ done (21/21) | Modbus TCP/UDP 主站读写 FB（10 TCP + 10 UDP + 版本 GVL；TF6250；从站服务端走配置器+ADS 非本库 FB） |
 | Tc2_ModbusRTU | 1.4.3 | 12 | ✅ done (12/12) | Modbus RTU 主站/从站 FB（V2 主站×4 + 从站×4 硬件变体 + 3 obsolete + 版本 GVL；TF6255） |
-| Tc2_EthernetIP | 现行 | ~30 | ⏳ pending | EtherNet/IP（走 TF6280 别名） |
+| Tc2_EthernetIP | — | 0 (stub) | ⚠️ no-plc-api | TF6280 EtherNet/IP Adapter 是配置型产品：PDF 0 个 FB_、无 PLC API 章节；适配器在 XAE 中配置，无独立 PLC 库 FB（同 Tc2_NC，详见 blocked.md） |
 | Tc2_IoFunctions | 现行 | 68 | ✅ done (68/68) | KL/EL 端子配置（含 ASI、AX2000、Lightbus、UPS、CANopen、DPV1、SERCOS 等） |
 | Tc2_ProfinetDiag | 1.0.2 | 27 | ✅ done (27/27) | PROFINET 控制器/设备诊断 + I&M + 端口诊断 FB（1 个 FB_PN_SCAN_UpTo255 较新未上 InfoSys） |
 
