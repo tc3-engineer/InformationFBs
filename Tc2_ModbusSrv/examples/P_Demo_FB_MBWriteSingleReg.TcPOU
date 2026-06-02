@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_MBWriteSingleReg" Id="{1706b38b-d131-5559-874f-11f5bb955519}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_MBWriteSingleReg
+VAR
+    fbWriteSingleReg: FB_MBWriteSingleReg;
+    sTargetIp     : STRING(15) := '192.168.1.50';   // 目标 Modbus 设备 IP（按现场改）
+    bTrigger      : BOOL;          // 在线置一次上升沿触发本次访问
+    bBusy         : BOOL;          // 在线 monitor：执行中为 TRUE
+    bError        : BOOL;          // 出错置 TRUE
+    nErrId        : UDINT;         // 出错时的 ADS/Modbus 错误码
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_ModbusSrv.FB_MBWriteSingleReg 演示程序（Modbus TCP 客户端 / 主站）
+// ============================================================
+// 场景：向变频器/温控表写单个设定值，例如改写一台变频器的目标频率寄存器，或给温控表下发新的设定温度。
+// 价值：单点写寄存器用功能码 6；本 FB 一次调用即可把一个 `WORD` 写到指定寄存器，省去报文构造。
+// 验证：登录后在线置 bTrigger := TRUE 触发一次；观察 bBusy 在数个周期后回 FALSE，
+//       bError 应为 FALSE、nErrId 应为 0；若对端不在线则 bError=TRUE 且 nErrId 含超时码。
+//       本例：把目标频率 16#1234 写入 5 号寄存器
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_ModbusSrv（References → Add library），并确保 TF6250 Modbus TCP 已授权运行
+//   3. 把 sTargetIp 改成现场 Modbus 设备 IP；编译 → 登录 → 运行
+//   4. 在线脉冲 bTrigger，按上方『验证』观察输出
+// ============================================================
+
+// 单次完整调用：所有 VAR_INPUT 显式赋值；bExecute 边沿触发一次
+fbWriteSingleReg(
+    sIPAddr  := sTargetIp,
+    nTCPPort := MODBUS_TCP_PORT,
+    nUnitID  := 16#FF,
+    nMBAddr  := 5,
+    nValue   := 16#1234,
+    bExecute := bTrigger,
+    tTimeout := T#5S,
+    bBUSY    => bBusy,
+    bError   => bError,
+    nErrId   => nErrId
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

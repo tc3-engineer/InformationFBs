@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_stLibVersion_Tc2_ModbusSrv" Id="{f23b4225-7ec7-5ade-90e6-5e0ea2f6f24f}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_stLibVersion_Tc2_ModbusSrv
+VAR
+    bInit          : BOOL := TRUE;
+    bLibVersionOk  : BOOL;
+    sActualVersion : STRING(23);
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_ModbusSrv.stLibVersion_Tc2_ModbusSrv 演示程序（库版本检查）
+// ============================================================
+// 场景：PLC 初始化时检查 Tc2_ModbusSrv 版本是否达标，并把版本字串送 HMI 显示。
+// 价值：升级 TF6250 后若库版本不符，可在启动阶段发现并报警，而不是运行时才暴露。
+// 验证：登录后观察 sActualVersion 是否显示形如 '1.6.4.0'；bLibVersionOk 为 TRUE 表示达标。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_ModbusSrv（References → Add library）
+//   3. 编译 → 登录 → 运行；在线 monitor sActualVersion / bLibVersionOk
+// ============================================================
+
+IF bInit THEN
+    bInit := FALSE;
+    // 读出字串版本便于 HMI 显示
+    sActualVersion := stLibVersion_Tc2_ModbusSrv.sVersion;
+    // 比较是否 >= 1.6（严格比较建议用 Tc2_System 的 F_CmpLibVersion）
+    bLibVersionOk := stLibVersion_Tc2_ModbusSrv.iMajor > 1
+        OR (stLibVersion_Tc2_ModbusSrv.iMajor = 1
+            AND stLibVersion_Tc2_ModbusSrv.iMinor >= 6);
+END_IF
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>
