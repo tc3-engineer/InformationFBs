@@ -48,15 +48,17 @@ def _toc_text(full: str) -> str:
     """Return the table-of-contents region of the cached PDF text.
 
     TOC entries end with a dot leader and a page number. The body of the
-    document does NOT have that pattern, so we walk forward from "Table of
-    contents" line by line and stop at the first non-blank line that doesn't
-    look like a TOC entry (or a page-break artifact).
-    """
-    start = full.find("Table of contents")
-    if start < 0:
-        return full
-    rest = full[start:]
+    document does NOT have that pattern, so we walk forward from a "Table of
+    contents" line by line and stop at the first run of non-blank lines that
+    don't look like a TOC entry (or a page-break artifact).
 
+    A PDF often prints "Table of contents" more than once (e.g. as a running
+    header on every TOC page, plus once in the body). The first occurrence is
+    not necessarily the real TOC — on some TF product manuals (e.g. ModbusRTU)
+    the first hit is a header with nothing parseable after it, which truncated
+    the region to a few characters. So we evaluate EVERY occurrence and keep the
+    region that yields the most TOC-shaped lines.
+    """
     # A TOC line either matches one of the entry shapes also accepted by
     # parse() below (LINE_RE / LINE_RE_FALLBACK — both with and without a dot
     # leader), or is a page-break artifact ("=== PAGE N ===", "Table of
@@ -74,20 +76,42 @@ def _toc_text(full: str) -> str:
         r"|\s*"  # blank
         r")$"
     )
-    end_offset = len(rest)
-    consec_non_toc = 0
-    pos = 0
-    for line in rest.splitlines(keepends=True):
-        if toc_line.match(line.rstrip("\n")):
-            consec_non_toc = 0
-        else:
-            consec_non_toc += 1
-            if consec_non_toc >= 2:
-                # Two consecutive non-TOC lines → we've left the TOC.
-                end_offset = pos
-                break
-        pos += len(line)
-    return rest[:end_offset]
+    entry_line = re.compile(
+        r"^\s*\d+(?:\.\d+){0,3}\s+.+?(?:\s+\.{2,}\s*|\s{2,})\d+\s*$"
+    )
+
+    def region_from(start: int) -> str:
+        rest = full[start:]
+        end_offset = len(rest)
+        consec_non_toc = 0
+        pos = 0
+        for line in rest.splitlines(keepends=True):
+            if toc_line.match(line.rstrip("\n")):
+                consec_non_toc = 0
+            else:
+                consec_non_toc += 1
+                if consec_non_toc >= 2:
+                    end_offset = pos
+                    break
+            pos += len(line)
+        return rest[:end_offset]
+
+    # Collect every "Table of contents" occurrence; score each region by the
+    # number of real TOC entry lines it contains and keep the richest one.
+    best = ""
+    best_score = -1
+    idx = full.find("Table of contents")
+    if idx < 0:
+        return full
+    while idx >= 0:
+        region = region_from(idx)
+        score = sum(1 for ln in region.splitlines() if entry_line.match(ln))
+        if score > best_score:
+            best_score = score
+            best = region
+        idx = full.find("Table of contents", idx + 1)
+    return best
+
 
 
 def parse(lib: str) -> list[dict]:
