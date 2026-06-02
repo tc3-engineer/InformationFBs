@@ -23,10 +23,43 @@ Tc2_System 是 TwinCAT 3 工程中最常引用的基础库之一，封装了与�
 - **库版本守门**：`stLibVersion_Tc2_System` + `F_CmpLibVersion`；
 - **全局常量集合**：`AMSPORT_*` / `ADSSTATE_*` / `FOPEN_MODE*` / `DEFAULT_ADS_TIMEOUT` 等。
 
-> 此 README 收录的 47 篇文档是 **S1 范围**，覆盖 General functions / File function blocks / Memory functions / I/O port access / Watchdog function blocks / Global constants / Library version / [Obsolete] 八类。
-> ADS 函数（`ADSREAD` / `ADSWRITE` 等）、IEC SFC / EventLogger / Time function blocks / Character functions 等剩余约 33 个条目属于另一个 PR 范围。
+> 全库 79 个 TOC 条目 + 1 个全局常量集合（`Constants.md`）共 80 篇文档全部 verified；分 16 类。
 
 ## 目录索引
+
+### ADS function blocks（5）
+
+PLC 主动发起 ADS 请求；`bExecute` 上升沿触发，`bBusy` / `bError` / `nErrId` 状态机；`sNetID` 空串 = 本机。
+
+| 名称 | 用途 |
+|---|---|
+| [ADSREAD](ads_function_blocks/ADSREAD.md) | 按 IndexGroup/IndexOffset 读 |
+| [ADSREADEX](ads_function_blocks/ADSREADEX.md) | 读 + 返回真实长度 |
+| [ADSWRITE](ads_function_blocks/ADSWRITE.md) | 按 IndexGroup/IndexOffset 写 |
+| [ADSRDWRT](ads_function_blocks/ADSRDWRT.md) | 一次往返：先写后读 |
+| [ADSRDWRTEX](ads_function_blocks/ADSRDWRTEX.md) | RdWrt + 返回真实长度 |
+
+### ADS functions（5）
+
+非阻塞 ADS 工具函数。
+
+| 名称 | 用途 |
+|---|---|
+| [F_CreateAmsNetId](ads_functions/F_CreateAmsNetId.md) | 6 字节 → AmsNetId 字符串 |
+| [F_ScanAmsNetIds](ads_functions/F_ScanAmsNetIds.md) | AmsNetId 字符串 → 6 字节 |
+| [ADSLOGSTR](ads_functions/ADSLOGSTR.md) | 写消息字符串到 ADS Logger |
+| [ADSLOGDINT](ads_functions/ADSLOGDINT.md) | 写 DINT 到 ADS Logger |
+| [ADSLOGLREAL](ads_functions/ADSLOGLREAL.md) | 写 LREAL 到 ADS Logger |
+
+### EventLogger function blocks（3）
+
+旧 ADS Event Logger 接入（推荐迁到 Tc3_EventLogger）。
+
+| 名称 | 用途 |
+|---|---|
+| [ADSLOGEVENT](eventlogger_function_blocks/ADSLOGEVENT.md) | 触发预定义事件 |
+| [ADSCLEAREVENTS](eventlogger_function_blocks/ADSCLEAREVENTS.md) | 清除事件队列 |
+| [FB_SimpleAdsLogEvent](eventlogger_function_blocks/FB_SimpleAdsLogEvent.md) | 简化封装 |
 
 ### File function blocks（14）
 
@@ -48,6 +81,21 @@ Tc2_System 是 TwinCAT 3 工程中最常引用的基础库之一，封装了与�
 | [FB_FileRename](file_function_blocks/FB_FileRename.md) | FB | 重命名 / 移动文件 |
 | [FB_CreateDir](file_function_blocks/FB_CreateDir.md) | FB | 新建目录（单级） |
 | [FB_RemoveDir](file_function_blocks/FB_RemoveDir.md) | FB | 删除空目录 |
+
+### General function blocks（8）
+
+任务监控、临界区锁、LED 颜色、GUID 生成、随机数。
+
+| 名称 | 用途 |
+|---|---|
+| [FB_IecCriticalSection](general_function_blocks/FB_IecCriticalSection.md) | IEC 临界区互斥 |
+| [FB_ReadTaskExceedCounter](general_function_blocks/FB_ReadTaskExceedCounter.md) | 读任务超期计数器 |
+| [FB_ResetTaskExceedCounter](general_function_blocks/FB_ResetTaskExceedCounter.md) | 清零任务超期计数器 |
+| [FB_CreateGUID](general_function_blocks/FB_CreateGUID.md) | 生成 128 位 GUID |
+| [FB_SetLedColor_BAPI](general_function_blocks/FB_SetLedColor_BAPI.md) | 通过 BIOS-API 设 LED 颜色 |
+| [FB_SetLedColorEx_BAPI](general_function_blocks/FB_SetLedColorEx_BAPI.md) | BAPI LED 颜色（扩展） |
+| [DRAND](general_function_blocks/DRAND.md) | 0..1 双精度伪随机 |
+| [GETCURTASKINDEX](general_function_blocks/GETCURTASKINDEX.md) | 当前任务索引（FB 版） |
 
 ### General functions（20）
 
@@ -75,6 +123,46 @@ Tc2_System 是 TwinCAT 3 工程中最常引用的基础库之一，封装了与�
 | [GETCURTASKINDEXEX](general_functions/GETCURTASKINDEXEX.md) | 当前任务上下文索引 |
 | [LPTSIGNAL](general_functions/LPTSIGNAL.md) | LPT 并口引脚控制 |
 | [TestAndSet](general_functions/TestAndSet.md) | 原子 TestAndSet 锁 |
+
+### IEC SFC / SFC flags function blocks（5）
+
+SFC（Sequential Function Chart）出错时的诊断辅助。
+
+| 名称 | 用途 |
+|---|---|
+| [AnalyzeExpression](iec_sfc_function_blocks/AnalyzeExpression.md) | 解析 SFC 转移条件表达式 |
+| [AnalyzeExpressionTable](iec_sfc_function_blocks/AnalyzeExpressionTable.md) | 解析转移条件并查表 |
+| [AnalyzeExpressionCombined](iec_sfc_function_blocks/AnalyzeExpressionCombined.md) | 解析 + 查表合并 |
+| [AppendErrorString](iec_sfc_function_blocks/AppendErrorString.md) | 拼接错误字符串 |
+| [SFCActionControl](iec_sfc_function_blocks/SFCActionControl.md) | SFC 动作控制 |
+
+### Time function blocks（2）
+
+CPU 高精度计数器读取（用于性能测量）。
+
+| 名称 | 用途 |
+|---|---|
+| [GETCPUACCOUNT](time_function_blocks/GETCPUACCOUNT.md) | 读 CPU 周期计数 |
+| [GETCPUCOUNTER](time_function_blocks/GETCPUCOUNTER.md) | 读 CPU 计数器 |
+
+### Time functions（3）
+
+任务时间戳与系统时间（高效，无 ADS）。
+
+| 名称 | 用途 |
+|---|---|
+| [F_GetSystemTime](time_functions/F_GetSystemTime.md) | 当前 UTC（DC 时间） |
+| [F_GetTaskTime](time_functions/F_GetTaskTime.md) | 当前任务周期起始 DC 时间 |
+| [F_GetTaskTotalTime](time_functions/F_GetTaskTotalTime.md) | 任务累计耗时 |
+
+### Character functions（2）
+
+字符与 ASCII 码互转。
+
+| 名称 | 用途 |
+|---|---|
+| [F_ToASC](character_functions/F_ToASC.md) | STRING 取首字符 ASCII |
+| [F_ToCHR](character_functions/F_ToCHR.md) | ASCII 码 → 单字符 STRING |
 
 ### Memory functions（4）
 
@@ -135,6 +223,6 @@ PC 主板硬件看门狗，超时强制重启整机。
 
 ## 验证基线
 
-- 所有 47 篇文档通过 `_meta/tools/verify_doc.py`（PDF + InfoSys 双源对照、占位短语扫描、§3 中文长度 ≥ 80）；
-- 所有 47 个例程通过 `_meta/tools/lint_plcopen.py`（PLCopenXML 结构校验）；
+- 所有 80 篇文档通过 `_meta/tools/verify_doc.py`（PDF + InfoSys 双源对照、占位短语扫描、§3 中文长度 ≥ 80）；
+- 所有 80 个例程通过 `_meta/tools/lint_plcopen.py`（PLCopenXML 结构校验）；
 - 元信息表 `InfoSys-checked: ✅ 2026-05-20` 已对每个条目逐条交叉验证。

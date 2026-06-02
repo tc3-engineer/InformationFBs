@@ -20,3 +20,10 @@
 ## 条目级别（verify-failed / example-build-failed）
 
 （暂无）
+
+## 库级别（no-plc-api：库存在但无独立 PLC FB 文档）
+
+```
+2026-06-02T00:00:00Z | Tc2_NC | * | 库为 stub：仅 AXIS_REF / PTP 数据结构。TF50x0_TC3_NC_PTP_EN.pdf 是 NC PTP 引擎配置手册（NC 配置 / 参数 / 控制环），无 PLC API 章节；InfoSys 无 tcplclib_tc2_nc 主页。所有 NC 控制 FB 实际由以下库提供：MC_*（Tc2_MC2 ✅）/ FB_SoE*（Tc2_NcDrive ✅）/ Tc2_NCI ⏳。无独立 doc 可写。
+```
+

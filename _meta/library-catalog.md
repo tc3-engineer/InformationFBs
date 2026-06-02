@@ -24,7 +24,7 @@
 | 库 | InfoSys 版本 | 估算 FB+FC | 状态 | 备注 |
 |---|---|---|---|---|
 | Tc2_Standard | 1.3.4 | 32 | ✅ done (32/32) | IEC 61131-3 标准 POU + 库版本常量 |
-| Tc2_System | 1.17.1 | ~150 | ⏳ pending | ADS、文件、任务、时间、字符串、EventLogger 接入 |
+| Tc2_System | 1.17.3 | 79 | ✅ done (79/79) | ADS、文件、任务、时间、字符串、EventLogger 接入 |
 | Tc2_Utilities | 2.18.2 | 344 | ✅ done (344/344) | 通用工具（97 FB + 1 OO parent + 245 FC + 1 GVL） |
 | Tc2_Math | 1.3.3 | 9 | ✅ done (9/9) | 取整 / 模运算（无矩阵/统计/滤波；那些在 Tc3_Controller） |
 | Tc3_EventLogger | 1.6.2 | 74 | ✅ done (74/74) | 事件/报警分发（7 OO parent + 66 method + 1 standalone FB） |
@@ -34,10 +34,10 @@
 | 库 | InfoSys 版本 | 估算 FB+FC | 状态 | 备注 |
 |---|---|---|---|---|
 | Tc2_MC2 | 2.17.0 | 22 (single-axis subset) | ✅ done (22/22) | PLCopen 单轴运动；多轴 / Cam / FlyingSaw 见 Tc2_MC2_Drive 及 Tc3_McCoordinatedMotion |
-| Tc2_MC2_Drive | 1.14.2 | ~30 | ⏳ pending | SoE 驱动器接入 |
-| Tc2_NC | 现行 | ~30 | ⏳ pending | NC PTP 底层（PDF 走 TF50x0 别名，见 preflight） |
-| Tc2_NcDrive | 现行 | ~30 | ⏳ pending | NC 驱动器 wrapper |
-| Tc2_Drive | 现行 | ~30 | ⏳ pending | SoE 驱动器底层 |
+| Tc2_MC2_Drive | 1.14.2 | 29 | ✅ done (29/29) | SoE 驱动器接入 |
+| Tc2_NC | — | 0 (stub) | ⚠️ no-plc-api | 仅 AXIS_REF / PTP 数据结构，无独立 PLC FB；NC 控制 FB 已在 Tc2_MC2 / Tc2_NcDrive / Tc2_NCI 中（详见 blocked.md） |
+| Tc2_NcDrive | 现行 | 6 | ✅ done (6/6) | NC 驱动器 wrapper |
+| Tc2_Drive | 现行 | 12 | ✅ done (12/12) | SoE 驱动器底层 |
 
 ## Tier 3 · 通信
 
@@ -49,7 +49,7 @@
 | Tc2_ModbusSrv | 现行 | ~20 | ⏳ pending | Modbus 服务端（走 TF6250 别名） |
 | Tc2_ModbusRTU | 现行 | ~20 | ⏳ pending | Modbus RTU 主站（走 TF6255 别名） |
 | Tc2_EthernetIP | 现行 | ~30 | ⏳ pending | EtherNet/IP（走 TF6280 别名） |
-| Tc2_IoFunctions | 现行 | ~30 | ⏳ pending | KL/EL 端子配置 |
+| Tc2_IoFunctions | 现行 | 68 | ✅ done (68/68) | KL/EL 端子配置（含 ASI、AX2000、Lightbus、UPS、CANopen、DPV1、SERCOS 等） |
 | Tc2_ProfinetDiag | 现行 | ~20 | ⏳ pending | PROFINET 诊断 |
 
 ## Tier 4 · 数据与诊断
@@ -69,8 +69,8 @@
 |---|---|---|---|
 | Tc3_OPCUA / Tc3_IotBase | ~50 | ⏳ pending | 对外 IT 集成 |
 | Tc3_PackML_V2 / V3 | ~30 | ⏳ pending | 包装机械 OMAC |
-| Tc2_MC2_Camming | ~20 | ⏳ pending | 凸轮（走 TF5050 别名） |
-| Tc2_MC2_FlyingSaw | ~10 | ⏳ pending | 飞剪（走 TF5055 别名） |
+| Tc2_MC2_Camming | 6 | ✅ done (6/6) | 凸轮（走 TF5050 别名） |
+| Tc2_MC2_FlyingSaw | 4 | ✅ done (4/4) | 飞剪（走 TF5055 别名） |
 | Tc3_DriveMotionControl | ~20 | ⏳ pending | 简化伺服 |
 | Tc2_NCI | ~30 | ⏳ pending | 插补 / CNC（走 TF5100 别名） |
 | Tc3_MC2_AdvancedHoming | 1.7.7 | 16 | ✅ done (16/16) | 自定义回零（PLCopen Part 5；收尾 3 + 被动 flying 3 + step 10） |
