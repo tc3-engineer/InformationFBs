@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_ModbusRtuMaster_KL6x5B" Id="{8b778e25-5a47-519b-be2d-ce20090c7b7f}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_ModbusRtuMaster_KL6x5B
+VAR
+    fbModbusMaster : ModbusRtuMaster_KL6x5B;         // 旧版 KL6001/6011/6021 端子主站（已废弃）
+    nTempSetpoint  : WORD := 1850;                     // 要写给温控器的设定值 185.0℃
+    bWriteReq      : BOOL;                             // 在线上升沿：触发一次写
+    bBusy          : BOOL;
+    bError         : BOOL;
+    eErrId         : MODBUS_ERRORS;
+    nBytesRead     : UINT;
+    nWriteOkCnt    : UDINT;                            // 监控：累计成功写次数
+    rtDone         : R_TRIG;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：维护早期用旧版 ModbusRtuMaster_KL6x5B 写成的存量程序——经 KL6011 端子向
+//       站地址 3 温控器写一个温度设定值（功能码 6）。
+//
+// 价值：演示旧版 KL6x5B 主站接口（UnitID 为 UINT、无 Aux 参数）的用法，便于改动
+//       老工程。新工程应改用 ModbusRtuMasterV2_KL6x5B。
+//
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs → Add → Existing Item → 选本 .TcPOU
+//   2. References → Add library → Tc2_ModbusRTU；System Manager 把 FB 内置串口数据
+//      结构链接到 KL6011 端子（波特率/校验位与温控器一致）
+//   3. 编译 → 登录 → 运行；在线改 nTempSetpoint 后脉冲 bWriteReq := TRUE
+//      → bBusy 短暂 TRUE 后落回；温控器在线则 bError=FALSE、设定值生效、nWriteOkCnt +1
+//      → 断开温控器再脉冲：bError=TRUE、eErrId=MODBUSERROR_NO_RESPONSE
+// =============================================================================
+
+// 写单个寄存器（Modbus 功能码 6）
+fbModbusMaster.WriteSingleRegister(
+    UnitID      := 3,
+    Quantity    := 1,
+    MBAddr      := 16#0800,
+    cbLength    := SIZEOF(nTempSetpoint),
+    pMemoryAddr := ADR(nTempSetpoint),
+    Execute     := bWriteReq,
+    Timeout     := T#1S,
+    BUSY        => bBusy,
+    Error       => bError,
+    ErrorId     => eErrId,
+    cbRead      => nBytesRead
+);
+
+// 一次成功写完成时累加计数
+rtDone(CLK := NOT bBusy AND bWriteReq AND NOT bError);
+IF rtDone.Q THEN
+    nWriteOkCnt := nWriteOkCnt + 1;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

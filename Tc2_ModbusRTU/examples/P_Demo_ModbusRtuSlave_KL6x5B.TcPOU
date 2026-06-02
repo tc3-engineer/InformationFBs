@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_ModbusRtuSlave_KL6x5B" Id="{e8e2ae10-78b7-5f0c-ba3d-8db7adae5e8e}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_ModbusRtuSlave_KL6x5B
+VAR
+    fbModbusSlave : ModbusRtuSlave_KL6x5B;           // KL6001/6011/6021 端子 Modbus RTU 从站
+    aInputs   : ARRAY[0..7] OF WORD;                  // 输入区（主站只读）偏移 16#0
+    aOutputs  : ARRAY[0..7] OF WORD;                  // 输出区（主站读写）偏移 16#800
+    aMemory   : ARRAY[0..7] OF WORD;                  // 存储区（主站读写）偏移 16#4000
+    eErrId    : MODBUS_ERRORS;
+    nRecipeId : WORD;                                  // 演示：主站经存储区下发配方号
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：TwinCAT 经 KL6011 低速串口端子作 Modbus RTU 从站，让上位主站通过存储区
+//       下发一个"配方号"，本机据此切换工艺参数。
+//
+// 价值：演示 KL6x5B（3 字节过程映像端子）从站标准用法——三块数据区 + 每周期一次
+//       调用。与 PcCOM/KL6x22B 接口一致，业务代码无需关心端子型号差异。
+//
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs → Add → Existing Item → 选本 .TcPOU
+//   2. References → Add library → Tc2_ModbusRTU；System Manager 把 FB 内置串口数据
+//      结构链接到 KL6011 端子（波特率/校验位与主站一致）
+//   3. 编译 → 登录 → 运行
+//   4. 用主站以站地址 3 写保持寄存器、地址 16#4000（存储区首字）、值 5
+//      → aMemory[0] 变 5，nRecipeId 变 5；eErrId 保持 MODBUSERROR_NO_ERROR
+//   5. 用主站读保持寄存器、地址 16#4000 → 回读到 5（写入已生效）
+// =============================================================================
+
+// 业务侧：把主站写进存储区第 0 个字的值解释为"当前配方号"
+nRecipeId := aMemory[0];
+
+// 每周期调用一次从站
+fbModbusSlave(
+    UnitID          := 3,                            // 本从站站地址
+    AdrInputs       := ADR(aInputs),
+    SizeInputBytes  := SIZEOF(aInputs),
+    AdrOutputs      := ADR(aOutputs),
+    SizeOutputBytes := SIZEOF(aOutputs),
+    AdrMemory       := ADR(aMemory),
+    SizeMemoryBytes := SIZEOF(aMemory),
+    ErrorId         => eErrId
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

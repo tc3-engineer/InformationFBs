@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_ModbusRtuMasterV2_KL6x22B" Id="{8f3751e5-5202-5225-b468-e9bc5b1746e4}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_ModbusRtuMasterV2_KL6x22B
+VAR
+    fbModbusMaster : ModbusRtuMasterV2_KL6x22B;      // KL6031/KL6041 串口端子主站
+    aMeterRegs     : ARRAY[0..5] OF WORD;             // 从电表读回的 6 个寄存器
+    bReadMeterReq  : BOOL;                             // 在线上升沿：触发一次读
+    bBusy          : BOOL;
+    bError         : BOOL;
+    eErrId         : MODBUS_ERRORS;
+    nBytesRead     : UINT;                             // 监控：读回字节数
+    nPollOkCnt     : UDINT;                            // 监控：累计成功读次数
+    rtDone         : R_TRIG;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：控制柜里用 KL6041 串口端子接 RS485 智能电表，周期读它的 6 个保持寄存器
+//       （电压/电流/有功功率等），喂给能耗统计。
+//
+// 价值：演示 KL6x22B（22 字节过程映像端子）主站的标准用法——与 PcCOM 版接口
+//       完全相同，仅硬件后端换成总线端子。靠 SIZEOF 给 cbLength、靠 BUSY 互锁、
+//       靠 Error/ErrorId 判断电表是否掉线。
+//
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs → Add → Existing Item → 选本 .TcPOU
+//   2. References → Add library → Tc2_ModbusRTU；在 System Manager 把 FB 内置串口
+//      数据结构链接到 KL6041 端子，端子波特率/校验位须与电表一致
+//   3. 编译 → 登录 → 运行
+//   4. 在线脉冲 bReadMeterReq := TRUE
+//      → bBusy 短暂 TRUE 后落回；电表在线则 bError=FALSE、aMeterRegs 被填、
+//        nBytesRead=12、nPollOkCnt 每次 +1
+//      → 拔掉电表通讯线再脉冲：bError=TRUE、eErrId=MODBUSERROR_NO_RESPONSE
+// =============================================================================
+
+// 读 6 个保持寄存器（Modbus 功能码 3）
+fbModbusMaster.ReadRegs(
+    UnitID      := 2,                                 // 电表站地址
+    Quantity    := 6,                                 // 读 6 个字
+    MBAddr      := 16#0000,                            // 起始数据地址 0
+    cbLength    := SIZEOF(aMeterRegs),                 // 必须 >= Quantity*2 = 12
+    pMemoryAddr := ADR(aMeterRegs),
+    Execute     := bReadMeterReq,
+    Timeout     := T#1S,
+    BUSY        => bBusy,
+    Error       => bError,
+    ErrorId     => eErrId,
+    cbRead      => nBytesRead
+);
+
+// 一次成功读完成时累加计数（BUSY 下降沿且无错）
+rtDone(CLK := NOT bBusy AND bReadMeterReq AND NOT bError);
+IF rtDone.Q THEN
+    nPollOkCnt := nPollOkCnt + 1;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

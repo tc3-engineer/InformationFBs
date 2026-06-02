@@ -738,3 +738,15 @@
 2026-06-02T00:00:00Z | Tc2_ProfinetDiag | device_el6631                          | FB_Write_IuM_EL6631_0010                 | verified | PDF + InfoSys cross-verified
 2026-06-02T00:00:00Z | Tc2_ProfinetDiag | port_diagnosis                         | FB_PN_GET_PORT_STATISTIC                 | verified | PDF + InfoSys cross-verified
 2026-06-02T00:00:00Z | Tc2_ProfinetDiag | port_diagnosis                         | FB_PN_READ_PORT_DIAG                     | verified | PDF + InfoSys cross-verified
+2026-06-02T00:00:00Z | Tc2_ModbusRTU  | function_blocks                         | ModbusRtuMasterV2_Generic                | verified | PDF + InfoSys cross-verified
+2026-06-02T00:00:00Z | Tc2_ModbusRTU  | function_blocks                         | ModbusRtuMasterV2_KL6x22B                | verified | PDF + InfoSys cross-verified
+2026-06-02T00:00:00Z | Tc2_ModbusRTU  | function_blocks                         | ModbusRtuMasterV2_KL6x5B                 | verified | PDF + InfoSys cross-verified
+2026-06-02T00:00:00Z | Tc2_ModbusRTU  | function_blocks                         | ModbusRtuMasterV2_PcCOM                  | verified | PDF + InfoSys cross-verified
+2026-06-02T00:00:00Z | Tc2_ModbusRTU  | function_blocks                         | ModbusRtuSlave_Generic                   | verified | PDF + InfoSys cross-verified
+2026-06-02T00:00:00Z | Tc2_ModbusRTU  | function_blocks                         | ModbusRtuSlave_KL6x22B                   | verified | PDF + InfoSys cross-verified
+2026-06-02T00:00:00Z | Tc2_ModbusRTU  | function_blocks                         | ModbusRtuSlave_KL6x5B                    | verified | PDF + InfoSys cross-verified
+2026-06-02T00:00:00Z | Tc2_ModbusRTU  | function_blocks                         | ModbusRtuSlave_PcCOM                     | verified | PDF + InfoSys cross-verified
+2026-06-02T00:00:00Z | Tc2_ModbusRTU  | global_constants                        | Global_Version                           | verified | PDF + InfoSys cross-verified
+2026-06-02T00:00:00Z | Tc2_ModbusRTU  | obsolete                                | ModbusRtuMaster_KL6x22B                  | verified | PDF + InfoSys cross-verified
+2026-06-02T00:00:00Z | Tc2_ModbusRTU  | obsolete                                | ModbusRtuMaster_KL6x5B                   | verified | PDF + InfoSys cross-verified
+2026-06-02T00:00:00Z | Tc2_ModbusRTU  | obsolete                                | ModbusRtuMaster_PcCOM                    | verified | PDF + InfoSys cross-verified

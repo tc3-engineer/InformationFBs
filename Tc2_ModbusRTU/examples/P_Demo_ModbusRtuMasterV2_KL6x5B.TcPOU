@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_ModbusRtuMasterV2_KL6x5B" Id="{d0bea7d1-ff0c-56b1-bf41-441669c80f24}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_ModbusRtuMasterV2_KL6x5B
+VAR
+    fbModbusMaster : ModbusRtuMasterV2_KL6x5B;        // KL6001/6011/6021 串口端子主站
+    nTempSetpoint  : WORD := 1850;                     // 要写给温控器的设定值 185.0℃
+    bWriteTempReq  : BOOL;                             // 在线上升沿：触发一次写
+    bWriteBusy     : BOOL;
+    bWriteError    : BOOL;
+    eWriteErrId    : MODBUS_ERRORS;
+    nBytesRead     : UINT;
+    nWriteOkCnt    : UDINT;                            // 监控：累计成功写次数
+    rtDone         : R_TRIG;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：用 KL6011 低速串口端子接 RS232 单回路温控器，把操作员设定的温度目标值
+//       下发给温控器（功能码 6 写单个寄存器）。
+//
+// 价值：演示 KL6x5B（3 字节过程映像端子）主站的写操作——Quantity=1、cbLength=2。
+//       与 PcCOM/KL6x22B 接口一致，业务代码无需关心端子型号差异。
+//
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs → Add → Existing Item → 选本 .TcPOU
+//   2. References → Add library → Tc2_ModbusRTU；在 System Manager 把 FB 内置串口
+//      数据结构链接到 KL6011 端子（波特率/校验位与温控器一致）
+//   3. 编译 → 登录 → 运行
+//   4. 在线改 nTempSetpoint 后脉冲 bWriteTempReq := TRUE
+//      → bWriteBusy 短暂 TRUE 后落回；温控器在线则 bWriteError=FALSE、
+//        温控器面板显示的设定值变为 185.0℃、nWriteOkCnt +1
+//      → 断开温控器再脉冲：bWriteError=TRUE、eWriteErrId=MODBUSERROR_NO_RESPONSE
+// =============================================================================
+
+// 写单个寄存器（Modbus 功能码 6）
+fbModbusMaster.WriteSingleRegister(
+    UnitID      := 3,                                 // 温控器站地址
+    Quantity    := 1,                                 // 写 1 个字
+    MBAddr      := 16#0800,                            // 输出区起始偏移示例
+    cbLength    := SIZEOF(nTempSetpoint),              // 2 字节
+    pMemoryAddr := ADR(nTempSetpoint),
+    Execute     := bWriteTempReq,
+    Timeout     := T#1S,
+    BUSY        => bWriteBusy,
+    Error       => bWriteError,
+    ErrorId     => eWriteErrId,
+    cbRead      => nBytesRead
+);
+
+// 一次成功写完成时累加计数
+rtDone(CLK := NOT bWriteBusy AND bWriteTempReq AND NOT bWriteError);
+IF rtDone.Q THEN
+    nWriteOkCnt := nWriteOkCnt + 1;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>
