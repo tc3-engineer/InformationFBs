@@ -13,7 +13,7 @@
 | Verified | 2026-05-25 ✅ |
 | InfoSys-checked | ✅ 2026-05-25 |
 | Status | `verified` |
-| Example | [`examples/P_Demo_MC_ReadFlyingSawCharacteristics.xml`](../examples/P_Demo_MC_ReadFlyingSawCharacteristics.xml) |
+| Example | [`examples/P_Demo_MC_ReadFlyingSawCharacteristics.TcPOU`](../examples/P_Demo_MC_ReadFlyingSawCharacteristics.TcPOU) |
 
 ---
 
@@ -98,7 +98,7 @@ END_VAR
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_MC_ReadFlyingSawCharacteristics.xml`](../examples/P_Demo_MC_ReadFlyingSawCharacteristics.xml)
+> 配套可导入文件：[`examples/P_Demo_MC_ReadFlyingSawCharacteristics.TcPOU`](../examples/P_Demo_MC_ReadFlyingSawCharacteristics.TcPOU)
 
 ```iecst
 // 场景：飞锯调试，建立同步后读出本次同步轮廓的从轴速度/加速度极值，确认没超机械极限

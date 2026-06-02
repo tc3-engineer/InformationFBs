@@ -76,5 +76,5 @@
 
 ## 验证
 
-全部 16 篇文档 `verify_doc.py` 退出 0（PASS），16 个 `examples/P_Demo_*.xml` `lint_plcopen.py` 退出 0。
+全部 16 篇文档 `verify_doc.py` 退出 0（PASS），16 个 `examples/P_Demo_*.TcPOU` `lint_tcpou.py` 退出 0。
 PDF + InfoSys 双源交叉核对一致（接口 VAR 名 / 类型 / Description 与 InfoSys topic 页一致）。

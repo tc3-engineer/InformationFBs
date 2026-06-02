@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_CHAR_TO_WCHAR" Id="{9514fcbb-a98e-5ba0-967c-3c4ad26cd242}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_CHAR_TO_WCHAR
+VAR
+    sTextIn : STRING(1) := 'Y'; // 输入单字符 ASCII；在线写值，如 'Y'
+    wOut    : WSTRING(1); // 转换得到的 WSTRING(1)
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：HMI 把操作员输入的 ASCII 控制字符（如 'Y' / 'N' / 'Q'）转换为 Unicode 送到 OPC UA 或 ADS notification 接口。
+// 价值：不用本函数则需手写位扩展（高字节补 0）+ null 终结，3 行代码；本函数 1 行解决，且 Beckhoff 保证 codepage 处理一致。
+// 验证步骤：
+//   1. 引用 Tc2_Utilities
+//   2. 编译 + 登录 + 运行
+//   3. 在线写触发位 TRUE，monitor 输出变量
+// =============================================================================
+wOut := CHAR_TO_WCHAR(sTextIn);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

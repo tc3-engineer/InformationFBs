@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_SoESetDataAccessMode" Id="{19aeaacb-dedd-5b54-aad8-6c848c506bd7}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_SoESetDataAccessMode
+VAR
+    fbSetAccessMode : FB_SoESetDataAccessMode; // 设置 SoE 访问模式 FB 实例
+    rtModeTrig      : R_TRIG; // 把电平转上升沿
+    bSetSeqModeReq  : BOOL := FALSE; // 在线写 TRUE 触发一次模式切换
+    bModeBusy       : BOOL;
+    bModeError      : BOOL;
+    nModeErrId      : UINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：系统里接了一台不支持并行 SoE 访问的第三方伺服。FB_SoERead 在它上面
+//       读参数时报 ADS 错。用本 FB 切到顺序访问（sequential）模式，再重试
+//       读写即可成功。
+//
+// 价值：1) 一个 FB 在并行/顺序访问模式间切换，让同一套参数访问代码兼容
+//          不同厂商设备
+//       2) 切一次即对后续 FB_SoERead/FB_SoEWrite 生效
+//       3) 不必为第三方设备另写一套访问逻辑
+//
+// !! 注意：本 FB 没有 Axis 输入（设的是全局访问模式而非针对某轴），错误输出
+//          叫 ErrId 不是 AdsErrId。仅在确认并行不被支持时才切顺序，否则用
+//          默认并行更快。
+//
+// 验证步骤：
+//   1. 引用 Tc2_MC2_Drive 库
+//   2. Add Existing Item (.TcPOU) 选本文件，加进 PlcTask，编译登录
+//   3. 在线写 bSetSeqModeReq := TRUE → bModeBusy 置 TRUE
+//   4. 等 bModeBusy 落回 FALSE 且 bModeError = FALSE 即切换成功
+//   5. 之后用 FB_SoERead 重试读第三方设备参数，应不再报并行相关的 ADS 错
+//   6. 若 bModeError = TRUE，看 nModeErrId 对照 ADS Return Codes 表
+// =============================================================================
+
+// 用 R_TRIG 把"持续按住的 TRUE"转成真正的上升沿
+rtModeTrig(CLK := bSetSeqModeReq);
+
+// 单次调用：本 FB 无 Axis；枚举拼写按 PDF 原文 Sequencial（不是 Sequential）
+// 本 FB 无 Done，靠 Busy 落回 FALSE 且 Error=FALSE 判成功
+fbSetAccessMode(
+    Execute := rtModeTrig.Q,
+    Mode    := eSoEDataAccessMode_Sequencial,
+    Busy    => bModeBusy,
+    Error   => bModeError,
+    ErrId   => nModeErrId
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

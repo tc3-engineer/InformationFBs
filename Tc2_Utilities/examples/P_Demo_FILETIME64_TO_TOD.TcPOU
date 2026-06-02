@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FILETIME64_TO_TOD" Id="{c524079b-f638-59a8-aed2-803db2fe8dd6}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FILETIME64_TO_TOD
+VAR
+    ftNow           : T_FILETIME64; // 当前 T_FILETIME64（从 F_GetCurDateTime 或 F_GetSystemTime 拿）
+    todNow          : TIME_OF_DAY; // 一天内的时刻（不含日期）
+    todLightOff     : TIME_OF_DAY := TOD#22:00:00.000; // 照明关闭阈值
+    bShouldLightOff : BOOL; // TRUE = 该关灯了
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：「每天 22:00 自动关闭照明」逻辑：取当前 T_FILETIME64 → TOD → 与 TOD#22:00 比较
+//
+// 价值：1 行调用避免手写「* 3600000 + ... + wMilliseconds」拼装 TOD 公式
+//
+// 验证步骤：
+//   1. 引用 Tc2_Utilities（≥ 3.7.3.0）
+//   2. 编译 + 登录 + 运行
+//   3. 通过 DT_TO_FILETIME64(DT#2026-05-11-22:30:00) 给 ftNow 赋值
+//   4. 在线观察 todNow = TOD#22:30:00.000
+//   5. bShouldLightOff = TRUE
+// =============================================================================
+todNow := FILETIME64_TO_TOD(ftNow);
+bShouldLightOff := todNow >= todLightOff;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

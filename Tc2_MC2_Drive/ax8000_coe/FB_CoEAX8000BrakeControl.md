@@ -13,7 +13,7 @@
 | Verified | 2026-05-21 ✅ |
 | InfoSys-checked | ✅ 2026-05-21 |
 | Status | `verified` |
-| Example | [`examples/P_Demo_FB_CoEAX8000BrakeControl.xml`](../examples/P_Demo_FB_CoEAX8000BrakeControl.xml) |
+| Example | [`examples/P_Demo_FB_CoEAX8000BrakeControl.TcPOU`](../examples/P_Demo_FB_CoEAX8000BrakeControl.TcPOU) |
 
 ---
 
@@ -107,7 +107,7 @@ END_VAR
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_FB_CoEAX8000BrakeControl.xml`](../examples/P_Demo_FB_CoEAX8000BrakeControl.xml)
+> 配套可导入文件：[`examples/P_Demo_FB_CoEAX8000BrakeControl.TcPOU`](../examples/P_Demo_FB_CoEAX8000BrakeControl.TcPOU)
 
 ```iecst
 // 场景：AX8000 轴手动松闸做机械对位，用完切回自动

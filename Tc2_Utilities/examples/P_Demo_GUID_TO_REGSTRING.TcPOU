@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_GUID_TO_REGSTRING" Id="{0c72784a-234e-5a98-8e74-ca9e263fa454}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_GUID_TO_REGSTRING
+VAR
+    stGuid  : GUID; // 工业语义：OPC UA App ID（GUID）
+    sRegStr : STRING(38); // 格式化后注册表字符串
+    bFormat : BOOL; // 在线触发
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：把 PLC 内的 OPC UA Application URI（GUID 形式）格式化为日志可读字符串；记入审计表。
+// 价值：替代手写 16 字节 → hex 字符串 + 拼接连字符 + 加大括号的 30 行代码；本函数 1 调用。
+// 验证步骤：
+//   1. 引用 Tc2_Utilities
+//   2. 编译 + 登录 + 运行
+//   3. 在线写触发位 TRUE，monitor 输出变量
+// =============================================================================
+
+IF bFormat THEN
+    sRegStr := GUID_TO_REGSTRING(in := stGuid);
+    bFormat := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

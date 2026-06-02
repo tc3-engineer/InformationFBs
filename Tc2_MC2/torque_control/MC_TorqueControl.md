@@ -13,7 +13,7 @@
 | Verified | 2026-05-21 ✅ |
 | InfoSys-checked | ✅ 2026-05-21 |
 | Status | `verified` |
-| Example | [`examples/P_Demo_MC_TorqueControl.xml`](../examples/P_Demo_MC_TorqueControl.xml) |
+| Example | [`examples/P_Demo_MC_TorqueControl.TcPOU`](../examples/P_Demo_MC_TorqueControl.TcPOU) |
 
 ---
 
@@ -136,7 +136,7 @@ END_VAR
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_MC_TorqueControl.xml`](../examples/P_Demo_MC_TorqueControl.xml)
+> 配套可导入文件：[`examples/P_Demo_MC_TorqueControl.TcPOU`](../examples/P_Demo_MC_TorqueControl.TcPOU)
 
 ```iecst
 // 场景：卷绕机张力控制 — 收线轴以恒定 35 Nm 力矩拉紧线材，速度限在 ±500 rpm

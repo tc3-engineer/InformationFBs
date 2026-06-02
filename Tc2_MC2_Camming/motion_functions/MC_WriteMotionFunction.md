@@ -13,7 +13,7 @@
 | Verified | 2026-05-21 ✅ |
 | InfoSys-checked | ✅ 2026-05-21 |
 | Status | `verified` |
-| Example | [`examples/P_Demo_MC_WriteMotionFunction.xml`](../examples/P_Demo_MC_WriteMotionFunction.xml) |
+| Example | [`examples/P_Demo_MC_WriteMotionFunction.TcPOU`](../examples/P_Demo_MC_WriteMotionFunction.TcPOU) |
 
 ---
 
@@ -123,7 +123,7 @@ END_VAR
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_MC_WriteMotionFunction.xml`](../examples/P_Demo_MC_WriteMotionFunction.xml)
+> 配套可导入文件：[`examples/P_Demo_MC_WriteMotionFunction.TcPOU`](../examples/P_Demo_MC_WriteMotionFunction.TcPOU)
 
 例程演示"包装机来料瓶宽变了——用 PLC 程序整体替换当前生效的凸轮形状，从 250mm 瓶专用 cam 切到 330mm 瓶专用 cam"。
 

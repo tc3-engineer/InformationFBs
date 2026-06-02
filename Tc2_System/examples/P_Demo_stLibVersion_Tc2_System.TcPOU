@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_stLibVersion_Tc2_System" Id="{0cfca44f-f951-5b8f-ae61-945a93dfafe1}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_stLibVersion_Tc2_System
+VAR
+    nLibMajor    : UINT; // 库主版本号
+    nLibMinor    : UINT; // 库次版本号
+    nLibBuild    : UINT; // 库构建号
+    nLibRevision : UINT; // 库修订号
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：启动时把 Tc2_System 版本各字段抓出来写到本地诊断变量，HMI 显示『库版本：x.y.z.r』。
+// 价值：替代 F_GetVersionTcSystem 多次调用，一次拿全。
+// 验证：观察 nLibMajor / nLibMinor / nLibBuild / nLibRevision 与库发布版本一致（v1.17.3 对应字段）。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_System（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』行的指示在线写值观察
+// =============================================================================
+
+// 启动期一次性抓取库版本各字段；这些是编译期常量，每周期读开销可忽略
+nLibMajor    := stLibVersion_Tc2_System.iMajor;
+nLibMinor    := stLibVersion_Tc2_System.iMinor;
+nLibBuild    := stLibVersion_Tc2_System.iBuild;
+nLibRevision := stLibVersion_Tc2_System.iRevision;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_LcomplexAbs" Id="{ffceb8db-a523-523a-bd26-e5af6091519c}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_LcomplexAbs
+VAR
+    lcCurrent : LCOMPLEX;
+    lrAbs     : LREAL;
+    bCompute  : BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_Utilities.LcomplexAbs 演示程序（FUNCTION，单周期触发）
+// ============================================================
+// 场景：变频器 d-q 电流幅值 = √(id² + iq²) 用于过电流保护比较。
+// 价值：替代手写 `SQRT(re*re + im*im)`；HYPOT 实现在极端值下更稳。
+// 验证步骤：
+//   1. 把本 PROGRAM 加到 PlcTask 调用列表
+//   2. 编译 + 登录
+//   3. 在线把 b... 触发位置 TRUE 一个周期
+//   4. 观察输出变量是否符合期望
+// ============================================================
+
+IF bCompute AND NOT LcomplexIsNaN(lcCurrent) THEN
+    // 先判 NaN 避免传播
+    lrAbs := LcomplexAbs(lcCurrent);
+    bCompute := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

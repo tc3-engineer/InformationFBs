@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_F_CheckMemoryArea" Id="{26293a28-5281-5aef-9f1f-ed79db88e39d}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_F_CheckMemoryArea
+VAR
+    nStaticCounter : USINT := 0; // 静态局部变量（编译期分配）
+    pDynamicValue  : POINTER TO LREAL; // 动态分配指针（__NEW）
+    eAreaStatic    : E_TcMemoryArea; // 静态变量的内存区
+    eAreaDynamic   : E_TcMemoryArea; // 动态变量的内存区
+    eAreaNull      : E_TcMemoryArea; // 空指针的内存区（应为 Unknown）
+    pNull          : POINTER TO BYTE := 0; // 空指针测试用
+    bCheckRequest  : BOOL; // 在线写 TRUE 触发一次诊断
+    rtCheck        : R_TRIG; // 上升沿检测
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：启动时分别检查一个静态局部变量和一个 __NEW 出来的动态变量所在内存区域，演示 F_CheckMemoryArea 的诊断用法。
+// 价值：替代靠崩溃 / 拷贝调试日志定位野指针的低效方法。
+// 验证：bCheckRequest := TRUE 触发一次 → 观察 eAreaStatic = eTcMA_Static（或对应枚举），eAreaDynamic = eTcMA_Dynamic。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_System（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』行的指示在线写值观察
+// =============================================================================
+
+rtCheck(CLK := bCheckRequest);
+IF rtCheck.Q THEN
+    // 1) 静态变量
+    eAreaStatic := F_CheckMemoryArea(pData := ADR(nStaticCounter), nSize := SIZEOF(nStaticCounter));
+
+    // 2) 动态分配；若未分配则先 __NEW
+    IF pDynamicValue = 0 THEN
+        pDynamicValue := __NEW(LREAL);
+    END_IF;
+    IF pDynamicValue &lt;&gt; 0 THEN
+        eAreaDynamic := F_CheckMemoryArea(pData := pDynamicValue, nSize := SIZEOF(LREAL));
+    END_IF;
+
+    // 3) 空指针
+    eAreaNull := F_CheckMemoryArea(pData := pNull, nSize := 1);
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

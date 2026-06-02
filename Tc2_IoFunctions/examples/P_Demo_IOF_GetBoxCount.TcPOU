@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_IOF_GetBoxCount" Id="{b454db5c-5340-507d-895b-9587361f00b6}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_IOF_GetBoxCount
+VAR
+    fbReadBoxCount    : IOF_GetBoxCount; // 读现场总线 box 计数
+    sTargetNetId      : T_AmsNetId := ''; // 本机
+    nProfibusDeviceId : UDINT := 1; // Profibus 主站 Device Id
+    bRequestBoxCount  : BOOL := FALSE; // 上升沿触发计数请求
+    tCountTimeout     : TIME := T#5S; // ADS 超时
+    nExpectedBoxCount : UDINT := 12; // 工程配置的目标节点数
+    bCountBusy        : BOOL; // FB 工作中
+    bCountError       : BOOL; // ADS 失败
+    nLastErrCode      : UDINT; // ADS 错误号
+    nActiveBoxCount   : UDINT; // 查得的在线节点数
+    bNodeMissingAlarm : BOOL; // 在线节点数不足报警
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：上电自检阶段，PLC 程序需要确认 Profibus 总线下挂 12 台设备全部在线，否则拒绝进入"运行"状态。
+// 价值：把"在线节点数核对"做成 30 行自检脚本里的一行调用。
+// 验证：登录后写 bRequestBoxCount := TRUE → bCountBusy 短暂 TRUE → 回 FALSE 后 nActiveBoxCount 显示实际在线节点数；与工程配置数 nExpectedBoxCount 对比，nActiveBoxCount < nExpectedBoxCount 时 bNodeMissingAlarm 置 TRUE。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_IoFunctions（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』行的指示在线写值观察
+// =============================================================================
+
+fbReadBoxCount(
+    NETID    := sTargetNetId,
+    DEVICEID := nProfibusDeviceId,
+    START    := bRequestBoxCount,
+    TMOUT    := tCountTimeout,
+    BUSY     => bCountBusy,
+    ERR      => bCountError,
+    ERRID    => nLastErrCode,
+    BOXCOUNT => nActiveBoxCount
+);
+
+// 完成后核对：在线节点不足即报警（必须在 FB 调用之后用其输出）
+IF NOT bCountBusy AND NOT bCountError THEN
+    bNodeMissingAlarm := nActiveBoxCount &lt; nExpectedBoxCount;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

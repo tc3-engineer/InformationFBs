@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_MC_StepLimitSwitch" Id="{72f2729a-a63e-5e38-97a7-4531a06bacb4}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_MC_StepLimitSwitch
+VAR
+    fbStepLimitSwitch : MC_StepLimitSwitch;
+    axisHoming        : AXIS_REF; // 归零目标轴；运行前需先 MC_Power 使能
+    rtExec            : R_TRIG; // 把保持型请求位整成单次上升沿
+    bLimitReq         : BOOL := FALSE; // 在线置 TRUE 触发一次执行
+    homingParam       : MC_HomingParameter; // 贯穿整条归零序列、各 FB 间逐级传递的参数结构
+    refSignal         : MC_Ref_Signal_Ref; // 参考信号源配置（锁存单元 / 信号源 / 当前电平）
+    homingOptions     : ST_Home_Options4; // 选项结构，Beckhoff 伺服保持默认（DisableDriveAccess := FALSE）
+    bLimitDone        : BOOL;
+    bBusy             : BOOL;
+    bLimitActive      : BOOL;
+    bAborted          : BOOL;
+    bError            : BOOL;
+    nErrorID          : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// 场景：行程短的小机构复用负端硬件限位开关作归零参考点。本 FB 朝负向搜索限位开关，
+//       命中其上升沿后把该点定为坐标 0（后续需收尾 FB 带退离把轴退回行程内）。
+// 价值：省去独立参考凸轮，限位开关一兼二用，降低成本与接线。
+// 验证：先 MC_Power 使能；在线写 bLimitReq := TRUE，观察 bLimitActive TRUE，轴朝负向走；
+//       命中限位开关后 bLimitDone 短暂 TRUE，位置读数变 0，轴压在限位上需后续收尾退离。
+
+// 配置参考信号源：用驱动默认信号源 + 默认锁存单元（实机按编码器/驱动手册选 TouchProbe）
+refSignal.SignalSource := SignalSource_Default;
+refSignal.TouchProbe   := PlcEvent;
+
+// 把保持型在线请求位整成单次上升沿，避免持续触发（charter: Execute 用 R_TRIG）
+rtExec(CLK := bLimitReq);
+
+// 单次完整调用：所有 VAR_INPUT 显式赋值，Axis（及 Parameter）按 VAR_IN_OUT 必须传引用
+fbStepLimitSwitch(
+    Execute           := rtExec.Q,
+    Direction         := mcNegativeDirection,
+    LimitSwitchMode   := mcRisingEdge,
+    LimitSwitchSignal := refSignal,
+    Velocity          := 30.0,
+    Acceleration      := 0.0,
+    Deceleration      := 0.0,
+    Jerk              := 0.0,
+    SetPosition       := 0.0,
+    TimeLimit         := T#30S,
+    DistanceLimit     := 1500.0,
+    TorqueLimit       := 100.0,
+    BufferMode        := MC_Aborting,
+    Options           := homingOptions,
+    Done              => bLimitDone,
+    Busy              => bBusy,
+    Active            => bLimitActive,
+    CommandAborted    => bAborted,
+    Error             => bError,
+    ErrorID           => nErrorID,
+    Axis              := axisHoming,
+    Parameter         := homingParam);
+
+// stateful 输出复位：请求复位后清掉本地观察位，便于下次干净触发
+IF NOT bLimitReq AND NOT bBusy THEN
+    bLimitDone := FALSE;
+    bAborted := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

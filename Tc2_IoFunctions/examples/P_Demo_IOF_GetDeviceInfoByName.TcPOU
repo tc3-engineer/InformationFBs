@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_IOF_GetDeviceInfoByName" Id="{934c4922-7a61-5632-a713-62dccc254939}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_IOF_GetDeviceInfoByName
+VAR
+    fbFetchDeviceInfo : IOF_GetDeviceInfoByName; // 一次取 DeviceId + NetId
+    sTargetNetId      : T_AmsNetId := ''; // 本机
+    sQueryDeviceName  : T_MaxString := 'DP_Master_Main'; // 设备名字
+    bStartFetchInfo   : BOOL := FALSE; // 上升沿触发
+    tFetchTimeout     : TIME := T#5S; // 超时
+    bFetchBusy        : BOOL; // 工作中
+    bFetchError       : BOOL; // 失败
+    nLastErrCode      : UDINT; // 错误号
+    nDeviceIdOut      : UDINT; // Device Id
+    sDeviceNetIdOut   : T_AmsNetId; // 设备 AMS Net ID（可能为空）
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：程序要对 Profibus 主卡调用 ADS 读总线诊断；需要同时拿到它的 DeviceId（用于其他 IOF_ 接口）和 AMS Net ID（用于 ADSREAD）。
+// 价值：一个 FB 实例代替两个，节省调用周期。
+// 验证：登录后 sQueryDeviceName := "DP_Master_Main"，在线写 bStartFetchInfo := TRUE → 回 FALSE 后同时填出 nDeviceIdOut + sDeviceNetIdOut。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_IoFunctions（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』行的指示在线写值观察
+// =============================================================================
+
+fbFetchDeviceInfo(
+    NETID       := sTargetNetId,
+    DEVICENAME  := sQueryDeviceName,
+    START       := bStartFetchInfo,
+    TMOUT       := tFetchTimeout,
+    BUSY        => bFetchBusy,
+    ERR         => bFetchError,
+    ERRID       => nLastErrCode,
+    DEVICEID    => nDeviceIdOut,
+    DEVICENETID => sDeviceNetIdOut
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

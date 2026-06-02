@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_FileDelete" Id="{c969cbdd-c5ae-56d2-a6c0-c70f947094bc}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_FileDelete
+VAR
+    fbFileDelete   : FB_FileDelete; // FB_FileDelete 实例
+    sFileToDelete  : T_MaxString := 'D:/log/old.csv'; // 要删除的文件路径
+    bDeleteRequest : BOOL; // 在线写 TRUE 触发一次删除
+    bDeleteError   : BOOL; // TRUE = 删除失败
+    nErrIdLast     : UDINT; // ADS 错误号
+    bBusyMon       : BOOL; // ADS 通讯中
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：清理过期日志：把 'D:/log/old.csv' 删除腾出磁盘空间。
+// 价值：封装 ADS 删除命令的状态机。
+// 验证：在线写 sFileToDelete + bDeleteRequest := TRUE → 文件被删除；故意删不存在的文件 → bDeleteError = TRUE 且 nErrIdLast = 0x70C。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_System（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』行的指示在线写值观察
+// =============================================================================
+
+fbFileDelete(
+    sNetId    := '',
+    sPathName := sFileToDelete,
+    ePath     := PATH_GENERIC,
+    bExecute  := bDeleteRequest,
+    tTimeout  := T#10S,
+    bBusy     => bBusyMon,
+    bError    => bDeleteError,
+    nErrId    => nErrIdLast
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

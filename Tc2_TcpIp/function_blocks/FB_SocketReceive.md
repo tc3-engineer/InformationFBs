@@ -13,7 +13,7 @@
 | Verified | 2026-05-21 ✅ |
 | InfoSys-checked | ✅ 2026-05-21 |
 | Status | `verified` |
-| Example | [`examples/P_Demo_FB_SocketReceive.xml`](../examples/P_Demo_FB_SocketReceive.xml) |
+| Example | [`examples/P_Demo_FB_SocketReceive.TcPOU`](../examples/P_Demo_FB_SocketReceive.TcPOU) |
 
 ---
 
@@ -102,7 +102,7 @@ END_VAR
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_FB_SocketReceive.xml`](../examples/P_Demo_FB_SocketReceive.xml)
+> 配套可导入文件：[`examples/P_Demo_FB_SocketReceive.TcPOU`](../examples/P_Demo_FB_SocketReceive.TcPOU)
 
 ```iecst
 // 场景：连接已建立，持续 polling 接收对端发来的字节流，演示按 LF 切包。

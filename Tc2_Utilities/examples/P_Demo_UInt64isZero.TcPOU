@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_UInt64isZero" Id="{ae416fc2-a640-5131-93da-12365b4dd9b7}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_UInt64isZero
+VAR
+    uliDivisor : T_ULARGE_INTEGER;; // 除数
+    bIsZero    : BOOL;; // 是否为 0
+    bCheck     : BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_Utilities.UInt64isZero 演示程序（FUNCTION，单周期触发）
+// ============================================================
+// 场景：除法前校验除数，避免除 0 PDF 未定义。
+// 价值：替代结构体 `=` 比较（在某些 TwinCAT 版本里不可靠或语义不明）。
+// 验证步骤：
+//   1. 把本 PROGRAM 加到 PlcTask 调用列表
+//   2. 编译 + 登录
+//   3. 在线把 b... 触发位置 TRUE 一个周期
+//   4. 观察输出变量是否符合期望
+// ============================================================
+
+IF bCheck THEN
+    // 除法前的合法性校验
+    bIsZero := UInt64isZero(uliDivisor);
+    bCheck := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

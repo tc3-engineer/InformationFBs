@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_SFCActionControl" Id="{ea174f3f-2616-51ee-9b85-1d3e670ec3e2}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_SFCActionControl
+VAR
+    fbSFCActionControl : SFCActionControl; // SFCActionControl 实例
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_System.SFCActionControl 演示程序
+// ============================================================
+// 场景：复杂 SFC 工艺用 IEC 步 + S/R/P 等限定符；引用 Tc2_System 即可启用。
+// 价值：替代经典步 + 手写 set/reset 逻辑，限定符语义由编译器实现。
+// 验证：在工程的 References 节点确认 Tc2_System；建一个含 IEC 步 + S 限定符的 SFC POU，编译应通过；运行后 action 表现符合 S 语义（持续保持直到被 R）。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_System（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』指引在线写值观察
+// ============================================================
+
+// 严禁手动实例化 SFCActionControl。只要 Tc2_System 被引用，IEC 步 action 限定符语义由编译器自动生效。
+;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

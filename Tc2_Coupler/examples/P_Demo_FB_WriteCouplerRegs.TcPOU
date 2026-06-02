@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_WriteCouplerRegs" Id="{b8c4f1c3-a0a1-5b1a-9909-7f1db10f360f}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_WriteCouplerRegs
+VAR
+    fbWriteRegs       : FB_WriteCouplerRegs; // 批量写耦合器/端子寄存器
+    stCouplerStatus   : PLCINTFSTRUCT; // 2-byte PLC interface status（链接耦合器）
+    stCouplerControl  : PLCINTFSTRUCT; // 2-byte PLC interface control（链接耦合器）
+    bWriteFeatureRegs : BOOL; // 单脉冲触发：写 KL3464 reg 32
+    nKL3464Slot       : BYTE := 2; // KL3464 端子号（KL9100 无源不计入）
+    nKL3464TableCh1   : BYTE := 0; // 通道 1 的 table 号
+    nFeatureRegNo     : BYTE := 32; // feature register 寄存器号
+    stWriteValues     : ST_CouplerTable; // 要写入的值表，下标 = 寄存器号
+    tWriteTimeout     : TIME := T#5S; // 写超时
+    bWriteBusy        : BOOL; // 写进行中
+    bWriteError       : BOOL; // 写出错
+    nLastWriteErrId   : UDINT; // 错误号
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：BK3120 + KL3464（4 通道 ±10V 模拟输入，端子号 2）。生产工艺要把通道
+//       1 的 feature register（reg 32）从默认 0 改为 16#0006（启用 user
+//       scaling + filter），且改动要持久化（下次开机仍生效）。
+//
+// 价值：把"2-byte PLC interface 批量写 + 密码寄存器 31 自动解/锁 + 跨端子
+//       寻址 + 超时管理"封装为一次调用。手写 K-bus 协议要 100+ 行；本 FB
+//       一行调用。配合 FB_ReadCouplerRegs（校验）+ CouplerReset（持久化）
+//       形成完整的"读-改-验-持久化"流程。
+//
+// 验证步骤：
+//   1. 在 System Manager 给 BK3120 启用 2-byte PLC interface 并链 IO
+//   2. 引用 Tc2_Coupler，编译，登录
+//   3. 检查 stWriteValues.aRegister[32].nHi=0, .nLo=6 已被赋值
+//   4. 在线置 bWriteFeatureRegs := TRUE 单脉冲 -> bWriteBusy 短暂 TRUE，
+//      1-2 秒后回 FALSE 且 bWriteError = FALSE
+//   5. 后续调 FB_ReadCouplerRegs 读 reg 32 -> 应得 16#0006
+//   6. 调 CouplerReset 软复位让端子把 RAM 写回 EEPROM 持久化
+//   7. 断电再上电 -> 再读 reg 32 仍应为 16#0006，证明持久化成功
+//   8. 反例：跳过第 6 步直接断电 -> 上电后 reg 32 回到默认 0，证明
+//      "写完不复位 = 改动全丢"
+// =============================================================================
+
+// 装载要写的值：reg 32 = 16#0006（高字节 0x00，低字节 0x06）。
+// 实际工程一般在 init 区或 HMI 配置好；这里写在主体便于在线观察改动。
+stWriteValues.aRegister[32].nHi := 16#00;
+stWriteValues.aRegister[32].nLo := 16#06;
+
+// 单次调用形式：所有 VAR_INPUT 显式赋值；写单寄存器时 nStartReg = nEndReg
+fbWriteRegs(
+    stState        := stCouplerStatus,
+    nTerminal      := nKL3464Slot,
+    nTable         := nKL3464TableCh1,
+    nStartReg      := nFeatureRegNo,
+    nEndReg        := nFeatureRegNo,
+    bExecute       := bWriteFeatureRegs,
+    stCouplerTable := stWriteValues,
+    tTimeout       := tWriteTimeout,
+    stCtrl         => stCouplerControl,
+    bBusy          => bWriteBusy,
+    bError         => bWriteError,
+    nErrId         => nLastWriteErrId
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

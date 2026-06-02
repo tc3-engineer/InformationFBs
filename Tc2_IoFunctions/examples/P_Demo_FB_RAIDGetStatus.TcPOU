@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_RAIDGetStatus" Id="{db945e58-ef8f-56b3-b030-b310968f354c}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_RAIDGetStatus
+VAR
+    fbGetRaidStatus   : FB_RAIDGetStatus; // RAID 状态读 FB（≤ 每秒一次）
+    sLocalNetId       : T_AmsNetId := ''; // 本机
+    stRaidStatusReq   : ST_RAIDConfigReq; // 请求：(控制器 ID, RAID 集索引)
+    bDoGetRaidStatus  : BOOL := FALSE; // 上升沿触发（最多每秒一次）
+    tRaidQueryTimeout : TIME := T#5S; // 超时
+    stRaidStatusOut   : ST_RAIDStatusRes; // RAID 状态结果
+    nRaidBytesRead    : UDINT; // 返回字节数
+    bStatusBusy       : BOOL; // 工作中
+    bStatusError      : BOOL; // 出错
+    nStatusErrId      : UDINT; // 错误号
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：工业服务器 RAID 健康监控：每秒读 RAID 0 集的状态，盘状态变化即报警。
+// 价值：硬盘故障第一时间被感知。
+// 验证：填好 stRaidStatusReq.nCntlrID := 0、.iRAIDIndex := 0（首集），写 bDoGetRaidStatus := TRUE → bStatusBusy 短暂 TRUE → 回 FALSE 后 stRaidStatusOut 显示 RAID 类型 + 各盘状态；拔一块盘模拟故障后再读 → stRaidStatusOut 中对应盘状态会变。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_IoFunctions（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』行的指示在线写值观察
+// =============================================================================
+
+// PDF NOTICE：每秒最多一次！业务侧需要把 bDoGetRaidStatus 触发限制在 1 Hz。
+fbGetRaidStatus(
+    sNETID          := sLocalNetId,
+    bWrtRd          := bDoGetRaidStatus,
+    stRAIDConfigReq := stRaidStatusReq,
+    tTimeOut        := tRaidQueryTimeout,
+    stRAIDStatusRes => stRaidStatusOut,
+    nBytesRead      => nRaidBytesRead,
+    bBusy           => bStatusBusy,
+    bError          => bStatusError,
+    nErrorID        => nStatusErrId
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

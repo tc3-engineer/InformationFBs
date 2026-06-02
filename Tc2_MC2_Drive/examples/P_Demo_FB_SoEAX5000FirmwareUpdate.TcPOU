@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_SoEAX5000FirmwareUpdate" Id="{4fb9412a-8733-5700-b1e4-6ff7464293a8}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_SoEAX5000FirmwareUpdate
+VAR
+    fbFwUpdate      : FB_SoEAX5000FirmwareUpdate; // AX5000 固件更新 FB 实例
+    axisServo       : AXIS_REF; // AX5000 伺服轴轴引用；必须先在 System Manager 配好并 Link
+    rtFwTrig        : R_TRIG; // 把电平转上升沿
+    bStartFwUpdate  : BOOL := FALSE; // 在线写 TRUE 触发一次固件更新（仅在受控停机窗口）
+    bFwBusy         : BOOL;
+    bFwError        : BOOL;
+    iFwAdsErr       : UINT;
+    iFwSercosErr    : UINT;
+    iFwDiagNumber   : UDINT;
+    eFwState        : E_FwUpdateState; // 固件更新状态；FwUpdateDone/NoFwUpdateRequired 为成功
+    iFwProgress     : INT;
+    sFwSelectedFile : STRING(255);
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：受控停机维护窗口里，把 AX5000 驱动器固件更新到工程要求的指定版本
+//       （v1.05_b0009）。FB 自动比对当前固件、找固件文件、刷写、恢复 EtherCAT
+//       状态，免人工逐台进 DriveManager 操作。
+//
+// 价值：1) 把整套固件升级流程封装成一个 FB，可纳入自动化升级脚本
+//       2) eFwUpdateState + iLoadProgress 全程反馈进度与结果
+//       3) 自动判断"已是目标版本则跳过"（NoFwUpdateRequired）
+//
+// !! 危险：更新期间 PLC/TwinCAT 不能停、EtherCAT 不能断、AX5000 不能断电，
+//          任何中断都可能损坏固件使端子不可用。只能在受控停机窗口触发。
+//
+// 验证步骤：
+//   1. System Manager 配好 AX5000 NC 轴并 Link 给 axisServo，引用 Tc2_MC2_Drive
+//   2. 确认固件文件存在于 sFirmwarePath（默认 FirmwarePool）
+//   3. Add Existing Item (.TcPOU) 选本文件，加进 PlcTask，编译登录
+//   4. 在受控停机状态下，在线写 bStartFwUpdate := TRUE
+//   5. 观察 eFwState：InProgress 期间 iFwProgress 走百分比；结束应为
+//      FwUpdateDone 或 NoFwUpdateRequired，bFwBusy 落回 FALSE
+//   6. 若 bFwError = TRUE：看 iFwAdsErr / iFwSercosErr / iFwDiagNumber，
+//      按 AX5000 手册恢复流程处理（不要简单重发）
+// =============================================================================
+
+// 用 R_TRIG 把"持续按住的 TRUE"转成真正的上升沿
+rtFwTrig(CLK := bStartFwUpdate);
+
+// 单次调用：版本字符串格式必须 vx.yy_bnnnn；Axis 是 VAR_IN_OUT 必传
+// 本 FB 无 Done，靠 bBusy 落回 FALSE + eFwState 判结果；注意 b/i/s 前缀命名
+fbFwUpdate(
+    sNetId                := '',
+    bExecute              := rtFwTrig.Q,
+    sFirmwareVersion      := 'v1.05_b0009',
+    sFirmwarePath         := 'C:\TwinCAT\Io\TcDriveManager\FirmwarePool',
+    tTimeout              := DEFAULT_ADS_TIMEOUT,
+    Axis                  := axisServo,
+    bBusy                 => bFwBusy,
+    bError                => bFwError,
+    iAdsErrId             => iFwAdsErr,
+    iSercosErrId          => iFwSercosErr,
+    iDiagNumber           => iFwDiagNumber,
+    eFwUpdateState        => eFwState,
+    iLoadProgress         => iFwProgress,
+    sSelectedFirmwareFile => sFwSelectedFile
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -13,7 +13,7 @@
 | Verified | 2026-05-11 ✅ |
 | InfoSys-checked | ✅ 2026-05-11 |
 | Status | `verified` |
-| Example | [`examples/P_Demo_F_BIGTYPE.xml`](../examples/P_Demo_F_BIGTYPE.xml) |
+| Example | [`examples/P_Demo_F_BIGTYPE.TcPOU`](../examples/P_Demo_F_BIGTYPE.TcPOU) |
 
 ---
 
@@ -88,7 +88,7 @@ F_BIGTYPE.pData := pData
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_F_BIGTYPE.xml`](../examples/P_Demo_F_BIGTYPE.xml)
+> 配套可导入文件：[`examples/P_Demo_F_BIGTYPE.TcPOU`](../examples/P_Demo_F_BIGTYPE.TcPOU)
 
 ```iecst
 // 场景：把一个配方结构体（多字段：编号 + 温度 + 时长 + 状态）作为一个整体

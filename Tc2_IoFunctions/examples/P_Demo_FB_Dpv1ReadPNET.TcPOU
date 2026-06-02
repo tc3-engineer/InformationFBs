@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_Dpv1ReadPNET" Id="{10e6cf55-7328-5740-a804-d32b76bba516}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_Dpv1ReadPNET
+VAR
+    fbDpv1ReadPNET          : FB_Dpv1ReadPNET; // Profinet DPV1 读 FB
+    sProfinetMasterNetId    : T_AmsNetId := ''; // EL6632 主站 NetId
+    iSinamicsPnetPort       : UINT := 1; // SINAMICS Profinet port
+    iDriveObjectId          : USINT := 2; // drive A
+    aDpv1ReqBuffer          : ARRAY[1..240] OF BYTE; // 请求
+    aDpv1ResBuffer          : ARRAY[1..240] OF BYTE; // 响应
+    iReqBufLen              : UDINT := 240; // 请求长度
+    iResBufLen              : UDINT := 240; // 响应长度
+    arrDpv1ReqParams        : ARRAY[1..39] OF ST_Dpv1ParamAddrEx; // 清单
+    arrDpv1ValueHdr         : ARRAY[1..39] OF ST_Dpv1ValueHeaderEx; // 解析输出
+    iNumParamsToRead        : USINT := 3; // 读 3 个
+    nReqPkgLenPNET          : USINT; // 请求帧长度
+    nReadResPkgLenPNET      : USINT; // 响应帧长度
+    bBuildReqPkgPNET        : BOOL := FALSE; // 触发构造
+    bDpv1ReadReqPNET        : BOOL := FALSE; // 触发发送
+    bSplitReadResPkgPNET    : BOOL := FALSE; // 触发解析
+    tDpv1ReadTimeout        : TIME := T#10S; // 超时
+    bDpv1ReadBusyPNET       : BOOL; // 工作中
+    iDpv1ReadRequestRefPNET : USINT; // 请求引用
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：Profinet SINAMICS 完整读流程：构造 → 发送 → 解析。
+// 价值：与 Profibus 版本对称。
+// 验证：登录后 sProfinetMasterNetId 设为 EL6632 NetId，iSinamicsPnetPort := slave port；bBuildReqPkgPNET → nReqPkgLenPNET > 0；bDpv1ReadReqPNET → bDpv1ReadBusyPNET 落回 → bSplitReadResPkgPNET 解析。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_IoFunctions（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』行的指示在线写值观察
+// =============================================================================
+
+// 步骤 1：构造请求
+IF bBuildReqPkgPNET THEN
+    nReqPkgLenPNET := F_CreateDpv1ReadReqPkgPNET(
+        pDpv1ReqData    := ADR(aDpv1ReqBuffer),
+        iNumOfParams    := iNumParamsToRead,
+        iDriveId        := iDriveObjectId,
+        stDpv1Parameter := arrDpv1ReqParams
+    );
+    bBuildReqPkgPNET := FALSE;
+END_IF;
+
+// 步骤 2：发送
+fbDpv1ReadPNET(
+    bExecute        := bDpv1ReadReqPNET,
+    aNetId          := sProfinetMasterNetId,
+    iProfinetPort   := iSinamicsPnetPort,
+    iDriveId        := iDriveObjectId,
+    pDpv1ReqData    := ADR(aDpv1ReqBuffer),
+    iDpv1ReqDataLen := iReqBufLen,
+    pDpv1ResData    := ADR(aDpv1ResBuffer),
+    iDpv1ResDataLen := iResBufLen,
+    tTmOut          := tDpv1ReadTimeout,
+    iRequestRef     => iDpv1ReadRequestRefPNET
+);
+bDpv1ReadBusyPNET := fbDpv1ReadPNET.bBusy;
+
+// 步骤 3：解析
+IF bSplitReadResPkgPNET THEN
+    nReadResPkgLenPNET := F_SplitDpv1ReadResPkgPNET(
+        pDpv1ResData        := ADR(aDpv1ResBuffer),
+        stDpv1Parameter     := arrDpv1ReqParams,
+        stDpv1ValueHeaderEx := arrDpv1ValueHdr
+    );
+    bSplitReadResPkgPNET := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

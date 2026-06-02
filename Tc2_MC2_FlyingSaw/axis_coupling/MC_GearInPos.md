@@ -13,7 +13,7 @@
 | Verified | 2026-05-25 ✅ |
 | InfoSys-checked | ✅ 2026-05-25 |
 | Status | `verified` |
-| Example | [`examples/P_Demo_MC_GearInPos.xml`](../examples/P_Demo_MC_GearInPos.xml) |
+| Example | [`examples/P_Demo_MC_GearInPos.TcPOU`](../examples/P_Demo_MC_GearInPos.TcPOU) |
 
 ---
 
@@ -136,7 +136,7 @@ END_VAR
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_MC_GearInPos.xml`](../examples/P_Demo_MC_GearInPos.xml)
+> 配套可导入文件：[`examples/P_Demo_MC_GearInPos.TcPOU`](../examples/P_Demo_MC_GearInPos.TcPOU)
 
 ```iecst
 // 场景：印刷连线横切，主轴(走料)走到每个印张切缝位置时刀辊须位置+速度精确对齐再切，保证切口落在印记上

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_WMID" Id="{786a5d2a-6346-5d95-ae1a-46eaf0ebc66d}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_WMID
+VAR
+    sConfig  : WSTRING(255) := "IP：192.168.1.10，端口：502"; // 中文风格配置串
+    sIP      : WSTRING(255); // 提取出的 IP 字段
+    nStart   : INT := 4; // IP 起点 = 第 4 字符（"IP：" 占 3 字符）
+    nLength  : INT := 12; // IP 字段长度 = 12 字符
+    bExtract : BOOL; // 触发一次 WMID
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：HMI 配置串带中文标签 "IP：xxx，端口：yyy"。要提取中间 IP 字段。
+//       全角冒号 / 全角逗号都按 1 个 UCS-2 字符算，nStart = 4 对应 "192"
+//       开头。STRING + MID 会按字节算，"IP：" 是 5 字节（I, P, 3-byte UTF8 冒号），
+//       要传 nStart = 6 才对，容易算错。
+//
+// 价值：WMID 按字符位置和长度，业务侧看到的"第 4 个字符"就是函数眼里的
+//       第 4 个字符，无需做字节-字符换算。
+//
+// 验证步骤：
+//   1. 导入本文件、引用 Tc2_Standard、编译、登录、运行
+//   2. 在线 monitor sIP（监视面板选 Unicode）
+//   3. 在线写 bExtract := TRUE
+//   4. 下一周期 sIP = "192.168.1.10"
+//   5. 改 nLength 为 100 + 再触发 → 观察越界行为（PDF 未明确）
+// =============================================================================
+
+// 入参顺序：(STR, LEN, POS) — LEN 在 POS 前，POS 从 1 起，按 UCS-2 字符算
+IF bExtract THEN
+    sIP := WMID(sConfig, nLength, nStart);
+    bExtract := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

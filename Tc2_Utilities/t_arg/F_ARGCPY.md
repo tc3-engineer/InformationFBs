@@ -13,7 +13,7 @@
 | Verified | 2026-05-11 ✅ |
 | InfoSys-checked | ✅ 2026-05-11 |
 | Status | `verified` |
-| Example | [`examples/P_Demo_F_ARGCPY.xml`](../examples/P_Demo_F_ARGCPY.xml) |
+| Example | [`examples/P_Demo_F_ARGCPY.TcPOU`](../examples/P_Demo_F_ARGCPY.TcPOU) |
 
 ---
 
@@ -90,7 +90,7 @@ RETURN n
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_F_ARGCPY.xml`](../examples/P_Demo_F_ARGCPY.xml)
+> 配套可导入文件：[`examples/P_Demo_F_ARGCPY.TcPOU`](../examples/P_Demo_F_ARGCPY.TcPOU)
 
 ```iecst
 // 场景：把"当前周期采集到的报警温度参数"快照保存到日志缓冲区，

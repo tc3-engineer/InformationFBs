@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_LMOD" Id="{5adefd18-b3df-571b-b292-d9c2ce2f5db0}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_LMOD
+VAR
+    lrAccumulatedPhaseDeg : LREAL := 400.56; // 连续累加的相位角（度）；在线写值模拟正弦激励器位置
+    lrTurnSizeDeg         : LREAL := 360.0; // 一圈的角度大小（360 度）
+    lrPhaseInOneTurnDeg   : LREAL; // 归一后的相位（带符号余数，范围 (-360, 360)）
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：振动信号分析——正弦激励器累计相位角会无限增长（400、800、1200…度），
+//       FFT 前需要归一到一圈以内。控制理论场景一般要 (-180, 180] 区间表示
+//       "距离零相位的最短差距"——LMOD 给的带符号余数恰好天然落入该区间附近。
+//
+// 价值：LMOD 一行替代 "v - LTRUNC(v/m) * m" 三次浮点运算，符号语义清晰。
+//       如果是 NC 轴更习惯 [0, 360) 应换用 MODABS。
+//
+// 验证步骤：
+//   1. 引用 Tc2_Math
+//   2. 在 PLC 项目右键 → Add Existing Item (.TcPOU) → 选本文件 → OK
+//   3. 编译、登录、运行
+//   4. 在线 monitor 看：
+//      - lrAccumulatedPhaseDeg = 400.56 → lrPhaseInOneTurnDeg = 40.56
+//      - 在线改 -400.56 → -40.56 （验证负被除数给负余数）
+//      - 改 0 → 0
+//      - 改 720 → 0 （整模值归零）
+//      - 改 720.5 → 0.5 （多圈情形）
+// =============================================================================
+
+// 单行调用：LMOD 带符号取余；符号跟随被除数（fmod 语义）
+lrPhaseInOneTurnDeg := LMOD(lrAccumulatedPhaseDeg, lrTurnSizeDeg);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

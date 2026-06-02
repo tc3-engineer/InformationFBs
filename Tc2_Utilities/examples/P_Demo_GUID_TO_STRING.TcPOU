@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_GUID_TO_STRING" Id="{22ea8c2c-2ff5-5133-b590-47d69e1458cf}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_GUID_TO_STRING
+VAR
+    stGuid  : GUID; // 工业语义：UA App ID
+    sStr    : STRING(36); // 格式化字符串
+    bFormat : BOOL; // 在线触发
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：OPC UA Application URI 写入数据库——数据库习惯无大括号 UUID；本函数直接输出可入库格式。
+// 价值：替代手写 16 字节 → hex + 连字符拼接。
+// 验证步骤：
+//   1. 引用 Tc2_Utilities
+//   2. 编译 + 登录 + 运行
+//   3. 在线写触发位 TRUE，monitor 输出变量
+// =============================================================================
+
+IF bFormat THEN
+    sStr := GUID_TO_STRING(stIn := stGuid);
+    bFormat := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

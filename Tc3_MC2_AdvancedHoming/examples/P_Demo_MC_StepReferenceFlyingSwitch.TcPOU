@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_MC_StepReferenceFlyingSwitch" Id="{e8feba67-d995-5b5a-9e94-3facf51c7cc3}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_MC_StepReferenceFlyingSwitch
+VAR
+    fbStepReferenceFlyingSwitch : MC_StepReferenceFlyingSwitch;
+    axisHoming                  : AXIS_REF; // 归零目标轴；运行前需先 MC_Power 使能
+    rtExec                      : R_TRIG; // 把保持型请求位整成单次上升沿
+    bFlyingSwReq                : BOOL := FALSE; // 在线置 TRUE 触发一次执行
+    refSignal                   : MC_Ref_Signal_Ref; // 参考信号源配置（锁存单元 / 信号源 / 当前电平）
+    homingOptions               : ST_Home_Options; // 选项结构，Beckhoff 伺服保持默认（DisableDriveAccess := FALSE）
+    bFlyingSwDone               : BOOL;
+    bBusy                       : BOOL;
+    bFlyingSwActive             : BOOL;
+    bAborted                    : BOOL;
+    bError                      : BOOL;
+    nErrorID                    : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// 场景：往复输送机构运行中经过一个固定安装的参考开关时在线对零，全程不停机。
+//       本 FB 只后台监听开关，输送运动由别的 Move 命令提供。
+// 价值：对零与生产并行无需停机；外部开关易加装、安装位置灵活。
+// 验证：保证输送轴正在走；在线写 bFlyingSwReq := TRUE，观察 bFlyingSwActive TRUE；轴经过
+//       开关并触发参考条件时 bFlyingSwDone 短暂 TRUE，轴位置读数被设为 0。
+
+// 配置参考信号源：用驱动默认信号源 + 默认锁存单元（实机按编码器/驱动手册选 TouchProbe）
+refSignal.SignalSource := SignalSource_Default;
+refSignal.TouchProbe   := PlcEvent;
+
+// 把保持型在线请求位整成单次上升沿，避免持续触发（charter: Execute 用 R_TRIG）
+rtExec(CLK := bFlyingSwReq);
+
+// 单次完整调用：所有 VAR_INPUT 显式赋值，Axis（及 Parameter）按 VAR_IN_OUT 必须传引用
+fbStepReferenceFlyingSwitch(
+    Execute         := rtExec.Q,
+    ReferenceSignal := refSignal,
+    SetPosition     := 0.0,
+    TimeLimit       := T#5S,
+    DistanceLimit   := 1000.0,
+    BufferMode      := MC_Aborting,
+    Options         := homingOptions,
+    Done            => bFlyingSwDone,
+    Busy            => bBusy,
+    Active          => bFlyingSwActive,
+    CommandAborted  => bAborted,
+    Error           => bError,
+    ErrorID         => nErrorID,
+    Axis            := axisHoming);
+
+// stateful 输出复位：请求复位后清掉本地观察位，便于下次干净触发
+IF NOT bFlyingSwReq AND NOT bBusy THEN
+    bFlyingSwDone := FALSE;
+    bAborted := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

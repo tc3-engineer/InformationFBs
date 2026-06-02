@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_GETCURTASKINDEXEX" Id="{aaae562e-2d4b-5127-b8b2-0b585c920012}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_GETCURTASKINDEXEX
+VAR
+    nMyTaskIdx : DINT; // 当前任务上下文
+    eContext   : INT; // 0=Win, 1=Init, 2=Cyclic
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：编写通用 FB 时根据上下文区分初始化阶段（返回 0）与循环阶段（返回 1..n），跳过不能在 init 阶段做的调用。
+// 价值：替代盲调用导致 init 期崩溃。
+// 验证：观察 nMyTaskIdx：循环任务里 ≥ 1；FB_init 内调用 = 0；从 HMI / Windows 调 PLC 函数 = -1。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_System（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』行的指示在线写值观察
+// =============================================================================
+
+nMyTaskIdx := GETCURTASKINDEXEX();
+
+// 简单分类
+IF nMyTaskIdx &lt; 0 THEN
+    eContext := 0;        // Windows 上下文
+ELSIF nMyTaskIdx = 0 THEN
+    eContext := 1;        // 实时非循环（FB_init）
+ELSE
+    eContext := 2;        // 循环 PLC 任务
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_EqualsToEventEntry" Id="{4d584fb4-23d6-509d-adf6-2084cd06822a}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_EqualsToEventEntry
+VAR
+    fbAlarm : FB_TcAlarm; // alarm 实例
+    stKnown : TcEventEntry; // 在线写入预期事件定义
+    bMatch  : BOOL; // 比较结果
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：判断当前 alarm 是否是清单里某个预定义事件
+// 价值：一次调用做事件定义匹配
+// 验证：登录后让 stKnown 与 fbAlarm 的 Create 参数一致 → bMatch=TRUE；改 nEventId → FALSE
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_EventLogger（System → References → Add library）
+//   3. 编译 → 登录 → 运行；按 verify 注释里给出的在线写值操作
+// =============================================================================
+
+bMatch := fbAlarm.EqualsToEventEntry(stEventEntry := stKnown);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

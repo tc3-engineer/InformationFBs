@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_UInt64Add64Ex" Id="{2d126e40-c068-59ec-8069-67f960401424}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_UInt64Add64Ex
+VAR
+    uliMoneyAccum : T_ULARGE_INTEGER;; // 累计金额（10⁻⁶ 分）
+    uliMoneyAdd   : T_ULARGE_INTEGER;; // 本笔金额
+    bOverflow     : BOOL;; // 溢出报警标志
+    bAccumulate   : BOOL;; // 触发一次累加
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_Utilities.UInt64Add64Ex 演示程序（FUNCTION，单周期触发）
+// ============================================================
+// 场景：金额累加（10⁻⁶ 分单位）需要检测溢出报警，避免长期累计静默回绕。
+// 价值：替代手写比较 `IF a &gt; (MAX - b) THEN bOV := TRUE; END_IF;` 一段；调用一次同时拿到和与溢出位。
+// 验证步骤：
+//   1. 把本 PROGRAM 加到 PlcTask 调用列表
+//   2. 编译 + 登录
+//   3. 在线把 b... 触发位置 TRUE 一个周期
+//   4. 观察输出变量是否符合期望
+// ============================================================
+
+// 周期开始处清零溢出标志，避免上周期残留误报
+bOverflow := FALSE;
+IF bAccumulate THEN
+    uliMoneyAccum := UInt64Add64Ex(uliMoneyAccum, uliMoneyAdd, bOverflow);
+    IF bOverflow THEN
+        // 工程响应：饱和到上限 + 触发报警（业务层处理）
+        uliMoneyAccum := ULARGE_INTEGER(16#FFFFFFFF, 16#FFFFFFFF);
+    END_IF;
+    bAccumulate := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

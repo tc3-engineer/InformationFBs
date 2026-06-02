@@ -13,7 +13,7 @@
 | Verified | 2026-05-25 ✅ |
 | InfoSys-checked | ✅ 2026-05-25 |
 | Status | `verified` |
-| Example | [`examples/P_Demo_FB_SoEWritePassword.xml`](../examples/P_Demo_FB_SoEWritePassword.xml) |
+| Example | [`examples/P_Demo_FB_SoEWritePassword.TcPOU`](../examples/P_Demo_FB_SoEWritePassword.TcPOU) |
 
 ---
 
@@ -103,7 +103,7 @@ END_VAR
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_FB_SoEWritePassword.xml`](../examples/P_Demo_FB_SoEWritePassword.xml)
+> 配套可导入文件：[`examples/P_Demo_FB_SoEWritePassword.TcPOU`](../examples/P_Demo_FB_SoEWritePassword.TcPOU)
 
 ```iecst
 // 场景：调试 AX5000 需要修改受密码保护的电机参数，先写入驱动器密码解锁

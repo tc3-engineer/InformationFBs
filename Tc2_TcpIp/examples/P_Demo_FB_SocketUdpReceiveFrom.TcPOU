@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_SocketUdpReceiveFrom" Id="{14395de9-af0e-512c-8e4f-20c6c7cab74a}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_SocketUdpReceiveFrom
+VAR
+    fbCreateUdp       : FB_SocketUdpCreate;
+    fbReceiveUdpHello : FB_SocketUdpReceiveFrom;
+    fbPollTON         : TON;
+    bRequestCreate    : BOOL;
+    bCreateBusy       : BOOL;
+    bCreateError      : BOOL;
+    nCreateErrId      : UDINT;
+    hUdpSocket        : T_HSOCKET;
+    abRxBuffer        : ARRAY[0..1499] OF BYTE; // 缓冲 1500 字节，覆盖以太网 MTU 防截断
+    bPollPulse        : BOOL;
+    bRxBusy           : BOOL;
+    bRxError          : BOOL;
+    nRxErrId          : UDINT;
+    sLastSenderHost   : T_IPv4Addr;
+    nLastSenderPort   : UDINT;
+    nRecBytes         : UDINT;
+    nPacketsReceived  : UDINT;
+    sLastPayload      : STRING(128);
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：PLC 在 5005 端口收来自网段 HMI/PC 的 UDP "HELLO" 发现回应包，记录
+//       每个回应的对端 IP 和端口，用作设备发现协议。
+//
+// 价值：演示 UDP 接收的两个关键特性：
+//       1) 缓冲 cbLen 必须 ≥ MTU，否则单包被截断不补回；
+//       2) sRemoteHost/nRemotePort 每包不同，必须每收一包都重新读。
+//
+// 验证步骤：
+//   1. 在线 bRequestCreate := TRUE，等 hUdpSocket.handle 非 0
+//   2. 在另一台机器: ncat -u PLC_IP 5005 后输入 "REPLY,HMI_01" 回车
+//   3. nPacketsReceived +1，sLastSenderHost 显示发送端 IP，
+//      nLastSenderPort 显示其源端口（OS 自动分配的 ephemeral port）
+//   4. sLastPayload 应为 "REPLY,HMI_01"（取 nRecBytes 字节构造 STRING）
+//   5. 用另一台机器再发一包 → sLastSenderHost 切换到新 IP
+// =============================================================================
+
+// 阶段 1：创建 UDP socket
+fbCreateUdp(
+    sSrvNetId := '',
+    sLocalHost := '0.0.0.0',
+    nLocalPort := 5005,
+    bExecute := bRequestCreate,
+    tTimeout := T#5S,
+    bBusy => bCreateBusy,
+    bError => bCreateError,
+    nErrId => nCreateErrId,
+    hSocket => hUdpSocket
+);
+
+// 100ms 自激 TON：连续 polling
+fbPollTON(IN := NOT fbPollTON.Q, PT := T#100MS, Q => bPollPulse);
+
+// 周期 polling 接收
+fbReceiveUdpHello(
+    sSrvNetId := '',
+    hSocket   := hUdpSocket,
+    cbLen     := SIZEOF(abRxBuffer),
+    pDest     := ADR(abRxBuffer),
+    bExecute  := bPollPulse,
+    tTimeout  := T#5S,
+    bBusy       => bRxBusy,
+    bError      => bRxError,
+    nErrId      => nRxErrId,
+    sRemoteHost => sLastSenderHost,
+    nRemotePort => nLastSenderPort,
+    nRecBytes   => nRecBytes
+);
+
+// 收到包时累加 + 把字节转 STRING 方便 monitor
+IF nRecBytes > 0 THEN
+    nPacketsReceived := nPacketsReceived + 1;
+    sLastPayload := MEMSTRING(ADR(abRxBuffer), nRecBytes);
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

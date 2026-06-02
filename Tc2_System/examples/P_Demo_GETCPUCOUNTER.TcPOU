@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_GETCPUCOUNTER" Id="{46cc089f-ec85-5583-922d-d956bbb49783}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_GETCPUCOUNTER
+VAR
+    fbGETCPUCOUNTER : GETCPUCOUNTER; // GETCPUCOUNTER 实例
+    udwCntLo        : UDINT; // 64-bit 低 32 位
+    udwCntHi        : UDINT; // 64-bit 高 32 位
+    ulCntCombined   : ULINT; // 拼成 64-bit
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_System.GETCPUCOUNTER 演示程序
+// ============================================================
+// 场景：给工件打 100 ns 精度时间戳；24h 连续运行用 64-bit 不回卷。
+// 价值：替代 F_GetSystemTime（NTP 同步会跳）。
+// 验证：登录后 ulCntCombined 应持续单调递增，每个 PLC 周期增长约 (任务周期 / 100ns)。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_System（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』指引在线写值观察
+// ============================================================
+
+fbGETCPUCOUNTER(cpuCntLoDW => udwCntLo, cpuCntHiDW => udwCntHi);
+
+// 拼成 64-bit
+ulCntCombined := SHL(TO_ULINT(udwCntHi), 32) OR TO_ULINT(udwCntLo);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

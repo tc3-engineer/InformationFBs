@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_MC_TorqueControl" Id="{29158063-774f-560a-bec7-b265157731aa}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_MC_TorqueControl
+VAR
+    fbTensionCtrl   : MC_TorqueControl;
+    axisTensionRoll : AXIS_REF;
+    bEnableTension  : BOOL := FALSE; // 在线 TRUE 启用张力控制；FALSE 后必须切回 CSV/CSP 模式
+    lrTorqueSetNm   : LREAL := 35.0; // 力矩设定值 (Nm 或额定百分比，取决于驱动器)
+    bAtTorque       : BOOL;
+    bCtrlBusy       : BOOL;
+    bCtrlError      : BOOL;
+    nErrorID        : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：卷绕机收线轴张力控制 — 用 35 Nm 恒力矩拉紧线材让线张力恒定，速度
+//       限制在 -500..+400 rpm 避免飞车。当线径变化导致负载变时 NC 自动调整
+//       速度以维持力矩。
+// 价值：把 NC + 驱动器固件级的 CST 模式切换 + 力矩斜坡 + 速度限制封装为一
+//       个 FB；业务不用自己写 SDO 切驱动器对象字典。
+// 验证：先 MC_Power 使能 axisTensionRoll；bEnableTension := TRUE → bAtTorque
+//       在力矩斜坡完成后 TRUE。在线观察 axisTensionRoll.NcToPlc.ActTorque ≈ 35。
+//       ⚠️ 使用后必须显式调 MC_WriteDriveOperationMode 切回 CSV/CSP，否则下次
+//       使能轴可能突然动（垂直轴会下坠）。
+// =============================================================================
+
+fbTensionCtrl(
+    Execute           := bEnableTension,
+    ContinuousUpdate  := TRUE,
+    Relative          := FALSE,
+    Torque            := lrTorqueSetNm,
+    TorqueRamp        := 10.0,
+    VelocityLimitHigh := 400.0,
+    VelocityLimitLow  := -500.0,
+    BufferMode        := MC_Aborting,
+    Axis              := axisTensionRoll,
+    InTorque          => bAtTorque,
+    Busy              => bCtrlBusy,
+    Error             => bCtrlError,
+    ErrorID           => nErrorID
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

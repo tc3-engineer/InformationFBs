@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_SetPositionOffset" Id="{a2fcb312-7ada-5877-a7c5-4d92063e4fa3}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_SetPositionOffset
+VAR
+    fbSetOffset         : FB_SetPositionOffset; // 写位置偏置 FB 实例
+    axisGantryX         : AXIS_REF; // 龙门 X 轴轴引用；必须先在 System Manager 配好并 Link
+    rtSetTrig           : R_TRIG; // 把电平转上升沿
+    bSetOffsetReq       : BOOL := FALSE; // 在线写 TRUE 触发一次写偏置
+    lrNewActualPosition : LREAL := 0.0; // 把当前点设为的新实际位置；0 = 设零点
+    bSetBusy            : BOOL;
+    bSetError           : BOOL;
+    nSetErrorID         : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：龙门 X 轴手动回到机械参考挡块后，把当前位置设为绝对零点
+//       （Position=0, Relative=FALSE），并把偏置存进驱动器内存，让 PLC
+//       重启后零点不丢。
+//
+// 价值：1) 偏置常驻驱动器侧，PLC 重启 / 工程下载都不用重新找零
+//       2) 硬件无关：AX5000/AX8000/EL72xx 自动选 SoE/CoE 通道
+//       3) 绝对/相对两种语义覆盖"设零"和"微调"两类需求
+//
+// 验证步骤：
+//   1. System Manager 配好 NC 轴并 Link 给 axisGantryX，引用 Tc2_MC2_Drive
+//   2. 在 DriveManager 里把偏置存放位置配成"驱动器"，与本例 Memory 保持一致
+//   3. Add Existing Item (.TcPOU) 选本文件，加进 PlcTask，编译登录
+//   4. 手动把轴开到机械参考挡块，确认轴已静止
+//   5. 在线写 bSetOffsetReq := TRUE → bSetBusy 置 TRUE
+//   6. 等 bSetBusy 落回 FALSE 且 bSetError = FALSE 即写入成功
+//   7. 观察 axisGantryX.NcToPlc.ActPos 应变为 0（= lrNewActualPosition）
+//   8. 若 bSetError = TRUE，看 nSetErrorID 对照 ADS Return Codes 表
+// =============================================================================
+
+// 用 R_TRIG 把"持续按住的 TRUE"转成真正的上升沿
+rtSetTrig(CLK := bSetOffsetReq);
+
+// 单次调用：绝对模式把当前点设为 lrNewActualPosition，存驱动器内存
+// Axis 是 VAR_IN_OUT 必传；本 FB 无 Done 输出，靠 Busy 落回 FALSE 判成功
+fbSetOffset(
+    Execute  := rtSetTrig.Q,
+    Position := lrNewActualPosition,
+    Relative := FALSE,
+    Feedback := ePositionOffsetFeedback1,
+    Memory   := ePositionOffsetMemory_Drive,
+    Axis     := axisGantryX,
+    Busy     => bSetBusy,
+    Error    => bSetError,
+    ErrorID  => nSetErrorID
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_MC_GearOut" Id="{7e4a820f-8a44-52f0-8827-88479e00ef1e}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_MC_GearOut
+VAR
+    fbDecouple       : MC_GearOut;
+    fbHaltSlave      : MC_Halt;
+    axisSlave        : AXIS_REF;
+    rtDecoupleTrig   : R_TRIG;
+    bRequestDecouple : BOOL := FALSE;
+    bDecoupleDone    : BOOL;
+    bSlaveStopDone   : BOOL;
+    nErrorID         : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：电子齿轮耦合工艺段完成 — 先解耦从轴让它脱离主轴跟随，然后立刻
+//       发 MC_Halt 把从轴平稳停下来。直接发 MC_GearOut 不接停车从轴会
+//       无限走（PDF DANGER 提醒）。
+// 价值：标准的"解耦 + 停车"两步法；避免冲软限位 / 撞机械限位事故。
+// 验证：先建立耦合（外部 MC_GearIn 已经调过，demo 假设 axisSlave 在跟主轴跑）；
+//       bRequestDecouple := TRUE → bDecoupleDone 一闪 TRUE；
+//       同周期触发 fbHaltSlave 减速；ActVelo 渐降到 0；
+//       bSlaveStopDone 短暂 TRUE。
+// =============================================================================
+
+rtDecoupleTrig(CLK := bRequestDecouple);
+
+fbDecouple(
+    Execute := rtDecoupleTrig.Q,
+    Slave   := axisSlave,
+    Done    => bDecoupleDone,
+    ErrorID => nErrorID
+);
+
+// 解耦完成立刻接停车 — 这是 PDF 反复强调的"务必做"步骤
+fbHaltSlave(
+    Execute      := bDecoupleDone,
+    Deceleration := 2000.0,
+    Jerk         := 20000.0,
+    Axis         := axisSlave,
+    Done         => bSlaveStopDone
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

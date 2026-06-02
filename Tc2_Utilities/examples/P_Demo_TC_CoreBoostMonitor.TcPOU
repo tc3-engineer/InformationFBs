@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_TC_CoreBoostMonitor" Id="{12cb571d-a60f-523e-bbcd-18f1abb108b3}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_TC_CoreBoostMonitor
+VAR
+    fbBoostMonitor            : TC_CoreBoostMonitor; // TC_CoreBoostMonitor 实例（默认 nCoreId=-1 自我监视）
+    hrTempResult              : HRESULT; // GetCoreTemperature 返回值
+    hrThrottleResult          : HRESULT; // GetAllRtCoreThrottling 返回值
+    nCurrentTemperatureC      : UDINT; // 当前核温（°C），在线 monitor
+    nMaxObservedTemperatureC  : UDINT; // 自实时启动以来观测到的最高温（°C）
+    nTemperatureLimitC        : UDINT; // 硬件温度上限（°C，启动后基本恒定）
+    bAnyRtCoreThermalThrottle : BOOL; // 任一实时核因温度被限频
+    bAnyRtCorePowerThrottle   : BOOL; // 任一实时核因功耗被限频
+    bTemperatureNearLimit     : BOOL; // 逼近温度上限标志（业务侧预警）
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_Utilities.TC_CoreBoostMonitor 演示程序
+// ============================================================
+// 场景：CX2040 工控机启用了 TwinCAT Core Boost 给运动控制实时核加速。需要在
+//       监视任务里轮询该核的温度与"是否被限频"，逼近上限时给 HMI 报警，避免
+//       在长时间满负载场景下硬件降速影响运动周期稳定性。
+// 价值：不用本 FB 时需要绕 CIPC API 或读 MSR 寄存器——业务工程师没权限也不该
+//       碰。本 FB 把硬件查询封装成一个方法调用，PLC 周期内即可拿到温度 / 限
+//       频状态，配合 HMI 报警可在硬件还没出错前就提示降负载。
+// 验证：硬件前置条件——Intel Core i 第 11 代或以上，且 Real-time Settings 已
+//       启用 Core Boost。否则方法调用返回 FAILED 的 HRESULT。
+//   1. 引用 Tc2_Utilities ≥ 3.7.4.0
+//   2. 编译 + 登录，把 P_Demo_TC_CoreBoostMonitor 加入 PlcTask 调用
+//   3. 在线监视 nCurrentTemperatureC（正常 40-70°C）/ nTemperatureLimitC（通常 100°C）
+//   4. 增加 PLC 负载（在另一任务里跑 1e6 次空循环）→ 观察 nCurrentTemperatureC
+//      上升，bAnyRtCoreThermalThrottle 在逼近上限时翻 TRUE
+//   5. 停止压力 → bAnyRtCoreThermalThrottle 在几秒内回 FALSE
+// ============================================================
+
+// 读取本核温度（引用参数回填）
+hrTempResult := fbBoostMonitor.GetCoreTemperature(
+    nCurrentTemp := nCurrentTemperatureC,
+    nMaxTemp     := nMaxObservedTemperatureC,
+    nTempLimit   := nTemperatureLimitC
+);
+
+// 全核聚合视图：是否有任一核正在限频
+hrThrottleResult := fbBoostMonitor.GetAllRtCoreThrottling(
+    bRtInThermalThrottling := bAnyRtCoreThermalThrottle,
+    bRtInPowerThrottling   := bAnyRtCorePowerThrottle
+);
+
+// 业务策略：留 5°C 余量给 HMI 提前报警，不等到硬件自动限频
+// 注：每周期先清零再按本周期成功读取的结果重新置位，避免单次读取失败时上一
+//     周期的报警状态被锁住造成 HMI 误显。
+bTemperatureNearLimit := FALSE;
+IF SUCCEEDED(hrTempResult) AND nTemperatureLimitC > 5 THEN
+    bTemperatureNearLimit := nCurrentTemperatureC >= (nTemperatureLimitC - 5);
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

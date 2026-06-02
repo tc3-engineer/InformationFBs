@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_Release" Id="{e82f0d65-cc41-5b09-9435-f3afb9878140}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_Release
+VAR
+    pfbAlarm        : POINTER TO FB_TcAlarm; // 动态分配的 alarm 实例指针（在本例外申请）
+    bReleaseReq     : BOOL := FALSE; // 在线置 TRUE 触发一次释放
+    bReleaseReqPrev : BOOL; // 边沿检测
+    hr              : HRESULT; // Release 返回值监视
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：动态分配的临时报警实例在用完后释放
+// 价值：防止 EventLogger 槽位泄露
+// 验证：登录后写 bReleaseReq := TRUE，hr 应该是 S_OK；再次 Release 会得到错误码（槽位已释放）
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_EventLogger（System → References → Add library）
+//   3. 编译 → 登录 → 运行；按 verify 注释里给出的在线写值操作
+// =============================================================================
+
+// 假设 pfbAlarm 已通过 __NEW(FB_TcAlarm) 分配并 Create() 完成
+IF bReleaseReq AND NOT bReleaseReqPrev AND pfbAlarm &lt;&gt; 0 THEN
+    hr := pfbAlarm^.Release();
+    // 释放后建议立即把指针清零或随后 __DELETE
+END_IF;
+bReleaseReqPrev := bReleaseReq;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

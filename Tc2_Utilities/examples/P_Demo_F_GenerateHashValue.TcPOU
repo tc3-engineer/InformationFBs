@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_F_GenerateHashValue" Id="{df93c58b-8617-5d96-9673-e01d5eabb98c}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_F_GenerateHashValue
+VAR
+    aFirmware : ARRAY[0..1023] OF BYTE; // 工业语义：1 KB 固件区
+    aSha256   : ARRAY[0..31] OF BYTE; // 32 字节 SHA-256 输出
+    eMode     : E_HashMode; // 哈希模式
+    bOk       : BOOL; // 成功
+    bHash     : BOOL; // 在线触发
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：OTA 固件升级：算 SHA-256 比对厂家签名，确认固件包未被篡改。
+// 价值：替代手动实现 SHA 算法（数百行 C 移植）；本函数提供库级密码学哈希。
+// 验证步骤：
+//   1. 引用 Tc2_Utilities
+//   2. 编译 + 登录 + 运行
+//   3. 在线写触发位 TRUE，monitor 输出变量
+// =============================================================================
+
+IF bHash THEN
+    // eMode := E_HashMode.SHA256;  // 示意，具体见 E_HashMode 文档
+    bOk := F_GenerateHashValue(hashMode := eMode,
+                               pData    := ADR(aFirmware),
+                               nData    := SIZEOF(aFirmware),
+                               pHash    := ADR(aSha256),
+                               nHash    := SIZEOF(aSha256));
+    bHash := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

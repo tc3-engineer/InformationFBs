@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_F_GetEventText" Id="{7c8bc534-2ca3-540c-9b9c-93c35cb7f861}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_F_GetEventText
+VAR
+    fbAlarm    : FB_TcAlarm; // 事件源（已 Create + AddArguments）
+    fbResult   : FB_AsyncStrResult; // 异步结果
+    nLangId    : DINT := 2052; // 中文 LangId
+    bDoReq     : BOOL := FALSE; // 上升沿触发
+    bDoReqPrev : BOOL; // 边沿检测
+    sEventText : STRING(255); // 事件文本
+    bGot       : BOOL; // 已取标志
+    hr         : HRESULT; // Function 返回值
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：一次性查询事件本地化文本
+// 价值：函数式调用简洁
+// 验证：登录后写 bDoReq := TRUE 触发；几周期后 fbResult.bBusy 变 FALSE，取 sEventText
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_EventLogger（System → References → Add library）
+//   3. 编译 → 登录 → 运行；按 verify 注释里给出的在线写值操作
+// =============================================================================
+
+IF bDoReq AND NOT bDoReqPrev THEN
+    hr := F_GetEventText(
+        nLangId := nLangId,
+        fbEventBase := fbAlarm,
+        fbResult := fbResult);
+    bGot := FALSE;
+END_IF;
+bDoReqPrev := bDoReq;
+
+IF NOT fbResult.bBusy AND NOT fbResult.bError AND NOT bGot THEN
+    fbResult.GetString(sResult := sEventText);
+    bGot := TRUE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

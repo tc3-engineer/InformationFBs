@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FIND2" Id="{e74c95a5-c5d4-56f6-8a85-8039de5e9178}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FIND2
+VAR
+    sUaNode : STRING(255) := 'ns=2;s=Pump.State'; // 工业语义：OPC UA NodeId 字符串
+    sSep    : STRING(4) := ';'; // 分隔符子串
+    nSepPos : UDINT; // 分隔符位置（1 起算），0 = 未找到
+    bParse  : BOOL; // 在线触发解析
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：解析 EtherCAT 配置 XML 字符串：找到 `'<Device>'` 标签的位置，再截取标签内容。
+// 价值：比 `Tc2_Standard.FIND` + 长度判断 + MID 拆解的链条更直接；返回值 1 起算与 `MID`/`INSERT`/`DELETE` 风格一致。
+// 验证步骤：
+//   1. 引用 Tc2_Utilities
+//   2. 编译 + 登录 + 运行
+//   3. 在线写触发位 TRUE，monitor 输出变量
+// =============================================================================
+IF bParse THEN
+    nSepPos := FIND2(pSrcString  := ADR(sUaNode),
+                     pFindString := ADR(sSep));
+    // nSepPos > 0 -> 可用 MID 拆出 ns= 和 s= 两段
+    bParse := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

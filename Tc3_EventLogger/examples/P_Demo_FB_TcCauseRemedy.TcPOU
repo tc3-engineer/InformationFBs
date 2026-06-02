@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_TcCauseRemedy" Id="{8bc6eada-cb24-519d-ab3c-c72cdaf912d4}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_TcCauseRemedy
+VAR
+    fbReq         : FB_RequestCauseRemedy; // 上游请求 FB（应已完成）
+    fbCauseRemedy : FB_TcCauseRemedy; // 承载子项
+    sCause        : STRING(255); // 原因文本
+    sRemedy       : STRING(255); // 补救文本
+    bGot          : BOOL; // 已读取标志
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：读取通过 FB_RequestCauseRemedy.Get 填充的子项字段
+// 价值：结构化访问承载子项
+// 验证：先有完成的 FB_RequestCauseRemedy；调 Get 填充本 FB；再读 GetCause/GetRemedy
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_EventLogger（System → References → Add library）
+//   3. 编译 → 登录 → 运行；按 verify 注释里给出的在线写值操作
+// =============================================================================
+
+// 从上游请求里取第 0 项填充本 FB
+fbReq.Get(nIndex := 0, fbResult := fbCauseRemedy);
+
+// 读字段（Get 系列方法的 sResult 参数是 VAR_IN_OUT STRING）
+fbCauseRemedy.GetCause(sResult := sCause);
+fbCauseRemedy.GetRemedy(sResult := sRemedy);
+bGot := LEN(sCause) &gt; 0;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

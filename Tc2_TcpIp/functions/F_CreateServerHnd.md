@@ -13,7 +13,7 @@
 | Verified | 2026-05-21 ✅ |
 | InfoSys-checked | ✅ 2026-05-21 |
 | Status | `verified` |
-| Example | [`examples/P_Demo_F_CreateServerHnd.xml`](../examples/P_Demo_F_CreateServerHnd.xml) |
+| Example | [`examples/P_Demo_F_CreateServerHnd.TcPOU`](../examples/P_Demo_F_CreateServerHnd.TcPOU) |
 
 ---
 
@@ -94,7 +94,7 @@ END_VAR
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_F_CreateServerHnd.xml`](../examples/P_Demo_F_CreateServerHnd.xml)
+> 配套可导入文件：[`examples/P_Demo_F_CreateServerHnd.TcPOU`](../examples/P_Demo_F_CreateServerHnd.TcPOU)
 
 ```iecst
 // 场景：PLC 当 TCP 服务器在 200 端口接 HMI；用 FB_ServerClientConnection helper。

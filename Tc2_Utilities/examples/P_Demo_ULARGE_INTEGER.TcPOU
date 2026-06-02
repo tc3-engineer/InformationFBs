@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_ULARGE_INTEGER" Id="{912ad0eb-df22-56bf-a7e8-5ca43b71da83}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_ULARGE_INTEGER
+VAR
+    uliThreshold : T_ULARGE_INTEGER;; // 1E12 字面常量
+    bInit        : BOOL := TRUE;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_Utilities.ULARGE_INTEGER 演示程序（FUNCTION，单周期触发）
+// ============================================================
+// 场景：在 PLC 启动初始化时定义 64 位常量上限阈值 = 1E12。
+// 价值：替代手写结构体字段逐字段赋值；一行调用语义清晰。
+// 验证步骤：
+//   1. 把本 PROGRAM 加到 PlcTask 调用列表
+//   2. 编译 + 登录
+//   3. 在线把 b... 触发位置 TRUE 一个周期
+//   4. 观察输出变量是否符合期望
+// ============================================================
+
+IF bInit THEN
+    // 1E12 = 0xE8D4A51000 = high 0x00 + low 0xE8D4A51000？
+    // 实际 1E12 = 16#E8D4A51000 → high = 16#E8, low = 16#D4A51000
+    uliThreshold := ULARGE_INTEGER(16#E8, 16#D4A51000);
+    bInit := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

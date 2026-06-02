@@ -13,7 +13,7 @@
 | Verified | 2026-05-21 ✅ |
 | InfoSys-checked | ✅ 2026-05-21 |
 | Status | `verified` |
-| Example | [`examples/P_Demo_MC_MoveContinuousRelative.xml`](../examples/P_Demo_MC_MoveContinuousRelative.xml) |
+| Example | [`examples/P_Demo_MC_MoveContinuousRelative.TcPOU`](../examples/P_Demo_MC_MoveContinuousRelative.TcPOU) |
 
 ---
 
@@ -123,7 +123,7 @@ END_VAR
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_MC_MoveContinuousRelative.xml`](../examples/P_Demo_MC_MoveContinuousRelative.xml)
+> 配套可导入文件：[`examples/P_Demo_MC_MoveContinuousRelative.TcPOU`](../examples/P_Demo_MC_MoveContinuousRelative.TcPOU)
 
 ```iecst
 // 场景：贴标机标头沿 X 走 200 mm 完成一张标签贴附，过点不停 100 mm/s 进入下一段

@@ -13,7 +13,7 @@
 | Verified | 2026-05-21 ✅ |
 | InfoSys-checked | ✅ 2026-05-21 |
 | Status | `verified` |
-| Example | [`examples/P_Demo_FB_ReadDriveInfo.xml`](../examples/P_Demo_FB_ReadDriveInfo.xml) |
+| Example | [`examples/P_Demo_FB_ReadDriveInfo.TcPOU`](../examples/P_Demo_FB_ReadDriveInfo.TcPOU) |
 
 ---
 
@@ -132,7 +132,7 @@ END_TYPE
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_FB_ReadDriveInfo.xml`](../examples/P_Demo_FB_ReadDriveInfo.xml)
+> 配套可导入文件：[`examples/P_Demo_FB_ReadDriveInfo.TcPOU`](../examples/P_Demo_FB_ReadDriveInfo.TcPOU)
 
 ```iecst
 // 场景：初始化时读出驱动器寻址信息，供后续 SoE/CoE 参数访问使用

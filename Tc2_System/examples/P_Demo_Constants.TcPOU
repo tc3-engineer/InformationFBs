@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_Constants" Id="{dde1ace0-c1aa-533b-a45b-5041b32c8627}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_Constants
+VAR
+    nPlcPort            : UINT; // 本机 TC3 PLC 端口号
+    eRunningState       : UINT; // ADS Running 状态码
+    tDefaultTimeout     : TIME; // 默认 ADS 超时
+    nFileTextAppendMode : DWORD; // 文本追加打开模式位掩码
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：演示直接引用 Constants 中的几个常用符号，把它们写到本地变量便于 HMI 监控显示。
+// 价值：替代硬编码 851 / 5 / T#5S 等魔法数字。
+// 验证：观察 nPlcPort = 851，eRunningState = 5（ADSSTATE_RUN），tDefaultTimeout = T#5S。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_System（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』行的指示在线写值观察
+// =============================================================================
+
+// 直接引用 Tc2_System.Constants 里的全局常量
+nPlcPort            := AMSPORT_R0_PLC_TC3;
+eRunningState       := ADSSTATE_RUN;
+tDefaultTimeout     := DEFAULT_ADS_TIMEOUT;
+nFileTextAppendMode := FOPEN_MODEAPPEND OR FOPEN_MODETEXT;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

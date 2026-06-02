@@ -13,7 +13,7 @@
 | Verified | 2026-05-11 ✅ |
 | InfoSys-checked | ✅ 2026-05-11 |
 | Status | `verified` |
-| Example | [`examples/P_Demo_WFIND.xml`](../examples/P_Demo_WFIND.xml) |
+| Example | [`examples/P_Demo_WFIND.TcPOU`](../examples/P_Demo_WFIND.TcPOU) |
 
 ---
 
@@ -81,7 +81,7 @@ PDF §5.3 原例：`WFIND("SUXYSI", "XY")` → `3`。
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_WFIND.xml`](../examples/P_Demo_WFIND.xml)（PLCopenXML，可直接导入 TwinCAT 3 XAE）
+> 配套可导入文件：[`examples/P_Demo_WFIND.TcPOU`](../examples/P_Demo_WFIND.TcPOU)（TwinCAT 3 原生 .TcPOU，可直接拖入 XAE 的 PLC POUs 文件夹）
 
 ```iecst
 // 场景：中文配置串 "IP：192.168.1.10，端口：502" 用全角逗号分段，先用 WFIND 定位

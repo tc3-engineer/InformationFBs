@@ -13,7 +13,7 @@
 | Verified | 2026-05-21 ✅ |
 | InfoSys-checked | ✅ 2026-05-21 |
 | Status | `verified` |
-| Example | [`examples/P_Demo_FB_BrakeControl.xml`](../examples/P_Demo_FB_BrakeControl.xml) |
+| Example | [`examples/P_Demo_FB_BrakeControl.TcPOU`](../examples/P_Demo_FB_BrakeControl.TcPOU) |
 
 ---
 
@@ -107,7 +107,7 @@ END_VAR
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_FB_BrakeControl.xml`](../examples/P_Demo_FB_BrakeControl.xml)
+> 配套可导入文件：[`examples/P_Demo_FB_BrakeControl.TcPOU`](../examples/P_Demo_FB_BrakeControl.TcPOU)
 
 ```iecst
 // 场景：手动松闸用人力盘动电机做机械对位，盘完立即切回自动

@@ -13,7 +13,7 @@
 | Verified | 2026-05-11 ✅ |
 | InfoSys-checked | ✅ 2026-05-11 |
 | Status | `verified` |
-| Example | [`examples/P_Demo_F_TranslateFileTime64Bias.xml`](../examples/P_Demo_F_TranslateFileTime64Bias.xml) |
+| Example | [`examples/P_Demo_F_TranslateFileTime64Bias.TcPOU`](../examples/P_Demo_F_TranslateFileTime64Bias.TcPOU) |
 
 ---
 
@@ -76,9 +76,9 @@ PDF 强调：输入用 `T_FILETIME64` 而非 `DT`，是为了在 online 模式�
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_F_TranslateFileTime64Bias.xml`](../examples/P_Demo_F_TranslateFileTime64Bias.xml)
+> 配套可导入文件：[`examples/P_Demo_F_TranslateFileTime64Bias.TcPOU`](../examples/P_Demo_F_TranslateFileTime64Bias.TcPOU)
 >
-> 导入步骤：右键 PLC 项目 → Import PLCopenXML → 选该文件 → OK
+> 导入步骤：右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选该文件 → OK
 > 详见 [`examples/README.md`](../examples/README.md)
 
 ```iecst

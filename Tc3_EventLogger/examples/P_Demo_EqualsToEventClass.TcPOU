@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_EqualsToEventClass" Id="{58bda131-6528-5205-b226-6b4c01c92faa}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_EqualsToEventClass
+VAR
+    fbAlarm      : FB_TcAlarm; // alarm 实例
+    guidExpected : GUID; // 要匹配的事件类 GUID
+    bMatch       : BOOL; // 比较结果
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：判断当前 alarm 是否属于「安全报警」类
+// 价值：一次调用即可分流
+// 验证：登录后让 fbAlarm.Create 用某 GUID，再写 guidExpected 为相同 GUID → bMatch=TRUE；改 guidExpected 任一字节 → FALSE
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_EventLogger（System → References → Add library）
+//   3. 编译 → 登录 → 运行；按 verify 注释里给出的在线写值操作
+// =============================================================================
+
+// 调用者已经持有 alarm 实例，判断它是否属于 guidExpected 这个事件类
+bMatch := fbAlarm.EqualsToEventClass(eventClass := guidExpected);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

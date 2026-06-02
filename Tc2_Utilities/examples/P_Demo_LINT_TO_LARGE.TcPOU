@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_LINT_TO_LARGE" Id="{13153e93-7b9a-56cf-9da6-4b984c0ad33d}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_LINT_TO_LARGE
+VAR
+    liNative : LINT := -123456789;
+    liLegacy : T_LARGE_INTEGER;
+    bConvert : BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_Utilities.LINT_TO_LARGE 演示程序（FUNCTION，单周期触发）
+// ============================================================
+// 场景：本地用 LINT 做算术，调用一个只接 T_LARGE_INTEGER 的旧 FB 前转一下。
+// 价值：替代手写 SHR/AND/拼装。
+// 验证步骤：
+//   1. 把本 PROGRAM 加到 PlcTask 调用列表
+//   2. 编译 + 登录
+//   3. 在线把 b... 触发位置 TRUE 一个周期
+//   4. 观察输出变量是否符合期望
+// ============================================================
+
+IF bConvert THEN
+    liLegacy := LINT_TO_LARGE(liNative);
+    bConvert := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

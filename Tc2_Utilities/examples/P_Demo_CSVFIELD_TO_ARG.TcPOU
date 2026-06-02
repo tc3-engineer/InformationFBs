@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_CSVFIELD_TO_ARG" Id="{9ebda556-f34a-5c32-920b-ac8e8d69d664}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_CSVFIELD_TO_ARG
+VAR
+    aCsvField  : ARRAY[0..31] OF BYTE; // 工业语义：CSV 字段字节缓冲
+    nTargetVal : UDINT; // 解析目标 PLC 变量
+    argTarget  : T_Arg; // T_Arg 描述符（指向 nTargetVal）
+    nConverted : UDINT; // 转换字节数（0 = 失败）
+    bParse     : BOOL; // 在线触发
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：读 CSV 配方文件：每行 `name, batch_id, recipe_id, target_temp` 四字段；用本函数把 batch_id (UDINT)、target_temp (LREAL) 等二进制字段直接解析进 PLC 变量。
+// 价值：替代手写 `STRTOK` + `STRING_TO_INT/LREAL` 链；本函数 1 行解析任意类型 + 自带 CSV 引号 / 转义处理。
+// 验证步骤：
+//   1. 引用 Tc2_Utilities
+//   2. 编译 + 登录 + 运行
+//   3. 在线写触发位 TRUE，monitor 输出变量
+// =============================================================================
+
+IF bParse THEN
+    // 模拟收到 CSV 字段 '42'
+    aCsvField[0] := 16#34; aCsvField[1] := 16#32; aCsvField[2] := 0;
+    argTarget := F_UDINT(nTargetVal);
+    nConverted := CSVFIELD_TO_ARG(pInput  := ADR(aCsvField),
+                                  cbInput := 2,
+                                  bQM     := FALSE,
+                                  out     := argTarget);
+    bParse := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_LARGE_TO_ULARGE" Id="{ab3a133a-ee78-5d5e-b7d7-3305a790cec7}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_LARGE_TO_ULARGE
+VAR
+    liSigned    : T_LARGE_INTEGER;
+    uliUnsigned : T_ULARGE_INTEGER;
+    bConvert    : BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_Utilities.LARGE_TO_ULARGE 演示程序（FUNCTION，单周期触发）
+// ============================================================
+// 场景：把有符号编码器累计转角（可负）按位模式塞进只接受无符号的哈希函数。
+// 价值：替代手动结构体字段拷贝。
+// 验证步骤：
+//   1. 把本 PROGRAM 加到 PlcTask 调用列表
+//   2. 编译 + 登录
+//   3. 在线把 b... 触发位置 TRUE 一个周期
+//   4. 观察输出变量是否符合期望
+// ============================================================
+
+IF bConvert THEN
+    uliUnsigned := LARGE_TO_ULARGE(liSigned);   // 位模式不变
+    bConvert := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

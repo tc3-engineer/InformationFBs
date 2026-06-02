@@ -13,7 +13,7 @@
 | Verified | 2026-05-21 ✅ |
 | InfoSys-checked | ✅ 2026-05-21 |
 | Status | `verified` |
-| Example | [`examples/P_Demo_MC_Home.xml`](../examples/P_Demo_MC_Home.xml) |
+| Example | [`examples/P_Demo_MC_Home.TcPOU`](../examples/P_Demo_MC_Home.TcPOU) |
 
 ---
 
@@ -122,7 +122,7 @@ END_VAR
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_MC_Home.xml`](../examples/P_Demo_MC_Home.xml)
+> 配套可导入文件：[`examples/P_Demo_MC_Home.TcPOU`](../examples/P_Demo_MC_Home.TcPOU)
 
 ```iecst
 // 场景：CNC 机床开机自动归零 X 轴 — 走到原点开关然后定零，定零位置取 System Manager 配置

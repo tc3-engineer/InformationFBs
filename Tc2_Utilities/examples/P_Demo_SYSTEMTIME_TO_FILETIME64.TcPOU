@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_SYSTEMTIME_TO_FILETIME64" Id="{165459cb-7633-5388-bc04-f51f94593322}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_SYSTEMTIME_TO_FILETIME64
+VAR
+    stPlannedStart : TIMESTRUCT; // HMI 输入的计划开机时间 (初始化通过在线手动赋值; 推荐字段：( wYear := 2026, wMonth := 5, wDay := 12, wHour := 8, wMinute := 0, wSecond := 0, wMilliseconds := 0 ))
+    ftPlannedStart : T_FILETIME64; // 存档用的紧凑表示
+    bValid         : BOOL; // 转换成功（返回 > 0）
+    bRunOnce       : BOOL; // 脉冲触发
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：HMI 让操作员按字段输入计划开机时间，PLC 内部存档用紧凑的 T_FILETIME64
+//
+// 价值：1 行完成 8 字段结构体到 64 位整数的折算，保留毫秒精度
+//
+// 验证步骤：
+//   1. 引用 Tc2_Utilities（≥ 3.3.44.0）
+//   2. 编译 + 登录 + 运行
+//   3. 强制 bRunOnce := TRUE
+//   4. 在线观察 ftPlannedStart 的 dwLow/dwHigh 应非零
+//   5. 用 FILETIME64_TO_SYSTEMTIME 反向应得回原 TIMESTRUCT
+// =============================================================================
+ftPlannedStart := SYSTEMTIME_TO_FILETIME64(stPlannedStart);
+bValid := (ftPlannedStart.dwLowDateTime <> 0) OR (ftPlannedStart.dwHighDateTime <> 0);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

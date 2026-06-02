@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_CoEAX8000BrakeTest" Id="{3398c9eb-dc9b-5e21-b460-3ec2ee63fcdc}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_CoEAX8000BrakeTest
+VAR
+    fbBrakeTest           : FB_CoEAX8000BrakeTest; // AX8000 抱闸测试 FB 实例
+    axisLiftAxis          : AXIS_REF; // AX8000 提升轴轴引用；测试会切 CST 模式，须纳入安全设计
+    rtBrakeTestTrig       : R_TRIG; // 把电平转上升沿
+    bStartBrakeTest       : BOOL := FALSE; // 在线写 TRUE 触发一次抱闸测试
+    bSafetyBrakeHeld      : BOOL := FALSE; // 来自安全控制器：抱闸在测试转矩下保持住的反馈（输入）
+    lrTestTorque          : LREAL := 5.0; // 测试施加的转矩 [Nm]，按抱闸额定保持力矩设
+    lrSafetyVelocityLimit : LREAL := 10.0; // 速度限制：抱闸保持不住时防失控加速
+    bTestBusy             : BOOL;
+    bTestError            : BOOL;
+    nTestErrorID          : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：堆垛机 AX8000 提升轴的定期功能性抱闸测试。把轴切到转矩模式 (CST)，
+//       施加测试转矩，由安全控制器反馈抱闸是否保持住（bSafetyBrakeHeld）。
+//       这是垂直轴防坠安全功能的周期性自检。
+//
+// 价值：1) 用驱动器内置转矩+速度限制做受控抱闸测试，无需机械加载装置
+//       2) 配合安全控制器反馈形成闭环验证，可自动化
+//       3) VelocityLimit 在抱闸失效时防轴失控加速
+//
+// !! 危险：本 FB 把轴切到 CST 模式，使用后（尤其出错后）轴可能滞留 CST，
+//          提升轴在此状态下使能会突然运动。测试后必须用 MC_ReadDriveOperationMode
+//          确认回到位置模式 (CSV/CSP)，否则用 MC_WriteDriveOperationMode 转回
+//          或中止处理。本 FB 必须纳入整体安全功能设计。
+//
+// 验证步骤：
+//   1. System Manager 配好 AX8000 NC 轴并 Link 给 axisLiftAxis，引用 Tc2_MC2_Drive
+//   2. 按 AX8000 功能描述完成抱闸测试所需的 AX8000 配置
+//   3. Add Existing Item (.TcPOU) 选本文件，加进 PlcTask，编译登录
+//   4. 在确保安全（有防护、符合风险评估）的前提下，设好 lrTestTorque /
+//      lrSafetyVelocityLimit，确认抱闸已闭合
+//   5. 在线写 bStartBrakeTest := TRUE → bTestBusy 置 TRUE，轴进入 CST
+//   6. 安全控制器确认抱闸保持后置 bSafetyBrakeHeld := TRUE，测试结束
+//   7. bTestBusy 落回 FALSE 后，调 MC_ReadDriveOperationMode 校验已回 CSV/CSP
+//   8. 若 bTestError = TRUE，看 nTestErrorID，并务必先校验运行模式再处理
+// =============================================================================
+
+// 用 R_TRIG 把"持续按住的 TRUE"转成真正的上升沿
+rtBrakeTestTrig(CLK := bStartBrakeTest);
+
+// 单次调用：Succeeded 是输入（来自安全控制器的保持反馈）；Axis 是 VAR_IN_OUT 必传
+// 本 FB 无 Done，靠 Busy 落回 FALSE 判结束；结束后务必校验运行模式
+fbBrakeTest(
+    Execute       := rtBrakeTestTrig.Q,
+    Succeeded     := bSafetyBrakeHeld,
+    Torque        := lrTestTorque,
+    VelocityLimit := lrSafetyVelocityLimit,
+    Timeout       := T#5S,
+    Axis          := axisLiftAxis,
+    Busy          => bTestBusy,
+    Error         => bTestError,
+    ErrorID       => nTestErrorID
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

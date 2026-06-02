@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_MC_MoveContinuousRelative" Id="{49730aa1-7e22-5477-8c06-3de166505702}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_MC_MoveContinuousRelative
+VAR
+    fbLabelStroke   : MC_MoveContinuousRelative;
+    fbStopAtEnd     : MC_Halt;
+    axisLabelHead   : AXIS_REF;
+    rtStrokeTrig    : R_TRIG;
+    rtStopTrig      : R_TRIG;
+    bStartStroke    : BOOL := FALSE;
+    bFinishCycle    : BOOL := FALSE;
+    lrLabelLengthMM : LREAL := 200.0;
+    lrTransitVelo   : LREAL := 100.0;
+    bAtEnd          : BOOL;
+    bStopDone       : BOOL;
+    nErrorID        : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：贴标机标头沿 X 走 200 mm（一张标签长度），到位时不停保持 100 mm/s
+//       衔接下一段（例如下一个标签或回程段）。
+// 价值：相对距离 + 终末速度直接描述工艺，PLC 不用算减速点位置。
+// 验证：bStartStroke := TRUE → ActPos 增加 200 mm 后 ActVelo 维持 100 mm/s，
+//       bAtEnd 置 TRUE。bFinishCycle := TRUE → 兜底停车。
+// =============================================================================
+
+rtStrokeTrig(CLK := bStartStroke);
+rtStopTrig(CLK := bFinishCycle);
+
+fbLabelStroke(
+    Execute       := rtStrokeTrig.Q,
+    Distance      := lrLabelLengthMM,
+    Velocity      := 800.0,
+    EndVelocity   := lrTransitVelo,
+    Acceleration  := 4000.0,
+    Deceleration  := 4000.0,
+    Jerk          := 40000.0,
+    BufferMode    := MC_Buffered,
+    Axis          := axisLabelHead,
+    InEndVelocity => bAtEnd,
+    ErrorID       => nErrorID
+);
+
+fbStopAtEnd(
+    Execute      := rtStopTrig.Q,
+    Deceleration := 4000.0,
+    Jerk         := 40000.0,
+    Axis         := axisLabelHead,
+    Done         => bStopDone
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

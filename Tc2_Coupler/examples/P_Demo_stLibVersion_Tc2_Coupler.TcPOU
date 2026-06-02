@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_stLibVersion_Tc2_Coupler" Id="{984cd2ca-9af2-59d3-b70d-a7bffa4957b7}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_stLibVersion_Tc2_Coupler
+VAR
+    nMajor               : INT; // 主版本号
+    nMinor               : INT; // 次版本号
+    nBuild               : INT; // 构建号
+    nRevision            : INT; // 修订号
+    sLibVersionForHmi    : STRING(40); // HMI 显示用版本字符串
+    nRequiredMajor       : INT := 1; // 业务要求的最低 major
+    nRequiredMinor       : INT := 1; // 业务要求的最低 minor
+    nRequiredBuild       : INT := 1; // 业务要求的最低 build
+    nRequiredRevision    : INT := 0; // 业务要求的最低 revision
+    bLibVersionOk        : BOOL; // 库版本是否满足业务最低要求
+    bBusinessTaskAllowed : BOOL; // 业务任务是否允许启动
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：本工程依赖 Tc2_Coupler >= 1.1.1（低版本不支持某新增端子的 user
+//       scaling 寄存器）。MAIN 启动期校验当前库版本是否达标，不满足就拒绝
+//       启动业务任务，并把版本字符串送 HMI 显示。
+//
+// 价值：替代已废弃的 F_GetVersionTcPlcCoupler；ST_LibVersion 结构化访问 +
+//       F_CmpLibVersion 内置比较，比手写 IF 链更清晰、向后兼容更好。
+//
+// 验证步骤：
+//   1. 引用 Tc2_Coupler 和 Tc2_System（后者提供 ST_LibVersion /
+//      F_CmpLibVersion / E_CmpLibVersion）
+//   2. 编译，登录
+//   3. 在线观察 nMajor / nMinor / nBuild / nRevision 应为 1 / 1 / 1 / 0
+//      （Tc2_Coupler 1.1.1）
+//   4. bLibVersionOk 应为 TRUE；bBusinessTaskAllowed 也为 TRUE
+//   5. 把 nRequiredMinor 改为 9 在线下发 -> bLibVersionOk 立刻变 FALSE
+//      （说明阈值生效）；bBusinessTaskAllowed 也跟着变 FALSE，业务被禁
+//   6. sLibVersionForHmi 在 HMI 直接显示，便于现场运维
+// =============================================================================
+
+// 直接取字段：本常量是编译期固化、运行时只读
+nMajor    := stLibVersion_Tc2_Coupler.iMajor;
+nMinor    := stLibVersion_Tc2_Coupler.iMinor;
+nBuild    := stLibVersion_Tc2_Coupler.iBuild;
+nRevision := stLibVersion_Tc2_Coupler.iRevision;
+sLibVersionForHmi := stLibVersion_Tc2_Coupler.sVersion;
+
+// 用 F_CmpLibVersion 做">= Required"比较
+bLibVersionOk := F_CmpLibVersion(
+    stLibVersion := stLibVersion_Tc2_Coupler,
+    iMajor       := nRequiredMajor,
+    iMinor       := nRequiredMinor,
+    iBuild       := nRequiredBuild,
+    iRevision    := nRequiredRevision,
+    nCmpType     := E_CmpLibVersion.GreaterOrEqual
+);
+
+// 业务任务的启动门控
+bBusinessTaskAllowed := bLibVersionOk;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

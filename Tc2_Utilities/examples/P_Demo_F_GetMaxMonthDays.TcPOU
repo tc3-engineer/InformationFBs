@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_F_GetMaxMonthDays" Id="{b4b3716f-3917-5939-903f-7fb83e62bcc5}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_F_GetMaxMonthDays
+VAR
+    wYear    : WORD := 2024; // 年份
+    wMonth   : WORD := 2; // 月份
+    wMaxDays : WORD; // 该月最大天数（闰年 2 月 = 29）
+    bRunOnce : BOOL; // 脉冲触发
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：HMI 用户输入(年, 月, 日)时校验 day 不超过该月最大天数
+//
+// 价值：1 行调用即得月长，无需「if month in {1,3,5,7,8,10,12} ...」一长串
+//
+// 验证步骤：
+//   1. 引用 Tc2_Utilities
+//   2. 编译 + 登录 + 运行
+//   3. 强制 bRunOnce := TRUE
+//   4. 在线观察 wMaxDays = 29（2024 年 2 月）
+//   5. wYear:=2023 重测 → wMaxDays = 28（平年 2 月）
+//   6. wMonth:=0 → wMaxDays = 0（错误返回）
+// =============================================================================
+wMaxDays := F_GetMaxMonthDays(wYear, wMonth);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

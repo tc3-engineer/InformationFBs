@@ -4,6 +4,6 @@
 - Library: Tc2_Standard v1.3.4
 - Source PDF: https://download.beckhoff.com/download/document/automation/twincat3/TwinCAT_3_PLC_Lib_Tc2_Standard_EN.pdf
 - Doc: `Tc2_Standard/counter/CTUD.md` — PASS
-- Example: `Tc2_Standard/examples/P_Demo_CTUD.xml` — PASS
+- Example: `Tc2_Standard/examples/P_Demo_CTUD.TcPOU` — PASS
 - Doc result: ✅ PASS
 - Example result: ✅ PASS

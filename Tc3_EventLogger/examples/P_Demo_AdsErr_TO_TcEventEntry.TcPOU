@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_AdsErr_TO_TcEventEntry" Id="{4ed4bdc3-94ff-5cca-a488-8e916cca1c0b}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_AdsErr_TO_TcEventEntry
+VAR
+    eErrorId     : E_AdsErr := E_AdsErr.ADSERR_DEVICE_INVALIDPARM; // 在线写入要转换的 ADS 错误码
+    stEventEntry : TcEventEntry; // 转换输出
+    bOk          : BOOL; // 转换成功标志
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：ADS 错误码 → TcEventEntry 转换演示
+// 价值：一次调用完成错误码到事件定义的转换
+// 验证：登录后给输入赋已知合法值；调用本 FC 后 bOk 应为 TRUE 且输出已填
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_EventLogger（System → References → Add library）
+//   3. 编译 → 登录 → 运行；按 verify 注释里给出的在线写值操作
+// =============================================================================
+
+// 把 ADS 错误码转成 TcEventEntry
+bOk := AdsErr_TO_TcEventEntry(
+    eErrorId := eErrorId,
+    stEventEntry := stEventEntry);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

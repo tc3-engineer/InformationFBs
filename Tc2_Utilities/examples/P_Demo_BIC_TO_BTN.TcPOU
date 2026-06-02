@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_BIC_TO_BTN" Id="{18753c71-116f-5e7f-87ca-3097849a7c9d}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_BIC_TO_BTN
+VAR
+    sBicRaw : STRING(255) := 1P193995SBTN0002agdw1KEL7411 Q1 2P112104020018; // 模拟从 FB_EcCoEReadBIC 读出的 BIC 原始串
+    sBtn    : STRING(9); // 提取出的 BTN，预期 '0002agdw'
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：产线 MES 追溯——记录每个 EtherCAT 从站的 BTN 出厂追溯号。
+//       生产时调用 FB_EcCoEReadBIC 读到 BIC 字符串，本 FC 提取 BTN 写入数据库。
+// 价值：替代手写 FIND + MID + RTrim 三步处理，一行解决，长度常量内置。
+// 验证步骤：
+//   1. 引用 Tc2_Utilities
+//   2. 编译 + 登录 + 运行
+//   3. 在线 monitor sBtn -> '0002agdw'
+//   4. 改 sBicRaw 为不含 'SBTN' 的字符串 -> sBtn 应为空串 ''
+// =============================================================================
+
+sBtn := BIC_TO_BTN(sBicRaw);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

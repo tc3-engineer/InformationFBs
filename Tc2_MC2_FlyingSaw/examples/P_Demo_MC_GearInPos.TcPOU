@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_MC_GearInPos" Id="{1b70beaf-bfe4-59a4-9fb8-fc4773b8f8eb}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_MC_GearInPos
+VAR
+    fbGearInPos   : MC_GearInPos;
+    axisWebFeed   : AXIS_REF; // 主轴：走料/印张
+    axisRotarySaw : AXIS_REF; // 从轴：旋转切刀
+    syncMode      : ST_SyncMode; // 同步边界条件位掩码（本例全 0）
+    bCoupleReq    : BOOL; // 在线置 TRUE 启动位置同步
+    rtCouple      : R_TRIG;
+    bStartSync    : BOOL; // 监视：同步开始
+    bInSync       : BOOL; // 监视：在同步点位置+速度精确对齐
+    bBusy         : BOOL;
+    bActive       : BOOL;
+    bAborted      : BOOL;
+    bErr          : BOOL;
+    nErrID        : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_MC2_FlyingSaw.MC_GearInPos 演示程序
+// ============================================================
+// 场景：印刷连线套准横切。主轴(走料)走到每个印张切缝位置时，切刀辊必须
+//       位置 + 速度同时精确对齐再切，保证切口正好落在印记上。
+// 价值：不用本 FB 时要自己算同步点轮廓、做相位补偿与速度匹配，极易切歪/
+//       丢位；本 FB 把"在指定主/从同步点精确对齐"封装为一次 Execute，由
+//       NC 规划过渡轮廓。与 MC_GearInVelo（只匹配速度）的关键区别在此。
+// 验证：先让主轴 axisWebFeed 运行（MC_MoveVelocity），再置 bCoupleReq := TRUE；
+//       观察 bStartSync 先 TRUE、从轴规划过渡，随后在主轴位置到达 100.0
+//       附近时从轴位置接近 0.0 且 bInSync 变 TRUE。同步点离接入点太近会
+//       报错（窗口不足）。解耦务必对从轴接 MC_Stop/MC_Halt。
+// ============================================================
+
+// 上升沿：一次按钮只触发一次耦合
+rtCouple(CLK := bCoupleReq);
+
+// 主轴走到 100.0 时从轴应到达 0.0 并达同步速度；1:1 速比
+fbGearInPos(
+    Execute            := rtCouple.Q,
+    RatioNumerator     := 1.0,
+    RatioDenominator   := 1,
+    MasterSyncPosition := 100.0,
+    SlaveSyncPosition  := 0.0,
+    SyncMode           := syncMode,
+    Master             := axisWebFeed,
+    Slave              := axisRotarySaw,
+    StartSync          => bStartSync,
+    InSync             => bInSync,
+    Busy               => bBusy,
+    Active             => bActive,
+    CommandAborted     => bAborted,
+    Error              => bErr,
+    ErrorID            => nErrID
+);
+
+// 命令进入运动队列后复位触发，准备下一次
+IF NOT bBusy THEN
+    bCoupleReq := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

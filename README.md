@@ -1,6 +1,6 @@
 # tc3-libraries-kb
 
-由 **Claude Code（云端）** 维护的 TwinCAT 3 全库知识库。覆盖 ~40 个 Beckhoff PLC 库 / ~1500-2000 个 FB+FC，所有文档以官方 PDF 为唯一可信源，每篇生成时**自动二次校验**。**每篇文档配套一个 PLCopenXML 例程文件，可直接导入 TwinCAT 3 XAE 运行验证**。
+由 **Claude Code（云端）** 维护的 TwinCAT 3 全库知识库。覆盖 ~40 个 Beckhoff PLC 库 / ~1500-2000 个 FB+FC，所有文档以官方 PDF 为唯一可信源，每篇生成时**自动二次校验**。**每篇文档配套一个 TcPOU 例程文件，可直接导入 TwinCAT 3 XAE 运行验证**。
 
 ## 工作方式：单 session + slash commands
 
@@ -24,20 +24,20 @@
 
 PR 描述里会列出每篇的 verify 结果，你 review 时优先看 verify-failed 的。
 
-## 例程：PLCopenXML，拖拽即用
+## 例程：TcPOU 原生格式，拖拽即用
 
-每个 FB/FC 配套一个 `.xml` 文件（IEC 61131-10 PLCopenXML 标准），含一个 PROGRAM POU 演示该 FB 用法。
+每个 FB/FC 配套一个 `.TcPOU` 文件（TwinCAT 3 原生 XML / TcPlcObject schema），含一个 PROGRAM POU 演示该 FB 用法。
 
 **导入步骤（TwinCAT 3 XAE）**：
 1. 右键 PLC 项目（`<MyProject> Project` 节点）
-2. 选 **Import PLCopenXML...**
-3. 选 `.xml` 文件 → OK
+2. 选 **Add → Existing Item...**
+3. 选 .TcPOU 文件 → OK
 4. POU 出现在树中
 5. 把 POU 加到 PlcTask（或在 MAIN 里调一下）→ 编译 → 登录 → 在线监视输出
 
-每个 .xml 顶部有中文验证步骤注释，明确告诉你"强制 X，观察 Y"。
+每个 .TcPOU 顶部有中文验证步骤注释，明确告诉你"强制 X，观察 Y"。
 
-> 官方文档原话："PLCopenXML defines a subset of the elements known in TwinCAT. 100% compatibility is therefore not ensured." — 即只导入"通用 IEC 61131-10 子集"，TwinCAT 私有特性（attribute pragma 等）不保留。本仓库例程**有意只用通用子集**，确保 100% 可导入。
+> **为什么改成 `.TcPOU` 而不是之前的 PLCopenXML（`.xml`）**：原版 PLCopenXML 例程需要 XAE 走 **Import PLCopenXML** 向导，且 Beckhoff 官方原话指出「PLCopenXML defines a subset of the elements known in TwinCAT. 100% compatibility is therefore not ensured.」`.TcPOU` 是 TwinCAT 3 原生 schema（`TcPlcObject`），**直接拖入 PLC `POUs` 文件夹即可使用**，保留 `SpecialFunc`、稳定 GUID 等元数据，免去子集映射。代价：`.TcPOU` 是 Beckhoff 私有格式，不能跨导入到 CODESYS / TIA / B&R 等非 Beckhoff IDE — 本仓库定位是 TwinCAT 3 文档与例程，原生格式优先。
 
 ## 目录结构
 

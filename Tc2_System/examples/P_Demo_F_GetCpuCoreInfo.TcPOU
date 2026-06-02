@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_F_GetCpuCoreInfo" Id="{3b7b4b2a-62c6-5a7e-8153-a10034dcd47c}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_F_GetCpuCoreInfo
+VAR
+    nCoreIndex : DINT; // 要查询的核心索引（先从 F_GetCpuCoreIndex 拿）
+    stCoreInfo : ST_CpuCoreInfo; // 读取到的核心信息结构
+    hrResult   : HRESULT; // 调用结果：S_OK = 0 / 失败码
+    bCfgOk     : BOOL; // TRUE = baseTime 与工艺要求一致
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：启动时读取当前核心 baseTime，与工艺要求 1 ms 比较，不匹配则告警。
+// 价值：替代登工程查 Real-time 面板，PLC 自助验证。
+// 验证：在线观察 hrResult = 0；改 nCoreIndex := 99 → hrResult = 0x9811070B。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_System（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』行的指示在线写值观察
+// =============================================================================
+
+// 先拿当前核心索引，再查详情
+nCoreIndex := F_GetCpuCoreIndex(nTaskIndex := 0);
+hrResult := F_GetCpuCoreInfo(
+    nCpuCoreIndex := nCoreIndex,
+    pInfo         := ADR(stCoreInfo)
+);
+
+// HRESULT 0 是 S_OK；上层业务判定 baseTime 是否匹配工艺要求
+// （此处只示意，实际字段名以 ST_CpuCoreInfo 定义为准）
+bCfgOk := (hrResult = 0);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

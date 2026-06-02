@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_F_FormatArgToStr" Id="{a406bb82-0ed7-5f5f-956c-7d0113b551c6}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_F_FormatArgToStr
+VAR
+    nValue           : UDINT := 12345; // 工业语义：要格式化的整数（如生产计数）
+    argFmt           : T_Arg; // T_Arg 描述符
+    eFmt             : E_TypeFieldParam; // 格式类型（枚举）
+    nWritten         : UDINT; // 实际写入字节数
+    bFmt             : BOOL; // 在线触发
+    sFormattedOutput : T_MaxString; // 格式化结果（VAR_IN_OUT，由 F_FormatArgToStr 写入）
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：自定义可本地化数字显示 FB：根据语言环境调整小数点 / 千分位字符，调用底层 `F_FormatArgToStr` 而不是裸字符串拼接。
+// 价值：**只在自定义格式化器内部用**——`FB_FormatString` 已经包装好 printf-style，业务侧 99% 场景不用裸调本函数。
+// 验证步骤：
+//   1. 引用 Tc2_Utilities
+//   2. 编译 + 登录 + 运行
+//   3. 在线写触发位 TRUE，monitor 输出变量
+// =============================================================================
+
+IF bFmt THEN
+    argFmt := F_UDINT(nValue);
+    // eFmt := E_TypeFieldParam.TYPE_d;  // 示意——具体枚举值见 E_TypeFieldParam 文档
+    nWritten := F_FormatArgToStr(bSign     := FALSE,
+                                 bBlank    := FALSE,
+                                 bNull     := FALSE,
+                                 bHash     := FALSE,
+                                 bLAlign   := FALSE,
+                                 bWidth    := TRUE,
+                                 iWidth    := 8,
+                                 iPrecision:= 0,
+                                 eFmtType  := eFmt,
+                                 arg       := argFmt,
+                                 sOut      := sFormattedOutput);
+    bFmt := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

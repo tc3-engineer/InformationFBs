@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_MC_PhasingRelative" Id="{1dbda28b-06d4-5d64-adec-6ec1a86f990f}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_MC_PhasingRelative
+VAR
+    fbAddPhase      : MC_PhasingRelative;
+    axisMainRoller  : AXIS_REF;
+    axisColorPlate  : AXIS_REF;
+    rtCorrectTrig   : R_TRIG;
+    bRunCorrection  : BOOL := FALSE;
+    lrPhaseErrorDeg : LREAL := 0.2;
+    bCorrectionDone : BOOL;
+    lrCoveredPhase  : LREAL;
+    nErrorID        : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：套准闭环 — 视觉相机每秒反馈一个小相位偏差（如 +0.2°），用相对相位
+//       调整 FB 把这个增量叠加到色版从轴上。多次调用累积修正。
+// 价值：业务不用维护"当前总相位偏差"全局变量，FB 自动累加；适合做相位的
+//       闭环 PID 直接输出。
+// 验证：先确认主从耦合已建立（外部 MC_GearIn 已运行）；
+//       bRunCorrection := TRUE 一次 → bCorrectionDone 在 ~ 0.1 s 后 TRUE，
+//       lrCoveredPhase ≈ 0.2。多次触发可看到相位差累积（视觉系统反馈应回零）。
+// =============================================================================
+
+rtCorrectTrig(CLK := bRunCorrection);
+
+fbAddPhase(
+    Execute           := rtCorrectTrig.Q,
+    ContinuousUpdate  := FALSE,
+    PhaseShift        := lrPhaseErrorDeg,
+    Velocity          := 5.0,
+    Acceleration      := 50.0,
+    Deceleration      := 50.0,
+    Jerk              := 500.0,
+    BufferMode        := MC_Aborting,
+    Master            := axisMainRoller,
+    Slave             := axisColorPlate,
+    Done              => bCorrectionDone,
+    CoveredPhaseShift => lrCoveredPhase,
+    ErrorId           => nErrorID
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

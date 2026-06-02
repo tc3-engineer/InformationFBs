@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_F_SplitPathName" Id="{72d2da59-19de-5a9d-9ebf-33988b28e484}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_F_SplitPathName
+VAR
+    sFullPath : T_MaxString := 'D:\Recipes\Apr\BatchA.csv'; // 完整路径
+    sDriveOut : STRING(3) := ''; // 盘符输出
+    sDirOut   : T_MaxString := ''; // 目录输出
+    sFileBase : T_MaxString := ''; // 文件名输出
+    sFileExt  : T_MaxString := ''; // 扩展名输出
+    bSplitOk  : BOOL; // TRUE = 拆分成功
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：读到工艺文件路径 → 拆出扩展名 .csv 走 CSV 解析分支；按目录归档到月份表。
+// 价值：一行替代 15-20 行字符串扫描。
+// 验证：改 sFullPath 为不同路径 → 4 个分量自动更新；非法路径 → bSplitOk = FALSE。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_System（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』行的指示在线写值观察
+// =============================================================================
+
+// 单次完整调用；VAR_IN_OUT 必须传本地变量
+bSplitOk := F_SplitPathName(
+    sPathName := sFullPath,
+    sDrive    := sDriveOut,
+    sDir      := sDirOut,
+    sFileName := sFileBase,
+    sExt      := sFileExt
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -13,7 +13,7 @@
 | Verified | 2026-05-21 ✅ |
 | InfoSys-checked | ✅ 2026-05-21 |
 | Status | `verified` |
-| Example | [`examples/P_Demo_FB_SoESetDataAccessMode.xml`](../examples/P_Demo_FB_SoESetDataAccessMode.xml) |
+| Example | [`examples/P_Demo_FB_SoESetDataAccessMode.TcPOU`](../examples/P_Demo_FB_SoESetDataAccessMode.TcPOU) |
 
 ---
 
@@ -96,7 +96,7 @@ END_VAR
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_FB_SoESetDataAccessMode.xml`](../examples/P_Demo_FB_SoESetDataAccessMode.xml)
+> 配套可导入文件：[`examples/P_Demo_FB_SoESetDataAccessMode.TcPOU`](../examples/P_Demo_FB_SoESetDataAccessMode.TcPOU)
 
 ```iecst
 // 场景：第三方 SoE 设备不支持并行访问，FB_SoERead 报 ADS 错；切到顺序访问

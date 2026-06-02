@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_F_StringIsASCII" Id="{f1041ff1-aada-5627-8c69-8ca1eb6c12b6}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_F_StringIsASCII
+VAR
+    sIncoming  : STRING(255) := 'Operator: John'; // 工业语义：上游收到的字符串（可能含非 ASCII）
+    bIsAscii   : BOOL; // 判定结果
+    nCharLen   : UDINT; // ASCII 字符数（顺便返回）
+    bCheckOnce : BOOL; // 在线触发
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：OPC UA 服务器把 PLC 字符串变量发布出去，UA 协议要求 UTF-8。先 `F_StringIsASCII` 判一下：是 ASCII 直接发；不是再走 `STRING_TO_UTF8` 转换。
+// 价值：高频日志/标签场景下，跳过不必要的 STRING→UTF8 转换可显著降低 CPU 占用（典型生产环境 90% 的 PLC 字符串都是纯 ASCII）。
+// 验证步骤：
+//   1. 引用 Tc2_Utilities
+//   2. 编译 + 登录 + 运行
+//   3. 在线写触发位 TRUE，monitor 输出变量
+// =============================================================================
+// 字符串上云前做编码检查
+IF bCheckOnce THEN
+    bIsAscii := F_StringIsASCII(pSTRING := ADR(sIncoming),
+                                nLen   => nCharLen);
+    // bIsAscii = TRUE -> 可直接当 UTF-8 发送，跳过 STRING_TO_UTF8 转换
+    bCheckOnce := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

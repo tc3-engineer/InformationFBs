@@ -13,7 +13,7 @@
 | Verified | 2026-05-25 ✅ |
 | InfoSys-checked | ✅ 2026-05-25 |
 | Status | `verified` |
-| Example | [`examples/P_Demo_FB_SoEAX5000ReadActMainVoltage.xml`](../examples/P_Demo_FB_SoEAX5000ReadActMainVoltage.xml) |
+| Example | [`examples/P_Demo_FB_SoEAX5000ReadActMainVoltage.TcPOU`](../examples/P_Demo_FB_SoEAX5000ReadActMainVoltage.TcPOU) |
 
 ---
 
@@ -104,7 +104,7 @@ END_VAR
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_FB_SoEAX5000ReadActMainVoltage.xml`](../examples/P_Demo_FB_SoEAX5000ReadActMainVoltage.xml)
+> 配套可导入文件：[`examples/P_Demo_FB_SoEAX5000ReadActMainVoltage.TcPOU`](../examples/P_Demo_FB_SoEAX5000ReadActMainVoltage.TcPOU)
 
 ```iecst
 // 场景：HMI 上显示 AX5000 进线电压，操作员点"刷新"读一次当前主电源电压峰值

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_PcWatchDog_BAPI" Id="{f17d413f-64a3-5a51-91d3-0d1548db5121}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_PcWatchDog_BAPI
+VAR
+    fbPcWatchdogBapi     : FB_PcWatchDog_BAPI; // FB_PcWatchDog_BAPI 实例
+    bEnableSlowWatchdog  : BOOL := FALSE; // 在线置 TRUE 启用看门狗
+    nSlowWatchdogTimeSec : UDINT := 600; // 看门狗超时 600 秒（10 分钟）
+    bBapiError           : BOOL; // TRUE = ADS 调用失败（BIOS 可能不支持）
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：慢工艺循环监护：超时设 600 秒（10 分钟），主循环每秒喂一次狗。卡死 10 分钟后 PC 自动重启。
+// 价值：兼容主板更广，超时上限远超 FB_PcWatchdog。
+// 验证：bEnableSlowWatchdog := TRUE → PC 正常；故意让 PLC 卡死超过 600 秒 → PC 自动重启。调试前务必 FALSE。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_System（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』行的指示在线写值观察
+// =============================================================================
+
+fbPcWatchdogBapi(
+    sNetID         := '',
+    nWatchdogTimeS := nSlowWatchdogTimeSec,
+    bExecute       := bEnableSlowWatchdog,
+    tTimeout       := T#5S
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

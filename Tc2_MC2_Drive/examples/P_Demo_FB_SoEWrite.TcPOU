@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_SoEWrite" Id="{6bb2fc6c-f8b8-5864-869c-e8550b64e6d3}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_SoEWrite
+VAR
+    fbSoEWrite      : FB_SoEWrite; // SoE 写参数 FB 实例
+    axisServo       : AXIS_REF; // 伺服轴轴引用；必须先在 System Manager 配好并 Link
+    rtWriteTrig     : R_TRIG; // 把电平转上升沿
+    bWriteParamReq  : BOOL := FALSE; // 在线写 TRUE 触发一次写入
+    nWriteIdn       : WORD; // 要写的 IDN，这里 S_0_IDNs + 33 = S-0-0033
+    nWriteValue     : UINT := 100; // 要写入的新参数值；写前确认在 Min/Max 内
+    bWriteBusy      : BOOL;
+    bWriteError     : BOOL;
+    nWriteAdsErr    : UINT;
+    nWriteSercosErr : UINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：产品换型，需要把伺服驱动器某 SoE 参数（IDN S-0-0033）写成新值。
+//       Element 16#40 表示写"值"——多数 SoE 参数只有值可写。
+//
+// 价值：1) IDN + Element 通用写任意可写 SoE 参数，免写一堆专用 FB
+//       2) 参数常驻驱动器侧，写一次长期生效
+//       3) AdsErrId + SercosErrId 双错误码区分"通信问题"和"只读/越界问题"
+//
+// !! 注意：SoE 参数写入是持久的，写错可能改变伺服行为。写前确认 IDN 正确、
+//          值落在参数 Min/Max 内（可先用 FB_SoERead 读 Min/Max）。
+//
+// 验证步骤：
+//   1. System Manager 配好 NC 轴并 Link 给 axisServo，引用 Tc2_MC2_Drive
+//   2. Add Existing Item (.TcPOU) 选本文件，加进 PlcTask，编译登录
+//   3. 选一个确实可写的 IDN，设好 nWriteValue
+//   4. 在线写 bWriteParamReq := TRUE → bWriteBusy 置 TRUE
+//   5. 等 bWriteBusy 落回 FALSE 且 bWriteError = FALSE 即写入成功，
+//      可用 FB_SoERead 回读验证
+//   6. 若 bWriteError = TRUE：看 nWriteAdsErr（通信），nWriteSercosErr
+//      （只读/越界/IDN 不存在）
+// =============================================================================
+
+// 用 S_0_IDNs 基地址拼出 S-0-0033
+nWriteIdn := S_0_IDNs + 33;
+
+// 用 R_TRIG 把"持续按住的 TRUE"转成真正的上升沿
+rtWriteTrig(CLK := bWriteParamReq);
+
+// 单次调用：SrcBuf/BufLen 配对指向 nWriteValue；Element 16#40 写值
+// Axis 是 VAR_IN_OUT 必传；本 FB 无 Done，靠 Busy 落回 FALSE 判成功
+fbSoEWrite(
+    NetId       := '',
+    Idn         := nWriteIdn,
+    Element     := 16#40,
+    SrcBuf      := ADR(nWriteValue),
+    BufLen      := SIZEOF(nWriteValue),
+    Execute     := rtWriteTrig.Q,
+    Timeout     := DEFAULT_ADS_TIMEOUT,
+    Axis        := axisServo,
+    Busy        => bWriteBusy,
+    Error       => bWriteError,
+    AdsErrId    => nWriteAdsErr,
+    SercosErrId => nWriteSercosErr
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

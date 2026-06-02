@@ -13,7 +13,7 @@
 | Verified | 2026-05-21 ✅ |
 | InfoSys-checked | ✅ 2026-05-21 |
 | Status | `verified` |
-| Example | [`examples/P_Demo_FB_TlsSocketListen.xml`](../examples/P_Demo_FB_TlsSocketListen.xml) |
+| Example | [`examples/P_Demo_FB_TlsSocketListen.TcPOU`](../examples/P_Demo_FB_TlsSocketListen.TcPOU) |
 
 ---
 
@@ -113,7 +113,7 @@ END_VAR
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_FB_TlsSocketListen.xml`](../examples/P_Demo_FB_TlsSocketListen.xml)
+> 配套可导入文件：[`examples/P_Demo_FB_TlsSocketListen.TcPOU`](../examples/P_Demo_FB_TlsSocketListen.TcPOU)
 
 ```iecst
 // 场景：PLC 在 8443 端口启 HTTPS-like 监听（单向 TLS）。

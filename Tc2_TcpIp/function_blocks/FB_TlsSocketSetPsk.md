@@ -13,7 +13,7 @@
 | Verified | 2026-05-21 ✅ |
 | InfoSys-checked | ✅ 2026-05-21 |
 | Status | `verified` |
-| Example | [`examples/P_Demo_FB_TlsSocketSetPsk.xml`](../examples/P_Demo_FB_TlsSocketSetPsk.xml) |
+| Example | [`examples/P_Demo_FB_TlsSocketSetPsk.TcPOU`](../examples/P_Demo_FB_TlsSocketSetPsk.TcPOU) |
 
 ---
 
@@ -99,7 +99,7 @@ END_VAR
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_FB_TlsSocketSetPsk.xml`](../examples/P_Demo_FB_TlsSocketSetPsk.xml)
+> 配套可导入文件：[`examples/P_Demo_FB_TlsSocketSetPsk.TcPOU`](../examples/P_Demo_FB_TlsSocketSetPsk.TcPOU)
 
 ```iecst
 // 场景：IoT 客户端用 PSK 接 IoT 网关；不部署证书 PKI 简化运维。

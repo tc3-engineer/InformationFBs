@@ -13,7 +13,7 @@
 | Verified | 2026-05-21 ✅ |
 | InfoSys-checked | ✅ 2026-05-21 |
 | Status | `verified` |
-| Example | [`examples/P_Demo_FB_SocketUdpReceiveFrom.xml`](../examples/P_Demo_FB_SocketUdpReceiveFrom.xml) |
+| Example | [`examples/P_Demo_FB_SocketUdpReceiveFrom.TcPOU`](../examples/P_Demo_FB_SocketUdpReceiveFrom.TcPOU) |
 
 ---
 
@@ -104,7 +104,7 @@ UDP receive 几乎没有逻辑错误——网络丢包不算"错误"。
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_FB_SocketUdpReceiveFrom.xml`](../examples/P_Demo_FB_SocketUdpReceiveFrom.xml)
+> 配套可导入文件：[`examples/P_Demo_FB_SocketUdpReceiveFrom.TcPOU`](../examples/P_Demo_FB_SocketUdpReceiveFrom.TcPOU)
 
 ```iecst
 // 场景：UDP socket 已建好，持续 polling 收发现包并记录对端 IP/Port。

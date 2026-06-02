@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_LicFileRead" Id="{4338bd76-2871-5b6b-b685-dc03fd085dcd}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_LicFileRead
+VAR
+    fbFB_LicFileRead : FB_LicFileRead; // FB_LicFileRead 实例
+    bExec            : BOOL := FALSE;
+    bBusy_           : BOOL;
+    bErrFlag         : BOOL;
+    nErrCode         : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：读 License 文件。
+// 价值：审计支持。
+// 验证：触发后观察 bDone / bErr，错误号 nErrId 反映 ADS Return Codes。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_Utilities（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』行的指示在线写值观察
+// =============================================================================
+
+fbFB_LicFileRead(
+    bExecute := bExec, tTimeout := DEFAULT_ADS_TIMEOUT,
+    bBusy => bBusy_, bError => bErrFlag, nErrorId => nErrCode
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

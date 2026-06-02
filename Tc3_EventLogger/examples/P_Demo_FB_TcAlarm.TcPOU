@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_TcAlarm" Id="{6ddd922f-42a6-5f0f-9973-4e7906aa7b36}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_TcAlarm
+VAR
+    fbAlarm            : FB_TcAlarm; // 包装机封口温度故障报警实例
+    bCreated           : BOOL; // Create() 是否已成功执行（一次性 latch）
+    bSealTempAlarm     : BOOL := FALSE; // 上层逻辑给出的故障信号（在线置 TRUE 模拟）
+    bConfirmReq        : BOOL := FALSE; // 操作员在 HMI 按下确认键时置 TRUE
+    bSealTempAlarmPrev : BOOL; // 用于检测上升/下降沿
+    hr                 : HRESULT; // 方法返回值监视
+    guidEventClass     : GUID; // 实际事件类 GUID（请通过 EventClass 编辑器导出）
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：包装机封口温度异常报警（需要操作员确认才能复位的故障）
+// 价值：一句 Raise()/Clear()/Confirm() 完成"上升沿报警→保持显示→等待确认"三态，省去自建报警表 + HMI 联动 + 持久化的全部样板代码
+// 验证：登录后写 bSealTempAlarm := TRUE，HMI EventLogger 视图应立即显示状态 Raised；写 FALSE 后状态变 Cleared 但 ConfirmationState 仍为 WaitForConfirmation；写 bConfirmReq := TRUE 后看到 Confirmed 状态，整条生命周期结束
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_EventLogger（System → References → Add library）
+//   3. 编译 → 登录 → 运行；按 verify 注释里给出的在线写值操作
+// =============================================================================
+
+// 第一次扫描注册到 EventLogger（GUID + EventID 由工程师在事件类编辑器配置）
+IF NOT bCreated THEN
+    hr := fbAlarm.Create(
+        eventClass := guidEventClass,
+        nEventId := 1001,                  // 封口温度异常事件 ID
+        eSeverity := TcEventSeverity.Error,
+        bWithConfirmation := TRUE,         // 需要操作员确认
+        ipSourceInfo := 0);                // 用默认源信息
+    bCreated := SUCCEEDED(hr);
+END_IF;
+
+// 上升沿 Raise，下降沿 Clear
+IF bSealTempAlarm AND NOT bSealTempAlarmPrev THEN
+    fbAlarm.Raise(nTimeStamp := 0);        // 0 = 用当前系统时间
+END_IF;
+IF NOT bSealTempAlarm AND bSealTempAlarmPrev THEN
+    fbAlarm.Clear(nTimeStamp := 0, bRemove := FALSE);
+END_IF;
+bSealTempAlarmPrev := bSealTempAlarm;
+
+// 操作员按确认键
+IF bConfirmReq THEN
+    fbAlarm.Confirm(nTimeStamp := 0);
+    bConfirmReq := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

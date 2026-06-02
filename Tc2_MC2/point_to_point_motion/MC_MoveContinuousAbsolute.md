@@ -13,7 +13,7 @@
 | Verified | 2026-05-21 ✅ |
 | InfoSys-checked | ✅ 2026-05-21 |
 | Status | `verified` |
-| Example | [`examples/P_Demo_MC_MoveContinuousAbsolute.xml`](../examples/P_Demo_MC_MoveContinuousAbsolute.xml) |
+| Example | [`examples/P_Demo_MC_MoveContinuousAbsolute.TcPOU`](../examples/P_Demo_MC_MoveContinuousAbsolute.TcPOU) |
 
 ---
 
@@ -124,7 +124,7 @@ END_VAR
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_MC_MoveContinuousAbsolute.xml`](../examples/P_Demo_MC_MoveContinuousAbsolute.xml)
+> 配套可导入文件：[`examples/P_Demo_MC_MoveContinuousAbsolute.TcPOU`](../examples/P_Demo_MC_MoveContinuousAbsolute.TcPOU)
 
 ```iecst
 // 场景：激光切割机 — 直线段以高速 1000 mm/s 切到 100 mm，过点不停继续 200 mm/s 进入圆弧段

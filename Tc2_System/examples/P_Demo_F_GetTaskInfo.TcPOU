@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_F_GetTaskInfo" Id="{3d0b5687-e502-5878-9961-a2ee7a72fb9e}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_F_GetTaskInfo
+VAR
+    stMyTaskInfo : PlcTaskSystemInfo; // 本任务系统信息
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：每周期把 MAIN 任务的最大执行时间存到 HMI 可视化变量；运维直接看到是否超周期。
+// 价值：替代登工程开 Real-time 面板远程观察。
+// 验证：加重 PLC 负载（如批量 MEMCPY）→ 观察 stMyTaskInfo.maxExecTime 增大。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_System（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』行的指示在线写值观察
+// =============================================================================
+
+// 每周期更新一次任务信息到 HMI 可视化变量
+stMyTaskInfo := F_GetTaskInfo();
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

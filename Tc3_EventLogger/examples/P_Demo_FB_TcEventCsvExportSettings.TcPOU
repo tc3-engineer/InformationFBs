@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_TcEventCsvExportSettings" Id="{198f2799-22e9-58fc-b453-528a3d6ffbf3}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_TcEventCsvExportSettings
+VAR
+    fbSettings  : FB_TcEventCsvExportSettings; // CSV 导出配置
+    bWithHeader : BOOL := TRUE; // 是否含表头
+    nLangId     : DINT := 2052; // 中文 LangId
+    sDelimiter  : STRING(4) := ';'; // 字段分隔符
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：配置「中文 + 分号分隔 + 带表头」的 CSV 导出
+// 价值：灵活的 CSV 格式控制
+// 验证：实例化后 fbSettings 的属性应反映你的配置；之后传给 ExportLoggedEvents
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_EventLogger（System → References → Add library）
+//   3. 编译 → 登录 → 运行；按 verify 注释里给出的在线写值操作
+// =============================================================================
+
+// 实际工程通过 setter / 属性配置 fbSettings
+// （EventLogger 库版本不同接口略有差异，请参考 InfoSys topic）
+// 本例仅声明实例与变量；后续：
+// fbLogger.ExportLoggedEvents(sFileName := '...', ipExportSettings := fbSettings, ...);
+; // placeholder — 配置具体走属性 setter（取决于库版本）
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

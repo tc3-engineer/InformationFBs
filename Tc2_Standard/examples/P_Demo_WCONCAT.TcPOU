@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_WCONCAT" Id="{e883d4bf-231a-52ab-92b5-d056246075fc}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_WCONCAT
+VAR
+    sAlarmPrefix : WSTRING(255) := "报警："; // 中文报警前缀（UCS-2 编码）
+    sAlarmReason : WSTRING(255) := "1 号电机过流"; // 报警原因（来自上游中文检测模块）
+    sAlarmText   : WSTRING(255); // 拼好的完整中文报警文本，直接发往 HMI 报警栏
+    bGenerate    : BOOL; // 触发一次 WCONCAT
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：HMI 报警栏显示中文报警。报警前缀（等级/编号）和原因文本来自不同
+//       模块，需要在 PLC 拼好再发给 HMI。如果用 STRING + CONCAT，按字节算
+//       中文会乱码；WSTRING + WCONCAT 用 UCS-2，中文 1 字符 = 1 字符。
+//
+// 价值：WCONCAT 与 CONCAT 语义一致但 Unicode 安全。HMI 默认 UCS-2 编码，
+//       PLC 侧用 WSTRING 与 HMI 编码完全匹配，无须运行时转码。
+//
+// 验证步骤：
+//   1. 导入本文件、引用 Tc2_Standard、编译、登录、运行
+//   2. 在线 monitor sAlarmText（注意监视面板要选 Unicode 显示）
+//   3. 在线写 bGenerate := TRUE
+//   4. 下一周期 sAlarmText = "报警：1 号电机过流"
+//   5. 把 sAlarmReason 改为 "紧急停机" + 再触发 → sAlarmText 立即更新
+//   6. WLEN(sAlarmText) 应等于字符数（中文每字符 1 个 WCHAR）而不是字节数
+// =============================================================================
+
+// WSTRING 字面量用双引号，单引号是 STRING 字面量
+IF bGenerate THEN
+    sAlarmText := WCONCAT(sAlarmPrefix, sAlarmReason);
+    bGenerate := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

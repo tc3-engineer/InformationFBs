@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_Profiler" Id="{822cd653-349b-5e1a-a86c-14d64b921884}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_Profiler
+VAR
+    fbProfiler : Profiler; // Profiler 实例
+    START      : BOOL;
+    RESET      : BOOL;
+    BUSY       : BOOL;
+    DATA       : PROFILERSTRUCT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：优化对比。
+// 价值：定位热点。
+// 验证：Start → 业务代码 → Stop → 读 nElapsed 微秒值。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_Utilities（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』行的指示在线写值观察
+// =============================================================================
+
+// 单次完整调用形式（所有 VAR_INPUT 显式赋值）
+fbProfiler(
+    START := START,
+    RESET := RESET,
+    BUSY => BUSY,
+    DATA => DATA
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

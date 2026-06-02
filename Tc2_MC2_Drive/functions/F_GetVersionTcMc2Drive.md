@@ -13,7 +13,7 @@
 | Verified | 2026-05-21 ✅ |
 | InfoSys-checked | ⚠️ not-on-infosys |
 | Status | `verified` |
-| Example | [`examples/P_Demo_F_GetVersionTcMc2Drive.xml`](../examples/P_Demo_F_GetVersionTcMc2Drive.xml) |
+| Example | [`examples/P_Demo_F_GetVersionTcMc2Drive.TcPOU`](../examples/P_Demo_F_GetVersionTcMc2Drive.TcPOU) |
 
 ---
 
@@ -72,7 +72,7 @@ END_VAR
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_F_GetVersionTcMc2Drive.xml`](../examples/P_Demo_F_GetVersionTcMc2Drive.xml)（PLCopenXML，可直接导入 TwinCAT 3 XAE）
+> 配套可导入文件：[`examples/P_Demo_F_GetVersionTcMc2Drive.TcPOU`](../examples/P_Demo_F_GetVersionTcMc2Drive.TcPOU)（TwinCAT 3 原生 .TcPOU，可直接拖入 XAE 的 PLC POUs 文件夹）
 
 ```iecst
 // 场景：上电初始化时校验库版本是否满足代码所需最低版本

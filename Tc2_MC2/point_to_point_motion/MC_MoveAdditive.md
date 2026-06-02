@@ -13,7 +13,7 @@
 | Verified | 2026-05-21 ✅ |
 | InfoSys-checked | ✅ 2026-05-21 |
 | Status | `verified` |
-| Example | [`examples/P_Demo_MC_MoveAdditive.xml`](../examples/P_Demo_MC_MoveAdditive.xml) |
+| Example | [`examples/P_Demo_MC_MoveAdditive.TcPOU`](../examples/P_Demo_MC_MoveAdditive.TcPOU) |
 
 ---
 
@@ -125,7 +125,7 @@ END_VAR
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_MC_MoveAdditive.xml`](../examples/P_Demo_MC_MoveAdditive.xml)
+> 配套可导入文件：[`examples/P_Demo_MC_MoveAdditive.TcPOU`](../examples/P_Demo_MC_MoveAdditive.TcPOU)
 
 ```iecst
 // 场景：贴片机粗定位到 PCB 坐标 (100 mm) 后用视觉补偿叠加 2.3 mm

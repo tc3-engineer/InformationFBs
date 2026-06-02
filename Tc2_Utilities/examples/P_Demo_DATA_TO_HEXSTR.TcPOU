@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_DATA_TO_HEXSTR" Id="{f4c5e396-2ece-5566-8f98-dbb9f01c2f11}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_DATA_TO_HEXSTR
+VAR
+    aCmdFrame : ARRAY[0..31] OF BYTE; // 工业语义：32 字节命令帧
+    sHexDump  : STRING(255); // hex dump 结果
+    bDump     : BOOL; // 在线触发
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：串口 / RS485 协议诊断：把收到的 32 字节命令帧 dump 为 hex 串写入日志。
+// 价值：比手写循环 + `HEXASCNIBBLE_TO_BYTE` 拼接简洁——但 85 字节上限严重——大数据用 `DATA_TO_HEXSTR2`。
+// 验证步骤：
+//   1. 引用 Tc2_Utilities
+//   2. 编译 + 登录 + 运行
+//   3. 在线写触发位 TRUE，monitor 输出变量
+// =============================================================================
+
+IF bDump THEN
+    aCmdFrame[0] := 16#02; aCmdFrame[1] := 16#10; aCmdFrame[2] := 16#AB;
+    sHexDump := DATA_TO_HEXSTR(pData   := ADR(aCmdFrame),
+                               cbData  := SIZEOF(aCmdFrame),
+                               bLoCase := FALSE);
+    bDump := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

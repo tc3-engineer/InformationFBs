@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_IsAlarmRaisedEx" Id="{8a82f8f6-3f59-58d7-af04-7996642431f7}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_IsAlarmRaisedEx
+VAR
+    fbLogger     : FB_TcEventLogger; // EventLogger 实例
+    stEventEntry : TcEventEntry; // 要查询的事件定义
+    bIsRaised    : BOOL; // 查询结果
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：结构体形式的启动联锁判断
+// 价值：结构体接口适合事件清单循环遍历
+// 验证：同 IsAlarmRaised：先让对应 alarm Raised，stEventEntry 与之匹配后 bIsRaised = TRUE
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_EventLogger（System → References → Add library）
+//   3. 编译 → 登录 → 运行；按 verify 注释里给出的在线写值操作
+// =============================================================================
+
+bIsRaised := fbLogger.IsAlarmRaisedEx(
+    stEventEntry := stEventEntry,
+    ipSourceInfo := 0);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

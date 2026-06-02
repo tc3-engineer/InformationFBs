@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_ADSLOGLREAL" Id="{34189f58-e0a9-5669-90e8-de508a5f0ef7}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_ADSLOGLREAL
+VAR
+    bTemperatureTooHigh : BOOL; // 温度越限信号
+    rtTempAlarm         : R_TRIG; // 边沿触发
+    rCurrentTemp        : LREAL := 187.203045; // 当前温度（°C）
+    udiAdsLogRes        : DINT; // 返回 0 = 成功
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_System.ADSLOGLREAL 演示程序
+// ============================================================
+// 场景：水冷温度越限弹一次消息框 + 写日志。
+// 价值：替代手写 REAL_TO_STRING + 拼字符串。
+// 验证：登录后写 bTemperatureTooHigh := TRUE，弹出 'PLC Msg.: Max Temp. reached ! Temperature: 187.203045'。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_System（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』指引在线写值观察
+// ============================================================
+
+rtTempAlarm(CLK := bTemperatureTooHigh);
+IF rtTempAlarm.Q THEN
+    udiAdsLogRes := ADSLOGLREAL(
+        msgCtrlMask := ADSLOG_MSGTYPE_HINT OR ADSLOG_MSGTYPE_MSGBOX,
+        msgFmtStr := 'PLC Msg.: Max Temp. reached ! Temperature: %f',
+        lrealArg := rCurrentTemp);
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

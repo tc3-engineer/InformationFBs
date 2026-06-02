@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_AdsReadEvents" Id="{c167be6d-0e0c-51b5-9877-1b572f278104}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_AdsReadEvents
+VAR
+    fbAdsReadEvents   : FB_AdsReadEvents; // FB 实例（已弃用；新代码用 Tc3_EventLogger）
+    sLocalNetId       : T_AMSNetId; // 空串 = 本机
+    bEnableEventQuery : BOOL; // 在线 TRUE 启动周期查询
+    nLanguageId       : DWORD := 1033; // 语言 ID（1033 = en_US）
+    eTimeFormat       : E_DateAndTimeFormat := E_DateAndTimeFormat.en_US;
+    tRefreshPeriod    : TIME := T#1S; // 查询周期，建议 ≥ 500ms
+    tAdsTimeout       : TIME := T#5S;
+    aActiveEvents     : ARRAY[1..80] OF ST_ReadEvent; // 活动消息数组，最多 80 条
+    nReportedEvents   : UDINT; // 实际活动消息条数
+    bQueryBusy        : BOOL;
+    bQueryDone        : BOOL;
+    bQueryError       : BOOL;
+    nQueryErrorId     : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_Utilities.FB_AdsReadEvents 演示程序（已弃用 FB）
+// ============================================================
+// 场景：维护一个 TwinCAT 3.1 Build 4022 的旧产线，HMI 用一个 Event Table
+//       控件显示当前活动报警。本 FB 是把控制器 EventLogger 里的活动消息
+//       拉到 PLC 端的标准接口——尽管已弃用，旧工程仍要继续维护。
+// 价值：保留旧工程的事件展示功能。如果是新工程，请改用 Tc3_EventLogger
+//       的 FB_TcAlarm + FB_TcEventLogger 订阅机制。
+// 验证：
+//   1. 引用 Tc2_Utilities，编译 + 登录
+//   2. 在线写 bEnableEventQuery := TRUE 启动周期查询
+//   3. 观察 bQueryBusy 周期翻 TRUE/FALSE；bQueryDone 在首次完成后保持 TRUE
+//   4. 触发一个测试报警（用旧版 ADSLOG 调用） → nReportedEvents 在 1-2 个
+//      tRefreshPeriod 内 +1
+//   5. 撤销 bEnableEventQuery → bQueryError / nQueryErrorId 复位为 0（PDF
+//      明确：下降沿复位错误）
+// ============================================================
+
+fbAdsReadEvents(
+    sNetId             := sLocalNetId,
+    bReadEvents        := bEnableEventQuery,
+    nLanguageId        := nLanguageId,
+    eDateAndTimeFormat := eTimeFormat,
+    tRefreshTime       := tRefreshPeriod,
+    tTimeout           := tAdsTimeout,
+    aEvents            => aActiveEvents,
+    nNumberOfEvents    => nReportedEvents,
+    bBusy              => bQueryBusy,
+    bDone              => bQueryDone,
+    bError             => bQueryError,
+    nErrorId           => nQueryErrorId
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_UInt64Shl" Id="{1d5994ad-fa75-56ed-baf6-eca28a71ac72}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_UInt64Shl
+VAR
+    uliValue    : T_ULARGE_INTEGER;
+    dwShiftBits : DWORD := 10;
+    uliScaled   : T_ULARGE_INTEGER;; // = value × 2^10 = ×1024
+    bScale      : BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_Utilities.UInt64Shl 演示程序（FUNCTION，单周期触发）
+// ============================================================
+// 场景：把 nanos 转 PicoSec 需要乘 1000，但若是 1024（2¹⁰）可用 `Shl(n, 10)` 加速。
+// 价值：替代乘法操作，性能更好；与 Shr 配对实现 64 位整数的位级缩放。
+// 验证步骤：
+//   1. 把本 PROGRAM 加到 PlcTask 调用列表
+//   2. 编译 + 登录
+//   3. 在线把 b... 触发位置 TRUE 一个周期
+//   4. 观察输出变量是否符合期望
+// ============================================================
+
+IF bScale AND dwShiftBits < 64 THEN
+    uliScaled := UInt64Shl(uliValue, dwShiftBits);
+    bScale := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -13,7 +13,7 @@
 | Verified | 2026-05-25 ✅ |
 | InfoSys-checked | ✅ 2026-05-25 |
 | Status | `verified` |
-| Example | [`examples/P_Demo_MC_GearInVelo.xml`](../examples/P_Demo_MC_GearInVelo.xml) |
+| Example | [`examples/P_Demo_MC_GearInVelo.TcPOU`](../examples/P_Demo_MC_GearInVelo.TcPOU) |
 
 ---
 
@@ -132,7 +132,7 @@ END_VAR
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_MC_GearInVelo.xml`](../examples/P_Demo_MC_GearInVelo.xml)
+> 配套可导入文件：[`examples/P_Demo_MC_GearInVelo.TcPOU`](../examples/P_Demo_MC_GearInVelo.TcPOU)
 
 ```iecst
 // 场景：包装线连续走料主输送带 + 横封刀从轴，刀需先与来料线速度同步再下刀，避免拉伸/堆料

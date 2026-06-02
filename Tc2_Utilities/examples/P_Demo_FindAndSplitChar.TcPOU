@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FindAndSplitChar" Id="{550f886d-1a90-5188-a171-4a54a5ec2b53}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FindAndSplitChar
+VAR
+    sPath  : STRING(255) := '/srv/data/log/2026-05.log'; // 工业语义：文件路径
+    sLeft  : STRING(128); // 目录部分
+    sRight : STRING(128); // 文件名部分
+    bOk    : BOOL; // 切分成功
+    bSplit : BOOL; // 在线触发
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：切分文件路径：`'/srv/data/log/2026-05.log'` 按 `/` 切——典型循环切到所有段。
+// 价值：比 `FindAndSplit` 更简洁——单字符场景无需先 `STRING(1)` 声明。
+// 验证步骤：
+//   1. 引用 Tc2_Utilities
+//   2. 编译 + 登录 + 运行
+//   3. 在线写触发位 TRUE，monitor 输出变量
+// =============================================================================
+// 从右切：得到 dir 与 filename
+IF bSplit THEN
+    bOk := FindAndSplitChar(sSeparatorChar   := '/',
+                            pSrcString       := ADR(sPath),
+                            pLeftString      := ADR(sLeft),
+                            nLeftSize        := SIZEOF(sLeft),
+                            pRightString     := ADR(sRight),
+                            nRightSize       := SIZEOF(sRight),
+                            bSearchFromRight := TRUE);
+    bSplit := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

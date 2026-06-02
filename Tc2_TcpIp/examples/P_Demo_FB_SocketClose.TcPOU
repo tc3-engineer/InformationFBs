@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_SocketClose" Id="{21993e66-12ca-5586-823a-54507338a38d}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_SocketClose
+VAR
+    fbConnectToScanner   : FB_SocketConnect; // 先建连，演示完整生命周期
+    fbCloseScannerSocket : FB_SocketClose; // 被本例程演示的主角
+    bRequestConnect      : BOOL; // 在线上升沿建连
+    bConnectBusy         : BOOL;
+    bConnectError        : BOOL;
+    nConnectErrId        : UDINT;
+    hScannerSocket       : T_HSOCKET; // 建连得到的句柄；演示后被关闭
+    bRequestClose        : BOOL; // 在线上升沿关闭
+    bClosing             : BOOL;
+    bCloseFailed         : BOOL;
+    nCloseErrId          : UDINT;
+    bSocketActive        : BOOL; // 上层维护的"句柄有效"标志，关闭成功后必须清零
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：PLC 作为客户端连到一个工业扫描枪（172.16.5.10:9100）扫码，扫完一批后
+//       关闭 socket 释放句柄，避免长时间占用 Server 句柄表。
+//
+// 价值：演示"先 Connect 后 Close 是配对操作"的纪律：每次成功 Connect 必须
+//       配 Close，业务侧用 bSocketActive 标志位跟踪。
+//
+// 验证步骤：
+//   1. 准备一个 TCP 监听端（ncat -l 9100）
+//   2. 在线 bRequestConnect := TRUE
+//      → hScannerSocket.handle 非 0，bSocketActive 置 TRUE
+//   3. 在线 bRequestClose := TRUE
+//      → bClosing 闪烁后落回，bCloseFailed=FALSE，bSocketActive 被清零
+//   4. 第二次脉冲 bRequestClose := TRUE 想关同一句柄
+//      → bCloseFailed 置 TRUE，nCloseErrId = 0x00008002 (TCPADSERROR_NOTFOUND)
+//        这是预期行为；上层应该靠 bSocketActive 来禁止重关
+// =============================================================================
+
+// 阶段 1：先建连（不是本 FB 主角，但 demo 需要一个真实句柄）
+fbConnectToScanner(
+    sSrvNetId   := '',
+    sRemoteHost := '172.16.5.10',
+    nRemotePort := 9100,
+    bExecute    := bRequestConnect,
+    tTimeout    := T#10S,
+    bBusy       => bConnectBusy,
+    bError      => bConnectError,
+    nErrId      => nConnectErrId,
+    hSocket     => hScannerSocket
+);
+
+// 建连成功后维护 bSocketActive（业务侧"句柄有效"状态）
+IF NOT bConnectBusy AND NOT bConnectError AND hScannerSocket.handle <> 0 THEN
+    bSocketActive := TRUE;
+END_IF;
+
+// 阶段 2：关闭（bRequestClose 上升沿；本 FB 主角）
+fbCloseScannerSocket(
+    sSrvNetId := '',
+    hSocket   := hScannerSocket,
+    bExecute  := bRequestClose,
+    tTimeout  := T#5S,
+    bBusy     => bClosing,
+    bError    => bCloseFailed,
+    nErrId    => nCloseErrId
+);
+
+// 关闭成功后立刻清零业务侧标志，防止误重关
+IF NOT bClosing AND NOT bCloseFailed AND bRequestClose THEN
+    bSocketActive := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

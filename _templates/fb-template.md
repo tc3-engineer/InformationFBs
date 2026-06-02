@@ -23,7 +23,7 @@
 | Verified | `YYYY-MM-DD` ✅ |
 | InfoSys-checked | `✅ YYYY-MM-DD` / `⚠️ not-on-infosys` |
 | Status | `verified` / `⚠️ verify-failed` / `pending` |
-| Example | [`examples/P_Demo_<Name>.xml`](../examples/P_Demo_<Name>.xml) |
+| Example | [`examples/P_Demo_<Name>.TcPOU`](../examples/P_Demo_<Name>.TcPOU) |
 
 ---
 
@@ -93,9 +93,9 @@ PDF + InfoSys 都没列 → 整段写 "PDF + InfoSys 均未列错误码（⚠️
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_<Name>.xml`](../examples/P_Demo_<Name>.xml)
+> 配套可导入文件：[`examples/P_Demo_<Name>.TcPOU`](../examples/P_Demo_<Name>.TcPOU)
 >
-> 导入步骤：右键 PLC 项目 → Import PLCopenXML → 选该文件 → OK
+> 导入步骤：右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选该文件 → OK
 > 详见 [`examples/README.md`](../examples/README.md)
 
 ```iecst

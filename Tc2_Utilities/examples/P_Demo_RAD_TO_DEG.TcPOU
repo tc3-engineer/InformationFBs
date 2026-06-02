@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_RAD_TO_DEG" Id="{75be47ba-dc55-5905-90a4-8f26566a35e4}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_RAD_TO_DEG
+VAR
+    lrInputAngle : LREAL := 1.5707963; // 输入角度（单位 弧度 (radian)）；在线改值测试不同输入
+    lrOutput     : LREAL; // 转换后角度（单位 度 (degree)）
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：HMI 显示角度（弧度 (radian)）-> PLC 三角运算（度 (degree)）的转换。
+//       例：5 轴 CNC 把操作员输入的旋转角（度）转弧度后送 SIN/COS 算轨迹。
+// 价值：避免每次手写 PI/180 常量，一行调用，参数语义明确。
+// 验证步骤：
+//   1. 引用 Tc2_Utilities
+//   2. 编译 + 登录 + 运行
+//   3. 在线 monitor lrOutput：
+//      - lrInputAngle = 0.0 -> lrOutput = 0.0
+//      - lrInputAngle = 3.14159 -> lrOutput 约 180.0
+//      - 在线改 lrInputAngle = 1.5708 -> lrOutput 约 90.0
+// =============================================================================
+
+// 单行调用：纯计算函数，每个 PLC 周期可反复调用
+lrOutput := RAD_TO_DEG(lrInputAngle);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

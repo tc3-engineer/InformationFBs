@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_HRESULTAdsErr_TO_TcEventEntry" Id="{e2f74b3f-645b-5f62-8356-8ef4e7434989}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_HRESULTAdsErr_TO_TcEventEntry
+VAR
+    hr           : E_HRESULTAdsErr := E_HRESULTAdsErr.HRESULTADSERR_DEVICE_INVALIDPARM; // 在线写入要转换的 HRESULT 错误码
+    stEventEntry : TcEventEntry; // 转换输出
+    bOk          : BOOL; // 成功标志
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：HRESULT ADS 错误码 → TcEventEntry 转换
+// 价值：HRESULT 形式 ADS 错的归一化
+// 验证：登录后给输入赋已知合法值；调用本 FC 后 bOk 应为 TRUE 且输出已填
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_EventLogger（System → References → Add library）
+//   3. 编译 → 登录 → 运行；按 verify 注释里给出的在线写值操作
+// =============================================================================
+
+bOk := HRESULTAdsErr_TO_TcEventEntry(
+    hr := hr,
+    stEventEntry := stEventEntry);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

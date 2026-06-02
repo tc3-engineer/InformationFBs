@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_SYSTEMTIME_TO_STRING" Id="{ed564dbb-083f-5ee0-b113-fccb3660e775}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_SYSTEMTIME_TO_STRING
+VAR
+    stCurrentTime : TIMESTRUCT; // 当前时间结构（来自 FB_LocalSystemTime） (初始化通过在线手动赋值; 推荐字段：( wYear := 2026, wMonth := 5, wDay := 11, wHour := 12, wMinute := 34, wSecond := 56, wMilliseconds := 789 ))
+    sLogPrefix    : STRING(24); // 日志前缀字符串
+    bRunOnce      : BOOL; // 脉冲触发
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：PLC 写本地日志文件，时间戳要稳定可读且字符串可比较排序
+//
+// 价值：1 行完成 8 字段到 23 字符字符串拼接，避免 7 次 WORD_TO_STRING + 补零 + 分隔
+//
+// 验证步骤：
+//   1. 引用 Tc2_Utilities
+//   2. 编译 + 登录 + 运行
+//   3. 强制 bRunOnce := TRUE
+//   4. 在线观察 sLogPrefix = «2026-05-11-12:34:56.789»
+//   5. 注意分隔符是 - 不是 T（这不是 ISO 8601，是 Beckhoff 内部格式）
+// =============================================================================
+sLogPrefix := SYSTEMTIME_TO_STRING(stCurrentTime);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

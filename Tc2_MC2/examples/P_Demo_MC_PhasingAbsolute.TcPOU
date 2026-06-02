@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_MC_PhasingAbsolute" Id="{9c3af4a9-9789-533d-b34c-b9d44f7ca530}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_MC_PhasingAbsolute
+VAR
+    fbSetPhase       : MC_PhasingAbsolute;
+    axisMainRoller   : AXIS_REF;
+    axisColorPlate   : AXIS_REF;
+    rtSetTrig        : R_TRIG;
+    bApplyPhase      : BOOL := FALSE;
+    lrTargetPhaseDeg : LREAL := 5.0;
+    bPhaseDone       : BOOL;
+    lrActualPhase    : LREAL;
+    nErrorID         : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：印刷机色版需相对主辊设定 5° 的绝对相位差以套色对齐。前序已经用
+//       MC_GearIn 把色版从轴耦合到主辊（demo 假设耦合已建立），本 FB 在耦
+//       合基础上调整绝对相位。
+// 价值：相位差作参数直接给，FB 自动规划 Jerk-limited 调整曲线；ContinuousUpdate
+//       = TRUE 允许调整过程中再改目标。
+// 验证：bApplyPhase := TRUE → bPhaseDone 在 ~ 0.5 s 后置 TRUE；
+//       lrActualPhase 应 ≈ 5.0；
+//       此时让 axisMainRoller 速度变化，axisColorPlate 应始终保持 5° 领先（不掉相）。
+// =============================================================================
+
+rtSetTrig(CLK := bApplyPhase);
+
+fbSetPhase(
+    Execute            := rtSetTrig.Q,
+    ContinuousUpdate   := TRUE,
+    PhaseShift         := lrTargetPhaseDeg,
+    Velocity           := 10.0,
+    Acceleration       := 100.0,
+    Deceleration       := 100.0,
+    Jerk               := 1000.0,
+    BufferMode         := MC_Aborting,
+    Master             := axisMainRoller,
+    Slave              := axisColorPlate,
+    Done               => bPhaseDone,
+    AbsolutePhaseShift => lrActualPhase,
+    ErrorId            => nErrorID
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

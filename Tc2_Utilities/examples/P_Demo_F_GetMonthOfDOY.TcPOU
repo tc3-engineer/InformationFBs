@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_F_GetMonthOfDOY" Id="{a893a8ce-fda2-567a-b31a-81239f6c8239}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_F_GetMonthOfDOY
+VAR
+    wYear    : WORD := 2024; // 年份
+    wDOY     : WORD := 60; // 年内第几天
+    wMonth   : WORD; // 算出的月份（1~12）
+    bRunOnce : BOOL; // 脉冲触发
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：气象数据用 DOY 紧凑存档，读取时需反查回月份做月度报表
+//
+// 价值：1 行反查避免手写 12 个月累计减法 + 闰年判定
+//
+// 验证步骤：
+//   1. 引用 Tc2_Utilities
+//   2. 编译 + 登录 + 运行
+//   3. 强制 bRunOnce := TRUE
+//   4. 在线观察 wMonth = 2（2024 年第 60 天是 2 月 29 日）
+//   5. wDOY:=131 → wMonth = 5
+//   6. wDOY:=366; wYear:=2023 → wMonth = 0（平年无 366 天）
+// =============================================================================
+wMonth := F_GetMonthOfDOY(wYear, wDOY);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

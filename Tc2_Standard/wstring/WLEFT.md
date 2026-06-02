@@ -13,7 +13,7 @@
 | Verified | 2026-05-11 ✅ |
 | InfoSys-checked | ✅ 2026-05-11 |
 | Status | `verified` |
-| Example | [`examples/P_Demo_WLEFT.xml`](../examples/P_Demo_WLEFT.xml) |
+| Example | [`examples/P_Demo_WLEFT.TcPOU`](../examples/P_Demo_WLEFT.TcPOU) |
 
 ---
 
@@ -79,7 +79,7 @@ PDF §5.5 原例：`WLEFT("SUSI", 3)` → `"SUS"`。
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_WLEFT.xml`](../examples/P_Demo_WLEFT.xml)（PLCopenXML，可直接导入 TwinCAT 3 XAE）
+> 配套可导入文件：[`examples/P_Demo_WLEFT.TcPOU`](../examples/P_Demo_WLEFT.TcPOU)（TwinCAT 3 原生 .TcPOU，可直接拖入 XAE 的 PLC POUs 文件夹）
 
 ```iecst
 // 场景：中文订单号 "客户A订单20260511_00123" 前 4 字 "客户A订" 是部门编码

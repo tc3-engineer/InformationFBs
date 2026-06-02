@@ -13,7 +13,7 @@
 | Verified | 2026-05-21 ✅ |
 | InfoSys-checked | ✅ 2026-05-21 |
 | Status | `verified` |
-| Example | [`examples/P_Demo_FB_CoEAX8000BrakeTest.xml`](../examples/P_Demo_FB_CoEAX8000BrakeTest.xml) |
+| Example | [`examples/P_Demo_FB_CoEAX8000BrakeTest.TcPOU`](../examples/P_Demo_FB_CoEAX8000BrakeTest.TcPOU) |
 
 ---
 
@@ -112,7 +112,7 @@ END_VAR
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_FB_CoEAX8000BrakeTest.xml`](../examples/P_Demo_FB_CoEAX8000BrakeTest.xml)
+> 配套可导入文件：[`examples/P_Demo_FB_CoEAX8000BrakeTest.TcPOU`](../examples/P_Demo_FB_CoEAX8000BrakeTest.TcPOU)
 
 ```iecst
 // 场景：定期对 AX8000 提升轴做功能性抱闸测试，验证抱闸保持能力

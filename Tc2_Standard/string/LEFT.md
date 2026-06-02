@@ -13,7 +13,7 @@
 | Verified | 2026-05-11 ✅ |
 | InfoSys-checked | ✅ 2026-05-11 |
 | Status | `verified` |
-| Example | [`examples/P_Demo_LEFT.xml`](../examples/P_Demo_LEFT.xml) |
+| Example | [`examples/P_Demo_LEFT.TcPOU`](../examples/P_Demo_LEFT.TcPOU) |
 
 ---
 
@@ -79,7 +79,7 @@ PDF §4.5 原例：`LEFT('SUSI', 3)` → `'SUS'`。
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_LEFT.xml`](../examples/P_Demo_LEFT.xml)（PLCopenXML，可直接导入 TwinCAT 3 XAE）
+> 配套可导入文件：[`examples/P_Demo_LEFT.TcPOU`](../examples/P_Demo_LEFT.TcPOU)（TwinCAT 3 原生 .TcPOU，可直接拖入 XAE 的 PLC POUs 文件夹）
 
 ```iecst
 // 场景：日志行 'ERROR Motor overcurrent'，需要提取等级前缀 'ERROR' (前 5 字符)

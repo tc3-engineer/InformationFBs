@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_HSOCKET_TO_STRING" Id="{ef9fc6d1-a02e-596b-92d1-4c7a453767e5}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_HSOCKET_TO_STRING
+VAR
+    fbConnect       : FB_SocketConnect; // 先建连产生真实句柄，再 demo 字串转换
+    bRequestConnect : BOOL;
+    bConnectBusy    : BOOL;
+    bConnectError   : BOOL;
+    nConnectErrId   : UDINT;
+    hClient         : T_HSOCKET;
+    sHandleStr      : STRING(80); // 在线 monitor 这个看人类可读句柄
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：PLC 连到 172.16.6.180:2404 的远端服务器。建连成功后每周期把
+//       hClient 句柄翻成人读字符串，便于在线观察 Server 给本机分配的
+//       local port、当前 remote 是哪条连接。
+//
+// 价值：演示句柄结构 → 字串的简单使用；用作日志 / HMI 显示 / 故障诊断。
+//
+// 验证步骤：
+//   1. 准备远端 ncat -l 2404 监听
+//   2. 在线 bRequestConnect := TRUE
+//   3. hClient.handle 非 0 后，sHandleStr 立刻显示
+//      "Handle:0x4001 Local:172.16.6.X:YYYYY Remote:172.16.6.180:2404"
+//      其中 YYYYY 是 Server 给本机自动分配的 ephemeral 端口
+//   4. 建连失败时句柄全零，sHandleStr 显示 "Handle:0x0 Local:0.0.0.0:0 Remote:0.0.0.0:0"
+// =============================================================================
+
+fbConnect(
+    sSrvNetId := '', sRemoteHost := '172.16.6.180', nRemotePort := 2404,
+    bExecute := bRequestConnect, tTimeout := T#10S,
+    bBusy => bConnectBusy, bError => bConnectError, nErrId => nConnectErrId,
+    hSocket => hClient);
+
+// 每周期更新人读字串；纯计算，开销忽略
+sHandleStr := HSOCKET_TO_STRING(hSocket := hClient);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

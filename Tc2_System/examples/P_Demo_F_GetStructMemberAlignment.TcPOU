@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_F_GetStructMemberAlignment" Id="{0ba9106d-61b7-5017-acc0-324b5891bedc}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_F_GetStructMemberAlignment
+VAR
+    nAlignBytes : BYTE; // 当前平台对齐字节数（1 / 2 / 4 / 8）
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：启动时记录当前平台对齐字节数到全局诊断变量；跨平台部署时一眼看出差异。
+// 价值：实测最准，替代凭经验猜。
+// 验证：在 x86 工控机上观察 nAlignBytes = 8；在 Arm CX 上观察 = 4。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_System（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』行的指示在线写值观察
+// =============================================================================
+
+// 一次调用即可，平台对齐不会运行期改变
+nAlignBytes := F_GetStructMemberAlignment();
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_REGSTRING_TO_GUID" Id="{2da7903c-e56c-587b-a63f-9d4af23375c2}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_REGSTRING_TO_GUID
+VAR
+    sRegStr : STRING(38) := '{12345678-1234-5678-9ABC-123456789ABC}'; // 工业语义：注册表 GUID 串
+    stGuid  : GUID; // 解析输出
+    bParse  : BOOL; // 在线触发
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：从 Windows 注册表读出 `'{CLSID-string}'` → 解析为 PLC GUID 结构 → 用于 COM API 调用。
+// 价值：替代手写 hex 解析 + 段切分代码。
+// 验证步骤：
+//   1. 引用 Tc2_Utilities
+//   2. 编译 + 登录 + 运行
+//   3. 在线写触发位 TRUE，monitor 输出变量
+// =============================================================================
+
+IF bParse THEN
+    stGuid := REGSTRING_TO_GUID(in := sRegStr);
+    bParse := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

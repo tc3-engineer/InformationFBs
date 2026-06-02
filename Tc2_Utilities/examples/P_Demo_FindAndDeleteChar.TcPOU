@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FindAndDeleteChar" Id="{5fb20cbc-a8ca-537a-893f-962ebc8dd111}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FindAndDeleteChar
+VAR
+    sPhoneRaw : STRING(32) := '0049-7531 567-890'; // 工业语义：原始电话号码含空格连字符
+    sPhoneNum : STRING(32); // 纯数字电话号
+    nRemoved  : UDINT; // 删除字符数
+    bClean    : BOOL; // 在线触发
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：清理 CSV 字段：删除所有 `	` Tab 字符；或者把电话号码中的 `-` 和 ` ` 都删掉只保留数字。
+// 价值：比 `FindAndDelete` 调用更省事——单字符常量直接写入参数，不用预先声明 STRING 变量取地址。
+// 验证步骤：
+//   1. 引用 Tc2_Utilities
+//   2. 编译 + 登录 + 运行
+//   3. 在线写触发位 TRUE，monitor 输出变量
+// =============================================================================
+// 第一步：删除所有空格
+IF bClean THEN
+    nRemoved := FindAndDeleteChar(pSrcString  := ADR(sPhoneRaw),
+                                  sDeleteChar := ' ',
+                                  pDstString  := ADR(sPhoneNum),
+                                  nDstSize    := SIZEOF(sPhoneNum));
+    // 第二步：在结果上再删 '-'（in-place 安全）
+    nRemoved := nRemoved + FindAndDeleteChar(pSrcString  := ADR(sPhoneNum),
+                                             sDeleteChar := '-',
+                                             pDstString  := ADR(sPhoneNum),
+                                             nDstSize    := SIZEOF(sPhoneNum));
+    bClean := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

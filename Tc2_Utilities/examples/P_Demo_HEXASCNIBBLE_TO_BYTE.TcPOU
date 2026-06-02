@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_HEXASCNIBBLE_TO_BYTE" Id="{0fa0c768-f111-5e9c-a143-0e98f64ed0b7}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_HEXASCNIBBLE_TO_BYTE
+VAR
+    nAscByte : BYTE := 16#41; // 工业语义：串口收到的一个 hex 字符 ASCII 码（例：0x41 = 'A'）
+    nNibble  : BYTE; // 解码后的 nibble（0-15 合法、255 错误）
+    bDecode  : BOOL; // 在线触发
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：串口收 hex 字符流：每个字节是一个 hex 字符的 ASCII 码；逐字节调用本函数得到 nibble，每两个拼成 1 BYTE。
+// 价值：替代手写 ASCII → nibble 映射（条件分支或查找表）；本函数 1 调用。
+// 验证步骤：
+//   1. 引用 Tc2_Utilities
+//   2. 编译 + 登录 + 运行
+//   3. 在线写触发位 TRUE，monitor 输出变量
+// =============================================================================
+
+IF bDecode THEN
+    nNibble := HEXASCNIBBLE_TO_BYTE(asc := nAscByte);
+    // nNibble = 10 (因为 0x41 = 'A' = 10)
+    bDecode := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

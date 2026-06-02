@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_REPLACE" Id="{91498aee-9749-5a00-93ec-214b77526c94}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_REPLACE
+VAR
+    sLogLine    : STRING(255) := 'WARN_ Motor stalled'; // 原始日志：等级 'WARN_' + 消息体
+    sNewLevel   : STRING(255) := 'ERROR'; // 升级后的等级标识
+    sResult     : STRING(255); // 等级升级后的完整日志
+    nReplaceLen : INT := 5; // 被替换段长度 = 5（'WARN_' 5 字符）
+    nReplacePos : INT := 1; // 替换起点 = 第 1 字符
+    bUpgrade    : BOOL; // 触发一次等级升级
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：报警系统判定某条 WARN 级别的日志在 30 秒内累积 5 次未恢复，需要把
+//       它升级为 ERROR 重发。原始日志 'WARN_ Motor stalled' 前 5 字符是等级，
+//       REPLACE 一行调用就能把 'WARN_' 换成 'ERROR' 保持消息体不变。
+//
+// 价值：REPLACE 按位置 + 长度替换整段，结果长度可与原段不同。比 DELETE +
+//       INSERT 两步合一。注意：本函数不是"模式匹配替换"，要替换所有出现
+//       必须配合 FIND 写循环。
+//
+// 验证步骤：
+//   1. 导入本文件、引用 Tc2_Standard、编译、登录、运行
+//   2. 在线 monitor sResult
+//   3. 在线写 bUpgrade := TRUE
+//   4. 下一周期 sResult = 'ERROR Motor stalled'（'WARN_' 被换成 'ERROR'）
+//   5. 把 sNewLevel 改成 'INFO'（只 4 字符）+ 再触发 →
+//      sResult = 'INFO Motor stalled'（长度自动变短，验证替换段可不等长）
+// =============================================================================
+
+// 入参顺序：(STR1, STR2, L, P) — L 在 P 前，POS 从 1 起
+IF bUpgrade THEN
+    sResult := REPLACE(sLogLine, sNewLevel, nReplaceLen, nReplacePos);
+    bUpgrade := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

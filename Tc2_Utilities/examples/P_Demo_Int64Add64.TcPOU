@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_Int64Add64" Id="{59efed3f-cc7b-5d08-8bd4-be6c5f418d6c}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_Int64Add64
+VAR
+    liAccum : T_LARGE_INTEGER;; // 累计差值
+    liDelta : T_LARGE_INTEGER;; // 本次差值
+    bAdd    : BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_Utilities.Int64Add64 演示程序（FUNCTION，单周期触发）
+// ============================================================
+// 场景：累计差值（可正可负）求合，确认不会超 2⁶³ 后用本函数。
+// 价值：替代手写有符号双倍长加；一行调用。
+// 验证步骤：
+//   1. 把本 PROGRAM 加到 PlcTask 调用列表
+//   2. 编译 + 登录
+//   3. 在线把 b... 触发位置 TRUE 一个周期
+//   4. 观察输出变量是否符合期望
+// ============================================================
+
+IF bAdd THEN
+    liAccum := Int64Add64(liAccum, liDelta);
+    bAdd := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

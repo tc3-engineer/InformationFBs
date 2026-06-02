@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_F_GetDayOfMonthEx" Id="{ff155b01-c38b-5473-bf54-2894248567dc}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_F_GetDayOfMonthEx
+VAR
+    wYear       : WORD := 2026; // 目标年份
+    wMonth      : WORD := 5; // 目标月份
+    wWOM        : WORD := 2; // 月内第几周（1~5，5=最后一周）
+    wDOW        : WORD := 1; // 星期几（0=周日 ... 6=周六，本例周一=1）
+    wMeetingDay : WORD; // 算出的开会日期（该月的日）
+    bRunOnce    : BOOL; // 脉冲触发
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：排产规则「每月第 2 个周一开例会」运行时需算出本月该日期
+//
+// 价值：1 行调用得到日期，不必循环遍历该月每天找匹配星期
+//
+// 验证步骤：
+//   1. 引用 Tc2_Utilities
+//   2. 编译 + 登录 + 运行
+//   3. 强制 bRunOnce := TRUE 一个周期
+//   4. 在线观察 wMeetingDay 应为 11（2026 年 5 月第 2 个周一是 11 号）
+//   5. wWOM := 5 重测 → 26（5 月最后一个周一）
+// =============================================================================
+wMeetingDay := F_GetDayOfMonthEx(wYear, wMonth, wWOM, wDOW);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

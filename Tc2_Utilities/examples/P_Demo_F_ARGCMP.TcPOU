@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_F_ARGCMP" Id="{fdfca513-25f3-513a-aa5d-7b18ba8152b8}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_F_ARGCMP
+VAR
+    nValueA         : INT := 100; // 模拟上一条消息的参数
+    nValueB         : INT := 100; // 模拟本条消息的参数
+    argA            : T_Arg; // A 的描述符
+    argB            : T_Arg; // B 的描述符
+    bUseTypeSafeCmp : BOOL := TRUE; // 是否启用类型安全比较
+    nCmpResult      : DINT; // 七档比较结果
+    bCompare        : BOOL; // 在线置 TRUE 触发一次比较
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_Utilities.F_ARGCMP 演示程序
+// ============================================================
+// 场景：EventLogger 消息去重——同 (eventId, param) 连续上报只保留首次。
+// 价值：替代手写 "比 eType + 比 cbLen + MEMCMP 内容" 三段；一行得带方向的结果。
+// 验证：在线把 nValueA 改为 100、nValueB 改为 200，bCompare := TRUE；
+//       下一周期 nCmpResult 应为 -1（A 内容小于 B）。改回相同则 nCmpResult = 0。
+// ============================================================
+
+// 用 F_INT 把两个业务量打包成 T_Arg
+argA := F_INT(nValueA);
+argB := F_INT(nValueB);
+
+IF bCompare THEN
+    nCmpResult := F_ARGCMP(typeSafe := bUseTypeSafeCmp, arg1 := argA, arg2 := argB);
+    bCompare := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

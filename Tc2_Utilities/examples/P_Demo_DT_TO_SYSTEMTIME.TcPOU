@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_DT_TO_SYSTEMTIME" Id="{59a1e1ae-e08f-5b87-9789-e91c2f70aa82}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_DT_TO_SYSTEMTIME
+VAR
+    dtCurrent : DATE_AND_TIME := DT#2026-05-11-12:34:56; // 当前 PLC 时间（来自 F_GetActualDateTime）
+    stCurrent : TIMESTRUCT; // 转换后的系统时间结构（HMI 绑定字段）
+    bRunOnce  : BOOL; // 脉冲触发一次执行
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：HMI 显示当前 PLC 时间需按 年-月-日-时-分-秒 拆分字段
+//
+// 价值：1 行调用拿到 7 个时间字段（自动算 wDayOfWeek），不用手写整除取余
+//
+// 验证步骤：
+//   1. 引用 Tc2_Utilities
+//   2. 编译 + 登录 + 运行
+//   3. 强制 bRunOnce := TRUE 一个周期
+//   4. 在线监视 stCurrent.wYear=2026, wMonth=5, wDay=11, wHour=12, wMinute=34, wSecond=56
+//   5. 注意 wMilliseconds 永远为 0（DT 精度只到秒）
+// =============================================================================
+stCurrent := DT_TO_SYSTEMTIME(dtCurrent);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

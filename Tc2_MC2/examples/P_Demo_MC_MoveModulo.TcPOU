@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_MC_MoveModulo" Id="{96222081-0900-5436-adae-8f4e19e69558}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_MC_MoveModulo
+VAR
+    fbIndexRotate    : MC_MoveModulo;
+    axisIndexTable   : AXIS_REF;
+    rtNextStation    : R_TRIG;
+    bAdvanceStation  : BOOL := FALSE; // 在线 TRUE 一次 = 转到下一工位
+    lrNextStationDeg : LREAL := 90.0; // 下一工位的模数目标角度
+    bRotateDone      : BOOL;
+    nErrorID         : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：4 工位分度盘 — 每按一次"下一工位"按钮，转台正向转 90° 到下一工位。
+// 价值：模数 FB 处理角度 wrap，业务不用算"现位 + 90 是否过 360"。
+// 验证：登录后 bAdvanceStation := TRUE 一次 → 角度 0→90；再触发 90→180；
+//       连续 4 次回到 0；将 lrNextStationDeg 改为 720 看到转 2 圈再到位。
+// =============================================================================
+
+rtNextStation(CLK := bAdvanceStation);
+
+fbIndexRotate(
+    Execute      := rtNextStation.Q,
+    Position     := lrNextStationDeg,
+    Velocity     := 180.0,
+    Acceleration := 360.0,
+    Deceleration := 360.0,
+    Jerk         := 3600.0,
+    Direction    := MC_Positive_Direction,
+    BufferMode   := MC_Aborting,
+    Axis         := axisIndexTable,
+    Done         => bRotateDone,
+    ErrorID      => nErrorID
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

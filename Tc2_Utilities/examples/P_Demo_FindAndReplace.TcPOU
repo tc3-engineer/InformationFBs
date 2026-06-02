@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FindAndReplace" Id="{9d9a6bf2-c6a9-5023-85cd-990bdb053135}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FindAndReplace
+VAR
+    sTemplate    : STRING(255) := '[{ts}] Pump alarm'; // 工业语义：日志模板含占位符 {ts}
+    sPlaceholder : STRING(16) := '{ts}'; // 占位符
+    sTimestamp   : STRING(32) := '2026-05-12T08:00:00'; // 实际时间戳值
+    sLogLine     : STRING(255); // 替换后日志
+    nReplaced    : UDINT; // 替换次数
+    bRender      : BOOL; // 在线触发
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：把日志中的占位符 `'{ts}'`、`'{level}'`、`'{msg}'` 替换为实际值。
+// 价值：替代 `STRING_TO_UTF8` + 字节级 MEMCPY 替换的 30 行循环；本函数 1 行解决。
+// 验证步骤：
+//   1. 引用 Tc2_Utilities
+//   2. 编译 + 登录 + 运行
+//   3. 在线写触发位 TRUE，monitor 输出变量
+// =============================================================================
+IF bRender THEN
+    nReplaced := FindAndReplace(pSrcString    := ADR(sTemplate),
+                                pDeleteString := ADR(sPlaceholder),
+                                pInsertString := ADR(sTimestamp),
+                                pDstString    := ADR(sLogLine),
+                                nDstSize      := SIZEOF(sLogLine));
+    bRender := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_SYSTEMTIME_TO_TOD" Id="{74415d46-388c-57e1-9926-a0f7b76895ad}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_SYSTEMTIME_TO_TOD
+VAR
+    stNow             : TIMESTRUCT; // 当前时间 (初始化通过在线手动赋值; 推荐字段：( wYear := 2026, wMonth := 5, wDay := 11, wHour := 8, wMinute := 0, wSecond := 0, wMilliseconds := 0 ))
+    todNow            : TIME_OF_DAY; // 转换后的一天内时刻
+    todAutoStart      : TIME_OF_DAY := TOD#08:00:00.000; // 自动启动阈值
+    bTriggerAutoStart : BOOL; // TRUE = 该启动了
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：「工作日早 8 点自动启动设备」逻辑：取当前 TIMESTRUCT → TOD → 比较 TOD#08:00
+//
+// 价值：1 行转 TOD，避免手写权重 3600000/60000/1000 相乘相加
+//
+// 验证步骤：
+//   1. 引用 Tc2_Utilities（≥ 3.7.3.0）
+//   2. 编译 + 登录 + 运行
+//   3. 在线观察 todNow = TOD#08:00:00.000
+//   4. bTriggerAutoStart = TRUE
+// =============================================================================
+todNow := SYSTEMTIME_TO_TOD(stNow);
+bTriggerAutoStart := todNow >= todAutoStart;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

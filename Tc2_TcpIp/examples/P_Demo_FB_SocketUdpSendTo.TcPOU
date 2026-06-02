@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_SocketUdpSendTo" Id="{b98533aa-913c-5dd3-8901-2bcfa7f7c521}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_SocketUdpSendTo
+VAR
+    fbCreateUdp      : FB_SocketUdpCreate; // 先建 UDP socket 给 SendTo 用
+    fbBroadcastHello : FB_SocketUdpSendTo;
+    fbCadenceTON     : TON; // 2 秒一次广播节拍
+    bRequestCreate   : BOOL;
+    bCreateBusy      : BOOL;
+    bCreateError     : BOOL;
+    nCreateErrId     : UDINT;
+    hUdpSocket       : T_HSOCKET;
+    sPayload         : STRING(64) := 'HELLO,PLC_DISCOVER,V1'; // 发现包内容，固定字串
+    bSendPulse       : BOOL;
+    bSendBusy        : BOOL;
+    bSendError       : BOOL;
+    nSendErrId       : UDINT;
+    nPacketsSent     : UDINT;
+    bRtrigSent       : R_TRIG;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：PLC 接入车间内网，需要发现网段中所有支持本协议的 HMI/PC：
+//       每 2 秒往 192.168.1.255:5005 广播一个 "HELLO" 包，监听该端口的设备
+//       会回 ack 包；本例程只演示发送侧。
+//
+// 价值：演示 UDP 广播——发送一行调用即完成，对比 TCP 必须先 Connect。
+//       验证"UDP 永远不会因对端不响应超时"（即使没人收，本 FB 仍 bError=FALSE）。
+//
+// 验证步骤：
+//   1. 在线 bRequestCreate := TRUE → hUdpSocket 创建
+//   2. 在另一台机器跑 ncat -ul 5005（监听 UDP 5005）
+//   3. 每 2 秒 ncat 端打印 "HELLO,PLC_DISCOVER,V1"
+//   4. nPacketsSent 每 2 秒 +1
+//   5. 关掉 ncat → nPacketsSent 继续 +1，bSendError 仍 FALSE（UDP 不感知）
+// =============================================================================
+
+// 阶段 1：创建 UDP socket
+fbCreateUdp(
+    sSrvNetId  := '',
+    sLocalHost := '0.0.0.0',
+    nLocalPort := 5004,
+    bExecute   := bRequestCreate,
+    tTimeout   := T#5S,
+    bBusy      => bCreateBusy,
+    bError     => bCreateError,
+    nErrId     => nCreateErrId,
+    hSocket    => hUdpSocket
+);
+
+// 阶段 2：2 秒一次脉冲触发广播
+fbCadenceTON(IN := NOT fbCadenceTON.Q, PT := T#2S, Q => bSendPulse);
+
+// 阶段 3：广播包发送（每 bSendPulse 上升沿一次）
+fbBroadcastHello(
+    sSrvNetId   := '',
+    hSocket     := hUdpSocket,
+    sRemoteHost := '192.168.1.255',
+    nRemotePort := 5005,
+    cbLen       := TO_UDINT(LEN(sPayload) + 1),
+    pSrc        := ADR(sPayload),
+    bExecute    := bSendPulse,
+    tTimeout    := T#5S,
+    bBusy       => bSendBusy,
+    bError      => bSendError,
+    nErrId      => nSendErrId
+);
+
+// 计数：bSendBusy 下降沿且无错时 +1
+bRtrigSent(CLK := NOT bSendBusy AND NOT bSendError);
+IF bRtrigSent.Q THEN
+    nPacketsSent := nPacketsSent + 1;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

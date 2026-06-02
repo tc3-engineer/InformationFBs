@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_EnumStringNumbers" Id="{4c79d4da-fc15-5cf9-a5e7-62ae16f9af17}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_EnumStringNumbers
+VAR
+    fbFB_EnumStringNumbers : FB_EnumStringNumbers; // FB_EnumStringNumbers 实例
+    sSearch                : T_MaxString;
+    eCmd                   : E_EnumCmdType := eEnumCmd_First;
+    eType                  : E_NumGroupTypes := eNumGroup_Float;
+    sNumber                : T_MaxString;
+    nPos                   : INT;
+    bEOS                   : BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：解析操作员多值输入。
+// 价值：自动处理分隔符。
+// 验证：输入 '5, 10, 15.5'，循环触发取出 5、10、15.5。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_Utilities（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』行的指示在线写值观察
+// =============================================================================
+
+// 单次完整调用形式（所有 VAR_INPUT 显式赋值）
+fbFB_EnumStringNumbers(
+    sSearch := sSearch,
+    eCmd := eCmd,
+    eType := eType,
+    sNumber => sNumber,
+    nPos => nPos,
+    bEOS => bEOS
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_WLEN" Id="{26d018c4-90a7-50b0-8ce3-a914b89050b3}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_WLEN
+VAR
+    sUserInput : WSTRING(255); // HMI 中文输入框（在线写值模拟）
+    nCharCount : INT; // WLEN 测出的字符数（按 UCS-2 字符算）
+    nMaxChars  : INT := 50; // 业务限定最大字符数 = 50（按视觉字符数）
+    bAccept    : BOOL; // 校验通过标志（非空且不超长）
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：HMI 给操作员输入"设备中文名"的输入框，业务规则要求非空且最多 50
+//       字（汉字按 1 字算）。LEN 按字节数算长度，输入 17 个汉字 LEN 会返回
+//       51 直接触发"超长"误报。WLEN 按 UCS-2 字符算，17 个汉字就是 17 字。
+//
+// 价值：WLEN 与 HMI 端"字符数"语义完全一致，避免字节/字符换算的坑。所有
+//       后续 WLEFT/WRIGHT/WMID/WINSERT/WDELETE/WCONCAT 的边界校验都依赖它。
+//
+// 验证步骤：
+//   1. 导入本文件、引用 Tc2_Standard、编译、登录、运行
+//   2. 在线 monitor nCharCount, bAccept
+//   3. 在线写 sUserInput := "1 号车间" → nCharCount = 5, bAccept = TRUE
+//   4. 把 sUserInput 写成 50 个汉字 → nCharCount = 50, bAccept = TRUE
+//   5. 把 sUserInput 写成 51 个汉字 → nCharCount = 51, bAccept = FALSE
+//   6. 把 sUserInput 写成 "" → nCharCount = 0, bAccept = FALSE
+// =============================================================================
+
+// 每周期跑一次校验：长度合规则放行
+nCharCount := WLEN(sUserInput);
+bAccept    := (nCharCount > 0) AND (nCharCount <= nMaxChars);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

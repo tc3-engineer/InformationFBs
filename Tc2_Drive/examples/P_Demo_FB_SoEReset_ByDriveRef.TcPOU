@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_SoEReset_ByDriveRef" Id="{75ef4e5b-73b6-50ae-9fdd-5cb36de0a346}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_SoEReset_ByDriveRef
+VAR
+    fbSoEReset    : FB_SoEReset_ByDriveRef; // SoE 驱动器复位 FB 实例
+    rtrigReset    : R_TRIG; // 把 bResetReq 转成单次上升沿
+    stPlcDriveRef : ST_PlcDriveRef; // 链接到 System Manager 的驱动器过程映像
+    stDriveRef    : ST_DriveRef; // 解析出的驱动器引用
+    bInit         : BOOL := TRUE; // 等过程映像刷上来再放行
+    bResetReq     : BOOL := FALSE; // 在线置 TRUE 触发一次复位
+    bResetBusy    : BOOL; // 复位命令执行中
+    bResetError   : BOOL; // 复位传输出错
+    iAdsErr       : UINT; // ADS 错误码
+    iSercosErr    : UINT; // Sercos 错误码
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：AX5000 伺服在过流/过温恢复后停在 C1D 故障态。操作员按 HMI "复位"按钮，
+//       PLC 给本 FB 一个 bExecute 上升沿，向 S-0-0099 下发复位命令，把驱动器
+//       从故障态清回待命态，之后才能重新走 enable 流程。
+//
+// 价值：把"向 S-0-0099 写复位 + ADS 异步状态机 + 10 秒超时管理"封装成一次
+//       上升沿触发调用，业务侧只要提供驱动器引用和一个按钮信号。
+//
+// 验证步骤：
+//   1. 引用 Tc2_Drive 库
+//   2. System Manager 里把某 AX5000 SoE 从站的过程映像链接到 stPlcDriveRef
+//   3. 编译、登录、运行；观察 bInit 在过程映像就绪后自动变 FALSE
+//   4. 让驱动器进入故障态（如触发安全门停机后再复位条件满足）
+//   5. 在线把 bResetReq := TRUE
+//      → bResetBusy 短暂为 TRUE，落下后 bResetError 应为 FALSE 表示复位成功
+//      → 驱动器 C1D 故障应被清除
+//   6. 若 bResetError = TRUE，读 iAdsErr / iSercosErr 定位通讯或驱动侧错误
+// =============================================================================
+
+// 初始化：把过程映像里的 NetID 字节数组转字符串，逐字段填入 stDriveRef
+IF bInit THEN
+    stDriveRef.sNetId     := F_CreateAmsNetId(stPlcDriveRef.aNetId);
+    stDriveRef.nSlaveAddr := stPlcDriveRef.nSlaveAddr;
+    stDriveRef.nDriveNo   := stPlcDriveRef.nDriveNo;
+    stDriveRef.nDriveType := stPlcDriveRef.nDriveType;
+    IF (stDriveRef.sNetId <> '') AND (stDriveRef.nSlaveAddr <> 0) THEN
+        bInit := FALSE;
+    END_IF;
+END_IF;
+
+rtrigReset(CLK := bResetReq);
+
+// 单次调用形式：所有 VAR_INPUT 显式赋值；tTimeout 必须给足 10 秒
+fbSoEReset(
+    stDriveRef := stDriveRef,
+    bExecute   := rtrigReset.Q AND NOT bInit,
+    tTimeout   := T#10S,
+    bBusy        => bResetBusy,
+    bError       => bResetError,
+    iAdsErrId    => iAdsErr,
+    iSercosErrId => iSercosErr
+);
+
+// 命令完成后收尾：bBusy 落下且请求标志还在，则清请求让 FB 复位
+IF NOT bResetBusy AND NOT bInit THEN
+    bResetReq := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

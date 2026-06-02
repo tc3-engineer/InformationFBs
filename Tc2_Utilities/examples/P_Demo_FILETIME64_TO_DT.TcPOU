@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FILETIME64_TO_DT" Id="{f6efa4fe-49e2-5fa4-80e2-3666f7ce3be6}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FILETIME64_TO_DT
+VAR
+    ftFromOpcUa : T_FILETIME64; // OPC UA 收到的时间戳
+    dtFromOpcUa : DATE_AND_TIME; // 转成 DT 后可与本地时间相减算时延
+    bRunOnce    : BOOL; // 脉冲触发
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：OPC UA 节点送回的 T_FILETIME64 时间戳，PLC 内部需要 DT 比较 / 显示
+//
+// 价值：1 行完成基准换算（1601→1970）+ 单位换算（100ns→s），避免手写 19 位常量
+//
+// 验证步骤：
+//   1. 引用 Tc2_Utilities（≥ 3.3.44.0）
+//   2. 编译 + 登录 + 运行
+//   3. 用 DT_TO_FILETIME64(DT#2026-05-11-12:00:00) 给 ftFromOpcUa 赋值
+//   4. 强制 bRunOnce := TRUE
+//   5. 在线观察 dtFromOpcUa 应为 DT#2026-05-11-12:00:00（先 DT_TO_FILETIME64 再 FILETIME64_TO_DT 互逆）
+// =============================================================================
+dtFromOpcUa := FILETIME64_TO_DT(ftFromOpcUa);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

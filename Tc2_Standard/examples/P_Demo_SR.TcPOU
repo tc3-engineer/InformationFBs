@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_SR" Id="{828b9fba-e70b-5715-a199-64f785d4092c}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_SR
+VAR
+    fbAlarmLatch   : SR; // SR 实例：温度报警闩锁（SET 优先）
+    bTempOverLimit : BOOL; // 温度超限即时信号（80°C 以上为 TRUE）
+    bOperatorAck   : BOOL; // 操作员"确认/复位"按钮
+    bAlarmLatched  : BOOL; // 闩锁后的报警位（用于驱动声光报警/SCADA 上报）
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：温度过高报警闩锁。温度传感器超 80°C 时报警位被闩锁置 TRUE 直到操作员
+//       按确认；但如果温度仍然超（故障未排除），按确认按钮无效——SET1 赢过 RESET。
+//       这是 PLC 报警系统的标准实现：故障没解除前不允许"消音"。
+//
+// 价值：1 次调用拿到"SET 主导锁存"完整语义；选 SR 而不是 RS 在这里是设计意图：
+//       故障必须优先于"确认"，否则操作员按住确认就能掩盖未排除的故障。
+//
+// 验证步骤：
+//   1. PLC 项目 → Add Existing Item (.TcPOU) → 选本文件
+//   2. 引用 Tc2_Standard 库
+//   3. 编译、登录、运行
+//   4. 在线 monitor bAlarmLatched
+//   5. 在线 bTempOverLimit := TRUE → bAlarmLatched 立刻 TRUE
+//   6. bTempOverLimit := FALSE → bAlarmLatched 保持 TRUE（锁存，温度回落不自动清）
+//   7. bOperatorAck := TRUE → bAlarmLatched 变 FALSE（清除报警）
+//   8. 关键测试：bTempOverLimit 仍 TRUE 同时 bOperatorAck := TRUE
+//      → bAlarmLatched 仍 TRUE（SET1 赢，操作员无法在故障未排除时清除报警）
+// =============================================================================
+
+fbAlarmLatch(
+    SET1  := bTempOverLimit,
+    RESET := bOperatorAck,
+    Q1    => bAlarmLatched
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

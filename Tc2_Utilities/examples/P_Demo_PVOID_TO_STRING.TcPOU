@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_PVOID_TO_STRING" Id="{aa4ddd6b-c6db-5460-9f47-e2ffa33ad6b8}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_PVOID_TO_STRING
+VAR
+    pSomeRef : POINTER TO BYTE; // 工业语义：要诊断的指针
+    sAddrStr : STRING(32); // 诊断字符串
+    bDiag    : BOOL; // 在线触发
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：排查内存泄漏：把疑似无效指针的值 dump 到日志，对比已知地址区间。
+// 价值：替代手写 hex 格式化 + 平台 if 分支；本函数自动按位宽适应。
+// 验证步骤：
+//   1. 引用 Tc2_Utilities
+//   2. 编译 + 登录 + 运行
+//   3. 在线写触发位 TRUE，monitor 输出变量
+// =============================================================================
+
+IF bDiag THEN
+    sAddrStr := PVOID_TO_STRING(in := pSomeRef);
+    bDiag := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

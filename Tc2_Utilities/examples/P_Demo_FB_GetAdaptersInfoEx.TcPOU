@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_GetAdaptersInfoEx" Id="{a48f2697-8142-5ea2-ab88-dbb991ab03d6}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_GetAdaptersInfoEx
+VAR
+    fbFB_GetAdaptersInfoEx : FB_GetAdaptersInfoEx; // FB_GetAdaptersInfoEx 实例
+    sNetID                 : T_AmsNetID := '';
+    bExecute               : BOOL := FALSE;
+    tTimeout               : TIME := DEFAULT_ADS_TIMEOUT;
+    bBusy                  : BOOL;
+    bError                 : BOOL;
+    nErrorID               : UDINT;
+    nAdapters              : UINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：FB_GetAdaptersInfoEx 的最小可编译演示——所有 VAR_INPUT 均以 doc/PDF 中真实引脚名调用。
+//       业务侧请在线 monitor / 在线写值触发对应输入，看输出端 monitor 结果。
+//
+// 价值：保证示例 ST 代码所有引脚名与 FB_GetAdaptersInfoEx 的 VAR_INPUT/VAR_OUTPUT 一致，
+//       Add Existing Item (.TcPOU) → 编译 → 登录 流程能跑通，作为 hand-curated 例程
+//       的脚手架。
+//
+// 验证步骤：
+//   1. 引用 Tc2_Utilities（及其依赖 Tc2_System）
+//   2. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件 → OK → 编译、登录
+//   3. 在线对 VAR_INPUT 写入合适触发值（典型 bExecute / RUN / START 上升沿）
+//   4. 在线 monitor VAR_OUTPUT 观察 FB 反应
+// =============================================================================
+
+fbFB_GetAdaptersInfoEx(
+    sNetID := sNetID,
+    bExecute := bExecute,
+    tTimeout := tTimeout,
+    bBusy => bBusy,
+    bError => bError,
+    nErrorID => nErrorID,
+    nAdapters => nAdapters
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

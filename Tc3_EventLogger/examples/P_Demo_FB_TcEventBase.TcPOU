@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_TcEventBase" Id="{2f2ba52a-a28d-519f-87f0-c1fa5b0f6b4c}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_TcEventBase
+VAR
+    fbAlarm1 : FB_TcAlarm; // 事件 1（举例：用 FB_TcAlarm 持有）
+    fbAlarm2 : FB_TcAlarm; // 事件 2
+    ipBase1  : I_TcEvent; // 通过接口拿到 base 视图
+    ipBase2  : I_TcEvent; // 通过接口拿到 base 视图
+    bEqual   : BOOL; // 比较结果
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：演示如何通过基类接口比较两个事件是否相同
+// 价值：一份代码同时支持 alarm 和 message 的比较，无需类型分支
+// 验证：无法直接独立运行——本例需在已有事件实例的工程里搭配 FB_TcAlarm / FB_TcMessage 才能演示效果
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_EventLogger（System → References → Add library）
+//   3. 编译 → 登录 → 运行；按 verify 注释里给出的在线写值操作
+// =============================================================================
+
+// FB_TcEventBase 是基类——业务里很少直接实例化，更常见的做法是声明子类 FB_TcAlarm / FB_TcMessage，
+// 然后通过 I_TcEvent 接口拿到 FB_TcEventBase 视图调用通用 API（EqualsToEventEntry / RequestEventText 等）。
+ipBase1 := fbAlarm1;
+ipBase2 := fbAlarm2;
+
+// 比较两事件定义是否相同（最粗粒度：仅看 EventClass + EventID + Severity）
+IF ipBase1 &lt;&gt; 0 AND ipBase2 &lt;&gt; 0 THEN
+    bEqual := ipBase1.EqualsToEventEntry(ipBase2);
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

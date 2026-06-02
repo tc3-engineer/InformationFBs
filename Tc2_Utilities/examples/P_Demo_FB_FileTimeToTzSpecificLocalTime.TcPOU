@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_FileTimeToTzSpecificLocalTime" Id="{739ac5ca-2d15-518c-8d64-e26b2c205d2d}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_FileTimeToTzSpecificLocalTime
+VAR
+    fbConvertUtcToLocal : FB_FileTimeToTzSpecificLocalTime; // FB 实例（已弃用；新代码用 FB_FileTime64ToTzSpecificLocalTime）
+    ftUtcInput          : T_FILETIME; // UTC 输入时间（FILETIME 32 位）
+    ftLocalOutput       : T_FILETIME; // 转换后本地时间
+    eDstStatus          : E_TimeZoneID; // 夏令时 / 标准时 / 未知
+    bInBTime            : BOOL; // DST 回退重复区第二次 = TRUE
+    bDoResetCache       : BOOL; // 时间源跳变后写 TRUE 一次清缓存
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_Utilities.FB_FileTimeToTzSpecificLocalTime 演示程序（已弃用 FB）
+// ============================================================
+// 场景：维护一个 TC2 时代的批次报表系统：内部时间戳全部以 UTC FILETIME 存储，
+//       HMI 显示时按西欧时区转成本地时间。本 FB 是这套旧系统转时区的标准工具。
+// 价值：保留旧报表系统的时区转换；新工程请改用 FB_FileTime64ToTzSpecificLocalTime。
+// 验证：
+//   1. 引用 Tc2_Utilities，编译 + 登录
+//   2. 给 ftUtcInput 写一个固定 UTC FILETIME（用 DT_TO_FILETIME 辅助函数）
+//   3. 监视 ftLocalOutput 的小时数 — 夏令时应比 UTC 多 2（CEST=UTC+2），冬令
+//      时多 1（CET=UTC+1）
+//   4. eDstStatus 应反映 Daylight / Standard
+//   5. 时间源跳变后写 bDoResetCache := TRUE 调 A_Reset 清缓存
+// ============================================================
+
+// 用 WEST_EUROPE_TZI 常量做时区数据
+fbConvertUtcToLocal(
+    in     := ftUtcInput,
+    tzInfo := WEST_EUROPE_TZI,
+    out    => ftLocalOutput,
+    eTzID  => eDstStatus,
+    bB     => bInBTime
+);
+
+// 时间源跳变后调 A_Reset() 清缓存（动作方法式调用）
+IF bDoResetCache THEN
+    bDoResetCache := FALSE;
+    fbConvertUtcToLocal.A_Reset();
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

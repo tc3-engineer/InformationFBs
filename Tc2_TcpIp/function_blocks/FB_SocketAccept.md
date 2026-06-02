@@ -13,7 +13,7 @@
 | Verified | 2026-05-21 ✅ |
 | InfoSys-checked | ✅ 2026-05-21 |
 | Status | `verified` |
-| Example | [`examples/P_Demo_FB_SocketAccept.xml`](../examples/P_Demo_FB_SocketAccept.xml) |
+| Example | [`examples/P_Demo_FB_SocketAccept.TcPOU`](../examples/P_Demo_FB_SocketAccept.TcPOU) |
 
 ---
 
@@ -112,7 +112,7 @@ END_IF
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_FB_SocketAccept.xml`](../examples/P_Demo_FB_SocketAccept.xml)
+> 配套可导入文件：[`examples/P_Demo_FB_SocketAccept.TcPOU`](../examples/P_Demo_FB_SocketAccept.TcPOU)
 
 ```iecst
 // 场景：把 incoming 连接放入一个简单的客户端槽位数组里。

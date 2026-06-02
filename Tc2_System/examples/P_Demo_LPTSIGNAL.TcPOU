@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_LPTSIGNAL" Id="{1a8355d4-47d3-54ef-ac73-ee9e3648ea94}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_LPTSIGNAL
+VAR
+    bLptOk1 : BOOL; // 入口拉高调用结果
+    bLptOk2 : BOOL; // 出口拉低调用结果
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：用示波器观察 MAIN 任务实际周期：入口拉高 D7、出口拉低 D7，示波器看到的方波周期 = 实际任务周期。
+// 价值：硬件级时序观察，比日志统计精度高。
+// 验证：示波器接 LPT1 D7 引脚 → 看到周期性方波；周期与 SYSTEM 配的任务周期一致。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_System（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』行的指示在线写值观察
+// =============================================================================
+
+// MAIN 入口拉高 LPT D7 引脚
+bLptOk1 := LPTSIGNAL(
+    PortAddr := 16#378,
+    PinNo    := 7,
+    OnOff    := TRUE
+);
+
+// ... 此处写业务逻辑（被示波器观察） ...
+
+// MAIN 出口拉低
+bLptOk2 := LPTSIGNAL(
+    PortAddr := 16#378,
+    PinNo    := 7,
+    OnOff    := FALSE
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

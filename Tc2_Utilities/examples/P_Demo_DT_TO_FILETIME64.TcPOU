@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_DT_TO_FILETIME64" Id="{cf790cb4-5fa9-5d9f-a120-89aed64f9bf3}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_DT_TO_FILETIME64
+VAR
+    dtMaintenance : DATE_AND_TIME := DT#2026-05-11-12:00:00; // 维护事件发生时间（DT 格式）
+    ftMaintenance : T_FILETIME64; // 转换后的 T_FILETIME64 值（用于写日志）
+    bRunOnce      : BOOL; // 脉冲触发一次执行
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：PLC 内部以 DT 记录维护事件时间，写入 Windows 日志 / 数据库前需转 T_FILETIME64
+//
+// 价值：1 行调用完成基准换算 + 单位换算，避免手写 1970↔1601 基准差与 100ns 系数
+//
+// 验证步骤：
+//   1. 引用 Tc2_Utilities（≥ 3.3.44.0）
+//   2. 编译 + 登录 + 运行
+//   3. 强制 bRunOnce := TRUE 一个周期
+//   4. 在线监视 ftMaintenance，dwLowDateTime/dwHighDateTime 应非零
+//   5. 用 FILETIME64_TO_DT 反向应得回 DT#2026-05-11-12:00:00
+// =============================================================================
+ftMaintenance := DT_TO_FILETIME64(dtMaintenance);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

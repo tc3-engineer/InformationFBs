@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_MC_AbortSuperposition" Id="{3e93757a-8b07-550e-abc4-8dc288ef89b7}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_MC_AbortSuperposition
+VAR
+    fbAbortShift    : MC_AbortSuperposition;
+    axisPrintRoller : AXIS_REF;
+    rtAbortTrig     : R_TRIG;
+    bRequestAbort   : BOOL := FALSE;
+    bAbortDone      : BOOL;
+    bAbortBusy      : BOOL;
+    bAbortError     : BOOL;
+    nErrorID        : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：套色检测在叠加运动启动后发现方向算错（应叠加 -2 而非 +2）, 必须立刻
+//       中止叠加避免印更多错色废品 — 但生产线主运动不能停。
+// 价值：精准中止叠加，不波及主运动；比 MC_Stop 整体停产代价低几个数量级。
+// 验证：先让 MC_MoveSuperImposed 叠加运动跑起来（前序 demo 假设已启动）；
+//       bRequestAbort := TRUE → 看 ActPos 增长立刻停止（叠加段不再增长），
+//       但主运动 ActVelo 维持原值；bAbortDone 短暂 TRUE。
+// =============================================================================
+
+rtAbortTrig(CLK := bRequestAbort);
+
+fbAbortShift(
+    Execute := rtAbortTrig.Q,
+    Axis    := axisPrintRoller,
+    Done    => bAbortDone,
+    Busy    => bAbortBusy,
+    Error   => bAbortError,
+    ErrorID => nErrorID
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_MC_WriteMotionFunctionPoint" Id="{0a5f8181-bf75-516b-9ccc-9549bcb6f6d9}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_MC_WriteMotionFunctionPoint
+VAR
+    fbAdjustPhasePoint : MC_WriteMotionFunctionPoint;
+    stPhaseAdjPoint    : MC_MotionFunctionPoint;
+    stWriteOpts        : ST_WriteMotionFunctionOptions;
+    nActiveCamId       : MC_CAM_ID;
+    nPhasePointID      : MC_MotionFunctionPoint_ID := 5;
+    lrPhaseOffsetMm    : LREAL := 0.2;
+    bApplyPhaseAdj     : BOOL := FALSE;
+    rtApplyTrig        : R_TRIG;
+    bAdjDone           : BOOL;
+    bAdjBusy           : BOOL;
+    bAdjError          : BOOL;
+    nAdjErrorID        : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：印刷机色版套印相位补偿 — 色差检测系统报告 5 号节点（位于套印关
+//       键相位窗口）的从轴位置偏小 0.2mm，需要把该单点的从轴位置增加
+//       0.2mm；其他点不动。配合 MC_SetCamOnlineChangeMode 已配置的"延迟
+//       到主轴下次到换型位置生效"模式实现 0 停机相位校正。
+// 价值：传统做法是离线改 cam 文件重启 → 整张报纸报废；用本 FB 单点写 +
+//       延迟激活可以在套印过程中无感校正。也比 MC_WriteMotionFunction 全
+//       量写更高效（不用把整张表都搬一遍）。
+// 验证步骤：
+//   1) 编译登录；nActiveCamId 已由上游 MC_CamTableSelect 准备好。
+//   2) 在线先用 MC_ReadMotionFunctionPoint 读出第 5 号点的当前 SlavePos，
+//      记下来作为基准；然后预填到 stPhaseAdjPoint（实际工程会自动做）。
+//   3) 本例为演示，stPhaseAdjPoint 手动改：把 stPhaseAdjPoint.SlavePos +=
+//      lrPhaseOffsetMm，其他字段保持读出的原值。
+//   4) 在线 bApplyPhaseAdj := TRUE → R_TRIG 上升沿触发 Execute；
+//      bAdjBusy 立 TRUE，1-N 周期后 bAdjDone := TRUE。
+//   5) 用 MC_ReadMotionFunctionPoint 同 PointID = 5 回读，应看到 SlavePos
+//      = 基准 + 0.2mm；若延迟激活则需要等 Axis.Status.CamDataQueued 变
+//      FALSE 才说明机械上真的生效了。
+//   6) 故障路径：nPhasePointID 改成一个表里不存在的 ID（如 9999）触发，
+//      应看到 bAdjError := TRUE。
+// =============================================================================
+// 注意：本例只展示写入框架；实际工程里 stPhaseAdjPoint 必须先用
+//       MC_ReadMotionFunctionPoint 读出原值再叠加偏移，不能直接清零写。
+
+rtApplyTrig(CLK := bApplyPhaseAdj);
+
+// 单次完整调用：Execute 上升沿 + 表 ID + 目标 PointID + 选项 + Point 数据
+fbAdjustPhasePoint(
+    Execute    := rtApplyTrig.Q,
+    CamTableID := nActiveCamId,
+    PointID    := nPhasePointID,
+    Options    := stWriteOpts,
+    Point      := stPhaseAdjPoint,
+    Done       => bAdjDone,
+    Busy       => bAdjBusy,
+    Error      => bAdjError,
+    ErrorID    => nAdjErrorID
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

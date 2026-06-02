@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_HEXSTR_TO_DATA2" Id="{bb8d4095-b3c7-54ea-ba16-080a9f4e04db}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_HEXSTR_TO_DATA2
+VAR
+    sHexCfg   : STRING(64) := '01 23 AB CD'; // 工业语义：配置文件读出的 hex 字节
+    aPdoBytes : ARRAY[0..15] OF BYTE; // 解析后的字节缓冲
+    nParsed   : UDINT; // 成功解析的字节数（0 = 解析失败）
+    bParse    : BOOL; // 在线触发
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：从配置文件读出 hex 字符串 `'01 23 AB CD'`，写入 EtherCAT 从站的 PDO 配置字节区。
+// 价值：替代手写 hex 解析循环（每 2 字符调用 `HEXASCNIBBLE_TO_BYTE` 拼字节）；本函数 1 行解决并自带 size 检查。
+// 验证步骤：
+//   1. 引用 Tc2_Utilities
+//   2. 编译 + 登录 + 运行
+//   3. 在线写触发位 TRUE，monitor 输出变量
+// =============================================================================
+IF bParse THEN
+    nParsed := HEXSTR_TO_DATA2(pSrcHexStr := ADR(sHexCfg),
+                               pDstData   := ADR(aPdoBytes),
+                               nDstSize   := SIZEOF(aPdoBytes));
+    // nParsed = 0 -> 整段解析失败（含非法字符）；业务侧应记错误日志
+    bParse := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

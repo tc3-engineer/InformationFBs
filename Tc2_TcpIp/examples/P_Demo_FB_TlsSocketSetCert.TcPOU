@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_TlsSocketSetCert" Id="{7ee02628-6237-52b8-aacd-a7a06dcc3526}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_TlsSocketSetCert
+VAR
+    fbCreateServer   : FB_TlsSocketCreate;
+    fbSetCert        : FB_TlsSocketSetCert;
+    hServerSocket    : T_HSOCKET;
+    bRequestCreate   : BOOL;
+    bCreateBusy      : BOOL;
+    bCreateError     : BOOL;
+    nCreateErrId     : UDINT;
+    sCertPath        : STRING(255) := 'C:\TwinCAT\3.1\Boot\Plc\TcpIpServer\server.pem';
+    sKeyPath         : STRING(255) := 'C:\TwinCAT\3.1\Boot\Plc\TcpIpServer\server.key';
+    sKeyPwd          : STRING(255) := 'mySecretPassphrase'; // 私钥加密口令；生产环境应从安全存储读，不要硬编码
+    bRequestSetCert  : BOOL;
+    bSetCertBusy     : BOOL;
+    bSetCertError    : BOOL;
+    nSetCertErrId    : UDINT;
+    bServerCertReady : BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：PLC 当 HTTPS-like 服务器，需要装本机服务端证书 + 加密私钥才能 Listen。
+//       证书 server.pem 包含叶子证书 + 中间证书拼接；私钥 server.key 是加密
+//       AES-256 PEM 形式，口令由部署脚本注入到 sKeyPwd（本例硬编码仅 demo）。
+//
+// 价值：演示 SetCert 是 TLS Server 启动的硬条件——少这一步 Listen 会直接
+//       拒绝，所有客户端 TLS 握手必失败。
+//
+// 验证步骤：
+//   1. 用 OpenSSL 生成测试证书+加密私钥并放到上述路径
+//   2. 在线 bRequestCreate := TRUE → hServerSocket 创建
+//   3. 在线 bRequestSetCert := TRUE
+//      → bSetCertBusy 闪烁后落回；bServerCertReady := TRUE
+//   4. 改 sKeyPwd 为错口令 → nSetCertErrId=0x00008086 (TLS_KEY_INVALID)
+//   5. 删 server.pem → nSetCertErrId=0x00008082 (TLS_CERT_NOTFOUND)
+//   6. 用证书 A 配私钥 B（不配对）→ nSetCertErrId=0x00008086 (TLS_KEY_INVALID)
+// =============================================================================
+
+fbCreateServer(
+    sSrvNetId := '', bListener := TRUE,
+    bExecute := bRequestCreate, tTimeout := T#5S,
+    bBusy => bCreateBusy, bError => bCreateError, nErrId => nCreateErrId,
+    hSocket => hServerSocket);
+
+fbSetCert(
+    sSrvNetId := '', hSocket := hServerSocket,
+    sCertPath := sCertPath, sKeyPath := sKeyPath, sKeyPwd := sKeyPwd,
+    bExecute := bRequestSetCert, tTimeout := T#5S,
+    bBusy => bSetCertBusy, bError => bSetCertError, nErrId => nSetCertErrId);
+
+IF NOT bSetCertBusy AND NOT bSetCertError AND bRequestSetCert THEN
+    bServerCertReady := TRUE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

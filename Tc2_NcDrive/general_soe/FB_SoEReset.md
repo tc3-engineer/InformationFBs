@@ -13,7 +13,7 @@
 | Verified | 2026-05-25 ✅ |
 | InfoSys-checked | ✅ 2026-05-25 |
 | Status | `verified` |
-| Example | [`examples/P_Demo_FB_SoEReset.xml`](../examples/P_Demo_FB_SoEReset.xml) |
+| Example | [`examples/P_Demo_FB_SoEReset.TcPOU`](../examples/P_Demo_FB_SoEReset.TcPOU) |
 
 ---
 
@@ -107,7 +107,7 @@ END_VAR
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_FB_SoEReset.xml`](../examples/P_Demo_FB_SoEReset.xml)
+> 配套可导入文件：[`examples/P_Demo_FB_SoEReset.TcPOU`](../examples/P_Demo_FB_SoEReset.TcPOU)
 
 ```iecst
 // 场景：AX5000 伺服因瞬时过流报错停机，HMI 上操作员按"复位"按钮，需要清驱动器错误后重新使能

@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_TlsSocketSetPsk" Id="{981c6541-3758-5c88-908c-6ac767ffba7a}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_TlsSocketSetPsk
+VAR
+    fbCreateClient       : FB_TlsSocketCreate;
+    fbSetPsk             : FB_TlsSocketSetPsk;
+    hSocket              : T_HSOCKET;
+    bRequestCreate       : BOOL;
+    bCreateBusy          : BOOL;
+    bCreateError         : BOOL;
+    nCreateErrId         : UDINT;
+    sPskIdentity         : STRING(255) := 'sensor-line-A-station-3';
+    abPskBytes           : ARRAY[0..15] OF BYTE; // 16 字节随机 PSK；真实工程应从安全存储读，不可硬编码
+    bPskBytesInitialized : BOOL;
+    bRequestSetPsk       : BOOL;
+    bSetPskBusy          : BOOL;
+    bSetPskError         : BOOL;
+    nSetPskErrId         : UDINT;
+    bPskReady            : BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：100 台同型号扫描枪连工厂 IoT 网关。出厂烧录同一对
+//       (identity = "sensor-line-A-station-3", PSK = 16 byte 随机字节)；
+//       网关侧也配置同样 identity → PSK 映射。建连时双方 PSK 校验通过即开始
+//       TLS 通讯，全程无证书 PKI。
+//
+// 价值：演示 PSK 模式的最简部署——Create → SetPsk → Connect 三步走，
+//       无需 AddCa / SetCert / AddCrl。运维负担显著小于 PKI。
+//
+// 验证步骤：
+//   1. 启动后 PLC 周期 1 把 abPskBytes 初始化为约定的 16 字节（演示用：
+//      生产应从加密文件 / TPM 读，不能硬编码）
+//   2. 在线 bRequestCreate := TRUE → hSocket 创建
+//   3. 在线 bRequestSetPsk := TRUE
+//      → bSetPskBusy 闪烁后落回；bPskReady := TRUE
+//   4. 故意把 abPskBytes 改成全 0 后再 SetPsk → 服务端验失败时 Connect
+//      会报 0x00008089 (TLS_HANDSHAKE_FAIL)
+//   5. 故意 pskKeyLen := 200（超 128 上限）→ 范围检查触发 PSK_SETUP_ERROR
+// =============================================================================
+
+// 启动阶段一次性把 PSK 字节填进数组（演示用；生产从安全存储 load）
+IF NOT bPskBytesInitialized THEN
+    abPskBytes[0]  := 16#A1; abPskBytes[1]  := 16#B2;
+    abPskBytes[2]  := 16#C3; abPskBytes[3]  := 16#D4;
+    abPskBytes[4]  := 16#E5; abPskBytes[5]  := 16#F6;
+    abPskBytes[6]  := 16#07; abPskBytes[7]  := 16#18;
+    abPskBytes[8]  := 16#29; abPskBytes[9]  := 16#3A;
+    abPskBytes[10] := 16#4B; abPskBytes[11] := 16#5C;
+    abPskBytes[12] := 16#6D; abPskBytes[13] := 16#7E;
+    abPskBytes[14] := 16#8F; abPskBytes[15] := 16#90;
+    bPskBytesInitialized := TRUE;
+END_IF;
+
+fbCreateClient(
+    sSrvNetId := '', bListener := FALSE,
+    bExecute := bRequestCreate, tTimeout := T#5S,
+    bBusy => bCreateBusy, bError => bCreateError, nErrId => nCreateErrId,
+    hSocket => hSocket);
+
+fbSetPsk(
+    sSrvNetId := '', hSocket := hSocket,
+    sIdentity := sPskIdentity,
+    pskKey    := ADR(abPskBytes),
+    pskKeyLen := SIZEOF(abPskBytes),
+    bExecute  := bRequestSetPsk,
+    tTimeout  := T#5S,
+    bBusy     => bSetPskBusy,
+    bError    => bSetPskError,
+    nErrId    => nSetPskErrId);
+
+IF NOT bSetPskBusy AND NOT bSetPskError AND bRequestSetPsk THEN
+    bPskReady := TRUE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

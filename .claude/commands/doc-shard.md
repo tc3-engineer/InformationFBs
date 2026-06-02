@@ -1,11 +1,11 @@
 ---
-description: 为指定库的指定类别生成完整 FB/FC 文档 + 配套 PLCopenXML 例程，每对带自验证
+description: 为指定库的指定类别生成完整 FB/FC 文档 + 配套 TcPOU 例程，每对带自验证
 argument-hint: <Library_Name> <Category>
 ---
 
 # /doc-shard
 
-为库 `$1` 中类别 `$2` 的所有 FB/FC 生成**完整文档 + 配套 PLCopenXML 例程**（带自验证）。
+为库 `$1` 中类别 `$2` 的所有 FB/FC 生成**完整文档 + 配套 TcPOU 例程**（带自验证）。
 
 ## 解析参数
 
@@ -40,8 +40,8 @@ python3 _meta/tools/extract_section.py <library> <section_number>
 **产物 A：文档** `<library>/<category_dir>/<name>.md`
 按 `_templates/fb-template.md` 生成。
 
-**产物 B：例程** `<library>/examples/P_Demo_<name>.xml`
-按 `_templates/plcopen-program.xml` 生成。
+**产物 B：例程** `<library>/examples/P_Demo_<Name>.TcPOU`
+按 `_templates/tcpou-program.xml` 生成。
 
 两份产物**必须配套生成**——只生成一份视为失败。
 
@@ -50,10 +50,10 @@ python3 _meta/tools/extract_section.py <library> <section_number>
 - VAR 区逐字搬运（包括类型、注释、分号、大小写）
 - 元信息表 9 行全填（**Example 字段必须链接到 .xml**）
 - 描述句不超出 PDF 原文事实
-- 例程章节必须在最前面提示"配套可导入文件 [examples/P_Demo_<Name>.xml]" 与导入步骤
+- 例程章节必须在最前面提示"配套可导入文件 [examples/P_Demo_<Name>.TcPOU]" 与导入步骤
 
-#### 例程生成规则（PLCopenXML）
-1. 复制 `_templates/plcopen-program.xml` 作为骨架
+#### 例程生成规则（TcPOU）
+1. 复制 `_templates/tcpou-program.xml` 作为骨架
 2. 替换占位符：`{{NAME}}`、`{{LIBRARY}}`、`{{TIMESTAMP}}`（用 ISO8601 当前 UTC）
 3. 在 `<localVars>` 中：
    - 必有 `fb<Name> : <Name>;`（用 `<derived name="<Name>"/>`）
@@ -77,7 +77,7 @@ python3 _meta/tools/verify_doc.py <library>/<category_dir>/<name>.md
 
 #### 3b. 例程验证
 ```bash
-python3 _meta/tools/lint_plcopen.py <library>/examples/P_Demo_<name>.xml
+python3 _meta/tools/lint_tcpou.py <library>/examples/P_Demo_<Name>.TcPOU
 ```
 退出 0 PASS / 2 FAIL。检查：XML 良构、pouType=program、fb<Name> + derived 引用正确、ST body XML 实体化。
 
@@ -135,8 +135,8 @@ python3 _meta/tools/lint_plcopen.py <library>/examples/P_Demo_<name>.xml
 
   | Name | Doc | Example | Notes |
   |---|---|---|---|
-  | RS  | ✅ | ✅ examples/P_Demo_RS.xml | - |
-  | SR  | ✅ | ✅ examples/P_Demo_SR.xml | - |
+  | RS  | ✅ | ✅ examples/P_Demo_RS.TcPOU | - |
+  | SR  | ✅ | ✅ examples/P_Demo_SR.TcPOU | - |
   | XYZ | ⚠️ verify-failed | ⚠️ example-build-failed | 见 blocked.md |
 
   剩余 pending（如本批超过 12 条）：

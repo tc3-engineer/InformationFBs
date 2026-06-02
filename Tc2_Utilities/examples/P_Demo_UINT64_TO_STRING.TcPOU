@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_UINT64_TO_STRING" Id="{f8fd168a-a0c8-57c5-84d9-cc666d07bda9}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_UINT64_TO_STRING
+VAR
+    uliCounter   : T_ULARGE_INTEGER;; // 64 位数据包计数器
+    sCounterText : STRING(21)); // CSV 列输出
+    bFormat      : BOOL;; // 触发一次格式化
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_Utilities.UINT64_TO_STRING 演示程序（FUNCTION，单周期触发）
+// ============================================================
+// 场景：把 64 位数据包计数器导出到 CSV 行，需要先转字符串。
+// 价值：替代手写 64 位除 10 取余循环；一行调用，无精度损失。
+// 验证步骤：
+//   1. 把本 PROGRAM 加到 PlcTask 调用列表
+//   2. 编译 + 登录
+//   3. 在线把 b... 触发位置 TRUE 一个周期
+//   4. 观察输出变量是否符合期望
+// ============================================================
+
+IF bFormat THEN
+    // 上升沿触发一次格式化，避免每个周期重做
+    sCounterText := UINT64_TO_STRING(uliCounter);
+    bFormat := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

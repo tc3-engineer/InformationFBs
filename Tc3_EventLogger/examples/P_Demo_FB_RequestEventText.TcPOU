@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_RequestEventText" Id="{76a683b7-fc15-5bdc-abda-7406785f5575}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_RequestEventText
+VAR
+    fbReq       : FB_RequestEventText; // 请求 FB 实例
+    fbAlarm     : FB_TcAlarm; // 提供 fbEventBase 参考的事件源
+    nLangId     : DINT := 2052; // 目标 LangId（中文）
+    bDoReq      : BOOL := FALSE; // 上升沿触发
+    bDoReqPrev  : BOOL; // 边沿检测
+    bBusy       : BOOL; // 状态
+    bError      : BOOL; // 错误
+    hrErrorCode : HRESULT; // 错误码
+    hr          : HRESULT; // Request 返回值
+    sResult     : STRING(255); // 结果文本
+    bGot        : BOOL; // 已取到结果
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：异步取事件本地化文本
+// 价值：异步取本地化资源
+// 验证：登录后写 bDoReq := TRUE 触发；几周期后 bBusy 变 FALSE 且 bError 应为 FALSE；之后取结果
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_EventLogger（System → References → Add library）
+//   3. 编译 → 登录 → 运行；按 verify 注释里给出的在线写值操作
+// =============================================================================
+
+IF bDoReq AND NOT bDoReqPrev THEN
+    fbReq.Clear();                            // 清理上次结果
+    hr := fbReq.Request(nLangId := nLangId, fbEventBase := fbAlarm);
+    bGot := FALSE;
+END_IF;
+bDoReqPrev := bDoReq;
+
+bBusy := fbReq.bBusy;
+bError := fbReq.bError;
+hrErrorCode := fbReq.hrErrorCode;
+
+IF NOT bBusy AND NOT bError AND NOT bGot THEN
+    fbReq.GetString(sResult := sResult);
+    bGot := TRUE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

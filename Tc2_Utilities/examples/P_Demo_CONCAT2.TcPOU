@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_CONCAT2" Id="{19fdc22f-135d-542f-bba4-cd5e6a357251}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_CONCAT2
+VAR
+    sModuleName : STRING(255) := 'PumpCtrl'; // 工业语义：模块名（来源）
+    sMessage    : STRING(255) := 'Tank level below threshold'; // 工业语义：日志正文
+    sLogLine    : STRING(512); // 工业语义：拼接后完整日志行（>255 字符）
+    bCheckLog   : BOOL; // 在线置 TRUE 触发一次拼接
+    bConcatOk   : BOOL; // 本次拼接是否完整
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：日志聚合：把模块名 ("PumpCtrl") + ': ' + 详细错误描述 + ' @ ' + 时间戳拼成完整日志行。完整日志 > 255 字符时 `Tc2_Standard.CONCAT` 直接溢出，必须用 `CONCAT2`。
+// 价值：替代 `Tc2_Standard.CONCAT` + 长度检查 + 多次声明 `STRING(80)`/`STRING(255)`/`STRING(1024)` 的混乱体系，统一用 `STRING` + `CONCAT2` 即可。返回值 `BOOL` 提供超长检测，比裸 `CONCAT` 更安全。
+// 验证步骤：
+//   1. 引用 Tc2_Utilities
+//   2. 编译 + 登录 + 运行
+//   3. 在线写触发位 TRUE，monitor 输出变量
+// =============================================================================
+// 仅在 bCheckLog 上升沿做一次拼接，避免每周期占用 CPU
+IF bCheckLog THEN
+    bConcatOk := CONCAT2(pSrcString1 := ADR(sModuleName),
+                         pSrcString2 := ADR(sMessage),
+                         pDstString  := ADR(sLogLine),
+                         nDstSize    := SIZEOF(sLogLine));
+    // bConcatOk = FALSE 时 sLogLine 已被截断，业务侧应丢弃或转错误处理
+    bCheckLog := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

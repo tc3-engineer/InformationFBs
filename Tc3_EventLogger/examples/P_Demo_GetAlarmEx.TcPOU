@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_GetAlarmEx" Id="{4f8e63b5-36dc-5057-92c5-f6de056aa49f}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_GetAlarmEx
+VAR
+    fbLogger     : FB_TcEventLogger; // EventLogger 实例
+    fbAlarmRef   : FB_TcAlarm; // 查询输出
+    stEventEntry : TcEventEntry; // 要查询的事件定义
+    bDoGet       : BOOL := FALSE; // 上升沿触发
+    bDoGetPrev   : BOOL; // 边沿检测
+    hr           : HRESULT; // 返回值监视
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：凭 TcEventEntry 查询本地匹配的 alarm 引用
+// 价值：结构体接口适合循环遍历事件清单批量查询
+// 验证：先 Create 一个 alarm，把同一 TcEventEntry 写入 stEventEntry 触发 GetAlarmEx → hr = S_OK；改 Severity → ADS_E_NOTFOUND
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_EventLogger（System → References → Add library）
+//   3. 编译 → 登录 → 运行；按 verify 注释里给出的在线写值操作
+// =============================================================================
+
+IF bDoGet AND NOT bDoGetPrev THEN
+    hr := fbLogger.GetAlarmEx(
+        stEventEntry := stEventEntry,
+        ipSourceInfo := 0,
+        fbAlarm := fbAlarmRef);
+    IF SUCCEEDED(hr) THEN
+        ; // 拿到引用后可调用 Raise/Clear/Confirm
+    END_IF;
+END_IF;
+bDoGetPrev := bDoGet;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

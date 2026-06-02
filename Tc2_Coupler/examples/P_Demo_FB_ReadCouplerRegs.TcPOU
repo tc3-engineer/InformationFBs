@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_ReadCouplerRegs" Id="{19f38c81-877d-59c2-8e68-0b35b7d7713c}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_ReadCouplerRegs
+VAR
+    fbReadRegs          : FB_ReadCouplerRegs; // 批量读耦合器/端子寄存器
+    rTrigScan           : R_TRIG; // 扫描请求上升沿
+    stCouplerStatus     : PLCINTFSTRUCT; // 2-byte PLC interface status
+    stCouplerControl    : PLCINTFSTRUCT; // 2-byte PLC interface control
+    bScanCouplerReg     : BOOL; // 扫描耦合器自身 reg 0..15
+    bScanKL3464Id       : BOOL; // 读 KL3464 (端子号 2) 的 reg 8
+    nActiveTerminalSlot : BYTE := TERM_COUPLER; // 当前目标端子号
+    nActiveTableNo      : BYTE := 0; // 表号
+    nActiveStartReg     : BYTE := 0; // 起始寄存器号（含）
+    nActiveEndReg       : BYTE := 15; // 结束寄存器号（含）
+    tScanTimeout        : TIME := T#10S; // 扫描超时 (经验式 N*100ms+2s)
+    bScanBusy           : BOOL; // 扫描进行中
+    bScanError          : BOOL; // 扫描出错
+    nLastErrId          : UDINT; // 最近一次错误号
+    stReadResult        : ST_CouplerTable; // 读到的寄存器表，下标 = 寄存器号
+    wKL3464IdReadback   : WORD; // KL3464 reg 8 还原为 WORD，应为 16#0D80
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：BK3120 + 端子排 [KL1408, KL9100, KL3464, KL4022]。上电后做硬件巡检：
+//   (a) 读耦合器自身 reg 0..15（型号 / 固件 / 站点配置）；
+//   (b) 读 KL3464（端子号 2，因 KL9100 是无源端子不计）的 reg 8（端子型号，
+//       应得 16#0D80 = 3456 = KL3464），与工程图纸对比，接错就拒绝启动。
+//
+// 价值：把"2-byte PLC interface 批量寄存器握手 + 高/低字节填表 + 超时管理"
+//       封装为一次调用。手写实现 100+ 行状态机；本 FB 一行调用。
+//
+// 验证步骤：
+//   1. 在 System Manager 给 BK3120 启用 2-byte PLC interface 并链 IO
+//   2. 引用 Tc2_Coupler，编译，登录
+//   3. 在线置 bScanCouplerReg := TRUE 触发一次 -> 数秒后 bScanBusy 回 FALSE，
+//      stReadResult 中 [0..15] 应有耦合器表数据
+//   4. 在线置 bScanKL3464Id := TRUE 触发 -> wKL3464IdReadback 应等于 16#0D80
+//   5. 若误把端子号 nActiveTerminalSlot 设为 3（把 KL9100 也数进去）触发 ->
+//      可能 nLastErrId = 16#400，证明无源端子确实不计入
+//   6. 触发完成后由 HMI 把 bScanX 标志清零再做下一次（上升沿语义）
+// =============================================================================
+
+// 按请求装载参数；同周期只允许一个请求拉高
+IF bScanCouplerReg THEN
+    nActiveTerminalSlot := TERM_COUPLER;
+    nActiveTableNo      := 0;
+    nActiveStartReg     := 0;
+    nActiveEndReg       := 15;
+ELSIF bScanKL3464Id THEN
+    nActiveTerminalSlot := 2;                    // KL3464（KL9100 无源不计）
+    nActiveTableNo      := 0;
+    nActiveStartReg     := 8;
+    nActiveEndReg       := 8;
+END_IF;
+
+// 单次调用形式：所有 VAR_INPUT 显式赋值
+fbReadRegs(
+    stState        := stCouplerStatus,
+    nTerminal      := nActiveTerminalSlot,
+    nTable         := nActiveTableNo,
+    nStartReg      := nActiveStartReg,
+    nEndReg        := nActiveEndReg,
+    bExecute       := bScanCouplerReg OR bScanKL3464Id,
+    tTimeout       := tScanTimeout,
+    stCtrl         => stCouplerControl,
+    bBusy          => bScanBusy,
+    bError         => bScanError,
+    nErrId         => nLastErrId,
+    stCouplerTable => stReadResult
+);
+
+// 完成后从 stReadResult[8] 还原 WORD；字段名以 ST_CouplerTable/ST_CouplerReg 实际定义为准
+IF bScanKL3464Id AND NOT bScanBusy AND NOT bScanError THEN
+    wKL3464IdReadback := SHL(TO_WORD(stReadResult.aRegister[8].nHi), 8)
+                       + TO_WORD(stReadResult.aRegister[8].nLo);
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_TcAlarm_CreateEx" Id="{38bd6165-78c7-5daa-8f90-04983b7bbcea}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_TcAlarm_CreateEx
+VAR
+    fbAlarm      : FB_TcAlarm; // FB_TcAlarm 实例
+    bCreated     : BOOL; // Create latch
+    hr           : HRESULT; // 返回值监视
+    stEventEntry : TcEventEntry; // 在线写入事件定义（GUID + EventID + Severity）
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：把已经在结构体里的事件定义批量注册（典型：从远程 EventLogger 同步事件清单）
+// 价值：一次结构体调用替代 5 个分散字段，便于循环批量注册
+// 验证：登录后让 bCreated := FALSE 触发一次 Create；hr 第一次应为 S_OK，再次执行得到 ERROR_ALREADY_EXISTS
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_EventLogger（System → References → Add library）
+//   3. 编译 → 登录 → 运行；按 verify 注释里给出的在线写值操作
+// =============================================================================
+
+// 用 TcEventEntry 结构体一次性注册（适合事件清单已在数组里的场景）
+IF NOT bCreated THEN
+    hr := fbAlarm.CreateEx(
+        stEventEntry := stEventEntry,
+        bWithConfirmation := TRUE,
+        ipSourceInfo := 0);
+    bCreated := SUCCEEDED(hr);
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

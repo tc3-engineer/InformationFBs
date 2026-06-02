@@ -10,7 +10,7 @@ Beckhoff TwinCAT 3 **Tc2_IoFunctions** 库的中文技术文档与可导入演�
 | PDF | [TwinCAT_3_PLC_Lib_Tc2_IoFunctions_EN.pdf](https://download.beckhoff.com/download/document/automation/twincat3/TwinCAT_3_PLC_Lib_Tc2_IoFunctions_EN.pdf) |
 | InfoSys 入口 | https://infosys.beckhoff.com/content/1033/tcplclib_tc2_iofunctions/index.html |
 | 文档总数 | **68 个 FB/FC + 1 GVL = 68 篇**（PDF TOC 列 70 项，其中 2 项为 "Overview" 导航条目无独立 API） |
-| 例程总数 | **68 个 P_Demo_*.xml** |
+| 例程总数 | **68 个 P_Demo_*.TcPOU** |
 | Verify 状态 | 全部 PASS（2026-05-21） |
 | Lint 状态 | 全部 PASS（2026-05-21） |
 
@@ -188,11 +188,11 @@ Beckhoff 工业服务器 RAID 阵列状态监控。**所有 FB 不能循环调�
 
 ## 例程目录
 
-所有 68 篇文档配套的 PLCopenXML 演示程序在 [`examples/`](examples/) 下，文件名 `P_Demo_<Name>.xml`。
+所有 68 篇文档配套的 TcPOU 演示程序在 [`examples/`](examples/) 下，文件名 `P_Demo_<Name>.TcPOU`。
 
 导入方式：
-1. 右键 TwinCAT 3 PLC 项目 → **Import PLCopenXML**
-2. 选 `examples/P_Demo_<Name>.xml`
+1. 右键 TwinCAT 3 PLC 项目 → **Add → Existing Item**
+2. 选 `examples/P_Demo_<Name>.TcPOU`
 3. 编译 → 登录 → 按文档 §7 与例程头部"验证"注释执行测试
 
 ## 文档遵循的硬规则
@@ -203,7 +203,7 @@ Beckhoff 工业服务器 RAID 阵列状态监控。**所有 FB 不能循环调�
 - 每篇含 PDF + InfoSys 双源 URL
 - 例程含「场景 / 价值 / 验证步骤」三件套
 - 例程注释 ≥ 1/3 代码行，解释 WHY 不复述 WHAT
-- 不引入 TwinCAT 私有特性，例程是纯 PLCopenXML 可跨工程导入
+- 不引入 TwinCAT 私有特性，例程是纯 TwinCAT 3 原生 .TcPOU，直接拖入 XAE 即可使用
 
 ## 已知偏差与待人工确认 ⚠️
 

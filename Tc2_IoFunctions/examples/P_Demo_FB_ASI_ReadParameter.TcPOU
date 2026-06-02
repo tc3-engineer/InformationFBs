@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_ASI_ReadParameter" Id="{f4be7547-c5c4-5763-891d-354a34433d88}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_ASI_ReadParameter
+VAR
+    fbAsiReadParam      : FB_ASI_ReadParameter; // ASI slave 参数读 FB
+    fbAsiParamControl   : FB_ASI_ParameterControl; // 后台调度
+    stAsiParamBuffer    : ST_ParameterBuffer; // 共享缓冲
+    stAsiInProcessImg   : ST_Parameter_IN; // 链到 %I*
+    stAsiOutProcessImg  : ST_Parameter_OUT; // 链到 %Q*
+    iTargetParamNumber  : WORD := 0; // 要读的参数编号
+    bEnableCyclicRead   : BOOL := FALSE; // 0=单次 1=循环
+    bStartReadParam     : BOOL := FALSE; // 上升沿触发
+    iParamValueReadback : BYTE; // 读得的参数值（低 4 bit）
+    nAsiCmdError        : DWORD; // ASI 错误号
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：HMI 显示 ASI 传感器 slave 12 的灵敏度档位（4 bit 参数）。
+// 价值：参数显示可读化。
+// 验证：登录后 iTargetParamNumber := 0、bEnableCyclicRead := FALSE、bStartReadParam := TRUE → fbAsiReadParam.bBusy 短暂 TRUE → 回 FALSE 后 iParamValueReadback 显示该 slave 参数（低 4 bit 有效）。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_IoFunctions（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』行的指示在线写值观察
+// =============================================================================
+
+fbAsiParamControl(
+    stParameterBuffer := stAsiParamBuffer,
+    stParameter_IN    := stAsiInProcessImg,
+    stParameter_OUT   := stAsiOutProcessImg
+);
+
+fbAsiReadParam(
+    iParameternumber    := iTargetParamNumber,
+    bCycleMode          := bEnableCyclicRead,
+    bStart              := bStartReadParam,
+    stParameterBuffer   := stAsiParamBuffer,
+    iParameterReadvalue => iParamValueReadback,
+    iErrornumber        => nAsiCmdError
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

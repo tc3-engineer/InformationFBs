@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_ipArguments" Id="{2aaa35cd-c5f5-558e-a4e1-a612e9b23f04}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_ipArguments
+VAR
+    fbAlarm      : FB_TcAlarm; // alarm 实例（已 Create）
+    ipArgs       : I_TcArguments; // 参数接口
+    sMotorName   : STRING(40) := 'M-01'; // 电机名
+    rTemperature : REAL := 95.5; // 当前温度
+    bAddArgs     : BOOL := FALSE; // 上升沿触发
+    bAddArgsPrev : BOOL; // 边沿检测
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：给即将 Raise 的 alarm 附加电机名 + 当前温度两个参数
+// 价值：文本占位符自动填充，多语言报警一次代码完成
+// 验证：登录后写 bAddArgs := TRUE，触发一次 Add；再 Raise；用 RequestEventText 取回事件文本应包含参数
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_EventLogger（System → References → Add library）
+//   3. 编译 → 登录 → 运行；按 verify 注释里给出的在线写值操作
+// =============================================================================
+
+// Raise 之前给 alarm 添加两个参数：电机名 + 温度
+IF bAddArgs AND NOT bAddArgsPrev THEN
+    ipArgs := fbAlarm.ipArguments;     // 取 getter
+    IF ipArgs &lt;&gt; 0 THEN
+        ipArgs.AddString(sValue := sMotorName);
+        ipArgs.AddReal(fValue := rTemperature);
+    END_IF;
+END_IF;
+bAddArgsPrev := bAddArgs;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

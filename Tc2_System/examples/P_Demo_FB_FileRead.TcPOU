@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_FileRead" Id="{48cecf65-efc8-56e7-8001-017a8ac1100f}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_FileRead
+VAR
+    fbFileRead   : FB_FileRead; // FB_FileRead 实例
+    hOpenedFile  : UINT; // 前置 FB_FileOpen 拿到的句柄
+    aReadBuffer  : ARRAY[0..255] OF BYTE; // 本地读入缓冲区（256 字节）
+    bReadRequest : BOOL; // 在线写 TRUE 触发一次读取
+    cbBytesRead  : UDINT; // 本次实际读到的字节数
+    bEofReached  : BOOL; // TRUE = 已到 EOF
+    bReadError   : BOOL; // TRUE = 读失败
+    nErrIdLast   : UDINT; // ADS 错误号
+    bBusyMon     : BOOL; // ADS 通讯中
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：从 D:/log/process.csv 末尾段每次读 256 字节到本地缓冲区，作为离线分析的预读窗口。
+// 价值：不用本 FB 需要自己拼 ADS 读命令 + 跟 ADS 应答字节解析。
+// 验证：在线置 bReadRequest := TRUE → 观察 cbBytesRead 在 1-2 PLC 周期后非零；多次触发后到 EOF → bEofReached := TRUE 且 cbBytesRead = 0。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_System（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』行的指示在线写值观察
+// =============================================================================
+
+// 单次完整调用：读 256 字节到 aReadBuffer
+fbFileRead(
+    sNetId    := '',
+    hFile     := hOpenedFile,
+    pReadBuff := ADR(aReadBuffer),
+    cbReadLen := SIZEOF(aReadBuffer),
+    bExecute  := bReadRequest,
+    tTimeout  := T#10S,
+    bBusy     => bBusyMon,
+    bError    => bReadError,
+    nErrId    => nErrIdLast,
+    cbRead    => cbBytesRead,
+    bEOF      => bEofReached
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

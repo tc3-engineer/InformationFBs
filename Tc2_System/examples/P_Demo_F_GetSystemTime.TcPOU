@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_F_GetSystemTime" Id="{e31d31ed-4ece-58d9-8323-e289480e53cc}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_F_GetSystemTime
+VAR
+    ulNowFiletime     : ULINT; // 当前系统时间戳（100ns 自 1601-01-01 UTC）
+    ulUnixEpoch_100ns : ULINT := 116444736000000000; // 1601→1970 偏移量（100ns）
+    ulUnixTime_100ns  : ULINT; // 换算到 Unix epoch（100ns 自 1970-01-01）
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_System.F_GetSystemTime 演示程序
+// ============================================================
+// 场景：给下线产品打 100ns 精度 FILETIME 时间戳写入 MES。
+// 价值：替代 GETSYSTEMTIME FB 的 lo/hi 拼接，一行调用。
+// 验证：登录后 ulNowFiletime 应是大于 13 万亿（约 2026 年的 FILETIME 数量级）；ulUnixTime_100ns 是从 1970 算起的 100ns 数。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_System（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』指引在线写值观察
+// ============================================================
+
+// 取当前 FILETIME（100ns 起 1601-01-01 UTC）
+ulNowFiletime := F_GetSystemTime();
+
+// 转 Unix 时间戳（如果业务侧需要与 Linux 系统对接）
+ulUnixTime_100ns := ulNowFiletime - ulUnixEpoch_100ns;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

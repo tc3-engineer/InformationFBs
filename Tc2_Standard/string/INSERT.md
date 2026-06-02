@@ -13,7 +13,7 @@
 | Verified | 2026-05-11 ✅ |
 | InfoSys-checked | ✅ 2026-05-11 |
 | Status | `verified` |
-| Example | [`examples/P_Demo_INSERT.xml`](../examples/P_Demo_INSERT.xml) |
+| Example | [`examples/P_Demo_INSERT.TcPOU`](../examples/P_Demo_INSERT.TcPOU) |
 
 ---
 
@@ -84,7 +84,7 @@ PDF §4.4 原例：`INSERT('SUSI', 'XY', 2)` → 在第 2 字符（`U`）后插�
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_INSERT.xml`](../examples/P_Demo_INSERT.xml)（PLCopenXML，可直接导入 TwinCAT 3 XAE）
+> 配套可导入文件：[`examples/P_Demo_INSERT.TcPOU`](../examples/P_Demo_INSERT.TcPOU)（TwinCAT 3 原生 .TcPOU，可直接拖入 XAE 的 PLC POUs 文件夹）
 
 ```iecst
 // 场景：日志行 'INFO Motor started' 要在 'INFO' 后插入时间戳 '[12:34:56]'

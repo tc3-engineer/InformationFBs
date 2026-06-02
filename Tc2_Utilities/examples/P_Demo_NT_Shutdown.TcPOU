@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_NT_Shutdown" Id="{7ea16ab7-27b2-503d-84af-0897f387aac6}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_NT_Shutdown
+VAR
+    fbNT_Shutdown : NT_Shutdown; // NT_Shutdown 实例
+    bShutdown     : BOOL := FALSE;
+    tDelay_s      : TIME := T#30S;
+    bBusy_        : BOOL;
+    bErrFlag      : BOOL;
+    nErrCode      : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：下班后自动关机。
+// 价值：PLC 可触发关机。
+// 验证：非生产环境验证：触发后 30 秒目标机器关机。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_Utilities（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』行的指示在线写值观察
+// =============================================================================
+
+fbNT_Shutdown(
+    NETID := '', START := bShutdown, DELAY := UDINT_TO_DWORD(TIME_TO_UDINT(tDelay_s) / 1000),
+    TMOUT := DEFAULT_ADS_TIMEOUT, BUSY => bBusy_, ERR => bErrFlag, ERRID => nErrCode
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

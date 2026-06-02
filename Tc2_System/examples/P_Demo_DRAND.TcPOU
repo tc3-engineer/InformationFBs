@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_DRAND" Id="{2546b6d8-73ea-525f-bf0e-b7fb483b4cc1}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_DRAND
+VAR
+    fbDRAND       : DRAND; // DRAND 实例
+    nSeedValue    : INT := 42; // 固定种子；改这里可换序列
+    rRandomWeight : LREAL; // 0..1 区间，乘 200 后加 300 得 300..500g
+    rSimWeight_g  : LREAL; // 折算后的仿真重量（克）
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_System.DRAND 演示程序
+// ============================================================
+// 场景：分拣线调试期，给虚拟物料赋 300..500g 随机重量驱动下游分流逻辑。
+// 价值：固定种子 (nSeedValue=42) 保证每次启动同一序列，便于回归对比。
+// 验证：登录后观察 rRandomWeight 在 0..1 之间跳动；rSimWeight_g 在 300..500g 之间。修改 nSeedValue 后重启会看到完全不同但可复现的序列。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_System（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』指引在线写值观察
+// ============================================================
+
+fbDRAND(
+    Seed := nSeedValue,
+    Num => rRandomWeight
+);
+
+// 折算到 300..500g
+rSimWeight_g := rRandomWeight * 200.0 + 300.0;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

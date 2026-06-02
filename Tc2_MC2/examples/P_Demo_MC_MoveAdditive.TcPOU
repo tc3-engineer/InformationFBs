@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_MC_MoveAdditive" Id="{aed8732f-c2cc-5af9-bdfb-ebce28b09608}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_MC_MoveAdditive
+VAR
+    fbVisionAdjust       : MC_MoveAdditive;
+    axisHeadX            : AXIS_REF;
+    rtAdjustTrigger      : R_TRIG;
+    bApplyVisionOffset   : BOOL := FALSE; // 在线写 TRUE 叠加一次视觉补偿
+    lrVisionCorrectionMM : LREAL := 2.3; // 视觉给的补偿量 mm
+    bAdjustDone          : BOOL;
+    bAdjustError         : BOOL;
+    nErrorID             : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：贴片机 X 轴 — 粗定位到 100 mm 后视觉相机告诉 PLC 还差 2.3 mm 没对准，
+//       叠加一次相对修正而不要业务代码自己算"100 + 2.3 = 102.3"。
+//
+// 价值：起点是"上一命令目标"而非"当前实际位置"，被打断时行为可预测；
+//       与前序粗定位用 Buffered 模式拼接，无需等 Done 即可排队修正。
+//
+// 验证步骤：
+//   1. 先用 MC_MoveAbsolute 把 axisHeadX 移到 100 mm（demo 假设已做）
+//   2. 在线写 bApplyVisionOffset := TRUE
+//   3. 应看到 ActPos 从 100 走到 102.3，bAdjustDone 短暂置 TRUE
+//   4. 若先 MC_Reset 再触发本 FB → 退化为 MC_MoveRelative 行为（起点变为 ActPos）
+// =============================================================================
+
+rtAdjustTrigger(CLK := bApplyVisionOffset);
+
+fbVisionAdjust(
+    Execute      := rtAdjustTrigger.Q,
+    Distance     := lrVisionCorrectionMM,
+    Velocity     := 50.0,
+    Acceleration := 500.0,
+    Deceleration := 500.0,
+    Jerk         := 5000.0,
+    BufferMode   := MC_Buffered,
+    Axis         := axisHeadX,
+    Done         => bAdjustDone,
+    Error        => bAdjustError,
+    ErrorID      => nErrorID
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

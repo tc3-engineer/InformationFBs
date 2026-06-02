@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_DELETE" Id="{5bc3d914-eba3-5515-aeea-2886236dcb4d}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_DELETE
+VAR
+    sRawFrame  : STRING(255) := 'STX|01|DATA|ETX'; // 来自串口的原始通讯帧，头部含 4 字节 'STX|'
+    sPayload   : STRING(255); // 剔除头部后交给业务层的有效载荷
+    nHeaderLen : INT := 4; // 协议头长度 = 4 字节 'STX|'
+    bStrip     : BOOL; // 在线置 TRUE 触发一次剥离
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：串口收到自定义协议帧 'STX|01|DATA|ETX'，前 4 字节是固定头 'STX|'，
+//       业务层只想看 '01|DATA|ETX' 部分。DELETE 从第 1 个字符起删 4 字节，
+//       一次调用完成清洗。
+//
+// 价值：DELETE 用"位置+长度"两个参数直接指定要剔除的段，比手写 LEFT+RIGHT
+//       拼接简洁。配合 LEN(STR) 校验可以做到任意位置的子段剥离。
+//
+// 验证步骤：
+//   1. PLC 项目 → Add Existing Item (.TcPOU) → 选本文件
+//   2. 引用 Tc2_Standard，编译，登录，运行
+//   3. 在线 monitor sPayload
+//   4. 在线写 bStrip := TRUE
+//   5. 下一周期 sPayload = '01|DATA|ETX'，bStrip 复位回 FALSE
+//   6. 修改 nHeaderLen 为 100（远大于 sRawFrame 长度）+ 再触发，
+//      观察 sPayload 是空串或原串，确认越界行为（PDF 未明确规定）
+// =============================================================================
+
+// POS=1 表示从第 1 个字符开始；IEC 字符串下标从 1 起，不是 0
+IF bStrip THEN
+    sPayload := DELETE(sRawFrame, nHeaderLen, 1);
+    bStrip := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

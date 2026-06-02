@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_LARGE_TO_LINT" Id="{6abdaa09-57b3-5b22-ba0a-70a1a315469d}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_LARGE_TO_LINT
+VAR
+    liFromAds : T_LARGE_INTEGER;; // ADS 读回
+    liNative  : LINT;; // 业务侧原生
+    bConvert  : BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_Utilities.LARGE_TO_LINT 演示程序（FUNCTION，单周期触发）
+// ============================================================
+// 场景：ADS Raw 报文 T_LARGE_INTEGER 字段读出后转 LINT 做业务计算。
+// 价值：替代位移 + 强转。
+// 验证步骤：
+//   1. 把本 PROGRAM 加到 PlcTask 调用列表
+//   2. 编译 + 登录
+//   3. 在线把 b... 触发位置 TRUE 一个周期
+//   4. 观察输出变量是否符合期望
+// ============================================================
+
+IF bConvert THEN
+    liNative := LARGE_TO_LINT(liFromAds);
+    bConvert := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

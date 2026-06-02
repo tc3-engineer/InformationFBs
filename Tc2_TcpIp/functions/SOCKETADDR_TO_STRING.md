@@ -13,7 +13,7 @@
 | Verified | 2026-05-21 ✅ |
 | InfoSys-checked | ✅ 2026-05-21 |
 | Status | `verified` |
-| Example | [`examples/P_Demo_SOCKETADDR_TO_STRING.xml`](../examples/P_Demo_SOCKETADDR_TO_STRING.xml) |
+| Example | [`examples/P_Demo_SOCKETADDR_TO_STRING.TcPOU`](../examples/P_Demo_SOCKETADDR_TO_STRING.TcPOU) |
 
 ---
 
@@ -78,7 +78,7 @@ sListenAddr := SOCKETADDR_TO_STRING(hListener.localAddr);
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_SOCKETADDR_TO_STRING.xml`](../examples/P_Demo_SOCKETADDR_TO_STRING.xml)
+> 配套可导入文件：[`examples/P_Demo_SOCKETADDR_TO_STRING.TcPOU`](../examples/P_Demo_SOCKETADDR_TO_STRING.TcPOU)
 
 ```iecst
 // 场景：把 hSocket 的 local 和 remote 各自拆出来分别显示。

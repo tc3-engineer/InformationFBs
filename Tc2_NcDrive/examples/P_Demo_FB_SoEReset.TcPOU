@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_SoEReset" Id="{55a14dce-ca55-56ad-8d8a-c76009f1456e}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_SoEReset
+VAR
+    fbDriveReset  : FB_SoEReset;
+    NcToPlcAxis   : NCTOPLC_AXIS_REF; // NC 轴过程映像（实际工程中映射到 %I*）
+    bResetRequest : BOOL; // HMI 复位按钮，在线置 TRUE 触发一次驱动器复位
+    rtReset       : R_TRIG;
+    bResetBusy    : BOOL; // 复位进行中
+    bResetError   : BOOL;
+    iAdsErr       : UINT;
+    iSercosErr    : UINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_NcDrive.FB_SoEReset 演示程序
+// ============================================================
+// 场景：AX5000 伺服因瞬时过流报错停机，操作员在 HMI 按"复位"按钮，
+//       需要先清驱动器侧 SoE 错误（S-0-0099），之后才能重新使能轴。
+// 价值：不用本 FB 时要自己用 FB_SoEWrite 往 S-0-0099 写值并处理 10 秒
+//       超时与 SoE 时序；本 FB 封装成一个 bExecute 边沿，并把 ADS / Sercos
+//       两路错误码分开输出，故障定位更快。
+// 验证：登录后在线把 bResetRequest 置 TRUE，观察 bResetBusy 立即变 TRUE，
+//       数秒后落回 FALSE；若驱动器无错则 bResetError 保持 FALSE。若链路
+//       异常，可看 iAdsErr / iSercosErr 出现非零码。
+// ============================================================
+
+// R_TRIG 取上升沿，保证一次按钮只触发一次复位命令
+rtReset(CLK := bResetRequest);
+
+// 单次完整调用：tTimeout 显式给 10 秒，因为驱动器复位最长耗时 10 秒
+fbDriveReset(
+    Axis     := NcToPlcAxis,
+    sNetId   := '',
+    bExecute := rtReset.Q,
+    tTimeout := T#10S,
+    bBusy        => bResetBusy,
+    bError       => bResetError,
+    iAdsErrId    => iAdsErr,
+    iSercosErrId => iSercosErr
+);
+
+// 命令完成后复位按钮信号，为下一次触发准备边沿
+IF NOT bResetBusy THEN
+    bResetRequest := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

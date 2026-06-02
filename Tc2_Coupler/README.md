@@ -10,13 +10,13 @@
 
 | Category | Name | 文档 | 例程 |
 |---|---|---|---|
-| Function blocks | ReadWriteTerminalReg | [✅ verified](function_blocks/ReadWriteTerminalReg.md) | [P_Demo_ReadWriteTerminalReg.xml](examples/P_Demo_ReadWriteTerminalReg.xml) |
-| Function blocks | CouplerReset | [✅ verified](function_blocks/CouplerReset.md) | [P_Demo_CouplerReset.xml](examples/P_Demo_CouplerReset.xml) |
-| Function blocks | FB_ReadCouplerDiag | [✅ verified](function_blocks/FB_ReadCouplerDiag.md) | [P_Demo_FB_ReadCouplerDiag.xml](examples/P_Demo_FB_ReadCouplerDiag.xml) |
-| Function blocks | FB_ReadCouplerRegs | [✅ verified](function_blocks/FB_ReadCouplerRegs.md) | [P_Demo_FB_ReadCouplerRegs.xml](examples/P_Demo_FB_ReadCouplerRegs.xml) |
-| Function blocks | FB_WriteCouplerRegs | [✅ verified](function_blocks/FB_WriteCouplerRegs.md) | [P_Demo_FB_WriteCouplerRegs.xml](examples/P_Demo_FB_WriteCouplerRegs.xml) |
-| [obsolete functions] | F_GetVersionTcPlcCoupler | [✅ verified](obsolete/F_GetVersionTcPlcCoupler.md) | [P_Demo_F_GetVersionTcPlcCoupler.xml](examples/P_Demo_F_GetVersionTcPlcCoupler.xml) |
-| Library version | stLibVersion_Tc2_Coupler | [✅ verified](global_constants/stLibVersion_Tc2_Coupler.md) | [P_Demo_stLibVersion_Tc2_Coupler.xml](examples/P_Demo_stLibVersion_Tc2_Coupler.xml) |
+| Function blocks | ReadWriteTerminalReg | [✅ verified](function_blocks/ReadWriteTerminalReg.md) | [P_Demo_ReadWriteTerminalReg.TcPOU](examples/P_Demo_ReadWriteTerminalReg.TcPOU) |
+| Function blocks | CouplerReset | [✅ verified](function_blocks/CouplerReset.md) | [P_Demo_CouplerReset.TcPOU](examples/P_Demo_CouplerReset.TcPOU) |
+| Function blocks | FB_ReadCouplerDiag | [✅ verified](function_blocks/FB_ReadCouplerDiag.md) | [P_Demo_FB_ReadCouplerDiag.TcPOU](examples/P_Demo_FB_ReadCouplerDiag.TcPOU) |
+| Function blocks | FB_ReadCouplerRegs | [✅ verified](function_blocks/FB_ReadCouplerRegs.md) | [P_Demo_FB_ReadCouplerRegs.TcPOU](examples/P_Demo_FB_ReadCouplerRegs.TcPOU) |
+| Function blocks | FB_WriteCouplerRegs | [✅ verified](function_blocks/FB_WriteCouplerRegs.md) | [P_Demo_FB_WriteCouplerRegs.TcPOU](examples/P_Demo_FB_WriteCouplerRegs.TcPOU) |
+| [obsolete functions] | F_GetVersionTcPlcCoupler | [✅ verified](obsolete/F_GetVersionTcPlcCoupler.md) | [P_Demo_F_GetVersionTcPlcCoupler.TcPOU](examples/P_Demo_F_GetVersionTcPlcCoupler.TcPOU) |
+| Library version | stLibVersion_Tc2_Coupler | [✅ verified](global_constants/stLibVersion_Tc2_Coupler.md) | [P_Demo_stLibVersion_Tc2_Coupler.TcPOU](examples/P_Demo_stLibVersion_Tc2_Coupler.TcPOU) |
 
 ## 使用须知
 

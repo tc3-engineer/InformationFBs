@@ -26,7 +26,7 @@ argument-hint: <path/to/doc.md>
 ```bash
 python3 _meta/tools/fetch_pdf.py --force <Library>   # 强制重新抓
 python3 _meta/tools/verify_doc.py $ARGUMENTS
-python3 _meta/tools/lint_plcopen.py <library>/examples/P_Demo_<name>.xml
+python3 _meta/tools/lint_tcpou.py <library>/examples/P_Demo_<Name>.TcPOU
 ```
 脚本失败 → 报错并退出（PDF URL 失效或网络问题）。
 

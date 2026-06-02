@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_SoEAX5000ReadActMainVoltage" Id="{478fe520-41c7-57a0-994b-bc456fbaf50d}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_SoEAX5000ReadActMainVoltage
+VAR
+    fbReadVoltage   : FB_SoEAX5000ReadActMainVoltage; // 读 AX5000 电网电压 FB 实例
+    axisServo       : AXIS_REF; // AX5000 伺服轴轴引用；必须先在 System Manager 配好并 Link
+    rtVoltTrig      : R_TRIG; // 把电平转上升沿
+    bReadVoltageReq : BOOL := FALSE; // 在线写 TRUE 触发一次读取（持续监控需周期性给上升沿）
+    lrMainVoltage   : LREAL; // 读回的电网电压峰值 (V)
+    bUnderVoltage   : BOOL; // 电压峰值低于阈值时报欠压
+    bVoltBusy       : BOOL;
+    bVoltError      : BOOL;
+    nVoltAdsErr     : UINT;
+    nVoltSercosErr  : UINT;
+    nVoltAttribute  : DWORD;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：电网质量监控。周期性读 AX5000 当前电网电压峰值（P-0-0200），低于
+//       阈值就报欠压，便于在掉电/欠压造成跟随误差前提前预警。
+//
+// 价值：1) 一个专用 FB 直接拿电压峰值，免查 P-0-0200 IDN、免拼 SoE 读取
+//       2) 用驱动器内部测量，无需外接电压表
+//       3) 双错误码便于区分通信问题和设备/参数问题
+//
+// !! 注意：ActualMainVoltage 是峰值不是 RMS；判断阈值按峰值口径设。
+//          只适用于 AX5000；其它设备用通用 FB_SoERead。
+//
+// 验证步骤：
+//   1. System Manager 配好 AX5000 NC 轴并 Link 给 axisServo，引用 Tc2_MC2_Drive
+//   2. Add Existing Item (.TcPOU) 选本文件，加进 PlcTask，编译登录
+//   3. 在线写 bReadVoltageReq := TRUE → bVoltBusy 置 TRUE
+//   4. 等 bVoltBusy 落回 FALSE 且 bVoltError = FALSE → lrMainVoltage 即电压峰值
+//   5. 观察 bUnderVoltage：电压低于 300V 峰值阈值时应为 TRUE
+//   6. 若 bVoltError = TRUE：看 nVoltAdsErr（通信），nVoltSercosErr（设备/参数）
+// =============================================================================
+
+// 用 R_TRIG 把"持续按住的 TRUE"转成真正的上升沿（持续监控需周期性触发）
+rtVoltTrig(CLK := bReadVoltageReq);
+
+// 单次调用：Axis 是 VAR_IN_OUT 必传；本 FB 无 Done，靠 Busy 落回 FALSE 判成功
+fbReadVoltage(
+    NetId             := '',
+    Execute           := rtVoltTrig.Q,
+    Timeout           := DEFAULT_ADS_TIMEOUT,
+    Axis              := axisServo,
+    Busy              => bVoltBusy,
+    Error             => bVoltError,
+    AdsErrId          => nVoltAdsErr,
+    SercosErrId       => nVoltSercosErr,
+    Attribute         => nVoltAttribute,
+    ActualMainVoltage => lrMainVoltage
+);
+
+// 读成功后做欠压判断（阈值按峰值口径设，这里示例 300V）
+IF NOT bVoltBusy AND NOT bVoltError THEN
+    bUnderVoltage := lrMainVoltage < 300.0;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

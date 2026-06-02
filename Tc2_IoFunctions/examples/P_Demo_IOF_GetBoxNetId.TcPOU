@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_IOF_GetBoxNetId" Id="{c04eaaac-a79e-5864-90e9-beee862ad172}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_IOF_GetBoxNetId
+VAR
+    fbLookupBoxNetId     : IOF_GetBoxNetId; // box AMS Net ID 查询 FB
+    sTargetNetId         : T_AmsNetId := ''; // 本机
+    nProfibusDeviceId    : UDINT := 1; // Profibus 主站 Device Id
+    nFc310xBoxAddr       : WORD := 0; // 目标 box 的现场总线地址（WORD 类型）
+    bStartLookupBoxNetId : BOOL := FALSE; // 上升沿触发查询
+    tLookupTimeout       : TIME := T#5S; // ADS 超时
+    bLookupBusy          : BOOL; // 工作中
+    bLookupError         : BOOL; // 失败
+    nLastErrCode         : UDINT; // 错误号
+    sFc310xBoxNetId      : T_AmsNetId; // 查得的 box AMS Net ID
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：调试时要从 PLC 通过 ADS 读 FC3101 主卡的总线诊断数据。需要先查得该卡作为 box 在系统里分配的 AMS Net ID。
+// 价值：避免硬编码 NetId；工程改动也能自适应。
+// 验证：登录后 nFc310xBoxAddr := 0 (Profibus 主站自身)，在线写 bStartLookupBoxNetId := TRUE → 回 FALSE 后 sFc310xBoxNetId 显示 FC3101 卡的 AMS Net ID。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_IoFunctions（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』行的指示在线写值观察
+// =============================================================================
+
+fbLookupBoxNetId(
+    NETID    := sTargetNetId,
+    DEVICEID := nProfibusDeviceId,
+    BOXADDR  := nFc310xBoxAddr,
+    START    := bStartLookupBoxNetId,
+    TMOUT    := tLookupTimeout,
+    BUSY     => bLookupBusy,
+    ERR      => bLookupError,
+    ERRID    => nLastErrCode,
+    BoxNetId => sFc310xBoxNetId
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

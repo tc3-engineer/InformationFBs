@@ -13,7 +13,7 @@
 | Verified | 2026-05-11 ✅ |
 | InfoSys-checked | ✅ 2026-05-11 |
 | Status | `verified` |
-| Example | [`examples/P_Demo_WREPLACE.xml`](../examples/P_Demo_WREPLACE.xml) |
+| Example | [`examples/P_Demo_WREPLACE.TcPOU`](../examples/P_Demo_WREPLACE.TcPOU) |
 
 ---
 
@@ -84,7 +84,7 @@ PDF §5.8 原例 ST 形式：`WREPLACE("SUXYSI", "K", 2, 2)` → 从第 2 字符
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_WREPLACE.xml`](../examples/P_Demo_WREPLACE.xml)（PLCopenXML，可直接导入 TwinCAT 3 XAE）
+> 配套可导入文件：[`examples/P_Demo_WREPLACE.TcPOU`](../examples/P_Demo_WREPLACE.TcPOU)（TwinCAT 3 原生 .TcPOU，可直接拖入 XAE 的 PLC POUs 文件夹）
 
 ```iecst
 // 场景：中文日志 "警告 电机异常" 升级为 "错误"，把前 2 字 "警告" 换成 "错误"

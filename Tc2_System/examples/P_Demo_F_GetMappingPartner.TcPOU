@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_F_GetMappingPartner" Id="{04e9b2cf-51b9-5388-93f7-7051a29d8f47}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_F_GetMappingPartner
+VAR
+    bMonitoredInput : BOOL; // 应当映射到某 EtherCAT DI 通道的关键输入
+    nPartnerId      : OTCID; // 对端对象 ID；0 = 未映射
+    bMappedOk       : BOOL; // TRUE = 已映射
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：MAIN 启动时检查关键输入变量是否映射到 EtherCAT 终端；未映射立即报警。
+// 价值：替代手动比对 IO 配置树。
+// 验证：未映射变量 → nPartnerId = 0；映射变量 → nPartnerId 非零。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_System（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』行的指示在线写值观察
+// =============================================================================
+
+nPartnerId := F_GetMappingPartner(
+    p := ADR(bMonitoredInput),
+    n := SIZEOF(bMonitoredInput)
+);
+
+// 非零即视为已挂上 IO 链
+bMappedOk := (nPartnerId &lt;&gt; 0);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

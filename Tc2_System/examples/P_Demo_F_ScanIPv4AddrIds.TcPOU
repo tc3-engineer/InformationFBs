@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_F_ScanIPv4AddrIds" Id="{99e879e8-6a3e-57b3-9558-4925e972d2f0}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_F_ScanIPv4AddrIds
+VAR
+    sUserInput  : T_IPv4Addr := '172.16.7.199'; // HMI 输入的 IP 字符串
+    aIpParsed   : T_IPv4AddrArr; // 解析后的 4 字节数组
+    bParseError : BOOL; // TRUE = 非空且全零，解析失败
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：HMI 输入字符串 IP → PLC 解析成 4 字节数组，再喂给 ADS 调用。带合法性双重校验。
+// 价值：一行替代手写 split + STRING_TO_USINT 8-12 行。
+// 验证：在线改 sUserInput := '192.168.1.100' → aIpParsed = [192,168,1,100]；改成 'abc' → aIpParsed = [0,0,0,0] 且 bParseError = TRUE。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_System（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』行的指示在线写值观察
+// =============================================================================
+
+// 每周期解析一次；用双重判断检错（全零 + 非合法 0.0.0.0 串）
+aIpParsed := F_ScanIPv4AddrIds(sIPv4 := sUserInput);
+
+// 错误判定：非空 / 非 0.0.0.0 但返回全零
+bParseError := (sUserInput &lt;&gt; '') AND (sUserInput &lt;&gt; '0.0.0.0')
+             AND (aIpParsed[0] = 0) AND (aIpParsed[1] = 0)
+             AND (aIpParsed[2] = 0) AND (aIpParsed[3] = 0);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

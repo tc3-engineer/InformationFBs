@@ -13,7 +13,7 @@
 | Verified | 2026-05-25 ✅ |
 | InfoSys-checked | ✅ 2026-05-25 |
 | Status | `verified` |
-| Example | [`examples/P_Demo_FB_SoEAX5000SetMotorCtrlWord.xml`](../examples/P_Demo_FB_SoEAX5000SetMotorCtrlWord.xml) |
+| Example | [`examples/P_Demo_FB_SoEAX5000SetMotorCtrlWord.TcPOU`](../examples/P_Demo_FB_SoEAX5000SetMotorCtrlWord.TcPOU) |
 
 ---
 
@@ -106,7 +106,7 @@ END_VAR
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_FB_SoEAX5000SetMotorCtrlWord.xml`](../examples/P_Demo_FB_SoEAX5000SetMotorCtrlWord.xml)
+> 配套可导入文件：[`examples/P_Demo_FB_SoEAX5000SetMotorCtrlWord.TcPOU`](../examples/P_Demo_FB_SoEAX5000SetMotorCtrlWord.TcPOU)
 
 ```iecst
 // 场景：维护人员需要在驱动器去使能状态下手动松开电机抱闸，盘动联轴器检查机械

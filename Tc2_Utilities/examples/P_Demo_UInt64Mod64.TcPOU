@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_UInt64Mod64" Id="{75398573-2dae-531d-908a-17f917b50503}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_UInt64Mod64
+VAR
+    uliCounter : T_ULARGE_INTEGER;; // 累计事件计数
+    uliBufSize : T_ULARGE_INTEGER;; // 环形缓冲区大小
+    uliIndex   : T_ULARGE_INTEGER;; // 写入索引
+    bIndex     : BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_Utilities.UInt64Mod64 演示程序（FUNCTION，单周期触发）
+// ============================================================
+// 场景：64 位累计事件计数 mod N（N = 缓冲区大小）得到环形缓冲区写指针。
+// 价值：替代手写 `dividend - 商 * divisor`；一次调用避免中间变量。
+// 验证步骤：
+//   1. 把本 PROGRAM 加到 PlcTask 调用列表
+//   2. 编译 + 登录
+//   3. 在线把 b... 触发位置 TRUE 一个周期
+//   4. 观察输出变量是否符合期望
+// ============================================================
+
+uliBufSize := ULARGE_INTEGER(0, 1024);
+IF bIndex AND NOT UInt64isZero(uliBufSize) THEN
+    uliIndex := UInt64Mod64(uliCounter, uliBufSize);
+    bIndex := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -12,25 +12,25 @@
 
 | Category | Name | 文档 | 例程 |
 |---|---|---|---|
-| Functions | CEIL | [✅ verified](functions/CEIL.md) | [P_Demo_CEIL.xml](examples/P_Demo_CEIL.xml) |
-| Functions | FLOOR | [✅ verified](functions/FLOOR.md) | [P_Demo_FLOOR.xml](examples/P_Demo_FLOOR.xml) |
-| Functions | FRAC | [✅ verified](functions/FRAC.md) | [P_Demo_FRAC.xml](examples/P_Demo_FRAC.xml) |
-| Functions | LMOD | [✅ verified](functions/LMOD.md) | [P_Demo_LMOD.xml](examples/P_Demo_LMOD.xml) |
-| Functions | LTRUNC | [✅ verified](functions/LTRUNC.md) | [P_Demo_LTRUNC.xml](examples/P_Demo_LTRUNC.xml) |
-| Functions | MODABS | [✅ verified](functions/MODABS.md) | [P_Demo_MODABS.xml](examples/P_Demo_MODABS.xml) |
-| Functions | MODTURNS | [✅ verified](functions/MODTURNS.md) | [P_Demo_MODTURNS.xml](examples/P_Demo_MODTURNS.xml) |
+| Functions | CEIL | [✅ verified](functions/CEIL.md) | [P_Demo_CEIL.TcPOU](examples/P_Demo_CEIL.TcPOU) |
+| Functions | FLOOR | [✅ verified](functions/FLOOR.md) | [P_Demo_FLOOR.TcPOU](examples/P_Demo_FLOOR.TcPOU) |
+| Functions | FRAC | [✅ verified](functions/FRAC.md) | [P_Demo_FRAC.TcPOU](examples/P_Demo_FRAC.TcPOU) |
+| Functions | LMOD | [✅ verified](functions/LMOD.md) | [P_Demo_LMOD.TcPOU](examples/P_Demo_LMOD.TcPOU) |
+| Functions | LTRUNC | [✅ verified](functions/LTRUNC.md) | [P_Demo_LTRUNC.TcPOU](examples/P_Demo_LTRUNC.TcPOU) |
+| Functions | MODABS | [✅ verified](functions/MODABS.md) | [P_Demo_MODABS.TcPOU](examples/P_Demo_MODABS.TcPOU) |
+| Functions | MODTURNS | [✅ verified](functions/MODTURNS.md) | [P_Demo_MODTURNS.TcPOU](examples/P_Demo_MODTURNS.TcPOU) |
 
 ### [obsolete functions]（1）
 
 | Category | Name | 文档 | 例程 |
 |---|---|---|---|
-| [obsolete functions] | F_GetVersionTcMath | [✅ verified](obsolete/F_GetVersionTcMath.md) | [P_Demo_F_GetVersionTcMath.xml](examples/P_Demo_F_GetVersionTcMath.xml) |
+| [obsolete functions] | F_GetVersionTcMath | [✅ verified](obsolete/F_GetVersionTcMath.md) | [P_Demo_F_GetVersionTcMath.TcPOU](examples/P_Demo_F_GetVersionTcMath.TcPOU) |
 
 ### Global Constants（1）
 
 | Category | Name | 文档 | 例程 |
 |---|---|---|---|
-| Library version | stLibVersion_Tc2_Math | [✅ verified](global_constants/stLibVersion_Tc2_Math.md) | [P_Demo_stLibVersion_Tc2_Math.xml](examples/P_Demo_stLibVersion_Tc2_Math.xml) |
+| Library version | stLibVersion_Tc2_Math | [✅ verified](global_constants/stLibVersion_Tc2_Math.md) | [P_Demo_stLibVersion_Tc2_Math.TcPOU](examples/P_Demo_stLibVersion_Tc2_Math.TcPOU) |
 
 ## 快速对照（取整与模运算族）
 

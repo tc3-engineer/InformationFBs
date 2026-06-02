@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_UTF8Len" Id="{096c698f-5bab-5b05-8eb0-dbc0e659fafd}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_UTF8Len
+VAR
+    aUtf8  : ARRAY[0..63] OF BYTE; // 工业语义：UTF-8 数据
+    nChars : UDINT; // 字符数
+    bAscii : BOOL; // 是否纯 ASCII（可零拷贝旁路）
+    nBytes : UDINT; // 字节数
+    bCheck : BOOL; // 在线触发
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：OPC UA 客户端收到 UTF-8 字符串：先 `UTF8Len` 算字符数 + `bASCII`；若 `bASCII = TRUE` 直接当 STRING 用；否则走 `UTF8_TO_STRING` / `UTF8_TO_WSTRING`。
+// 价值：性能优化关键——避免在高频数据上做不必要的编码转换。
+// 验证步骤：
+//   1. 引用 Tc2_Utilities
+//   2. 编译 + 登录 + 运行
+//   3. 在线写触发位 TRUE，monitor 输出变量
+// =============================================================================
+IF bCheck THEN
+    aUtf8[0] := 16#48; aUtf8[1] := 16#69; aUtf8[2] := 16#00;
+    nChars := UTF8Len(pUTF8 := ADR(aUtf8),
+                      bASCII => bAscii,
+                      nSize  => nBytes);
+    // bAscii = TRUE -> 跳过转换；FALSE -> 走 UTF8_TO_STRING/WSTRING
+    bCheck := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

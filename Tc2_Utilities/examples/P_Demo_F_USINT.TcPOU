@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_F_USINT" Id="{d01346ea-0860-5fb5-aefd-b8824cc6bbe7}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_F_USINT
+VAR
+    nPriority     : USINT := 5; // 业务量（USINT）
+    bPackArg      : BOOL; // 在线置 TRUE 触发一次打包
+    argDescriptor : T_Arg; // 打包后的 T_Arg 描述符（含 eType/cbLen/pData）
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_Utilities.F_USINT 演示程序（FUNCTION，返回 T_Arg）
+// ============================================================
+// 场景：把 USINT 业务量打包为 T_Arg，供下游 EventLogger / FormatString2
+//       / ADS 消息的可变参数机制使用。
+// 价值：替代手填 T_Arg 三字段（eType/cbLen/pData），一行调用搞定。
+// 验证：在线写 nPriority 为示例值，bPackArg := TRUE；
+//       下一周期 argDescriptor.cbLen = SIZEOF(USINT)，argDescriptor.pData <> 0。
+// ============================================================
+
+IF bPackArg THEN
+    // 单次完整调用：返回的 T_Arg 立即可喂给 F_PutInArg(arg := argDescriptor, ...)
+    argDescriptor := F_USINT(nPriority);
+    bPackArg := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

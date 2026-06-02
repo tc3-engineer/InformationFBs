@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_FileClose" Id="{b363e821-9c81-5ec1-b38f-338133457e47}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_FileClose
+VAR
+    fbFileClose   : FB_FileClose; // FB_FileClose 实例
+    hOpenedFile   : UINT; // 之前 FB_FileOpen 得到的句柄
+    bCloseRequest : BOOL; // 在线写 TRUE 触发一次关闭
+    bCloseDone    : BOOL; // TRUE = 关闭成功
+    bCloseError   : BOOL; // TRUE = 关闭失败
+    nErrIdLast    : UDINT; // ADS 错误号
+    bBusyMon      : BOOL; // ADS 通讯中
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：把之前 FB_FileOpen 拿到的 hFile 安全关闭，把缓冲区数据强制刷盘。
+// 价值：不用本 FB 就要自己拼 ADS Write 0x10004 命令并跟状态。
+// 验证：在线置 bCloseRequest := TRUE → 观察 bBusy 跳起后落下 → hOpenedFile 在业务侧被清零；故意传一个 0 句柄 → bCloseError = TRUE。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_System（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』行的指示在线写值观察
+// =============================================================================
+
+// 单次完整调用：关闭文件并把本地句柄清零
+fbFileClose(
+    sNetId   := '',
+    hFile    := hOpenedFile,
+    bExecute := bCloseRequest,
+    tTimeout := T#10S,
+    bBusy    => bBusyMon,
+    bError   => bCloseError,
+    nErrId   => nErrIdLast
+);
+
+// 业务侧：busy 落沿且无错则视为关闭成功，清掉本地句柄
+bCloseDone := (NOT bBusyMon) AND (NOT bCloseError) AND bCloseRequest;
+IF bCloseDone THEN
+    hOpenedFile := 0;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

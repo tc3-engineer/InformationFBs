@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_ADSLOGSTR" Id="{1191ce6a-1b22-5f49-9978-14e216eb20f6}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_ADSLOGSTR
+VAR
+    bSFCError       : BOOL; // SFC 步超时信号
+    rtSFCAlarm      : R_TRIG; // 边沿触发
+    strSFCErrorStep : STRING := 'Step_LoadMaterial'; // 当前阻塞步名
+    udiAdsLogRes    : DINT; // 返回 0 = 成功
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_System.ADSLOGSTR 演示程序
+// ============================================================
+// 场景：SFC 卡步时把步名嵌入告警写日志。
+// 价值：替代手写 CONCAT + 日志接口；一行调用。
+// 验证：登录后写 bSFCError := TRUE，应弹出 'PLC Msg.: Guarding time executed in SFC step: Step_LoadMaterial'。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_System（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』指引在线写值观察
+// ============================================================
+
+rtSFCAlarm(CLK := bSFCError);
+IF rtSFCAlarm.Q THEN
+    udiAdsLogRes := ADSLOGSTR(
+        msgCtrlMask := ADSLOG_MSGTYPE_ERROR OR ADSLOG_MSGTYPE_MSGBOX,
+        msgFmtStr := 'PLC Msg.: Guarding time executed in SFC step: %s',
+        strArg := strSFCErrorStep);
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

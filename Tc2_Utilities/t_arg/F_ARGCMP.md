@@ -13,7 +13,7 @@
 | Verified | 2026-05-11 ✅ |
 | InfoSys-checked | ✅ 2026-05-11 |
 | Status | `verified` |
-| Example | [`examples/P_Demo_F_ARGCMP.xml`](../examples/P_Demo_F_ARGCMP.xml) |
+| Example | [`examples/P_Demo_F_ARGCMP.TcPOU`](../examples/P_Demo_F_ARGCMP.TcPOU) |
 
 ---
 
@@ -103,7 +103,7 @@ END_IF
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_F_ARGCMP.xml`](../examples/P_Demo_F_ARGCMP.xml)
+> 配套可导入文件：[`examples/P_Demo_F_ARGCMP.TcPOU`](../examples/P_Demo_F_ARGCMP.TcPOU)
 
 ```iecst
 // 场景：EventLogger 消息去重——同样的 (eventId, param) 二元组连续上报多次时，

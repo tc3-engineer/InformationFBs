@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_MC_MoveSuperImposed" Id="{798453a5-a6bb-55ad-af8a-c93c8ba257b5}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_MC_MoveSuperImposed
+VAR
+    fbColorRegistration : MC_MoveSuperImposed;
+    axisPrintRoller     : AXIS_REF;
+    rtApplyShift        : R_TRIG;
+    bApplyColorShift    : BOOL := FALSE;
+    lrShiftMM           : LREAL := 2.0;
+    bShiftDone          : BOOL;
+    bShiftWarn          : BOOL;
+    lrActualShift       : LREAL;
+    nErrorID            : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：印刷机色版主轴正在恒速跑（前序 MC_MoveVelocity 发起，demo 中假设已启动），
+//       套色检测发现本色版需领先主色版 2 mm 才能对齐，调用本 FB 在主运动之上
+//       叠加 2 mm 相对位移 — 主运动不停，叠加完成后两轴位置差保留。
+// 价值：业务不用停掉主运动重新发新命令；叠加期间主速度变化 FB 自动适应。
+// 验证：先用 MC_MoveVelocity 让 axisPrintRoller 跑起来（demo 假设）；
+//       bApplyColorShift := TRUE → 看 ActPos 在 ~ 0.1 s 内额外多走 2 mm；
+//       bShiftDone 短暂置 TRUE；lrActualShift 应等于 2.0。
+// =============================================================================
+
+rtApplyShift(CLK := bApplyColorShift);
+
+fbColorRegistration(
+    Execute         := rtApplyShift.Q,
+    Mode            := SUPERPOSITIONMODE_VELOREDUCTIONCONTINUOUS,
+    Distance        := lrShiftMM,
+    VelocityDiff    := 20.0,
+    Acceleration    := 200.0,
+    Deceleration    := 200.0,
+    Jerk            := 2000.0,
+    VelocityProcess := 100.0,
+    Length          := 500.0,
+    Axis            := axisPrintRoller,
+    Done            => bShiftDone,
+    Warning         => bShiftWarn,
+    ActualDistance  => lrActualShift,
+    ErrorID         => nErrorID
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

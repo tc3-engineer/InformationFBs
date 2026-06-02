@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_F_SwapRealEx" Id="{5fb1a1ae-023b-529c-a8e8-39dcf58eeaad}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_F_SwapRealEx
+VAR
+    fTempFromBc : REAL := 12.34; // 工业语义：从 BC9000 读到的温度（Hi-Lo 颠倒）
+    bOk         : BOOL; // 交换成功
+    bSwap       : BOOL; // 在线触发
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：老产线 CX5020 IPC 通过 ADS 从 BC9000 总线终端读取 REAL 类型的温度变量；从网络收到的字节流必须经 `F_SwapRealEx` 才能正确解读。
+// 价值：替代手写 `MEMCPY` + 字节位运算交换；本函数对调用方透明。
+// 验证步骤：
+//   1. 引用 Tc2_Utilities
+//   2. 编译 + 登录 + 运行
+//   3. 在线写触发位 TRUE，monitor 输出变量
+// =============================================================================
+
+IF bSwap THEN
+    bOk := F_SwapRealEx(fVal := fTempFromBc);
+    // bOk = TRUE -> fTempFromBc 现在是 IPC 端可正确解读的浮点
+    bSwap := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

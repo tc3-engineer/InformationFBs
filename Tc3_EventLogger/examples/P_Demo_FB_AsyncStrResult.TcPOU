@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_AsyncStrResult" Id="{c01c73b3-0a29-5985-a06d-aa885dfafbfb}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_AsyncStrResult
+VAR
+    fbAlarm     : FB_TcAlarm; // alarm 实例（已 Create）
+    fbResult    : FB_AsyncStrResult; // 异步结果实例
+    nLangId     : UDINT := 2052; // 简体中文 LCID
+    bBusy       : BOOL; // 处理状态属性
+    bError      : BOOL; // 错误状态属性
+    hrErrorCode : HRESULT; // 错误码
+    sEventText  : STRING(255); // 结果文本
+    bDoReq      : BOOL := FALSE; // 上升沿触发请求
+    bDoReqPrev  : BOOL; // 边沿检测
+    bGot        : BOOL; // 已取到结果
+    hr          : HRESULT; // Request 返回值
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：异步取事件文本演示
+// 价值：异步轮询拿到本地化文本
+// 验证：先 fbAlarm.RequestEventText 触发；每周期看 fbResult.bBusy 应在几周期内变 FALSE；之后 GetString 取文本
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_EventLogger（System → References → Add library）
+//   3. 编译 → 登录 → 运行；按 verify 注释里给出的在线写值操作
+// =============================================================================
+
+// 边沿触发发起请求
+IF bDoReq AND NOT bDoReqPrev THEN
+    hr := fbAlarm.RequestEventText(nLangId := nLangId, fbAsyncResult := fbResult);
+    bGot := FALSE;
+END_IF;
+bDoReqPrev := bDoReq;
+
+// 每周期检查异步状态
+bBusy := fbResult.bBusy;
+bError := fbResult.bError;
+hrErrorCode := fbResult.hrErrorCode;
+
+// 完成后取一次结果
+IF NOT bBusy AND NOT bError AND NOT bGot THEN
+    fbResult.GetString(sResult := sEventText);
+    bGot := TRUE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

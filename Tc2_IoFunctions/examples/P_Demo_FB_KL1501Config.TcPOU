@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_KL1501Config" Id="{72bd6f54-2545-5d7b-b6e0-9486819a46cb}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_KL1501Config
+VAR
+    fbKl1501              : FB_KL1501Config; // KL1501 配置 FB
+    stKl1501InProcessImg  : ST_KL1501InData; // KL1501 输入过程映像（链到 %I*）
+    stKl1501OutProcessImg : ST_KL1501OutData; // KL1501 输出过程映像（链到 %Q*）
+    bDoKl1501Configure    : BOOL := FALSE; // 上升沿写配置
+    bDoKl1501ReadConfig   : BOOL := FALSE; // 上升沿只读配置
+    iCounterTypeSelected  : INT := 0; // 0=32 上下 1=2×16 上 2/3=门控
+    bReverseCountDir      : BOOL := FALSE; // 反向计数
+    tKl1501ConfigTimeout  : TIME := T#5S; // 配置超时
+    bKl1501Busy           : BOOL; // 工作中
+    bKl1501Error          : BOOL; // 出错
+    iLastKl1501Error      : UDINT; // 错误号
+    iKl1501State          : USINT; // 状态字节
+    iCount0               : UINT; // 通道 0 计数
+    iCount1               : UINT; // 通道 1 计数
+    iCurrentCountValue    : UDINT; // 32 bit 组合计数值
+    iKl1501TerminalCode   : WORD; // 端子型号编码
+    iKl1501SpecialVer     : WORD; // 端子特殊版本
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：上电时把 KL1501 配为 32 bit 上下计数器，不反向；运行后读端子计数值进行设备速度计算。
+// 价值：端子配置纳入 PLC 程序版本控制。
+// 验证：登录确认 stKl1501InProcessImg / stKl1501OutProcessImg 已链到端子；在线写 bDoKl1501Configure := TRUE → fbKl1501.bBusy 短暂 TRUE → 回 FALSE 后 iLastKl1501Error = 0 表示成功；iCurrentCountValue 应反映编码器旋转。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_IoFunctions（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』行的指示在线写值观察
+// =============================================================================
+
+fbKl1501(
+    bConfigurate         := bDoKl1501Configure,
+    bReadConfig          := bDoKl1501ReadConfig,
+    iSetCounterType      := iCounterTypeSelected,
+    bSetBackwardCounting := bReverseCountDir,
+    tTimeout             := tKl1501ConfigTimeout,
+    stInData             := stKl1501InProcessImg,
+    stOutData            := stKl1501OutProcessImg,
+    bBusy                => bKl1501Busy,
+    bError               => bKl1501Error,
+    iErrorId             => iLastKl1501Error,
+    iState               => iKl1501State,
+    iDataIn0             => iCount0,
+    iDataIn1             => iCount1,
+    iDataIn              => iCurrentCountValue,
+    iTerminalType        => iKl1501TerminalCode,
+    iSpecialType         => iKl1501SpecialVer
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -13,7 +13,7 @@
 | Verified | 2026-05-21 ✅ |
 | InfoSys-checked | ✅ 2026-05-21 |
 | Status | `verified` |
-| Example | [`examples/P_Demo_HSOCKET_TO_STRING.xml`](../examples/P_Demo_HSOCKET_TO_STRING.xml) |
+| Example | [`examples/P_Demo_HSOCKET_TO_STRING.TcPOU`](../examples/P_Demo_HSOCKET_TO_STRING.TcPOU) |
 
 ---
 
@@ -88,7 +88,7 @@ LogMessage(sLogLine);
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_HSOCKET_TO_STRING.xml`](../examples/P_Demo_HSOCKET_TO_STRING.xml)
+> 配套可导入文件：[`examples/P_Demo_HSOCKET_TO_STRING.TcPOU`](../examples/P_Demo_HSOCKET_TO_STRING.TcPOU)
 
 ```iecst
 // 场景：客户端建连成功后把句柄打成日志，便于追踪每条 TCP 连接。

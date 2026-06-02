@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_ResetToDefault" Id="{a116d452-08cb-5358-a75b-d3d0bdfa1418}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_ResetToDefault
+VAR
+    fbSrc        : FB_TcSourceInfo; // 源信息实例
+    bDoReset     : BOOL := FALSE; // 上升沿触发
+    bDoResetPrev : BOOL; // 边沿检测
+    hr           : HRESULT; // 返回值监视
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：测试结束后还原 SourceInfo 到默认
+// 价值：一次调用还原
+// 验证：登录后调用 ResetToDefault 后 fbSrc 字段回到默认（SourceName = PLC 符号路径）
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_EventLogger（System → References → Add library）
+//   3. 编译 → 登录 → 运行；按 verify 注释里给出的在线写值操作
+// =============================================================================
+
+IF bDoReset AND NOT bDoResetPrev THEN
+    hr := fbSrc.ResetToDefault();
+END_IF;
+bDoResetPrev := bDoReset;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

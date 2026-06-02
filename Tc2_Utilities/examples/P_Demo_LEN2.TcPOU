@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_LEN2" Id="{c8516c7b-d5c3-5c7b-a545-77bb4d4c4544}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_LEN2
+VAR
+    sLargeBuf : STRING(1024) := 'Logs accumulating...'; // 工业语义：长 STRING(1024) 日志缓冲
+    nLen      : UDINT; // 字符长度（>255 时 Tc2_Standard.LEN 会错）
+    bCheck    : BOOL; // 在线触发
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：计算变长 logBuffer 当前已写入字符数，作为下次 append 的偏移基准。
+// 价值：`Tc2_Standard.LEN` 限 255——`STRING(1024)` 必须用 `LEN2`。
+// 验证步骤：
+//   1. 引用 Tc2_Utilities
+//   2. 编译 + 登录 + 运行
+//   3. 在线写触发位 TRUE，monitor 输出变量
+// =============================================================================
+IF bCheck THEN
+    nLen := LEN2(pSTRING := ADR(sLargeBuf));
+    bCheck := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

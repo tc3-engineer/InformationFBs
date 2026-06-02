@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_IOF_SER_IDN_Read" Id="{76578b63-c9e5-53fc-ac95-4fb1a2d15f7a}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_IOF_SER_IDN_Read
+VAR
+    fbSercosIdnRead     : IOF_SER_IDN_Read; // SERCOS IDN 读 FB
+    sLocalNetId         : T_AmsNetId := ''; // 本机
+    nIdnToRead          : UINT := 100; // 要读的 IDN (S-100)
+    bStartIdnRead       : BOOL := FALSE; // 上升沿触发
+    nDrivePort          : UINT := 1; // drive port 号
+    nReadMode           : DINT := 0; // 0=Value 2=Name 3=Attr 4=Unit 5=Min 6=Max
+    nCachedAttrib       : DWORD := 0; // 已知属性（0 = 让 FB 自动读）
+    aReadBuffer         : ARRAY[1..64] OF BYTE; // 读取缓冲 64 字节
+    cbReadBufferLen     : UDINT := 64; // 缓冲长度
+    tIdnReadTimeout     : TIME := T#5S; // 超时
+    cbReadbackLen       : UDINT; // 实际读到字节数
+    nReadAttribOut      : DWORD; // 属性返回（可缓存）
+    stReadAttribDecoded : ST_SercosParamAttrib; // 属性字段分解
+    bIdnReadBusy        : BOOL; // 工作中
+    bIdnReadErr         : BOOL; // 出错
+    nIdnReadErrId       : UDINT; // 错误号
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：SERCOS drive 1（port = 1）调试：读 IDN-100（位置环增益）。
+// 价值：把 IDN 访问封装为 PLC 调用，免去 SERCANS 工具。
+// 验证：登录后 sLocalNetId := ""、nDrivePort := 1、nIdnToRead := 100、bStartIdnRead := TRUE → bIdnReadBusy 短暂 TRUE → 回 FALSE 后 cbReadbackLen 显示实际字节数、aReadBuffer[1..4] 含读到的 IDN-100 值（按 DINT 解释）。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_IoFunctions（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』行的指示在线写值观察
+// =============================================================================
+
+// 单次调用形式；多次读同 drive 时把 nReadAttribOut 缓存给下次的 nCachedAttrib 提速
+fbSercosIdnRead(
+    sNetId     := sLocalNetId,
+    nIDN       := nIdnToRead,
+    bExecute   := bStartIdnRead,
+    nPort      := nDrivePort,
+    nMode      := nReadMode,
+    nAttrib    := nCachedAttrib,
+    cbLen      := cbReadBufferLen,
+    dwDestAddr := ADR(aReadBuffer),
+    tTimeout   := tIdnReadTimeout,
+    cbRead     => cbReadbackLen,
+    nAttribRd  => nReadAttribOut,
+    sAttrib    => stReadAttribDecoded,
+    bBusy      => bIdnReadBusy,
+    bError     => bIdnReadErr,
+    nErrId     => nIdnReadErrId
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

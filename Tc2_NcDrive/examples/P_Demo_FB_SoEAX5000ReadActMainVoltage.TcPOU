@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_SoEAX5000ReadActMainVoltage" Id="{478fe520-41c7-57a0-994b-bc456fbaf50d}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_SoEAX5000ReadActMainVoltage
+VAR
+    fbReadMainVoltage : FB_SoEAX5000ReadActMainVoltage;
+    NcToPlcAxis       : NCTOPLC_AXIS_REF; // NC 轴过程映像（实际工程映射到 %I*）
+    bReadRequest      : BOOL; // 在线置 TRUE 读一次进线电压
+    rtRead            : R_TRIG;
+    bBusy             : BOOL;
+    bError            : BOOL;
+    iAdsErr           : UINT;
+    iSercosErr        : UINT;
+    fMainVoltage      : LREAL; // 监视：当前主电源电压峰值 (V)
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_NcDrive.FB_SoEAX5000ReadActMainVoltage 演示程序
+// ============================================================
+// 场景：HMI 上显示 AX5000 进线电压，操作员点"刷新"读一次当前主电源
+//       电压峰值 P-0-0200，用于电网状态监测/欠压预警。
+// 价值：不用本 FB 时要自己用 FB_SoERead 填 P-0-0200 的 IDN 并解析原始字节；
+//       本 FB 直接给出浮点伏特值，省去 SoE 参数寻址与单位换算。
+// 验证：登录后置 bReadRequest := TRUE，观察 bBusy 短暂为 TRUE 后落回，
+//       fMainVoltage 显示一个接近进线电压峰值的数值（如 ~300 V 级别）；
+//       bError 应保持 FALSE。
+// ============================================================
+
+// 上升沿：一次"刷新"只读一次
+rtRead(CLK := bReadRequest);
+
+// 单次完整调用
+fbReadMainVoltage(
+    Axis     := NcToPlcAxis,
+    sNetId   := '',
+    bExecute := rtRead.Q,
+    tTimeout := DEFAULT_ADS_TIMEOUT,
+    bBusy              => bBusy,
+    bError             => bError,
+    iAdsErrId          => iAdsErr,
+    iSercosErrId       => iSercosErr,
+    fActualMainVoltage => fMainVoltage
+);
+
+// 完成后复位按钮，准备下一次刷新
+IF NOT bBusy THEN
+    bReadRequest := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

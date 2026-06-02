@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_F_CreateDpv1WriteReqPkgPNET" Id="{825ccbd1-d1fd-5afe-b035-c71d39107176}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_F_CreateDpv1WriteReqPkgPNET
+VAR
+    aDpv1WriteReqBuffer   : ARRAY[1..240] OF BYTE; // 请求缓冲
+    arrDpv1ReqParams      : ARRAY[1..39] OF ST_Dpv1ParamAddrEx; // 参数
+    arrDpv1ValueHdr       : ARRAY[1..39] OF ST_Dpv1ValueHeaderEx; // 值
+    iNumParamsToWrite     : USINT := 2; // 参数数
+    iDriveObjectId        : USINT := 2; // drive A
+    bBuildWriteReqPkgPNET : BOOL := FALSE; // 触发
+    nWriteReqPkgLenPNET   : USINT; // 长度
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：Profinet SINAMICS 一次写 2 个参数。
+// 价值：对称封装。
+// 验证：写 bBuildWriteReqPkgPNET := TRUE → nWriteReqPkgLenPNET > 0。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_IoFunctions（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』行的指示在线写值观察
+// =============================================================================
+
+IF bBuildWriteReqPkgPNET THEN
+    nWriteReqPkgLenPNET := F_CreateDpv1WriteReqPkgPNET(
+        pDpv1ReqData        := ADR(aDpv1WriteReqBuffer),
+        iNumOfParams        := iNumParamsToWrite,
+        iDriveId            := iDriveObjectId,
+        stDpv1Parameter     := arrDpv1ReqParams,
+        stDpv1ValueHeaderEx := arrDpv1ValueHdr
+    );
+    bBuildWriteReqPkgPNET := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

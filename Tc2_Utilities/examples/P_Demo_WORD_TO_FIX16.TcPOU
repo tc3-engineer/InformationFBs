@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_WORD_TO_FIX16" Id="{eb84e2ac-3d73-5061-8ef9-78fcb6d499d4}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_WORD_TO_FIX16
+VAR
+    wFromSdo   : WORD := 2#0000110010000000;; // PDF 示例值 = 12.5 in Q8
+    fp8Decoded : T_FIX16;
+    lrCheck    : LREAL;
+    bDecode    : BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_Utilities.WORD_TO_FIX16 演示程序（FUNCTION，单周期触发）
+// ============================================================
+// 场景：EtherCAT SDO 读回 16 位字，重新解读为 Q8 定点。
+// 价值：替代 `INT_TO_FIX16(WORD_TO_INT(...), n)` 两层转换。
+// 验证步骤：
+//   1. 把本 PROGRAM 加到 PlcTask 调用列表
+//   2. 编译 + 登录
+//   3. 在线把 b... 触发位置 TRUE 一个周期
+//   4. 观察输出变量是否符合期望
+// ============================================================
+
+IF bDecode THEN
+    fp8Decoded := WORD_TO_FIX16(wFromSdo, 8);
+    lrCheck    := FIX16_TO_LREAL(fp8Decoded);   // 应为 12.5
+    bDecode := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

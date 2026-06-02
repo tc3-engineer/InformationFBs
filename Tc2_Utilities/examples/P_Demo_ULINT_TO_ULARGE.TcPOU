@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_ULINT_TO_ULARGE" Id="{3a5700b4-d8bf-568e-84ee-feb21ff218eb}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_ULINT_TO_ULARGE
+VAR
+    nNativeU64 : ULINT := 12345678901234; // 工业语义：TwinCAT 3 原生计数器
+    stLegacy   : T_ULARGE_INTEGER; // TwinCAT 2 旧格式
+    bConvert   : BOOL; // 在线触发
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：把 TwinCAT 3 的高精度计数器（`ULINT`）传给老 BC2000 接口（接受 `T_ULARGE_INTEGER`）。
+// 价值：替代手写 SHR / AND / 拆位的 5 行代码。
+// 验证步骤：
+//   1. 引用 Tc2_Utilities
+//   2. 编译 + 登录 + 运行
+//   3. 在线写触发位 TRUE，monitor 输出变量
+// =============================================================================
+
+IF bConvert THEN
+    stLegacy := ULINT_TO_ULARGE(in := nNativeU64);
+    bConvert := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

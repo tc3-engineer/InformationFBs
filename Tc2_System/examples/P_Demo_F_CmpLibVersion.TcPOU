@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_F_CmpLibVersion" Id="{a44bb276-13e9-51f4-8e48-5e8a776c77e3}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_F_CmpLibVersion
+VAR
+    iMajorRequired    : UINT := 3; // 要求 major
+    iMinorRequired    : UINT := 3; // 要求 minor
+    iBuildRequired    : UINT := 8; // 要求 build
+    iRevisionRequired : UINT := 0; // 要求 revision
+    nCmpResult        : DINT; // 比较结果：-1 / 0 / +1
+    bSystemBlocked    : BOOL; // TRUE = 版本不满足，拒绝启动 MAIN
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：MAIN 启动时检查 Tc2_System 是否 ≥ 3.3.8.0；低版本置位 bSystemBlocked，拒绝运行业务逻辑。
+// 价值：一行守门替代 4 段 IF 链；启动早期发现版本问题。
+// 验证：在线观察 nCmpResult：装的是更新版本时 = 1；改 iMajorRequired := 99 → -1 → bSystemBlocked := TRUE。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_System（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』行的指示在线写值观察
+// =============================================================================
+
+// 启动期一次性比较；只要 >= 0 即视为满足要求
+nCmpResult := F_CmpLibVersion(
+    stVersion := stLibVersion_Tc2_System,
+    iMajor    := iMajorRequired,
+    iMinor    := iMinorRequired,
+    iBuild    := iBuildRequired,
+    iRevision := iRevisionRequired
+);
+
+// 版本不足直接锁住业务逻辑
+bSystemBlocked := (nCmpResult &lt; 0);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

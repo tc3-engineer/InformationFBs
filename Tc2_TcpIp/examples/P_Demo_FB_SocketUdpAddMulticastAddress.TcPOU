@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_SocketUdpAddMulticastAddress" Id="{39de341e-368c-5fd6-8604-9bd500b91f1f}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_SocketUdpAddMulticastAddress
+VAR
+    fbCreateMulticastSocket   : FB_SocketUdpCreate;
+    fbJoinGroup               : FB_SocketUdpAddMulticastAddress;
+    fbReceiveMulticast        : FB_SocketUdpReceiveFrom;
+    fbPollTON                 : TON;
+    bRequestCreate            : BOOL;
+    bCreateBusy               : BOOL;
+    bCreateError              : BOOL;
+    nCreateErrId              : UDINT;
+    hUdpSocket                : T_HSOCKET;
+    bRequestJoin              : BOOL; // socket 创建好后再 bRequestJoin := TRUE
+    sMulticastGroup           : STRING(15) := '239.1.1.100';
+    bJoinBusy                 : BOOL;
+    bJoinError                : BOOL;
+    nJoinErrId                : UDINT;
+    bJoined                   : BOOL; // 业务标志：已加入组
+    abRxBuffer                : ARRAY[0..1499] OF BYTE;
+    bPollPulse                : BOOL;
+    bRxBusy                   : BOOL;
+    bRxError                  : BOOL;
+    nRxErrId                  : UDINT;
+    sSenderHost               : T_IPv4Addr;
+    nSenderPort               : UDINT;
+    nRecBytes                 : UDINT;
+    nMulticastPacketsReceived : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：PLC 订阅一个组播流（239.1.1.100:6000），如远程示教系统每秒推送
+//       一个组播配方更新包到所有在线 PLC；本 PLC 仅当订阅者一员。
+//
+// 价值：演示完整的多播订阅链路——Create → Join → ReceiveFrom 三步走，
+//       缺一不可。直接 Create 不 Join 也能 receive 单播 UDP 包但收不到
+//       多播包；本例程让"加入组"这一步的必要性可观察。
+//
+// 验证步骤：
+//   1. 在线 bRequestCreate := TRUE 创建 socket（hUdpSocket.handle 非 0）
+//   2. 在线 bRequestJoin := TRUE 加入组（bJoined 置 TRUE）
+//   3. 在另一台机器: ncat -u 239.1.1.100 6000 后输入 "RECIPE_v2\n"
+//      → nMulticastPacketsReceived +1
+//   4. 在 bJoined=FALSE 时多播包不会进 receive 队列（理论上）；
+//      实测可视实现而异，这里以 "Join 后能稳定收到" 作为验证目标
+// =============================================================================
+
+// 阶段 1：创建 UDP socket（端口与多播组相同）
+fbCreateMulticastSocket(
+    sSrvNetId := '',
+    sLocalHost := '0.0.0.0',
+    nLocalPort := 6000,
+    bExecute := bRequestCreate,
+    tTimeout := T#5S,
+    bBusy => bCreateBusy,
+    bError => bCreateError,
+    nErrId => nCreateErrId,
+    hSocket => hUdpSocket
+);
+
+// 阶段 2：加入多播组
+fbJoinGroup(
+    sSrvNetId      := '',
+    hSocket        := hUdpSocket,
+    sMulticastAddr := sMulticastGroup,
+    bExecute       := bRequestJoin,
+    tTimeout       := T#5S,
+    bBusy          => bJoinBusy,
+    bError         => bJoinError,
+    nErrId         => nJoinErrId
+);
+
+// 加入成功后置位 bJoined（供业务上层判断 ReceiveFrom 是否可信）
+IF NOT bJoinBusy AND NOT bJoinError AND bRequestJoin THEN
+    bJoined := TRUE;
+END_IF;
+
+// 阶段 3：周期 polling 收多播包
+fbPollTON(IN := NOT fbPollTON.Q, PT := T#100MS, Q => bPollPulse);
+fbReceiveMulticast(
+    sSrvNetId := '',
+    hSocket   := hUdpSocket,
+    cbLen     := SIZEOF(abRxBuffer),
+    pDest     := ADR(abRxBuffer),
+    bExecute  := bPollPulse,
+    tTimeout  := T#5S,
+    bBusy       => bRxBusy,
+    bError      => bRxError,
+    nErrId      => nRxErrId,
+    sRemoteHost => sSenderHost,
+    nRemotePort => nSenderPort,
+    nRecBytes   => nRecBytes
+);
+
+IF nRecBytes > 0 THEN
+    nMulticastPacketsReceived := nMulticastPacketsReceived + 1;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

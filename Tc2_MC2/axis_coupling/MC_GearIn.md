@@ -13,7 +13,7 @@
 | Verified | 2026-05-21 ✅ |
 | InfoSys-checked | ✅ 2026-05-21 |
 | Status | `verified` |
-| Example | [`examples/P_Demo_MC_GearIn.xml`](../examples/P_Demo_MC_GearIn.xml) |
+| Example | [`examples/P_Demo_MC_GearIn.TcPOU`](../examples/P_Demo_MC_GearIn.TcPOU) |
 
 ---
 
@@ -128,7 +128,7 @@ END_VAR
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_MC_GearIn.xml`](../examples/P_Demo_MC_GearIn.xml)
+> 配套可导入文件：[`examples/P_Demo_MC_GearIn.TcPOU`](../examples/P_Demo_MC_GearIn.TcPOU)
 
 ```iecst
 // 场景：包装线主滚筒 + 推送轴电子齿轮 1:2（推送走 2 倍速度），保持袋长一致

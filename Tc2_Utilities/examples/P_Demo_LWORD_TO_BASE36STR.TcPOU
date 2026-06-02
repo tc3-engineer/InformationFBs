@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_LWORD_TO_BASE36STR" Id="{0f6c4741-f6b3-5d8a-b820-b85bb3dc887b}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_LWORD_TO_BASE36STR
+VAR
+    nBatchSeq : LWORD := 12345678; // 工业语义：当前生产序号
+    sBatchId  : STRING(16); // Base36 工单号
+    bEncode   : BOOL; // 在线触发
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：生产订单号编码：当前序号 `nBatchSeq : LWORD` → 5 字符 Base36 字符串作为工单 ID 打印到标签。
+// 价值：比 hex 字符串紧凑 38%；比 Base64 字符集简单（无 `+ /` 等特殊字符）。
+// 验证步骤：
+//   1. 引用 Tc2_Utilities
+//   2. 编译 + 登录 + 运行
+//   3. 在线写触发位 TRUE，monitor 输出变量
+// =============================================================================
+
+IF bEncode THEN
+    sBatchId := LWORD_TO_BASE36STR(in := nBatchSeq, iPrecision := 5, bLoCase := FALSE);
+    bEncode := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

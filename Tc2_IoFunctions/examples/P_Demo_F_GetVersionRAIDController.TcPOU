@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_F_GetVersionRAIDController" Id="{4ddb3759-9b13-5e48-8a2a-9cd94a4f03af}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_F_GetVersionRAIDController
+VAR
+    nMajor            : UINT := 0; // 主版本
+    nMinor            : UINT := 0; // 次版本
+    nRevision         : UINT := 0; // 修订
+    bReadVersionField : BOOL := FALSE; // 触发读取
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：旧 RAID 控制器版本读取代码兼容性参考；不推荐用。
+// 价值：⚠️ 已废弃。
+// 验证：登录后写 bReadVersionField := TRUE → 一周期后 nMajor / nMinor / nRevision 显示库版本（与 F_GetVersionTcIoFunctions 返回值相同）。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_IoFunctions（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』行的指示在线写值观察
+// =============================================================================
+
+// 警告：已废弃；新工程改用 stLibVersion_Tc2_IoFunctions
+IF bReadVersionField THEN
+    nMajor    := F_GetVersionRAIDController(nVersionElement := 1);
+    nMinor    := F_GetVersionRAIDController(nVersionElement := 2);
+    nRevision := F_GetVersionRAIDController(nVersionElement := 3);
+    bReadVersionField := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

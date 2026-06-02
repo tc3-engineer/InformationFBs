@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_WINSERT" Id="{4aaa8f27-f844-5e94-8d99-41e29861b42b}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_WINSERT
+VAR
+    sLogLine   : WSTRING(255) := "信息 电机启动"; // 中文日志：等级 + 空格 + 消息体
+    sTimestamp : WSTRING(255) := " [12:34:56]"; // 时间戳（前置空格分隔等级与时间）
+    sResult    : WSTRING(255); // 插入时间戳后的完整日志
+    nInsertPos : INT := 2; // 插入点 = 第 2 字符后（"信息" 占 2 字符，插到 "息" 后面）
+    bGenerate  : BOOL; // 触发一次 WINSERT
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：中文日志 "信息 电机启动" 要在等级标识 "信息" 之后插入时间戳变成
+//       "信息 [12:34:56] 电机启动" 再发往日志服务。等级和消息体都是中文，
+//       必须用 WSTRING + WINSERT 才能正确按字符插入。
+//
+// 价值：WINSERT 按 UCS-2 字符计数。"信息" 是 2 个字符（不是 6 字节），
+//       插入点 nInsertPos = 2 直观对应"在 '息' 后面插入"。STRING + INSERT
+//       要传 nInsertPos = 6 才能在 UTF-8 字节流中找到正确插入点。
+//
+// 验证步骤：
+//   1. 导入本文件、引用 Tc2_Standard、编译、登录、运行
+//   2. 在线 monitor sResult（监视面板选 Unicode）
+//   3. 在线写 bGenerate := TRUE
+//   4. 下一周期 sResult = "信息 [12:34:56] 电机启动"
+//   5. 把 nInsertPos 改成 0 + 再触发 → 时间戳出现在最前面
+//   6. 把 nInsertPos 改成 100 + 再触发 → 时间戳追加到末尾
+// =============================================================================
+
+// POS=2 表示"在第 2 字符之后插入"（即 "信息" 之后），按字符算不是按字节
+IF bGenerate THEN
+    sResult := WINSERT(sLogLine, sTimestamp, nInsertPos);
+    bGenerate := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

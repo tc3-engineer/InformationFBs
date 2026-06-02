@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_EOF" Id="{09c8e563-30a5-5149-a1fd-2ed7bd3499b3}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_EOF
+VAR
+    fbEof            : FB_EOF; // FB_EOF 实例
+    hOpenedFile      : UINT; // 已打开句柄
+    bEofCheckRequest : BOOL; // 在线写 TRUE 触发一次查询
+    bEofReached      : BOOL; // TRUE = 已到 EOF
+    bEofError        : BOOL; // TRUE = 查询失败
+    nErrIdLast       : UDINT; // ADS 错误号
+    bBusyMon         : BOOL; // ADS 通讯中
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：按块循环读完整个大日志文件，每读完一块就显式查询是否到达 EOF 作为退出条件。
+// 价值：语义比 FB_FileRead 内置 bEOF 更清晰，专做检测。
+// 验证：读到中间时 bEofReached = FALSE；读到末尾 → bEofReached = TRUE。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_System（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』行的指示在线写值观察
+// =============================================================================
+
+fbEof(
+    sNetId   := '',
+    hFile    := hOpenedFile,
+    bExecute := bEofCheckRequest,
+    tTimeout := T#10S,
+    bBusy    => bBusyMon,
+    bError   => bEofError,
+    nErrId   => nErrIdLast,
+    bEOF     => bEofReached
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

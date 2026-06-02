@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_F_TranslateFileTime64Bias" Id="{bd37ad30-cad7-56dc-babb-7955109a6f22}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_F_TranslateFileTime64Bias
+VAR
+    ftUTC        : T_FILETIME64; // UTC 时间戳
+    nBiasMinutes : DINT := -480; // UTC vs 本地的差值，北京时区 = -480
+    bDirection   : BOOL := FALSE; // FALSE = UTC → Local，TRUE = Local → UTC
+    ftLocal      : T_FILETIME64; // 转换后的本地时间
+    bRunOnce     : BOOL; // 脉冲触发
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：PLC 用 UTC 记日志避免 DST 跳点，HMI 显示需转本地时间（北京东 8 区）
+//
+// 价值：1 行完成时区偏移，避免手写常量 600000000 (60 × 10⁷)
+//
+// 验证步骤：
+//   1. 引用 Tc2_Utilities（≥ 3.3.44.0）
+//   2. 编译 + 登录 + 运行
+//   3. 先用 DT_TO_FILETIME64(DT#2026-05-11-04:00:00) 给 ftUTC 赋值
+//   4. 强制 bRunOnce := TRUE
+//   5. 在线观察 ftLocal，用 FILETIME64_TO_DT 转回 DT 应为 2026-05-11-12:00:00（早 8 小时）
+//   6. 改 nBiasMinutes := 60 测试 CET 时区 → 应早 1 小时
+// =============================================================================
+ftLocal := F_TranslateFileTime64Bias(ftUTC, nBiasMinutes, bDirection);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -13,7 +13,7 @@
 | Verified | 2026-05-21 ✅ |
 | InfoSys-checked | ✅ 2026-05-21 |
 | Status | `verified` |
-| Example | [`examples/P_Demo_MC_MoveSuperImposed.xml`](../examples/P_Demo_MC_MoveSuperImposed.xml) |
+| Example | [`examples/P_Demo_MC_MoveSuperImposed.TcPOU`](../examples/P_Demo_MC_MoveSuperImposed.TcPOU) |
 
 ---
 
@@ -144,7 +144,7 @@ END_VAR
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_MC_MoveSuperImposed.xml`](../examples/P_Demo_MC_MoveSuperImposed.xml)
+> 配套可导入文件：[`examples/P_Demo_MC_MoveSuperImposed.TcPOU`](../examples/P_Demo_MC_MoveSuperImposed.TcPOU)
 
 ```iecst
 // 场景：印刷机色版主轴恒速跑（外部已发 MC_MoveVelocity），现在需要让色版临时领先 2 mm 完成套色补偿

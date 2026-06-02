@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_F_GetVersionTcSystem" Id="{a96c020e-1148-5c86-84f0-7f4d36a05217}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_F_GetVersionTcSystem
+VAR
+    nMajorOld : UINT; // 废弃方式读到的 major
+    nMajorNew : UINT; // 现代方式读到的 major
+    bMatched  : BOOL; // TRUE = 两种方式结果一致
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：对照演示：分别用废弃的 F_GetVersionTcSystem 和现代的 stLibVersion_Tc2_System 读 major，对比两者结果应当一致。
+// 价值：提醒读者切换到现代写法。
+// 验证：观察 nMajorOld = nMajorNew；若不一致说明工程引用的库版本与当前运行不一致。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_System（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』行的指示在线写值观察
+// =============================================================================
+
+// 废弃方式（仅演示，不要在新代码用）
+nMajorOld := F_GetVersionTcSystem(nVersionElement := 1);
+
+// 现代方式：一行直接读全局常量字段
+nMajorNew := stLibVersion_Tc2_System.iMajor;
+
+// 应当一致
+bMatched := (nMajorOld = nMajorNew);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

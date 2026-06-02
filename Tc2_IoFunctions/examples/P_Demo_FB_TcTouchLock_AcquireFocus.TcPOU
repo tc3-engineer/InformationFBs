@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_TcTouchLock_AcquireFocus" Id="{24464ea3-904e-5f2b-b799-0c6915bdf398}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_TcTouchLock_AcquireFocus
+VAR
+    fbAcquirePanelFocus    : FB_TcTouchLock_AcquireFocus; // 多触摸屏 focus FB
+    bRequestFocusForPanelA : BOOL := FALSE; // 电平：TRUE 请求焦点
+    sPanelAUid             : STRING(32) := 'PANEL_A'; // 面板唯一 ID（TcTouchLockService.exe 中配置）
+    tFocusLedBlinkPeriod   : TIME := T#200MS; // 等待焦点时 LED 闪烁周期
+    bPanelAHasFocus        : BOOL; // 面板 A 是否持有 focus
+    bPanelALedState        : BOOL; // LED 状态输出
+    bFocusReqBusy          : BOOL; // 工作中
+    bFocusReqError         : BOOL; // 出错
+    nFocusReqErrId         : UDINT; // ADS 错误号
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：IPC 接 2 块控制面板，面板 A (sSetID = "PANEL_A") 操作员配置时屏蔽面板 B 的输入。
+// 价值：避免大型设备多人误操作冲突。
+// 验证：先确保 `TcTouchLockService.exe` 服务运行且已配置 sPanelAUid = "PANEL_A"；登录后 bRequestFocusForPanelA := TRUE → bPanelAHasFocus 在 1-2 秒内变 TRUE；同时面板 B 的输入被屏蔽。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_IoFunctions（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』行的指示在线写值观察
+// =============================================================================
+
+// 注：PDF VAR 区把 bError 写成 bError:（末尾多冒号）是排版错；实际名 bError
+fbAcquirePanelFocus(
+    bEnable   := bRequestFocusForPanelA,
+    sSetID    := sPanelAUid,
+    tLEDTime  := tFocusLedBlinkPeriod,
+    bAcquired => bPanelAHasFocus,
+    bLED      => bPanelALedState,
+    bBusy     => bFocusReqBusy,
+    bError    => bFocusReqError,
+    nErrID    => nFocusReqErrId
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

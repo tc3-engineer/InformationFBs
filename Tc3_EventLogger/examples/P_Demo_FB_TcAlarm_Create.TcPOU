@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_TcAlarm_Create" Id="{ee76963a-b3ca-5979-917e-b8e10e2e3760}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_TcAlarm_Create
+VAR
+    fbAlarm        : FB_TcAlarm; // FB_TcAlarm 实例（继承自 FB_TcEventBase）
+    bCreated       : BOOL; // Create() 是否已成功执行（latch）
+    hr             : HRESULT; // Create 返回值监视
+    guidEventClass : GUID; // 事件类 GUID（请通过 EventClass 编辑器导出后写入）
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：包装机封口温度异常报警的一次性注册
+// 价值：把"事件类 + ID + 严重级别 + 确认要求"集中在 Create 里，业务代码后续只管 Raise/Clear
+// 验证：登录后单步：第一个扫描 hr 应该是 0 (S_OK)，bCreated 变 TRUE；之后周期再走 IF 判断被 bCreated 截住不再调用；强行让 bCreated := FALSE 再次进入 Create() 会拿到 ERROR_ALREADY_EXISTS
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_EventLogger（System → References → Add library）
+//   3. 编译 → 登录 → 运行；按 verify 注释里给出的在线写值操作
+// =============================================================================
+
+// 第一次扫描注册 alarm 到 EventLogger；之后由 bCreated latch 截住
+IF NOT bCreated THEN
+    hr := fbAlarm.Create(
+        eventClass := guidEventClass,
+        nEventId := 1001,                  // 封口温度异常
+        eSeverity := TcEventSeverity.Error,
+        bWithConfirmation := TRUE,
+        ipSourceInfo := 0);                // 0 = 默认源信息（符号路径）
+    bCreated := SUCCEEDED(hr);
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

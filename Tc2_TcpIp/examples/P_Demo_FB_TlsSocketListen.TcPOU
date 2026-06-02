@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_TlsSocketListen" Id="{b9e5ccaf-3e2c-5b3f-ac4d-02f9f329c199}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_TlsSocketListen
+VAR
+    fbCreateTlsListener : FB_TlsSocketCreate;
+    fbSetServerCert     : FB_TlsSocketSetCert;
+    fbStartTlsListen    : FB_TlsSocketListen;
+    fbAcceptIncoming    : FB_SocketAccept;
+    hListener           : T_HSOCKET;
+    bRequestCreate      : BOOL;
+    bCreateBusy         : BOOL;
+    bCreateError        : BOOL;
+    nCreateErrId        : UDINT;
+    sCertPath           : STRING(255) := 'C:\TwinCAT\3.1\Boot\Plc\TcpIpServer\server.pem';
+    sKeyPath            : STRING(255) := 'C:\TwinCAT\3.1\Boot\Plc\TcpIpServer\server.key';
+    sKeyPwd             : STRING(255);
+    bRequestSetCert     : BOOL;
+    bSetCertBusy        : BOOL;
+    bSetCertError       : BOOL;
+    nSetCertErrId       : UDINT;
+    stListenFlags       : ST_TlsListenFlags; // 默认 bNoClientCert := TRUE 即单向 TLS（HTTPS 风格）
+    bRequestListen      : BOOL;
+    bListenBusy         : BOOL;
+    bListenError        : BOOL;
+    nListenErrId        : UDINT;
+    bPollAccept         : BOOL;
+    bClientAccepted     : BOOL;
+    bAcceptBusy         : BOOL;
+    bAcceptError        : BOOL;
+    nAcceptErrId        : UDINT;
+    hRemoteClient       : T_HSOCKET;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：PLC 端在 8443 端口启 HTTPS-like TLS 监听服务，给现场手持终端通过
+//       HTTPS 访问 PLC 数据 API。CA 由 PLC 自己签发（自签或私 CA）。
+//
+// 价值：演示 TLS 服务端的完整启动链路：
+//       Create(bListener:=TRUE) → SetCert(server.pem/key) → Listen → Accept。
+//       少 SetCert 必报 TLS_CERT_NOTFOUND。
+//
+// 验证步骤：
+//   1. 把服务端证书 + 私钥拷到 sCertPath / sKeyPath 指定位置
+//   2. 在线 bRequestCreate := TRUE 创建 socket
+//   3. 在线 bRequestSetCert := TRUE 配置证书
+//   4. 在线 bRequestListen := TRUE 开监听
+//   5. 在线 bPollAccept := TRUE 持续 polling
+//   6. PC 上 curl -k https://PLC_IP:8443/ 看到 TLS 握手日志
+//   7. 注：bPollAccept 是 TON 节拍触发更稳，本例保持简洁直接 polling
+// =============================================================================
+
+// 阶段 1：Create（监听模式）
+fbCreateTlsListener(
+    sSrvNetId := '', bListener := TRUE,
+    bExecute := bRequestCreate, tTimeout := T#5S,
+    bBusy => bCreateBusy, bError => bCreateError, nErrId => nCreateErrId,
+    hSocket => hListener);
+
+// 阶段 2：SetCert（必须）
+fbSetServerCert(
+    sSrvNetId := '', hSocket := hListener,
+    sCertPath := sCertPath, sKeyPath := sKeyPath, sKeyPwd := sKeyPwd,
+    bExecute := bRequestSetCert, tTimeout := T#5S,
+    bBusy => bSetCertBusy, bError => bSetCertError, nErrId => nSetCertErrId);
+
+// 阶段 3：Listen
+fbStartTlsListen(
+    sSrvNetId := '', sLocalHost := '0.0.0.0', nLocalPort := 8443,
+    flags := stListenFlags,
+    bExecute := bRequestListen, tTimeout := T#5S,
+    hListener := hListener,
+    bBusy => bListenBusy, bError => bListenError, nErrId => nListenErrId);
+
+// 阶段 4：Accept（普通 FB_SocketAccept 处理 incoming，TLS 握手对应用透明）
+fbAcceptIncoming(
+    sSrvNetId := '', hListener := hListener,
+    bExecute := bPollAccept, tTimeout := T#5S,
+    bAccepted => bClientAccepted,
+    bBusy => bAcceptBusy, bError => bAcceptError, nErrId => nAcceptErrId,
+    hSocket => hRemoteClient);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

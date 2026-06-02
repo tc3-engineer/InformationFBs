@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_LEN" Id="{6f5cf2a2-70de-5519-9d52-6f1df5a38c53}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_LEN
+VAR
+    sUserInput : STRING(255); // HMI 输入框接收的用户文字（在线写值模拟）
+    nInputLen  : INT; // LEN 测出的有效字符数
+    nMaxLen    : INT := 50; // 业务限定的最大字符数 = 50
+    bAccept    : BOOL; // 校验通过标志（>0 且 <= nMaxLen）
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：HMI 上有一个输入框让操作员输入设备名，业务规则要求非空且最长 50
+//       字符。PLC 每周期跑一次 LEN 校验，bAccept 给后续业务做 gate。
+//
+// 价值：LEN 是字符串处理的"探针"。所有 LEFT/RIGHT/MID/INSERT/DELETE/CONCAT
+//       前的边界检查都靠它。本例展示"非空 + 不超长"双重校验的最简写法。
+//
+// 验证步骤：
+//   1. 导入本文件、引用 Tc2_Standard、编译、登录、运行
+//   2. 在线 monitor nInputLen, bAccept
+//   3. 在线写 sUserInput := 'Pump-01'
+//   4. 下一周期 nInputLen = 7，bAccept = TRUE
+//   5. 把 sUserInput 改成 ''（空串）→ nInputLen = 0，bAccept = FALSE
+//   6. 把 sUserInput 改成长度 51 的字符串 → nInputLen = 51，bAccept = FALSE
+// =============================================================================
+
+// 每周期跑一次校验：长度合规则放行
+nInputLen := LEN(sUserInput);
+bAccept   := (nInputLen > 0) AND (nInputLen <= nMaxLen);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

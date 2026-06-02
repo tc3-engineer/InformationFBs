@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_LARGE_INTEGER" Id="{06de0603-a082-562e-b757-57debab5599b}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_LARGE_INTEGER
+VAR
+    liSentinel : T_LARGE_INTEGER;; // 未设定哨兵 = INT64_MIN
+    bInit      : BOOL := TRUE;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_Utilities.LARGE_INTEGER 演示程序（FUNCTION，单周期触发）
+// ============================================================
+// 场景：初始化'未设定'哨兵值 = INT64_MIN。
+// 价值：替代字段逐字段赋值。
+// 验证步骤：
+//   1. 把本 PROGRAM 加到 PlcTask 调用列表
+//   2. 编译 + 登录
+//   3. 在线把 b... 触发位置 TRUE 一个周期
+//   4. 观察输出变量是否符合期望
+// ============================================================
+
+IF bInit THEN
+    liSentinel := LARGE_INTEGER(16#80000000, 16#00000000);   // INT64_MIN
+    bInit := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

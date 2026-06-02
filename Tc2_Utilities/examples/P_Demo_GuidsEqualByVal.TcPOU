@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_GuidsEqualByVal" Id="{576198f4-3088-57a4-a858-dde7ca490bff}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_GuidsEqualByVal
+VAR
+    stExpected : GUID; // 工业语义：预先记录的 Session GUID
+    stReceived : GUID; // 客户端传来的 GUID
+    bMatch     : BOOL; // 是否匹配
+    bCheck     : BOOL; // 在线触发
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：OPC UA Session ID 验证：每次客户端请求带 GUID Session ID，PLC 服务端比对预先生成的 Session ID 决定是否拒绝。
+// 价值：**IEC 强制要求**——不能用 `=` 比较结构体；本函数是 GUID 比较的唯一标准方式。
+// 验证步骤：
+//   1. 引用 Tc2_Utilities
+//   2. 编译 + 登录 + 运行
+//   3. 在线写触发位 TRUE，monitor 输出变量
+// =============================================================================
+
+IF bCheck THEN
+    bMatch := GuidsEqualByVal(guidA := stExpected, guidB := stReceived);
+    // bMatch = FALSE -> 拒绝该客户端连接
+    bCheck := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

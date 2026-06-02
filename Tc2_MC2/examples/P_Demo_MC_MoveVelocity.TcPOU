@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_MC_MoveVelocity" Id="{42941d42-8335-50d1-96ba-fe4409d26526}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_MC_MoveVelocity
+VAR
+    fbConveyorRun   : MC_MoveVelocity;
+    fbConveyorHalt  : MC_Halt;
+    axisConveyor    : AXIS_REF;
+    rtStartTrig     : R_TRIG;
+    rtStopTrig      : R_TRIG;
+    bStartConveyor  : BOOL := FALSE; // 在线 TRUE 启动传送带
+    bStopConveyor   : BOOL := FALSE; // 在线 TRUE 平稳停止传送带
+    lrLineSpeedMMpS : LREAL := 1500.0; // 传送带线速度 mm/s
+    bAtSpeed        : BOOL;
+    bRunBusy        : BOOL;
+    bHaltDone       : BOOL;
+    nRunErrorID     : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：包装线主传送带 — 启动后恒速 1.5 m/s 运行直到 PLC 发停车指令。
+//       MoveVelocity 负责加速到目标速度，Halt 负责停车，分工明确。
+// 价值：达到恒速后 FB 自动"放手"，NC 维持速度无需 PLC 持续干预。
+// 验证：bStartConveyor := TRUE → 看 axisConveyor.NcToPlc.ActVelo 爬升到 1500，
+//       bAtSpeed 置 TRUE。bStopConveyor := TRUE → 减速到 0，bHaltDone 短暂 TRUE。
+// =============================================================================
+
+rtStartTrig(CLK := bStartConveyor);
+rtStopTrig(CLK := bStopConveyor);
+
+fbConveyorRun(
+    Execute      := rtStartTrig.Q,
+    Velocity     := lrLineSpeedMMpS,
+    Acceleration := 2000.0,
+    Deceleration := 2000.0,
+    Jerk         := 20000.0,
+    Direction    := MC_Positive_Direction,
+    BufferMode   := MC_Aborting,
+    Axis         := axisConveyor,
+    InVelocity   => bAtSpeed,
+    Busy         => bRunBusy,
+    ErrorID      => nRunErrorID
+);
+
+fbConveyorHalt(
+    Execute      := rtStopTrig.Q,
+    Deceleration := 2000.0,
+    Jerk         := 20000.0,
+    BufferMode   := MC_Aborting,
+    Axis         := axisConveyor,
+    Done         => bHaltDone
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

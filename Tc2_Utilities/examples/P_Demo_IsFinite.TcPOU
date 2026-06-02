@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_IsFinite" Id="{1fab11e7-58f0-52b7-8746-3e20abb62811}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_IsFinite
+VAR
+    fSensorRaw       : LREAL := 25.0; // 模拟传感器原始值
+    argSensor        : T_Arg; // 打包后的 T_Arg
+    bSensorIsFinite  : BOOL; // IsFinite 返回
+    bSensorFault     : BOOL; // 锁存：曾经出现非有限值
+    nSensorScaledOut : DINT; // 安全场合才转换出的工程值
+    bCheckSensor     : BOOL; // 在线置 TRUE 触发一次体检
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_Utilities.IsFinite 演示程序
+// ============================================================
+// 场景：温度模拟量计算成 LREAL 后，conversion 前先体检，挡住 INF/NaN
+//       带来的 FPU 异常停机。
+// 价值：一行调用代替 "fX<>fX + ABS(fX)>1E308" 手工组合判断。
+// 验证：先 fSensorRaw := 25.0 → bCheckSensor := TRUE → bSensorIsFinite = TRUE；
+//       再用 Watch 强写 fSensorRaw 的位模式为 NaN（或除零）→ bSensorIsFinite = FALSE。
+// ============================================================
+
+argSensor := F_LREAL(fSensorRaw);
+
+IF bCheckSensor THEN
+    bSensorIsFinite := IsFinite(x := argSensor);
+    IF bSensorIsFinite THEN
+        // 安全：conversion 不会触发 FPU 异常停机
+        nSensorScaledOut := LREAL_TO_DINT(fSensorRaw * 100.0);
+    ELSE
+        // 故障：跳过 conversion，PLC 不停机
+        bSensorFault := TRUE;
+    END_IF;
+    bCheckSensor := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

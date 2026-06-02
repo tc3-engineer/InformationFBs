@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_CoEDriveEnable" Id="{2983ac6c-9298-5780-ad62-e555522a9740}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_CoEDriveEnable
+VAR
+    fbDriveEnable : FB_CoEDriveEnable; // CoE 驱动器使能 FB 实例
+    stCoEDriveIo  : ST_CoeDriveIoInterface; // 在 System Manager 链接 CoE 驱动器 PDO
+    rtrigReset    : R_TRIG; // 把 bResetReq 转成复位脉冲
+    bEnableDrive  : BOOL := FALSE; // 在线置 TRUE 推动使能状态机（电平型）
+    bResetReq     : BOOL := FALSE; // 故障时在线置 TRUE 复位一次
+    bDriveReady   : BOOL; // 到达运行使能为 TRUE
+    bDriveFault   : BOOL; // 驱动器 Fault 态
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：用 CoE 伺服做简单速度控制，不引入完整 NC 配置，直接由 PLC 使能并喂速度
+//       （输送带/风机/卷绕等单纯调速场合）。本例程先把驱动器使能到运行态。
+//
+// 价值：把 CiA 402 状态机（Switch on disabled → Ready → Switched on →
+//       Operation enabled）的逐步控制字操作封装成一个 bEnable 布尔，业务侧不必
+//       手写状态字解析和控制字时序。
+//
+// 验证步骤：
+//   1. 引用 Tc2_Drive 库
+//   2. System Manager 里把 CoE 驱动器的 PDO（控制字/状态字/设定值/实际值）链接
+//      到 stCoEDriveIo 各字段（VAR_IN_OUT 必须正确链接，否则 bDriveReady 上不来）
+//   3. 编译、登录、运行
+//   4. 在线置 bEnableDrive := TRUE（电平型，要保持）
+//      → 状态机逐步推进，几个周期后 bDriveReady 变 TRUE（运行使能）
+//   5. 若 bDriveFault = TRUE，在线置 bResetReq := TRUE 复位一次（控制字 Bit 7）
+//      → 故障清除后重新使能，bDriveReady 再次变 TRUE
+//   6. 置 bEnableDrive := FALSE 验证去使能：bDriveReady 应回 FALSE
+//   7. 之后可配合 FB_CoEDriveMoveVelocity 在 bDriveReady=TRUE 时喂速度
+// =============================================================================
+
+// bReset 取上升沿，避免长期置位
+rtrigReset(CLK := bResetReq);
+
+// 单次调用形式：VAR_IN_OUT stCoeDriveIoInterface 必传；每周期调用推进状态机
+fbDriveEnable(
+    bEnable := bEnableDrive,
+    bReset  := rtrigReset.Q,
+    stCoeDriveIoInterface := stCoEDriveIo,
+    bStatus     => bDriveReady,
+    bDriveError => bDriveFault
+);
+
+// 复位脉冲用完即清
+IF NOT bDriveFault THEN
+    bResetReq := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

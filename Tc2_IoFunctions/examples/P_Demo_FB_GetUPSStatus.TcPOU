@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_GetUPSStatus" Id="{47ccc96c-daa4-51a6-94e1-fd6d2efa2c26}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_GetUPSStatus
+VAR
+    fbReadUpsStatus   : FB_GetUPSStatus; // UPS 状态读 FB（电平触发）
+    sUpsTargetNetId   : T_AmsNetId := ''; // 本机空串
+    nUpsAdsPort       : T_AmsPort := 0; // 0 = Windows UPS Service
+    bEnableUpsMonitor : BOOL := TRUE; // 电平使能：TRUE 即开始监控
+    bUpsStatusValid   : BOOL; // 数据是否有效
+    bUpsReadError     : BOOL; // 读 UPS 出错
+    nUpsReadErrId     : UDINT; // ADS 错误号
+    stUpsStatus       : ST_UPSStatus; // UPS 状态结构
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：CX 工控机配 CB3011 UPS：周期读 UPS 状态；检测到 UPS 在用电池且剩余 < 30 秒 → 触发关键数据写盘 + 报警。
+// 价值：掉电保护：让 PLC 程序提前 1-2 秒响应即将断电。
+// 验证：登录后 bEnableUpsMonitor := TRUE → 1-5 秒后 bUpsStatusValid 应为 TRUE，stUpsStatus 各字段（如 PowerStatus / BatteryFlag）有值；模拟断电（拔市电插头）→ 1-5 秒内 stUpsStatus 显示电池模式。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_IoFunctions（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』行的指示在线写值观察
+// =============================================================================
+
+// 电平触发：bEnable = TRUE 即周期读，不需要上升沿
+fbReadUpsStatus(
+    sNetId   := sUpsTargetNetId,
+    nPort    := nUpsAdsPort,
+    bEnable  := bEnableUpsMonitor,
+    bValid   => bUpsStatusValid,
+    bError   => bUpsReadError,
+    nErrId   => nUpsReadErrId,
+    stStatus => stUpsStatus
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FindAndDelete" Id="{d5fe72f6-df9e-53c4-a9f7-39e948897847}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FindAndDelete
+VAR
+    sHtmlSrc : STRING(255) := 'Tank&lt;br&gt;level low&lt;/p&gt;'; // 工业语义：含 HTML 标签的原始报警串
+    sBrTag   : STRING(8) := '&lt;br&gt;'; // 要删除的标签
+    sCleaned : STRING(255); // 清理后的纯文本
+    nRemoved : UDINT; // 删除次数
+    bClean   : BOOL; // 在线触发
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：HTML 转纯文本：用 `FindAndDelete` 把 `'<br>'`、`'</p>'` 等固定标签整批删掉。
+// 价值：不用本函数则需 `FIND2` + `DELETE2` 循环，至少 8 行；本函数 1 行解决，并返回总删除次数用于报表。
+// 验证步骤：
+//   1. 引用 Tc2_Utilities
+//   2. 编译 + 登录 + 运行
+//   3. 在线写触发位 TRUE，monitor 输出变量
+// =============================================================================
+// 从报警消息中剥除 <br> 标签
+IF bClean THEN
+    nRemoved := FindAndDelete(pSrcString    := ADR(sHtmlSrc),
+                              pDeleteString := ADR(sBrTag),
+                              pDstString    := ADR(sCleaned),
+                              nDstSize      := SIZEOF(sCleaned));
+    bClean := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

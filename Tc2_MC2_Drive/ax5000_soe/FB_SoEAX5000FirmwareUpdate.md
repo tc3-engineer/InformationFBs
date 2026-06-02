@@ -13,7 +13,7 @@
 | Verified | 2026-05-21 ✅ |
 | InfoSys-checked | ✅ 2026-05-21 |
 | Status | `verified` |
-| Example | [`examples/P_Demo_FB_SoEAX5000FirmwareUpdate.xml`](../examples/P_Demo_FB_SoEAX5000FirmwareUpdate.xml) |
+| Example | [`examples/P_Demo_FB_SoEAX5000FirmwareUpdate.TcPOU`](../examples/P_Demo_FB_SoEAX5000FirmwareUpdate.TcPOU) |
 
 ---
 
@@ -131,7 +131,7 @@ END_VAR
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_FB_SoEAX5000FirmwareUpdate.xml`](../examples/P_Demo_FB_SoEAX5000FirmwareUpdate.xml)
+> 配套可导入文件：[`examples/P_Demo_FB_SoEAX5000FirmwareUpdate.TcPOU`](../examples/P_Demo_FB_SoEAX5000FirmwareUpdate.TcPOU)
 
 ```iecst
 // 场景：受控停机窗口里把 AX5000 固件更新到指定版本

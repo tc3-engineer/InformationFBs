@@ -13,7 +13,7 @@
 | Verified | 2026-05-11 ✅ |
 | InfoSys-checked | ✅ 2026-05-11 |
 | Status | `verified` |
-| Example | [`examples/P_Demo_WINSERT.xml`](../examples/P_Demo_WINSERT.xml) |
+| Example | [`examples/P_Demo_WINSERT.TcPOU`](../examples/P_Demo_WINSERT.TcPOU) |
 
 ---
 
@@ -80,7 +80,7 @@ PDF §5.4 原例：`WINSERT("SUSI", "XY", 2)` → 在第 2 字符后插入 `XY` 
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_WINSERT.xml`](../examples/P_Demo_WINSERT.xml)（PLCopenXML，可直接导入 TwinCAT 3 XAE）
+> 配套可导入文件：[`examples/P_Demo_WINSERT.TcPOU`](../examples/P_Demo_WINSERT.TcPOU)（TwinCAT 3 原生 .TcPOU，可直接拖入 XAE 的 PLC POUs 文件夹）
 
 ```iecst
 // 场景：中文日志 "信息 电机启动" 要在 "信息" 后插入时间戳 " [12:34:56]"

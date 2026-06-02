@@ -13,7 +13,7 @@
 | Verified | 2026-05-21 ✅ |
 | InfoSys-checked | ✅ 2026-05-21 |
 | Status | `verified` |
-| Example | [`examples/P_Demo_FB_TlsSocketConnect.xml`](../examples/P_Demo_FB_TlsSocketConnect.xml) |
+| Example | [`examples/P_Demo_FB_TlsSocketConnect.TcPOU`](../examples/P_Demo_FB_TlsSocketConnect.TcPOU) |
 
 ---
 
@@ -119,7 +119,7 @@ TLS 专有错误（PDF §7.3.2）：
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_FB_TlsSocketConnect.xml`](../examples/P_Demo_FB_TlsSocketConnect.xml)
+> 配套可导入文件：[`examples/P_Demo_FB_TlsSocketConnect.TcPOU`](../examples/P_Demo_FB_TlsSocketConnect.TcPOU)
 
 ```iecst
 // 场景：PLC 连云端 MQTT-TLS broker（mqtt.example.com:8883）做安全遥测。

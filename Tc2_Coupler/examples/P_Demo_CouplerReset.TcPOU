@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_CouplerReset" Id="{c40add89-4216-5d66-a483-01738f2d6971}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_CouplerReset
+VAR
+    fbResetCoupler           : CouplerReset; // 耦合器软复位 FB 实例
+    stCouplerStatus          : PLCINTFSTRUCT; // 2-byte PLC interface status word（链接到耦合器）
+    stCouplerControl         : PLCINTFSTRUCT; // 2-byte PLC interface control word（链接到耦合器）
+    bMaintenanceResetRequest : BOOL; // 维护按钮单脉冲触发复位
+    tResetTimeout            : TIME := T#10S; // 复位超时；K-bus 端子多时给足时间
+    bResetBusy               : BOOL; // 复位进行中标志
+    bResetError              : BOOL; // 复位失败标志
+    nResetErrId              : UDINT; // 错误号 0/16#100/16#200/16#300/16#400/16#500
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：印刷机控制柜里挂的 BK3120（Profibus 耦合器）经常在端子热插拔后报
+//       K-bus error。维护人员希望按一下控制面板的"K-bus 复位"按钮就自动恢复，
+//       无需重启整个站。本程序在维护单脉冲后软复位耦合器。
+//
+// 价值：替代"现场按耦合器面板 reset 按钮"（机柜内部不安全）、"Profibus 站点
+//       reset"（会瞬间打断全站通信，影响范围大）、"整柜断电"（连续工艺代价高）。
+//       本 FB 让 PLC 程序软复位单台耦合器、其它站不受影响。
+//
+// 验证步骤：
+//   1. 在 System Manager 给 BK3120 的 2-byte PLC interface 选 enabled，
+//      并把 status word / control word 各 2 字节链接到本程序的两个变量
+//   2. 引用 Tc2_Coupler，编译，登录
+//   3. 人为拔掉一个 KLxxx 端子，观察 stCouplerStatus.Byte0 的 K-bus
+//      error 位被置 1；插回端子，K-bus error 仍未自动清
+//   4. 将 bMaintenanceResetRequest 置 TRUE 一个 PLC 周期（在线写值）
+//      -> bResetBusy 应短暂置 TRUE，1-3 秒后回 FALSE
+//   5. 复位完成后 stCouplerStatus.Byte0 中 K-bus error 位应清 0，
+//      bResetError = FALSE，nResetErrId = 0
+//   6. 若设 tResetTimeout = T#1S 再触发 -> 大概率 bResetError = TRUE，
+//      nResetErrId = 16#300（超时），证明 TMOUT 不要设太短
+// =============================================================================
+
+// 单次调用形式：所有 VAR_INPUT 显式赋值
+fbResetCoupler(
+    STATE   := stCouplerStatus,
+    START   := bMaintenanceResetRequest,
+    TMOUT   := tResetTimeout,
+    CONTROL => stCouplerControl,
+    BUSY    => bResetBusy,
+    ERR     => bResetError,
+    ERRID   => nResetErrId
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

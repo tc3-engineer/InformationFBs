@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_UInt64Div16Ex" Id="{672bd12c-7995-58a1-9d63-99ed8e4c2fb3}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_UInt64Div16Ex
+VAR
+    uliNanos     : T_ULARGE_INTEGER;; // 纳秒时间戳
+    wDivider     : WORD := 1000;; // 转毫秒的除数
+    uliMillis    : T_ULARGE_INTEGER;; // 商：毫秒数
+    uliRemainder : T_ULARGE_INTEGER;; // 余数：剩余纳秒
+    bDivide      : BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_Utilities.UInt64Div16Ex 演示程序（FUNCTION，单周期触发）
+// ============================================================
+// 场景：64 位时钟戳（ns）除以 1000 转毫秒、再除以 1000 转秒等小除数链。
+// 价值：替代手写 64 位除法链；硬件指令一次搞定，性能可预测。
+// 验证步骤：
+//   1. 把本 PROGRAM 加到 PlcTask 调用列表
+//   2. 编译 + 登录
+//   3. 在线把 b... 触发位置 TRUE 一个周期
+//   4. 观察输出变量是否符合期望
+// ============================================================
+
+IF bDivide AND wDivider <> 0 THEN
+    // 除 0 PDF 未定义 → 前置校验
+    uliMillis := UInt64Div16Ex(uliNanos, wDivider, uliRemainder);
+    bDivide := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

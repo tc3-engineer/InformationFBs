@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_ListenerBase2" Id="{72accac8-559b-590e-94ed-bddbef0477c0}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_ListenerBase2
+VAR
+    fbListener  : FB_ListenerBase2; // 实际工程应声明子类（继承自 FB_ListenerBase2）
+    bSubscribed : BOOL; // 订阅 latch
+    hr          : HRESULT; // 返回值监视
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：自定义 listener 监听 alarm 事件并打印到 trace（实际工程会推到数据库/OPC UA）
+// 价值：一次声明 + Subscribe + 周期 Execute 完成事件订阅
+// 验证：子类需要 OVERRIDE OnAlarmRaised 等方法（本例只给出主程序）。在 PLC 项目里继承 FB_ListenerBase2 后导入本例；触发任意 alarm 应能看到子类回调被调用
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_EventLogger（System → References → Add library）
+//   3. 编译 → 登录 → 运行；按 verify 注释里给出的在线写值操作
+// =============================================================================
+
+// 第一次扫描订阅（也可订阅时传过滤器）
+IF NOT bSubscribed THEN
+    hr := fbListener.Subscribe(ipMessageFilterConfig := 0, ipAlarmFilterConfig := 0);
+    bSubscribed := SUCCEEDED(hr);
+END_IF;
+
+// 每周期推进事件队列；EventLogger 会在合适时机回调子类的 OnXxx 方法
+hr := fbListener.Execute();
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

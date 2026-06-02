@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_SetLedColor_BAPI" Id="{1a23033d-23db-517d-949a-3cd0dbb6f989}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_SetLedColor_BAPI
+VAR
+    fbFB_SetLedColor_BAPI : FB_SetLedColor_BAPI; // FB_SetLedColor_BAPI 实例
+    bSetLedReq            : BOOL; // 在线上升沿触发切灯
+    eDesiredColor         : E_UsrLED_Color := eUsrLED_Green; // 目标颜色，默认绿
+    bLedSwitching         : BOOL; // 切换中
+    bLedSwitchErr         : BOOL; // BAPI 调用错误
+    nLastAdsError         : UDINT; // ADS / BAPI 错误码
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_System.FB_SetLedColor_BAPI 演示程序
+// ============================================================
+// 场景：CX5130 把整机健康态映射到 USR LED，无 HMI 工位也能扫一眼判断状态。
+// 价值：替代外接信号灯柱布线；BAPI 协议已封装，业务只关心枚举值。
+// 验证：登录后改 eDesiredColor 为 eUsrLED_Red，写 bSetLedReq := TRUE，物理 USR LED 应在 1 秒内变红；改成 eUsrLED_Off 再触发后熄灭。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_System（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』指引在线写值观察
+// ============================================================
+
+fbFB_SetLedColor_BAPI(
+    sNetID := '', eNewColor := eDesiredColor, bExecute := bSetLedReq, tTimeout := DEFAULT_ADS_TIMEOUT,
+    bBusy => bLedSwitching, bError => bLedSwitchErr, nErrID => nLastAdsError
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

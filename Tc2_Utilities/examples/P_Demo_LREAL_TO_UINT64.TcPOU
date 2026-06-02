@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_LREAL_TO_UINT64" Id="{2231a532-274e-56da-8a35-b7ae86001084}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_LREAL_TO_UINT64
+VAR
+    lrSetpoint   : LREAL := 1.5E12;; // 业务侧浮点（如累计产量上限）
+    uliConverted : T_ULARGE_INTEGER;; // 转换结果（写入 ADS Raw 报文）
+    bConvert     : BOOL;; // 在线置 TRUE 触发一次转换
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_Utilities.LREAL_TO_UINT64 演示程序（FUNCTION，单周期触发）
+// ============================================================
+// 场景：把 PID 控制器算出的速度上限（LREAL）写入 ADS Raw 报文中按 T_ULARGE_INTEGER 定义的累计计数字段。
+// 价值：不用本函数得手写 LREAL 拆 DWORD 高低位再赋值给结构体两次，本函数一次返回；与 `Tc2_Utilities` 其它 64 位函数风格统一。
+// 验证步骤：
+//   1. 把本 PROGRAM 加到 PlcTask 调用列表
+//   2. 编译 + 登录
+//   3. 在线把 b... 触发位置 TRUE 一个周期
+//   4. 观察输出变量是否符合期望
+// ============================================================
+
+IF bConvert AND lrSetpoint >= 0 THEN
+    // 上升沿触发：先校验非负，避免命中 PDF 未定义行为
+    uliConverted := LREAL_TO_UINT64(lrSetpoint);
+    bConvert := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

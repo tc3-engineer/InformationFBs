@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_F_GetVersionTcNcDrive" Id="{2eb4d776-e0bb-55bf-9883-2a9b2cd44b8b}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_F_GetVersionTcNcDrive
+VAR
+    iMajor    : UINT; // 监视：主版本号
+    iMinor    : UINT; // 监视：次版本号
+    iRevision : UINT; // 监视：修订号
+    bReadOnce : BOOL := TRUE; // 只在首周期读一次
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_NcDrive.F_GetVersionTcNcDrive 演示程序
+// ============================================================
+// 场景：上电初始化时把实际链接进工程的 Tc2_NcDrive 库版本读出来，
+//       拼成 "major.minor.revision" 写进诊断日志 / HMI。
+// 价值：运行期即可拿到真实库版本，避免靠人工记忆；可做"低于某版本告警"
+//       的兼容性门槛检查。
+// 验证：登录后观察 iMajor / iMinor / iRevision 在首周期被赋值（应为
+//       1 / 2 / 9，对应库版本 1.2.9），之后 bReadOnce 落为 FALSE。
+// ============================================================
+
+// F_GetVersionTcNcDrive 是纯函数，无副作用，不需要边沿 / Busy。
+// 一次只返回一个分量，故分三次调用拼出完整版本。
+IF bReadOnce THEN
+    iMajor    := F_GetVersionTcNcDrive(nVersionElement := 1);
+    iMinor    := F_GetVersionTcNcDrive(nVersionElement := 2);
+    iRevision := F_GetVersionTcNcDrive(nVersionElement := 3);
+    bReadOnce := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

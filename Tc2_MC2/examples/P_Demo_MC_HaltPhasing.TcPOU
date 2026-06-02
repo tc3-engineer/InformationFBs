@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_MC_HaltPhasing" Id="{595d8fa4-1be6-5db7-a85c-73a0503ae1d4}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_MC_HaltPhasing
+VAR
+    fbStopPhasing  : MC_HaltPhasing;
+    axisMaster     : AXIS_REF;
+    axisColorPlate : AXIS_REF;
+    rtStopTrig     : R_TRIG;
+    bRequestStop   : BOOL := FALSE;
+    bStopDone      : BOOL;
+    bStopBusy      : BOOL;
+    nErrorID       : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：套色印刷启动相位调整后业务发现参数算错，需要让色版从轴的"相位调整
+//       速度"按 Jerk-limited 曲线平稳归零，避免色版瞬时抖动印废品。
+// 价值：相对 MC_AbortSuperposition 的瞬时中止，本 FB 给可控减速曲线工艺平顺；
+//       从轴耦合关系保留，主运动继续推进。
+// 验证：先用 MC_PhasingRelative 启动相位调整（外部 demo 假设已启动）；
+//       bRequestStop := TRUE → bStopBusy 立 TRUE；从轴叠加速度按 1000 mm/s²
+//       减速降到 0，bStopDone 短暂 TRUE；从轴仍按之前齿比跟主轴走。
+// =============================================================================
+
+rtStopTrig(CLK := bRequestStop);
+
+fbStopPhasing(
+    Execute      := rtStopTrig.Q,
+    Deceleration := 1000.0,
+    Jerk         := 10000.0,
+    BufferMode   := MC_Aborting,
+    Master       := axisMaster,
+    Slave        := axisColorPlate,
+    Done         => bStopDone,
+    Busy         => bStopBusy,
+    ErrorId      => nErrorID
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

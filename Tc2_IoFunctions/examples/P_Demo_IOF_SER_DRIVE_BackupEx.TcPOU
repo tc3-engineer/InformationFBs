@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_IOF_SER_DRIVE_BackupEx" Id="{365f9655-0851-5dc9-9b0a-c1e25a144ed0}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_IOF_SER_DRIVE_BackupEx
+VAR
+    fbSercosDriveBackupEx : IOF_SER_DRIVE_BackupEx; // SERCOS drive 备份 Ex FB
+    sLocalNetId           : T_AmsNetId := ''; // 本机
+    nDrivePort            : UINT := 1; // drive port
+    sBackupComment        : T_MaxString := 'Drive 1 Ex backup'; // 注释
+    eBackupFilePath       : E_OpenPath := PATH_BOOTPATH; // 路径
+    sBackupFileName       : T_MaxString := 'DRIVEPAR_EX.BIN'; // 文件名
+    bDoCheckReq           : BOOL := FALSE; // CRC
+    bDoBackupReq          : BOOL := FALSE; // 备份
+    bDoRestoreReq         : BOOL := FALSE; // 恢复
+    bEnableCRC            : BOOL := FALSE; // CRC
+    bUseStdBackupList     : BOOL := TRUE; // IDN-192
+    bUseUserBackupList    : BOOL := FALSE; // 用户清单
+    bIgnoreReadErrors     : BOOL := FALSE; // 跳过不可读参数
+    tBackupTimeout        : TIME := T#30S; // 超时
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：只备份 drive 1 的 motion 关键参数（自定义清单）；备份遇错不中止。
+// 价值：更精细控制。
+// 验证：⚠️ PDF VAR 区未列 `arrList`；按 PDF 正文配置自定义清单后触发 bDoBackupReq；遇错可看 `bIgnoreParamErr` 是否生效。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_IoFunctions（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』行的指示在线写值观察
+// =============================================================================
+
+// ⚠️ 完整 arrList 接口字段在 PDF VAR 区未列；按 PDF 正文与 drive 手册补充
+fbSercosDriveBackupEx(
+    bCheck          := bDoCheckReq,
+    bBackup         := bDoBackupReq,
+    bRestore        := bDoRestoreReq,
+    bCRCEnable      := bEnableCRC,
+    bStdBackupList  := bUseStdBackupList,
+    bUserBackupList := bUseUserBackupList,
+    sNetId          := sLocalNetId,
+    nPort           := nDrivePort,
+    sComment        := sBackupComment,
+    ePath           := eBackupFilePath,
+    sPathName       := sBackupFileName,
+    tTimeout        := tBackupTimeout,
+    bIgnoreParamErr := bIgnoreReadErrors
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

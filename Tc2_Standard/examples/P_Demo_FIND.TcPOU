@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FIND" Id="{2225a5b8-61d4-5a2e-868b-10ac78adff1e}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FIND
+VAR
+    sConfig   : STRING(255) := 'IP:192.168.1.10,PORT:502'; // 配置串：IP 与 PORT 之间用逗号分隔
+    sDelim    : STRING(255) := ','; // 分隔符，本例为逗号
+    nDelimPos : INT; // FIND 返回值：0 = 未找到，>0 = 子串起点位置（1-based）
+    bSearch   : BOOL; // 在线置 TRUE 触发一次搜索
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：HMI 上让操作员输入 'IP:xxx,PORT:yyy' 配置串，PLC 需要先用 FIND 定位
+//       ',' 把 IP 段和 PORT 段切开，再分别交给 TCP/IP 配置 FB。FIND 是"指南针"，
+//       它的返回值直接决定后续 LEFT/RIGHT 的切割长度。
+//
+// 价值：一行调用拿到子串首次出现位置，0 = miss，>0 = 命中位置。业务侧只
+//       须判 nDelimPos > 0 就能区分 ok / 配置非法。不用本 FC 要写 15+ 行
+//       逐字节比较循环。
+//
+// 验证步骤：
+//   1. 导入本文件、引用 Tc2_Standard、编译、登录、运行
+//   2. 在线 monitor nDelimPos
+//   3. 在线写 bSearch := TRUE
+//   4. 下一周期 nDelimPos = 16（',' 在 sConfig 中第 16 位）
+//   5. 在线改 sConfig := 'IP:192.168.1.10'（去掉 ',PORT' 段）+ 再触发
+//      验证 nDelimPos = 0（未找到 → 业务层走错误分支）
+// =============================================================================
+
+// IEC 字符串位置从 1 起；返回值 0 是"miss"统一约定
+IF bSearch THEN
+    nDelimPos := FIND(sConfig, sDelim);
+    bSearch := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_RIGHT" Id="{3535016d-172f-57dc-b0dc-de3e9de2c8f5}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_RIGHT
+VAR
+    sOrderID   : STRING(255) := 'ORD2026051100123'; // 订单号：前缀 ORD + 日期 8 位 + 流水号 5 位
+    sSerial    : STRING(255); // 提取出的流水号（订单号尾 5 位）
+    nSerialLen : INT := 5; // 流水号固定长度 = 5
+    bExtract   : BOOL; // 触发一次 RIGHT
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：MES 系统下发订单号 'ORDyyyymmddNNNNN'（前缀 ORD + 日期 8 位 + 流水 5 位）。
+//       HMI 只想展示流水号 NNNNN 给现场操作员看，避免长字符串挤显示。RIGHT
+//       从尾部直接截 5 字符即可。
+//
+// 价值：RIGHT 一行调用完成"取后 N 字符"。不用本 FC 要写 MID(s, len, LEN(s)-len+1)
+//       要算两次长度。RIGHT 把"从右数"的语义直接嵌进函数名，可读性更好。
+//
+// 验证步骤：
+//   1. 导入本文件、引用 Tc2_Standard、编译、登录、运行
+//   2. 在线 monitor sSerial
+//   3. 在线写 bExtract := TRUE
+//   4. 下一周期 sSerial = '00123'（订单号尾 5 字符）
+//   5. 把 sOrderID 改成 'X1'（只 2 字符）+ 再触发 → sSerial = 'X1'
+//      （SIZE>LEN 时返回整个源串，不补空格）
+// =============================================================================
+
+// RIGHT(s, 5) 表示"从右往左数 5 个字符"
+IF bExtract THEN
+    sSerial := RIGHT(sOrderID, nSerialLen);
+    bExtract := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

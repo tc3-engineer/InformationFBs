@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_IOF_SER_ResetErr" Id="{4bd07568-b0bb-5f10-b366-662a1e147cfa}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_IOF_SER_ResetErr
+VAR
+    fbSercosResetErr : IOF_SER_ResetErr; // SERCOS 全清错 FB
+    sLocalNetId      : T_AmsNetId := ''; // 本机
+    nSercosDeviceId  : UDINT := 1; // 主站 Device Id
+    bClearAllErrReq  : BOOL := FALSE; // HMI 按钮：清错
+    tClearTimeout    : TIME := T#5S; // 超时
+    bClearBusy       : BOOL; // 工作中
+    bClearErr        : BOOL; // 出错
+    nLastErrCode     : UDINT; // 错误号
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：HMI 报警后操作员按"清错"按钮 → 触发 SERCOS 全清。
+// 价值：封装 SERCOS 错误复位为 HMI 操作。
+// 验证：登录后 nSercosDeviceId 设为主站；写 bClearAllErrReq := TRUE → bClearBusy 短暂 TRUE → 回 FALSE 后 nLastErrCode = 0 表示成功；若 drive 仍有硬件故障，下一周期还会重新报错。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_IoFunctions（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』行的指示在线写值观察
+// =============================================================================
+
+fbSercosResetErr(
+    NETID    := sLocalNetId,
+    DEVICEID := nSercosDeviceId,
+    RESET    := bClearAllErrReq,
+    TMOUT    := tClearTimeout,
+    BUSY     => bClearBusy,
+    ERR      => bClearErr,
+    ERRID    => nLastErrCode
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

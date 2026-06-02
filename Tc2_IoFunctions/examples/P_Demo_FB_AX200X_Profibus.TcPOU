@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_AX200X_Profibus" Id="{1441fe0a-f16b-5e2c-b052-b54af12bbdba}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_AX200X_Profibus
+VAR
+    fbAx2000All          : FB_AX200X_Profibus; // AX2000 综合 FB
+    stAx2000PzdIn        : ST_PZD_IN; // PZD 输入
+    stAx2000PzdOut       : ST_PZD_OUT; // PZD 输出
+    bDriveInitReq        : BOOL := FALSE; // 上升沿初始化
+    bUseDigitalSpeedMode : BOOL := FALSE; // 初始化为 Digital speed
+    iDigitalSpeedCmd     : DWORD := 0; // Digital speed 指令
+    iVelocityCmd         : DWORD := 1500; // Motion 速度
+    iPositionTarget      : DINT := 12000; // 目标位置
+    iRunMode             : BYTE := 1; // 0=DS 1=MT 2=Jog 3=Cal
+    iMotionTaskNum       : WORD := 0; // motion-task 号
+    iMotionBlockType     : WORD := 16#2000; // motion-task 类型
+    iJogBaseVelo         : INT := 100; // Jog 基础速度
+    iCalVelocity         : WORD := 50; // Homing 速度
+    bSetRefPointReq      : BOOL := FALSE; // 设置零位
+    bStartCmd            : BOOL := FALSE; // 上升沿启动
+    bStopCmd             : BOOL := FALSE; // 上升沿停止
+    bShortStopCmd        : BOOL := FALSE; // 短停
+    iAx2000Station       : BYTE := 5; // AX2000 站号
+    iFC310xDevId         : WORD := 1; // FC310x DeviceId
+    bErrResumeReq        : BOOL := FALSE; // 复位错误
+    tCmdTimeout          : TIME := T#5S; // 超时
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：AX2000 综合控制：一个 FB 涵盖初始化 + jog + motion + homing。
+// 价值：单一接口，业务代码简洁。
+// 验证：登录后 bDriveInitReq := TRUE 一次完成初始化；切 iRunMode := 1 (Motiontask) + bStartCmd := TRUE → 伺服按 iPositionTarget 定位。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_IoFunctions（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』行的指示在线写值观察
+// =============================================================================
+
+// 必须循环调用维持 PZD 通讯
+fbAx2000All(
+    bInit              := bDriveInitReq,
+    bMode_DigitalSpeed := bUseDigitalSpeedMode,
+    iDigitalSpeed      := iDigitalSpeedCmd,
+    iVelocity          := iVelocityCmd,
+    iPosition          := iPositionTarget,
+    iRunningMode       := iRunMode,
+    imotion_tasknumber := iMotionTaskNum,
+    imotion_blocktype  := iMotionBlockType,
+    iJogModeBasicValue := iJogBaseVelo,
+    iCalVelo           := iCalVelocity,
+    bSetRefPoint       := bSetRefPointReq,
+    bStart             := bStartCmd,
+    bStop              := bStopCmd,
+    bShortStop         := bShortStopCmd,
+    iSlaveAddress      := iAx2000Station,
+    iFC310xDeviceId    := iFC310xDevId,
+    bErrorResume       := bErrResumeReq,
+    tTimeOut           := tCmdTimeout
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

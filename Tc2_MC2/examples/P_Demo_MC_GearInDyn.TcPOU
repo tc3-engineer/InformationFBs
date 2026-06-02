@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_MC_GearInDyn" Id="{e7bb40ee-f0e5-5a88-aeac-a6e54f53bcfd}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_MC_GearInDyn
+VAR
+    fbDynamicGear      : MC_GearInDyn;
+    axisLineRoll       : AXIS_REF;
+    axisTakeUp         : AXIS_REF;
+    bEnableCoupling    : BOOL := FALSE; // 在线 TRUE 启用动态齿轮耦合
+    lrCurrentGearRatio : LREAL := 1.0; // 动态齿比；业务代码每周期可改
+    bIsCoupled         : BOOL;
+    bCoupleBusy        : BOOL;
+    nErrorID           : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：卷绕收线机 — 主轴是出料辊（线速度恒定），从轴是收线轴。随着卷径变
+//       大，要保持线速度恒定就要不停降低齿比。业务侧代码（外部）根据卷径
+//       传感器每周期更新 lrCurrentGearRatio，本 FB 把这个齿比应用到耦合。
+// 价值：齿比是 PLC 变量，可被 PID / 卷径算法实时控制；机械齿轮箱做不到。
+// 验证：bEnableCoupling := TRUE → bIsCoupled 立 TRUE；
+//       在线写 lrCurrentGearRatio = 0.5 → 看 axisTakeUp.NcToPlc.ActVelo 立刻变为
+//       axisLineRoll.ActVelo × 0.5；继续在线写 0.3、0.2 验证连续可变。
+//       注意：bEnableCoupling := FALSE 不会解耦（齿比冻结），要彻底解耦
+//       需调用 MC_GearOut(axisTakeUp)。
+// =============================================================================
+
+fbDynamicGear(
+    Enable       := bEnableCoupling,
+    GearRatio    := lrCurrentGearRatio,
+    Acceleration := 1000.0,
+    Deceleration := 0.0,
+    Jerk         := 0.0,
+    Master       := axisLineRoll,
+    Slave        := axisTakeUp,
+    InGear       => bIsCoupled,
+    Busy         => bCoupleBusy,
+    ErrorID      => nErrorID
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

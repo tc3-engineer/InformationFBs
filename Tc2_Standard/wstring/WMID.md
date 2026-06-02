@@ -13,7 +13,7 @@
 | Verified | 2026-05-11 ✅ |
 | InfoSys-checked | ✅ 2026-05-11 |
 | Status | `verified` |
-| Example | [`examples/P_Demo_WMID.xml`](../examples/P_Demo_WMID.xml) |
+| Example | [`examples/P_Demo_WMID.TcPOU`](../examples/P_Demo_WMID.TcPOU) |
 
 ---
 
@@ -82,7 +82,7 @@ PDF §5.7 原例：`WMID("SUSI", 2, 2)` → 从第 2 字符起取 2 字符 → `
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_WMID.xml`](../examples/P_Demo_WMID.xml)（PLCopenXML，可直接导入 TwinCAT 3 XAE）
+> 配套可导入文件：[`examples/P_Demo_WMID.TcPOU`](../examples/P_Demo_WMID.TcPOU)（TwinCAT 3 原生 .TcPOU，可直接拖入 XAE 的 PLC POUs 文件夹）
 
 ```iecst
 // 场景：从 "IP：192.168.1.10，端口：502" 中提取中间 IP 段 "192.168.1.10"

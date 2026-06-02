@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_SimpleAdsLogEvent" Id="{ac2e8383-0cc6-546d-9d07-b4e7eb8b9de0}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_SimpleAdsLogEvent
+VAR
+    fbFB_SimpleAdsLogEvent : FB_SimpleAdsLogEvent; // FB_SimpleAdsLogEvent 实例
+    bLowCoolant            : BOOL; // 电平：TRUE = 冷却液位告警 active
+    bAckCoolantAlarm       : BOOL; // 上升沿确认告警
+    nLastAdsError          : UDINT; // ADS 错误码
+    bAdsErr                : BOOL; // ADS 错误
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_System.FB_SimpleAdsLogEvent 演示程序
+// ============================================================
+// 场景：包装线 '冷却液位低' 告警 (SourceId=1, EventId=4711) 推到 EventLogger。
+// 价值：事件文本提前在 EventLogger 配好；业务代码只关心电平变化。
+// 验证：登录后写 bLowCoolant := TRUE，HMI 报警表出现 4711 号告警；写 bAckCoolantAlarm := TRUE 后告警变为已确认；写 bLowCoolant := FALSE 后告警消失。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_System（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』指引在线写值观察
+// ============================================================
+
+fbFB_SimpleAdsLogEvent(
+    SourceId := 1, EventId := 4711, bSetEvent := bLowCoolant, bQuit := bAckCoolantAlarm,
+    ErrId => nLastAdsError, Error => bAdsErr
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

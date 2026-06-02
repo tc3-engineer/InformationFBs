@@ -13,7 +13,7 @@
 | Verified | 2026-05-21 ✅ |
 | InfoSys-checked | ✅ 2026-05-21 |
 | Status | `verified` |
-| Example | [`examples/P_Demo_MC_GearOut.xml`](../examples/P_Demo_MC_GearOut.xml) |
+| Example | [`examples/P_Demo_MC_GearOut.TcPOU`](../examples/P_Demo_MC_GearOut.TcPOU) |
 
 ---
 
@@ -109,7 +109,7 @@ END_VAR
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_MC_GearOut.xml`](../examples/P_Demo_MC_GearOut.xml)
+> 配套可导入文件：[`examples/P_Demo_MC_GearOut.TcPOU`](../examples/P_Demo_MC_GearOut.TcPOU)
 
 ```iecst
 // 场景：工艺段结束 — 从轴脱开主轴跟随，然后立刻平稳停车避免冲极限

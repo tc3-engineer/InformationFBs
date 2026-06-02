@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_LrealIsFinite" Id="{b29bcd7d-a61b-5398-b6c5-552892ec09af}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_LrealIsFinite
+VAR
+    lrPidOut : LREAL;; // PID 输出
+    bFinite  : BOOL;; // 是否安全使用
+    bCheck   : BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_Utilities.LrealIsFinite 演示程序（FUNCTION，单周期触发）
+// ============================================================
+// 场景：PID 输出做电机命令前必须先 finite 校验，否则下游 LREAL_TO_INT64 命中 PDF 未定义。
+// 价值：替代手写 IEEE 754 位检测；一次调用语义清晰。
+// 验证步骤：
+//   1. 把本 PROGRAM 加到 PlcTask 调用列表
+//   2. 编译 + 登录
+//   3. 在线把 b... 触发位置 TRUE 一个周期
+//   4. 观察输出变量是否符合期望
+// ============================================================
+
+IF bCheck THEN
+    // 必须用变量传址 —— REFERENCE TO 不接表达式
+    bFinite := LrealIsFinite(lrPidOut);
+    bCheck := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

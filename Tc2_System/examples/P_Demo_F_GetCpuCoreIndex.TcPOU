@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_F_GetCpuCoreIndex" Id="{b5c863b3-a731-54a4-a78c-15e4ec306b1b}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_F_GetCpuCoreIndex
+VAR
+    nCurrentCore : DINT; // 当前任务所在 CPU 核心索引
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：启动时记录当前 PLC 主任务所在 CPU 核心，写到全局变量供 HMI 显示。
+// 价值：替代登工程查 Real-time 面板。
+// 验证：在线观察 nCurrentCore 应与 TwinCAT SYSTEM Real-time 面板里 MAIN 任务的 Core 列一致。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_System（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』行的指示在线写值观察
+// =============================================================================
+
+// 0 表示查询调用方自身所在核心，无需先查任务索引
+nCurrentCore := F_GetCpuCoreIndex(nTaskIndex := 0);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

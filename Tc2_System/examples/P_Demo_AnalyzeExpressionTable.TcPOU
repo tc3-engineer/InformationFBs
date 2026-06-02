@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_AnalyzeExpressionTable" Id="{97ab1203-86d4-58a6-a5a9-d91f7aaf5cd5}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_AnalyzeExpressionTable
+VAR
+    fbAnalyzeExpressionTable : AnalyzeExpressionTable; // AnalyzeExpressionTable 实例
+    bSensorA                 : BOOL; // 传感器 A
+    bSensorB                 : BOOL; // 传感器 B
+    bSensorC                 : BOOL; // 传感器 C
+    SFCEnableLimit           : BOOL := TRUE; // 启用步超时监控
+    SFCError                 : BOOL; // 有步超时
+    SFCErrorAnalyzationTable : ARRAY[0..15] OF ExpressionResult; // 本 FB 自动写入的诊断数组（类型见 Tc2_System DUT）
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_System.AnalyzeExpressionTable 演示程序
+// ============================================================
+// 场景：SFC 卡步事件结构化写入 MES：拿到变量名+当前值数组直接入库。
+// 价值：替代字符串解析；本 FB 给的就是结构化 ARRAY。
+// 验证：在 SFC POU 中复刻本声明区 + 步超时配置；运行触发卡步后 SFCErrorAnalyzationTable 第 0..N 元素装入未满足变量信息。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_System（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』指引在线写值观察
+// ============================================================
+
+// 本 FB 由系统在 SFC 步超时时自动调用，业务代码零侵入；本 PROGRAM 仅展示必需的 SFC flag 声明。
+;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

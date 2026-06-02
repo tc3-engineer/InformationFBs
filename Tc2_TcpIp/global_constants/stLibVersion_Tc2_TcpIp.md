@@ -13,7 +13,7 @@
 | Verified | 2026-05-21 ✅ |
 | InfoSys-checked | ✅ 2026-05-21 |
 | Status | `verified` |
-| Example | [`examples/P_Demo_stLibVersion_Tc2_TcpIp.xml`](../examples/P_Demo_stLibVersion_Tc2_TcpIp.xml) |
+| Example | [`examples/P_Demo_stLibVersion_Tc2_TcpIp.TcPOU`](../examples/P_Demo_stLibVersion_Tc2_TcpIp.TcPOU) |
 
 ---
 
@@ -86,7 +86,7 @@ END_IF
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_stLibVersion_Tc2_TcpIp.xml`](../examples/P_Demo_stLibVersion_Tc2_TcpIp.xml)
+> 配套可导入文件：[`examples/P_Demo_stLibVersion_Tc2_TcpIp.TcPOU`](../examples/P_Demo_stLibVersion_Tc2_TcpIp.TcPOU)
 
 ```iecst
 // 场景：PLC 初始化时检查 Tc2_TcpIp ≥ 1.5.0，否则报警拒启动。

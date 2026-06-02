@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_F_GetVersionTcPlcCoupler" Id="{f7b57a18-49fd-548e-92d8-ba05c19af1f2}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_F_GetVersionTcPlcCoupler
+VAR
+    nMajorOld         : UINT; // 老 obsolete 函数读 major（迁移期保留）
+    nMinorOld         : UINT; // 老函数读 minor
+    nRevisionOld      : UINT; // 老函数读 revision
+    bVersionOkLegacy  : BOOL; // Legacy 手写比较结果
+    bVersionOkModern  : BOOL; // Modern F_CmpLibVersion 结果（应与 Legacy 一致）
+    nRequiredMajor    : UINT := 1; // 业务要求的最低 major
+    nRequiredMinor    : UINT := 1; // 业务要求的最低 minor
+    nRequiredRevision : UINT := 0; // 业务要求的最低 revision
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：TwinCAT 2 老程序里用 F_GetVersionTcPlcCoupler 校验 Tc2_Coupler 至少
+//       是 1.1.0 才允许启动业务任务；现在迁到 TwinCAT 3，暂时保留老代码并并
+//       行展示推荐的新写法对比。
+//
+// 价值：让维护人员一眼看出"老 obsolete 函数"到"现代 ST_LibVersion +
+//       F_CmpLibVersion"的替换关系，方便后续把老代码逐步换成现代写法。
+//       新代码不要再用 F_GetVersionTcPlcCoupler。
+//
+// 验证步骤：
+//   1. 引用 Tc2_Coupler 和 Tc2_System（后者提供 ST_LibVersion /
+//      F_CmpLibVersion / E_CmpLibVersion）
+//   2. 编译，登录
+//   3. 在线观察 nMajorOld / nMinorOld / nRevisionOld 应为 1 / 1 / 1
+//      （Tc2_Coupler 当前 1.1.1）
+//   4. bVersionOkLegacy 与 bVersionOkModern 应同时为 TRUE
+//   5. 把 nRequiredMajor 改为 2 -> 两者同时变 FALSE，证明两条路径语义一致
+//   6. 把 nRequiredMajor 改回 1，nRequiredMinor 改为 5 -> 两者同时 FALSE
+// =============================================================================
+
+// ========== Legacy 写法（迁移期保留，新代码不要写）==========
+// F_GetVersionTcPlcCoupler 一次只返回一个字段，要 3 次调用拼版本；返回 UINT 而非 INT
+nMajorOld    := F_GetVersionTcPlcCoupler(1);
+nMinorOld    := F_GetVersionTcPlcCoupler(2);
+nRevisionOld := F_GetVersionTcPlcCoupler(3);
+
+// 手写">= Required"比较逻辑，逐字段判断
+bVersionOkLegacy := (nMajorOld > nRequiredMajor)
+                  OR (nMajorOld = nRequiredMajor AND nMinorOld > nRequiredMinor)
+                  OR (nMajorOld = nRequiredMajor AND nMinorOld = nRequiredMinor
+                      AND nRevisionOld >= nRequiredRevision);
+
+// ========== Modern 写法（推荐；需要引用 Tc2_System）==========
+// 一次性结构化访问 + 内置比较
+bVersionOkModern := F_CmpLibVersion(
+    stLibVersion := stLibVersion_Tc2_Coupler,
+    iMajor       := TO_INT(nRequiredMajor),
+    iMinor       := TO_INT(nRequiredMinor),
+    iBuild       := 0,
+    iRevision    := TO_INT(nRequiredRevision),
+    nCmpType     := E_CmpLibVersion.GreaterOrEqual
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

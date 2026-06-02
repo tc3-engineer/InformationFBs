@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_WriteOutput_analog" Id="{826c13e4-0917-5b2f-b71f-351dc766336b}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_WriteOutput_analog
+VAR
+    fbAsiAnalogWrite    : FB_WriteOutput_analog; // ASI 模拟输出 FB
+    fbAsiParamControl   : FB_ASI_ParameterControl; // 后台调度
+    stAsiParamBuffer    : ST_ParameterBuffer; // 共享缓冲
+    stAsiInProcessImg   : ST_Parameter_IN; // 链到 %I*
+    stAsiOutProcessImg  : ST_Parameter_OUT; // 链到 %Q*
+    iAsiAnalogSlaveAddr : BYTE := 18; // 目标 slave
+    iAnalogChannelNo    : BYTE := 0; // 通道
+    iValveSetpoint      : WORD := 16384; // 阀位设定值 0..32767
+    bEnableCyclicWrite  : BOOL := TRUE; // 0=单次 1=循环
+    bStartAnalogWrite   : BOOL := FALSE; // 上升沿触发
+    nAsiCmdError        : DWORD; // 错误号
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：ASI 模拟调节阀 slave 18，通道 0 接收 0..32767 表示阀位 0-100%；PID 输出连续写入。
+// 价值：与 PID 配套使用，构成闭环。
+// 验证：登录后 iAsiAnalogSlaveAddr := 18、iAnalogChannelNo := 0、iValveSetpoint := 16384（约 50%）、bEnableCyclicWrite := TRUE、bStartAnalogWrite := TRUE → 阀位应在 1-2 个 ASI 周期后变化到 50%；改 iValveSetpoint 看是否跟随。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_IoFunctions（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』行的指示在线写值观察
+// =============================================================================
+
+fbAsiParamControl(
+    stParameterBuffer := stAsiParamBuffer,
+    stParameter_IN    := stAsiInProcessImg,
+    stParameter_OUT   := stAsiOutProcessImg
+);
+
+fbAsiAnalogWrite(
+    iSlaveaddress     := iAsiAnalogSlaveAddr,
+    iChannel          := iAnalogChannelNo,
+    iSlavevalue       := iValveSetpoint,
+    bCycleMode        := bEnableCyclicWrite,
+    bStart            := bStartAnalogWrite,
+    stParameterBuffer := stAsiParamBuffer,
+    bErrornumber      => nAsiCmdError
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

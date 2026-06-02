@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_SendMessage" Id="{30067fda-4d10-5816-976d-6dd1f1d871f0}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_SendMessage
+VAR
+    fbLogger       : FB_TcEventLogger; // EventLogger 实例
+    guidEventClass : GUID; // 事件类 GUID
+    bUserLogin     : BOOL := FALSE; // 操作员登录信号
+    bUserLoginPrev : BOOL; // 边沿检测
+    hr             : HRESULT; // 返回值监视
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：操作员登录瞬间发一条审计 message
+// 价值：无需声明 message 实例就能发事件
+// 验证：登录后写 bUserLogin := TRUE，HMI EventLogger 应立刻出现一条 Info 级 message；再次置位再发一条
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_EventLogger（System → References → Add library）
+//   3. 编译 → 登录 → 运行；按 verify 注释里给出的在线写值操作
+// =============================================================================
+
+// 边沿触发：操作员登录瞬间发一条审计消息
+IF bUserLogin AND NOT bUserLoginPrev THEN
+    hr := fbLogger.SendMessage(
+        eventClass := guidEventClass,
+        nEventId := 3001,                      // "操作员登录" 事件 ID
+        eSeverity := TcEventSeverity.Info,
+        ipSourceInfo := 0,
+        nTimeStamp := 0,
+        ipArguments := 0);
+END_IF;
+bUserLoginPrev := bUserLogin;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

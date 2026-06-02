@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_WSTRNCPY" Id="{f9bf00c4-640a-533a-8514-ffd2c0032c65}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_WSTRNCPY
+VAR
+    wsSrc   : WSTRING(255) := "HMI text alpha"; // 工业语义：源 WSTRING
+    wsDst   : WSTRING(64); // 目标 WSTRING
+    bOk     : BOOL; // 完整复制
+    nSrcLen : UDINT; // 源字符数
+    nDstLen : UDINT; // 目标字符数
+    bCopy   : BOOL; // 在线触发
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：HMI 字符串缓冲动态复制——索引可能越界，比 `:=` 更安全。
+// 价值：`Tc2_Standard.WSTRNCPY` ⚠️ 不存在（标准库无对应）——本函数填补 WSTRING 安全复制空缺。
+// 验证步骤：
+//   1. 引用 Tc2_Utilities
+//   2. 编译 + 登录 + 运行
+//   3. 在线写触发位 TRUE，monitor 输出变量
+// =============================================================================
+IF bCopy THEN
+    bOk := WSTRNCPY(pDst     := ADR(wsDst),
+                    pSrc     := ADR(wsSrc),
+                    nDstSize := SIZEOF(wsDst),
+                    nSrcLen  => nSrcLen,
+                    nDstLen  => nDstLen);
+    bCopy := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

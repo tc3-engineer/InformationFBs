@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_TcEvent" Id="{b31e2802-ded9-590d-ade7-fd0799c64b41}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_TcEvent
+VAR
+    fbAlarm : FB_TcAlarm; // alarm 实例（已 Create）
+    ipEvent : I_TcEvent; // 只读事件接口
+    bMatch  : BOOL; // 示例：用 EqualsTo 比较
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：listener 回调中读取 fbEvent 的元数据
+// 价值：只读视图统一所有事件类型访问
+// 验证：本 FB 主要在 listener 回调里使用——直接演示需要先继承 FB_ListenerBase2。本例演示从 alarm 实例拿到 FB_TcEvent 接口的方法。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_EventLogger（System → References → Add library）
+//   3. 编译 → 登录 → 运行；按 verify 注释里给出的在线写值操作
+// =============================================================================
+
+// FB_TcAlarm 通过接口转型可以暴露为 I_TcEvent / I_TcEventBase 接口
+// 即"只读事件视图"——listener 回调里收到的 fbEvent 就是这个视图。
+ipEvent := fbAlarm;
+IF ipEvent &lt;&gt; 0 THEN
+    bMatch := ipEvent.EqualsToEventEntry(stEventEntry := ipEvent.stEventEntry);
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

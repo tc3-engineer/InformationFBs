@@ -13,7 +13,7 @@
 | Verified | 2026-05-21 ✅ |
 | InfoSys-checked | ✅ 2026-05-21 |
 | Status | `verified` |
-| Example | [`examples/P_Demo_MC_MoveVelocity.xml`](../examples/P_Demo_MC_MoveVelocity.xml) |
+| Example | [`examples/P_Demo_MC_MoveVelocity.TcPOU`](../examples/P_Demo_MC_MoveVelocity.TcPOU) |
 
 ---
 
@@ -125,7 +125,7 @@ END_VAR
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_MC_MoveVelocity.xml`](../examples/P_Demo_MC_MoveVelocity.xml)
+> 配套可导入文件：[`examples/P_Demo_MC_MoveVelocity.TcPOU`](../examples/P_Demo_MC_MoveVelocity.TcPOU)
 
 ```iecst
 // 场景：传送带启动后恒速 1.5 m/s 运行；点 bStartConveyor 启动，点 bStopConveyor 停

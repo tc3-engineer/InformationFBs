@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_GetPowerConsumption" Id="{b0bf8a07-1232-50a3-b2fd-06d26fea0e08}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_GetPowerConsumption
+VAR
+    fbCBM                               : TC_CoreBoostMonitor; // TC_CoreBoostMonitor 实例
+    hrResult                            : HRESULT; // 方法返回的 HRESULT
+    out_nCurrentPackagePowerConsumption : UDINT; // 方法 REFERENCE TO nCurrentPackagePowerConsumption 出参
+    out_nPackagePowerLimit              : UDINT; // 方法 REFERENCE TO nPackagePowerLimit 出参
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_Utilities.TC_CoreBoostMonitor.GetPowerConsumption 演示程序（METHOD）
+// ============================================================
+// 注意：必须 Intel Core i 11 代+ 且 TwinCAT Core Boost 已启用
+// 验证步骤：
+//   1. 引用 Tc2_Utilities
+//   2. 编译 + 登录
+//   3. 在 Real-time Settings 启用 Core Boost
+//   4. 在线监视 hrResult 与 out_* 出参
+// ============================================================
+
+hrResult := fbCBM.GetPowerConsumption(out_nCurrentPackagePowerConsumption, out_nPackagePowerLimit);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

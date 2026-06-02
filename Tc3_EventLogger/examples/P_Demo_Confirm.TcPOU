@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_Confirm" Id="{926e6128-a14d-5f54-9ad3-0cd7fe22fab9}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_Confirm
+VAR
+    fbAlarm         : FB_TcAlarm; // 已 Create 且 Raised 的 alarm 实例
+    bConfirmReq     : BOOL := FALSE; // 操作员确认按钮（在线置 TRUE 模拟）
+    bConfirmReqPrev : BOOL; // 边沿检测
+    hr              : HRESULT; // Confirm 返回值监视
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：操作员在 HMI 上单点确认包装机封口温度异常报警
+// 价值：一次 Confirm() 完成确认 + 时间戳写入 + 监听器分发；HMI 上该条报警从"等待确认"变"已处理"
+// 验证：需要先有一条 bWithConfirmation = TRUE 的 alarm 处于 Raised 状态；在线写 bConfirmReq := TRUE 模拟点击确认按钮，下一周期看 HMI 上 ConfirmationState 变 Confirmed
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_EventLogger（System → References → Add library）
+//   3. 编译 → 登录 → 运行；按 verify 注释里给出的在线写值操作
+// =============================================================================
+
+// 假定 fbAlarm 已在前面某处 Create()+Raise()，本片段只演示确认动作
+// 上升沿触发：HMI 按钮按下瞬间调一次 Confirm（不要每周期都调）
+IF bConfirmReq AND NOT bConfirmReqPrev THEN
+    hr := fbAlarm.Confirm(nTimeStamp := 0);   // 0 = 当前时间
+END_IF;
+bConfirmReqPrev := bConfirmReq;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

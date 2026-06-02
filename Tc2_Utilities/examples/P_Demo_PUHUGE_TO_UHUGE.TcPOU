@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_PUHUGE_TO_UHUGE" Id="{81a294ae-6371-5ba7-b3fd-78e8367b064b}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_PUHUGE_TO_UHUGE
+VAR
+    uhRealValue           : UHUGE; // 模拟 wire 缓冲区中的 UHUGE 字段
+    pUHUGEField           : POINTER TO UHUGE; // 业务侧先算好的字段地址（ADR 或 pBase+nOff）
+    bExtractField         : BOOL; // 在线置 TRUE 触发一次解析
+    uhRealValue_extracted : UHUGE; // 解析后的副本，供业务逻辑使用
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_Utilities.PUHUGE_TO_UHUGE 演示程序（FUNCTION）
+// ============================================================
+// 场景：从一段二进制 wire 缓冲区里按偏移取 UHUGE 字段（Modbus/CAN/ADS Raw）。
+// 价值：替代手写 pField + nOff + ^ 指针算术；一次调用取值，少打错符号。
+// 验证：在线写 uhRealValue := 示例值；bExtractField := TRUE；
+//       下一周期 uhRealValue_extracted 应等于 uhRealValue。
+// ============================================================
+
+// 业务代码通常已经算好字段地址（pBase + 协议偏移）；演示用 ADR 等价
+pUHUGEField := ADR(uhRealValue);
+
+IF bExtractField AND pUHUGEField <> 0 THEN
+    // 单次完整调用：避免手写 ^ 解引用，统一风格便于和字节序转换串联
+    uhRealValue_extracted := PUHUGE_TO_UHUGE(pUHUGEField);
+    bExtractField := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

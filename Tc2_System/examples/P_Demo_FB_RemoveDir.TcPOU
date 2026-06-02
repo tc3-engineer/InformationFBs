@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_RemoveDir" Id="{9f54a3af-8d60-50b0-928c-f20d7075f9dc}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_RemoveDir
+VAR
+    fbRemoveDir       : FB_RemoveDir; // FB_RemoveDir 实例
+    sDirToRemove      : T_MaxString := 'D:/log/tmp_archive'; // 要删除的（空）目录路径
+    bRemoveDirRequest : BOOL; // 在线写 TRUE 触发一次删除
+    bRemoveDirError   : BOOL; // TRUE = 删除失败
+    nErrIdLast        : UDINT; // ADS / OS 错误号
+    bBusyMon          : BOOL; // ADS 通讯中
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：月底归档完成后清理空临时目录 'D:/log/tmp_archive'。
+// 价值：一次调用即可。
+// 验证：目录为空时调用 → 目录消失；目录非空 → bRemoveDirError = TRUE。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_System（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』行的指示在线写值观察
+// =============================================================================
+
+fbRemoveDir(
+    sNetId    := '',
+    sPathName := sDirToRemove,
+    ePath     := PATH_GENERIC,
+    bExecute  := bRemoveDirRequest,
+    tTimeout  := T#10S,
+    bBusy     => bBusyMon,
+    bError    => bRemoveDirError,
+    nErrId    => nErrIdLast
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

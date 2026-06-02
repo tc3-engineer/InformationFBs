@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_ADSRDWRT" Id="{96bbdd9a-3409-5204-a0c1-023a43497d33}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_ADSRDWRT
+VAR
+    fbADSRDWRT    : ADSRDWRT; // ADSRDWRT 实例
+    bReadSymReq   : BOOL; // 上升沿触发一次按名读
+    sSymbolName   : STRING(80) := '.fActualPosition'; // 对端 PLC 全局变量名（前导点）
+    nSymNameLen   : UDINT; // 运行时填入 LEN(sSymbolName)+1
+    rRemoteValue  : LREAL; // 读到的值
+    bAdsBusy      : BOOL; // 正在读
+    bAdsErr       : BOOL; // 错误
+    nLastAdsError : UDINT; // 错误码
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_System.ADSRDWRT 演示程序
+// ============================================================
+// 场景：主 PLC 跨 ADS 按名读取从 PLC 的 .fActualPosition 做位置融合。
+// 价值：替代两步 ADSWRITE 拿句柄 + ADSREAD 拿值，单次往返省延迟。
+// 验证：登录后 bReadSymReq := TRUE，bAdsBusy 闪一下后 rRemoteValue 装入对端实际位置。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_System（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』指引在线写值观察
+// ============================================================
+
+// 字符串长度包含 STRING 终止符
+nSymNameLen := LEN(sSymbolName) + 1;
+
+fbADSRDWRT(
+    NETID := '', PORT := 851, IDXGRP := 16#0000F004, IDXOFFS := 0, WRITELEN := nSymNameLen, READLEN := SIZEOF(rRemoteValue), SRCADDR := ADR(sSymbolName), DESTADDR := ADR(rRemoteValue), WRTRD := bReadSymReq, TMOUT := DEFAULT_ADS_TIMEOUT,
+    BUSY => bAdsBusy, ERR => bAdsErr, ERRID => nLastAdsError
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

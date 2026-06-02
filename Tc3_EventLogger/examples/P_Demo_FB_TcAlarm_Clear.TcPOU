@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_TcAlarm_Clear" Id="{f9d7cfec-5641-598f-abd5-a9c66ed14773}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_TcAlarm_Clear
+VAR
+    fbAlarm               : FB_TcAlarm; // 电机过载报警实例
+    bCreated              : BOOL; // Create latch
+    rCurrent              : REAL := 0.0; // 电机电流 (A)
+    rOverLimit            : REAL := 8.0; // 过载阈值
+    bMotorOverCurrent     : BOOL; // 故障信号
+    bMotorOverCurrentPrev : BOOL; // 边沿检测
+    hr                    : HRESULT; // 返回值监视
+    guidEventClass        : GUID; // 事件类 GUID
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：电机过载故障消失（电流降回安全值）的下降沿清除
+// 价值：把 Clear 和 Raise 配对，让 HMI 准确反映"故障已恢复"状态
+// 验证：先让 rCurrent &gt; rOverLimit 触发 Raise（HMI 显示 Raised）；再写 rCurrent := 5.0 让信号回落，下降沿调用 Clear；HMI 状态变 Cleared 但若 bWithConfirmation 仍显示"等待确认"
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_EventLogger（System → References → Add library）
+//   3. 编译 → 登录 → 运行；按 verify 注释里给出的在线写值操作
+// =============================================================================
+
+IF NOT bCreated THEN
+    hr := fbAlarm.Create(eventClass := guidEventClass, nEventId := 2001,
+        eSeverity := TcEventSeverity.Error, bWithConfirmation := FALSE,
+        ipSourceInfo := 0);
+    bCreated := SUCCEEDED(hr);
+END_IF;
+
+bMotorOverCurrent := rCurrent &gt; rOverLimit;
+
+// 上升沿 Raise，下降沿 Clear（bRemove := FALSE 保留实例以便复用）
+IF bMotorOverCurrent AND NOT bMotorOverCurrentPrev THEN
+    hr := fbAlarm.Raise(nTimeStamp := 0);
+END_IF;
+IF NOT bMotorOverCurrent AND bMotorOverCurrentPrev THEN
+    hr := fbAlarm.Clear(nTimeStamp := 0, bRemove := FALSE);
+END_IF;
+bMotorOverCurrentPrev := bMotorOverCurrent;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

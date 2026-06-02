@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_INSERT2" Id="{db5457ef-e31c-523a-bde1-9d7e282104cd}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_INSERT2
+VAR
+    sMessage   : STRING(255) := 'Pump alarm'; // 工业语义：原始日志消息
+    sTimestamp : STRING(32) := '[2026-05-12 08:00] '; // 时间戳前缀
+    sFullLog   : STRING(320); // 拼接后完整日志
+    bOk        : BOOL; // 成功
+    bPrefix    : BOOL; // 在线触发
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：日志行加时间戳前缀：`INSERT2(src=msg, insert=ts+' ', pos=0)` 写到完整日志缓冲。
+// 价值：替代 `LEFT` + `CONCAT2` + `MID` + `CONCAT2` 的 4 步链；本函数 1 行调用。
+// 验证步骤：
+//   1. 引用 Tc2_Utilities
+//   2. 编译 + 登录 + 运行
+//   3. 在线写触发位 TRUE，monitor 输出变量
+// =============================================================================
+// 把时间戳作为前缀插入消息开头（nPos = 0 = 头部）
+IF bPrefix THEN
+    bOk := INSERT2(pSrcString    := ADR(sMessage),
+                   pInsertString := ADR(sTimestamp),
+                   pDstString    := ADR(sFullLog),
+                   nDstSize      := SIZEOF(sFullLog),
+                   nPos          := 0);
+    bPrefix := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

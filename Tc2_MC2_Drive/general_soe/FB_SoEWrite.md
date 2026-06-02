@@ -13,7 +13,7 @@
 | Verified | 2026-05-21 ✅ |
 | InfoSys-checked | ✅ 2026-05-21 |
 | Status | `verified` |
-| Example | [`examples/P_Demo_FB_SoEWrite.xml`](../examples/P_Demo_FB_SoEWrite.xml) |
+| Example | [`examples/P_Demo_FB_SoEWrite.TcPOU`](../examples/P_Demo_FB_SoEWrite.TcPOU) |
 
 ---
 
@@ -122,7 +122,7 @@ END_VAR
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_FB_SoEWrite.xml`](../examples/P_Demo_FB_SoEWrite.xml)
+> 配套可导入文件：[`examples/P_Demo_FB_SoEWrite.TcPOU`](../examples/P_Demo_FB_SoEWrite.TcPOU)
 
 ```iecst
 // 场景：把一个 SoE 参数（IDN S-0-0033, Element 16#40 = Value）写成新值

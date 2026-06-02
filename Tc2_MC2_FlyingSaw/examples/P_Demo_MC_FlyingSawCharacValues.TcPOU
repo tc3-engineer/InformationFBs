@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_MC_FlyingSawCharacValues" Id="{cf012e65-4451-57c1-bf9c-db7458a678c1}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_MC_FlyingSawCharacValues
+VAR
+    fbReadCharac : MC_ReadFlyingSawCharacteristics;
+    axisCrossSaw : AXIS_REF; // 从轴（须已建立飞锯同步）
+    charValues   : MC_FlyingSawCharacValues; // 本结构体：飞锯同步特征值载体
+    bReadReq     : BOOL; // 在线置 TRUE 读一次特征值
+    rtRead       : R_TRIG;
+    bDone        : BOOL;
+    bBusy        : BOOL;
+    bErr         : BOOL;
+    nErrID       : UDINT;
+    fVeloMax     : LREAL; // 监视：从结构读出的从轴最大速度
+    fAccMax      : LREAL; // 监视：从结构读出的从轴最大加速度
+    bWithinLimit : BOOL; // 监视：同步轮廓极值是否在机械限值内
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_MC2_FlyingSaw.MC_FlyingSawCharacValues 演示程序
+// ============================================================
+// 场景：飞锯调试。声明 MC_FlyingSawCharacValues 结构供
+//       MC_ReadFlyingSawCharacteristics 填充；读出后取关键极值做安全校核。
+// 价值：本结构把 NC 内部的同步轮廓特征以结构化类型暴露给 PLC，使
+//       "同步段从轴最大速度/加速度是否超限"可在程序里量化判断，
+//       而不必靠经验或示波器盲看。
+// 验证：先用 MC_GearInVelo / MC_GearInPos 建立飞锯同步（启动后特征值才可用），
+//       再置 bReadReq := TRUE，观察 bDone 变 TRUE，charValues 被填充，
+//       fVeloMax / fAccMax 显示极值，bWithinLimit 反映是否在设定限值内。
+// ============================================================
+
+// 上升沿：一次按钮只读一次
+rtRead(CLK := bReadReq);
+
+// 本结构作为 VAR_IN_OUT 传入，由读特征值 FB 填写
+fbReadCharac(
+    Execute        := rtRead.Q,
+    Slave          := axisCrossSaw,
+    CamTableCharac := charValues,
+    Done           => bDone,
+    Busy           => bBusy,
+    Error          => bErr,
+    ErrorID        => nErrID
+);
+
+// 读成功后取极值字段并与机械限值比对（限值为示例值）
+IF bDone THEN
+    fVeloMax     := charValues.fSlaveVeloMax;
+    fAccMax      := charValues.fSlaveAccMax;
+    bWithinLimit := (fVeloMax <= 1000.0) AND (fAccMax <= 5000.0);
+END_IF;
+
+// 完成后复位触发信号，准备下一次
+IF NOT bBusy THEN
+    bReadReq := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

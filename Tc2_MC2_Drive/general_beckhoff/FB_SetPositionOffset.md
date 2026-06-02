@@ -13,7 +13,7 @@
 | Verified | 2026-05-21 ✅ |
 | InfoSys-checked | ✅ 2026-05-21 |
 | Status | `verified` |
-| Example | [`examples/P_Demo_FB_SetPositionOffset.xml`](../examples/P_Demo_FB_SetPositionOffset.xml) |
+| Example | [`examples/P_Demo_FB_SetPositionOffset.TcPOU`](../examples/P_Demo_FB_SetPositionOffset.TcPOU) |
 
 ---
 
@@ -114,7 +114,7 @@ END_VAR
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_FB_SetPositionOffset.xml`](../examples/P_Demo_FB_SetPositionOffset.xml)
+> 配套可导入文件：[`examples/P_Demo_FB_SetPositionOffset.TcPOU`](../examples/P_Demo_FB_SetPositionOffset.TcPOU)
 
 ```iecst
 // 场景：手动回到机械参考点后，把当前点设为绝对零点（Position=0, Relative=FALSE）

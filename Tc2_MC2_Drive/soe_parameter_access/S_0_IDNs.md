@@ -13,7 +13,7 @@
 | Verified | 2026-05-21 ✅ |
 | InfoSys-checked | ⚠️ not-on-infosys |
 | Status | `verified` |
-| Example | [`examples/P_Demo_S_0_IDNs.xml`](../examples/P_Demo_S_0_IDNs.xml) |
+| Example | [`examples/P_Demo_S_0_IDNs.TcPOU`](../examples/P_Demo_S_0_IDNs.TcPOU) |
 
 ---
 
@@ -95,7 +95,7 @@ END_VAR
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_S_0_IDNs.xml`](../examples/P_Demo_S_0_IDNs.xml)
+> 配套可导入文件：[`examples/P_Demo_S_0_IDNs.TcPOU`](../examples/P_Demo_S_0_IDNs.TcPOU)
 
 ```iecst
 // 场景：用 S_0_IDNs 基地址拼出几个常用 IDN，供 SoE 读写 FB 使用

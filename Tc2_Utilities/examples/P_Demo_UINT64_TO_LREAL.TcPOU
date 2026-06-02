@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_UINT64_TO_LREAL" Id="{4ef0c985-938a-5049-a85e-26c65045d43d}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_UINT64_TO_LREAL
+VAR
+    uliEnergy   : T_ULARGE_INTEGER;; // 累计电度（来自电表通讯）
+    lrEnergyKWh : LREAL;; // HMI 显示用浮点
+    bConvert    : BOOL;; // 触发一次转换
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_Utilities.UINT64_TO_LREAL 演示程序（FUNCTION，单周期触发）
+// ============================================================
+// 场景：HMI 上要显示电表累计电度（64 位计数器），需要换成 LREAL 才能让 TPY 上的浮点显示控件正确处理小数位与单位换算。
+// 价值：替代手写 `LREAL(in.dwHighPart) * 4294967296.0 + LREAL(in.dwLowPart)`；一行调用，可读性更高。
+// 验证步骤：
+//   1. 把本 PROGRAM 加到 PlcTask 调用列表
+//   2. 编译 + 登录
+//   3. 在线把 b... 触发位置 TRUE 一个周期
+//   4. 观察输出变量是否符合期望
+// ============================================================
+
+IF bConvert THEN
+    // 仅用于显示；精确算术保持在 T_ULARGE_INTEGER 域内
+    lrEnergyKWh := UINT64_TO_LREAL(uliEnergy);
+    bConvert := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_MC_StepBlockLagBasedDetection" Id="{fc7d084f-35d0-5db3-a436-546ae6a745dd}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_MC_StepBlockLagBasedDetection
+VAR
+    fbStepBlockLagBasedDetection : MC_StepBlockLagBasedDetection;
+    axisHoming                   : AXIS_REF; // 归零目标轴；运行前需先 MC_Power 使能
+    rtExec                       : R_TRIG; // 把保持型请求位整成单次上升沿
+    bLagDetReq                   : BOOL := FALSE; // 在线置 TRUE 触发一次执行
+    homingParam                  : MC_HomingParameter; // 贯穿整条归零序列、各 FB 间逐级传递的参数结构
+    homingOptions                : ST_Home_Options3; // 选项结构，Beckhoff 伺服保持默认（DisableDriveAccess := FALSE）
+    bLagDetDone                  : BOOL;
+    bBusy                        : BOOL;
+    bLagDetActive                : BOOL;
+    bAborted                     : BOOL;
+    bError                       : BOOL;
+    nErrorID                     : UDINT;
+    lrRecordedPos                : LREAL; // Detection 版返回的检测位置（轴位置本身不被改写）
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// 场景：无转矩反馈的驱动监测机械止挡磨损——本 FB 用跟随误差判据顶到止挡后只返回
+//       RecordedPosition，上层与历史基准比对判断磨损，不直接改写轴位置。
+// 价值：不依赖转矩信号又把测量与置零解耦，适合磨损/偏差监测。
+// 验证：先 MC_Power 使能；在线写 bLagDetReq := TRUE，观察 bLagDetActive TRUE，轴低速顶；
+//       顶到止挡跟随误差>5 且速度持续低于阈值后 bLagDetDone TRUE，lrRecordedPos 显示止挡位置。
+
+// 把保持型在线请求位整成单次上升沿，避免持续触发（charter: Execute 用 R_TRIG）
+rtExec(CLK := bLagDetReq);
+
+// 单次完整调用：所有 VAR_INPUT 显式赋值，Axis（及 Parameter）按 VAR_IN_OUT 必须传引用
+fbStepBlockLagBasedDetection(
+    Execute                := rtExec.Q,
+    Direction              := mcPositiveDirection,
+    Velocity               := 10.0,
+    Acceleration           := 0.0,
+    Deceleration           := 0.0,
+    Jerk                   := 0.0,
+    DetectionVelocityLimit := 1.0,
+    DetectionVelocityTime  := T#200MS,
+    TimeLimit              := T#20S,
+    DistanceLimit          := 500.0,
+    TorqueLimit            := 30.0,
+    LagLimit               := 5.0,
+    BufferMode             := MC_Aborting,
+    Options                := homingOptions,
+    Done                   => bLagDetDone,
+    Busy                   => bBusy,
+    Active                 => bLagDetActive,
+    CommandAborted         => bAborted,
+    Error                  => bError,
+    ErrorID                => nErrorID,
+    RecordedPosition       => lrRecordedPos,
+    Axis                   := axisHoming,
+    Parameter              := homingParam);
+
+// stateful 输出复位：请求复位后清掉本地观察位，便于下次干净触发
+IF NOT bLagDetReq AND NOT bBusy THEN
+    bLagDetDone := FALSE;
+    bAborted := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

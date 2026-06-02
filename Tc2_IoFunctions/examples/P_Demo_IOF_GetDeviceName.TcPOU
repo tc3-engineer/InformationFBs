@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_IOF_GetDeviceName" Id="{5462d4e1-f97a-5ff7-bd9e-5d1c74f1f515}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_IOF_GetDeviceName
+VAR
+    fbGetDeviceName : IOF_GetDeviceName; // ID → 名字 FB
+    sTargetNetId    : T_AmsNetId := ''; // 本机
+    nLookupDeviceId : UDINT := 1; // 要查的 Device Id
+    bStartGetName   : BOOL := FALSE; // 上升沿触发
+    tGetNameTimeout : TIME := T#5S; // 超时
+    bGetNameBusy    : BOOL; // 工作中
+    bGetNameError   : BOOL; // 失败
+    nLastErrCode    : UDINT; // 错误号
+    sDeviceNameOut  : T_MaxString; // 设备名
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：IO 巡检脚本枚举所有 Device Id 后，对每个 ID 调本 FB 拿名字写到日志。
+// 价值：可读诊断日志。
+// 验证：登录后 nLookupDeviceId := 1，在线写 bStartGetName := TRUE → 回 FALSE 后 sDeviceNameOut 显示 System Manager 命名。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_IoFunctions（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』行的指示在线写值观察
+// =============================================================================
+
+fbGetDeviceName(
+    NETID      := sTargetNetId,
+    DEVICEID   := nLookupDeviceId,
+    START      := bStartGetName,
+    TMOUT      := tGetNameTimeout,
+    BUSY       => bGetNameBusy,
+    ERR        => bGetNameError,
+    ERRID      => nLastErrCode,
+    DEVICENAME => sDeviceNameOut
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

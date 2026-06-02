@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_IecCriticalSection" Id="{7479dba8-344a-5f24-97f1-300c39782a13}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_IecCriticalSection
+VAR
+    fbFB_IecCriticalSection : FB_IecCriticalSection; // FB_IecCriticalSection 实例
+    nSharedCounter          : DINT; // 被两个任务竞争写的共享计数器
+    bSectionOk              : BOOL; // Enter 返回值
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_System.FB_IecCriticalSection 演示程序
+// ============================================================
+// 场景：多任务竞争同一全局共享计数器 nSharedCounter；调度器不保证原子自增。
+// 价值：用 FB_IecCriticalSection 包裹自增，确保即使两个任务同时执行也不会丢失计数。
+// 验证：登录后把本 PROGRAM 同时加到两个任务（一个 1ms、一个 10ms），运行 1 分钟后观察 nSharedCounter 与理论值（任务次数和）一致，无丢失。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_System（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』指引在线写值观察
+// ============================================================
+
+bSectionOk := fbIecCriticalSection.Enter();
+IF bSectionOk THEN
+    // 关键段：原子修改
+    nSharedCounter := nSharedCounter + 1;
+    fbIecCriticalSection.Leave();
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

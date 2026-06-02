@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_CalcHashValue_update" Id="{6f340881-44ac-52c3-aacb-d72be20b0374}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_CalcHashValue_update
+VAR
+    fbHashCalculator : FB_CalcHashValue;
+    eHashMode        : E_HashMode := E_HashMode.HashMode_Sha256;
+    sChunk1          : STRING(80) := 'hello '; // 第一段数据
+    sChunk2          : STRING(80) := 'world'; // 第二段数据
+    bDoTwoStepHash   : BOOL; // 上升沿触发一次两段喂入
+    bStartOk         : BOOL;
+    bUpdateOk1       : BOOL;
+    bUpdateOk2       : BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_Utilities.FB_CalcHashValue.update() 演示程序
+// ============================================================
+// 场景：演示 update 的"分段喂入"——两次 update 喂 'hello ' + 'world' 等价于
+//       一次 update 喂 'hello world'。这是大文件分块 hash 的核心机制。
+// 价值：让读者明白 update 不限调用次数，分段边界对 hash 结果无影响，是流式
+//       hash 算法的标准性质。
+// 验证：
+//   1. 编译 + 登录
+//   2. 在线写 bDoTwoStepHash := TRUE 触发一次 start + 两次 update
+//   3. 监视 bStartOk / bUpdateOk1 / bUpdateOk2 应全为 TRUE
+//   4. 真取 hash 还需 finish——本例只演示 update，故省略
+//   5. 完整三段流程见 P_Demo_FB_CalcHashValue.TcPOU
+// ============================================================
+
+IF bDoTwoStepHash THEN
+    bDoTwoStepHash := FALSE;
+    bStartOk := fbHashCalculator.start(hashMode := eHashMode);
+    bUpdateOk1 := fbHashCalculator.update(pData := ADR(sChunk1),
+                                           nData := LEN(sChunk1));
+    bUpdateOk2 := fbHashCalculator.update(pData := ADR(sChunk2),
+                                           nData := LEN(sChunk2));
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

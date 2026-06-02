@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_UTF8_TO_WSTRING" Id="{c165e51c-0e8d-5530-9ec1-278829ab1224}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_UTF8_TO_WSTRING
+VAR
+    aUtf8    : ARRAY[0..63] OF BYTE; // 工业语义：UTF-8 输入
+    wsOut    : WSTRING(64); // 目标 WSTRING（保留 Unicode）
+    bOk      : BOOL; // 转换成功
+    nDstLen  : UDINT; // 目标字符数
+    bConvert : BOOL; // 在线触发
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：HMI 显示模块用 WSTRING；从 OPC UA Server 收到的 UTF-8 文本需先转 WSTRING 才能送到 HMI。
+// 价值：比 `UTF8_TO_STRING` 保真度高——Unicode 全字符集；适合多语言 HMI。
+// 验证步骤：
+//   1. 引用 Tc2_Utilities
+//   2. 编译 + 登录 + 运行
+//   3. 在线写触发位 TRUE，monitor 输出变量
+// =============================================================================
+IF bConvert THEN
+    aUtf8[0] := 16#48; aUtf8[1] := 16#69; aUtf8[2] := 16#00;
+    bOk := UTF8_TO_WSTRING(pDstWSTRING := ADR(wsOut),
+                           pSrcUTF8    := ADR(aUtf8),
+                           nDstSize    := SIZEOF(wsOut),
+                           nDstLen     => nDstLen);
+    bConvert := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

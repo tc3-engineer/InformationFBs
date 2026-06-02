@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_SETBIT32" Id="{d385aa68-5351-519c-a4c9-bafdab9e50b2}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_SETBIT32
+VAR
+    bMotorReady  : BOOL := FALSE; // 电机就绪
+    bDoorClosed  : BOOL := FALSE; // 安全门已关
+    dwStatusWord : DWORD := 0; // 组合后的状态字（HMI 显示）
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：拼装设备状态字：根据 bMotorReady / bDoorClosed 等多个状态位置位组合成 32 位状态字。
+// 价值：可读性强，省魔法数字。
+// 验证：bMotorReady := TRUE → 观察 dwStatusWord bit0 = 1；bDoorClosed := TRUE → bit1 = 1。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_System（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』行的指示在线写值观察
+// =============================================================================
+
+// 每周期重新组合：先清零再按状态置位
+dwStatusWord := 0;
+IF bMotorReady THEN
+    dwStatusWord := SETBIT32(inVal32 := dwStatusWord, bitNo := 0);
+END_IF;
+IF bDoorClosed THEN
+    dwStatusWord := SETBIT32(inVal32 := dwStatusWord, bitNo := 1);
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

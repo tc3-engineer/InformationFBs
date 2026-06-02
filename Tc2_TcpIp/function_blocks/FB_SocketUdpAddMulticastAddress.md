@@ -13,7 +13,7 @@
 | Verified | 2026-05-21 ✅ |
 | InfoSys-checked | ✅ 2026-05-21 |
 | Status | `verified` |
-| Example | [`examples/P_Demo_FB_SocketUdpAddMulticastAddress.xml`](../examples/P_Demo_FB_SocketUdpAddMulticastAddress.xml) |
+| Example | [`examples/P_Demo_FB_SocketUdpAddMulticastAddress.TcPOU`](../examples/P_Demo_FB_SocketUdpAddMulticastAddress.TcPOU) |
 
 ---
 
@@ -100,7 +100,7 @@ END_VAR
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_FB_SocketUdpAddMulticastAddress.xml`](../examples/P_Demo_FB_SocketUdpAddMulticastAddress.xml)
+> 配套可导入文件：[`examples/P_Demo_FB_SocketUdpAddMulticastAddress.TcPOU`](../examples/P_Demo_FB_SocketUdpAddMulticastAddress.TcPOU)
 
 ```iecst
 // 场景：加入多播组 239.1.1.100，准备接收组播视频流元数据。

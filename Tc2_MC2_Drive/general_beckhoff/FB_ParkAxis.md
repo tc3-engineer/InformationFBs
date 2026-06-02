@@ -13,7 +13,7 @@
 | Verified | 2026-05-21 ✅ |
 | InfoSys-checked | ✅ 2026-05-21 |
 | Status | `verified` |
-| Example | [`examples/P_Demo_FB_ParkAxis.xml`](../examples/P_Demo_FB_ParkAxis.xml) |
+| Example | [`examples/P_Demo_FB_ParkAxis.TcPOU`](../examples/P_Demo_FB_ParkAxis.TcPOU) |
 
 ---
 
@@ -110,7 +110,7 @@ END_VAR
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_FB_ParkAxis.xml`](../examples/P_Demo_FB_ParkAxis.xml)
+> 配套可导入文件：[`examples/P_Demo_FB_ParkAxis.TcPOU`](../examples/P_Demo_FB_ParkAxis.TcPOU)
 
 ```iecst
 // 场景：模块化机器某可选工位未装电机，开机驻留该通道避免反馈报错

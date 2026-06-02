@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_LREAL_TO_FIX16" Id="{e859dc9c-6572-5750-af11-74a3126d83fc}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_LREAL_TO_FIX16
+VAR
+    lrKp    : LREAL := 0.5;
+    fp8Kp   : T_FIX16;
+    bEncode : BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_Utilities.LREAL_TO_FIX16 演示程序（FUNCTION，单周期触发）
+// ============================================================
+// 场景：HMI 输入 0.5 的比例系数转 Q8 定点供 PID 用。
+// 价值：替代手写 `INT(in * 256)`；附带范围提示和默认 n。
+// 验证步骤：
+//   1. 把本 PROGRAM 加到 PlcTask 调用列表
+//   2. 编译 + 登录
+//   3. 在线把 b... 触发位置 TRUE 一个周期
+//   4. 观察输出变量是否符合期望
+// ============================================================
+
+IF bEncode THEN
+    // 工程统一使用 Q8 → n = 8
+    fp8Kp := LREAL_TO_FIX16(lrKp, 8);
+    bEncode := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

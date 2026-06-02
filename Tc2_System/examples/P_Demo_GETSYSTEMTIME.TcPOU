@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_GETSYSTEMTIME" Id="{8b75c6bc-8261-5ee9-a53a-7fe427fb15bd}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_GETSYSTEMTIME
+VAR
+    fbGetSystemTime : GETSYSTEMTIME; // 废弃 FB 实例（仅演示）
+    nTimeLo         : UDINT; // 废弃方式低 32 位
+    nTimeHi         : UDINT; // 废弃方式高 32 位
+    ulFullTimeOld   : ULINT; // 废弃方式拼装的 64 位
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：对照演示：调用废弃的 GETSYSTEMTIME 与现代 F_GetSystemTime()，两者拼出的 64 位时间戳应当一致。
+// 价值：提醒切换到现代写法。
+// 验证：观察 ulFullTimeOld = ulFullTimeNew（或差距 ≤ 1 个 PLC 周期）。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_System（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』行的指示在线写值观察
+// =============================================================================
+
+// 废弃方式：先调 FB，再手动拼接两个 UDINT 成 ULINT
+fbGetSystemTime(
+    timeLoDW => nTimeLo,
+    timeHiDW => nTimeHi
+);
+ulFullTimeOld := SHL(TO_ULINT(nTimeHi), 32) OR TO_ULINT(nTimeLo);
+
+// 现代写法（注释，需 Tc2_System 提供 F_GetSystemTime 函数）：
+// stFt := F_GetSystemTime();
+// ulFullTimeNew := stFt.dwHighDateTime ... 等
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_MC_StepBlockDetection" Id="{4dc60da5-a415-59c0-8aa5-96dc1a3f7b9c}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_MC_StepBlockDetection
+VAR
+    fbStepBlockDetection : MC_StepBlockDetection;
+    axisHoming           : AXIS_REF; // 归零目标轴；运行前需先 MC_Power 使能
+    rtExec               : R_TRIG; // 把保持型请求位整成单次上升沿
+    bBlockDetReq         : BOOL := FALSE; // 在线置 TRUE 触发一次执行
+    homingParam          : MC_HomingParameter; // 贯穿整条归零序列、各 FB 间逐级传递的参数结构
+    homingOptions        : ST_Home_Options3; // 选项结构，Beckhoff 伺服保持默认（DisableDriveAccess := FALSE）
+    bBlockDetDone        : BOOL;
+    bBusy                : BOOL;
+    bBlockDetActive      : BOOL;
+    bAborted             : BOOL;
+    bError               : BOOL;
+    nErrorID             : UDINT;
+    lrRecordedPos        : LREAL; // Detection 版返回的检测位置（轴位置本身不被改写）
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// 场景：检查机械止挡因磨损产生的位置漂移——本 FB 限矩顶到止挡后只返回 RecordedPosition，
+//       上层把它和历史基准比较判断磨损量，不直接改写轴位置。
+// 价值：顶止挡测量与置零解耦，便于做磨损/装配偏差监测。
+// 验证：先 MC_Power 使能；在线写 bBlockDetReq := TRUE，观察 bBlockDetActive TRUE，轴低速顶；
+//       顶到止挡后 bBlockDetDone TRUE，lrRecordedPos 显示止挡位置（轴位置读数不变）。
+
+// 把保持型在线请求位整成单次上升沿，避免持续触发（charter: Execute 用 R_TRIG）
+rtExec(CLK := bBlockDetReq);
+
+// 单次完整调用：所有 VAR_INPUT 显式赋值，Axis（及 Parameter）按 VAR_IN_OUT 必须传引用
+fbStepBlockDetection(
+    Execute                := rtExec.Q,
+    Direction              := mcPositiveDirection,
+    Velocity               := 10.0,
+    Acceleration           := 0.0,
+    Deceleration           := 0.0,
+    Jerk                   := 0.0,
+    DetectionVelocityLimit := 1.0,
+    DetectionVelocityTime  := T#200MS,
+    TimeLimit              := T#20S,
+    DistanceLimit          := 500.0,
+    TorqueLimit            := 30.0,
+    TorqueTolerance        := 5.0,
+    BufferMode             := MC_Aborting,
+    Options                := homingOptions,
+    Done                   => bBlockDetDone,
+    Busy                   => bBusy,
+    Active                 => bBlockDetActive,
+    CommandAborted         => bAborted,
+    Error                  => bError,
+    ErrorID                => nErrorID,
+    RecordedPosition       => lrRecordedPos,
+    Axis                   := axisHoming,
+    Parameter              := homingParam);
+
+// stateful 输出复位：请求复位后清掉本地观察位，便于下次干净触发
+IF NOT bBlockDetReq AND NOT bBusy THEN
+    bBlockDetDone := FALSE;
+    bAborted := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

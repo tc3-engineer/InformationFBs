@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_SYSTEMTIME_TO_DT" Id="{b37db726-166d-54f5-b187-266301742349}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_SYSTEMTIME_TO_DT
+VAR
+    stOpcTime : TIMESTRUCT; // OPC UA 收到的时间结构 (初始化通过在线手动赋值; 推荐字段：( wYear := 2026, wMonth := 5, wDay := 11, wHour := 12, wMinute := 34, wSecond := 56, wMilliseconds := 500 ))
+    dtFromOpc : DATE_AND_TIME; // 转成 DT 后可参与 - 减法
+    bRunOnce  : BOOL; // 脉冲触发
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：OPC UA 收到 TIMESTRUCT，PLC 内部用 DT 做时间差减法更方便
+//
+// 价值：1 行完成结构体到 DT 折算，自动处理毫秒舍入策略
+//
+// 验证步骤：
+//   1. 引用 Tc2_Utilities
+//   2. 编译 + 登录 + 运行
+//   3. 强制 bRunOnce := TRUE一次
+//   4. 在线观察 dtFromOpc = DT#2026-05-11-12:34:57（500ms 进位）
+//   5. 在线把 wMilliseconds := 0 重测 → DT#2026-05-11-12:34:56
+// =============================================================================
+dtFromOpc := SYSTEMTIME_TO_DT(stOpcTime);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

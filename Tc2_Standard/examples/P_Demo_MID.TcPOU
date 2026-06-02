@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_MID" Id="{2aeadc2a-7713-5e9b-aa4d-cb3f06ab545d}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_MID
+VAR
+    sConfig  : STRING(255) := 'IP:192.168.1.10,PORT:502'; // HMI 配置串：IP 段 + 逗号 + PORT 段
+    sIP      : STRING(255); // 提取出的 IP 字段
+    nStart   : INT := 4; // IP 起点位置：'IP:' 占 3 字符 → IP 第 1 字节在第 4 位
+    nLength  : INT := 12; // IP 字段长度 = 12 字符（'192.168.1.10'）
+    bExtract : BOOL; // 触发一次 MID
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：HMI 给 PLC 传配置串 'IP:xxx,PORT:yyy'。PLC 需要从中间段提取 IP，
+//       后续传给 TCP/IP 配置 FB。位置和长度都是已知（或先 FIND 算出来的），
+//       MID 一行调用即可。
+//
+// 价值：MID 接受"位置 + 长度"直接取任意位置的子串，不必绕 LEFT+RIGHT 双套。
+//       入参顺序是 (STR, LEN, POS)——LEN 在 POS 前，是新人最容易写错的地方。
+//
+// 验证步骤：
+//   1. 导入本文件、引用 Tc2_Standard、编译、登录、运行
+//   2. 在线 monitor sIP
+//   3. 在线写 bExtract := TRUE
+//   4. 下一周期 sIP = '192.168.1.10'，bExtract 复位
+//   5. 把 nLength 改成 100（超过剩余字符数）+ 再触发，观察越界行为
+//      （PDF 未明确，实测一般返回从 POS 到末尾的全部字符）
+// =============================================================================
+
+// 入参顺序：STR, LEN, POS（LEN 在 POS 前！）。POS 从 1 起。
+IF bExtract THEN
+    sIP := MID(sConfig, nLength, nStart);
+    bExtract := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

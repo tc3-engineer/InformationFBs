@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_TcArguments" Id="{4c512908-0ed6-519e-acb0-d87f70ea4ec2}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_TcArguments
+VAR
+    fbAlarm      : FB_TcAlarm; // alarm 实例（已 Create）
+    ipArgs       : I_TcArguments; // 参数列表接口
+    sMotorName   : STRING(40) := 'M-01'; // 电机名
+    rTemperature : REAL := 95.5; // 温度
+    bArgsEmpty   : BOOL; // 参数表是否为空
+    bDoAdd       : BOOL := FALSE; // 上升沿触发
+    bDoAddPrev   : BOOL; // 边沿检测
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：给即将 Raise 的 alarm 添加电机名 + 温度两个参数
+// 价值：结构化参数 + 自动占位符填充
+// 验证：登录后 ipArgs 通过 fbAlarm.ipArguments 拿到；调 IsEmpty 应该为 TRUE；调 AddString/AddReal 后 IsEmpty 为 FALSE
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_EventLogger（System → References → Add library）
+//   3. 编译 → 登录 → 运行；按 verify 注释里给出的在线写值操作
+// =============================================================================
+
+ipArgs := fbAlarm.ipArguments;                  // 拿到参数列表接口
+IF ipArgs &lt;&gt; 0 THEN
+    bArgsEmpty := ipArgs.IsEmpty();             // 调用 FB_TcArguments.IsEmpty
+    IF bDoAdd AND NOT bDoAddPrev THEN
+        ipArgs.AddString(sValue := sMotorName);
+        ipArgs.AddReal(fValue := rTemperature);
+    END_IF;
+    bDoAddPrev := bDoAdd;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

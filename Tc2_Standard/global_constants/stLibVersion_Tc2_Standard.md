@@ -13,7 +13,7 @@
 | Verified | 2026-05-11 ✅ |
 | InfoSys-checked | ✅ 2026-05-11 |
 | Status | `verified` |
-| Example | [`examples/P_Demo_stLibVersion_Tc2_Standard.xml`](../examples/P_Demo_stLibVersion_Tc2_Standard.xml) |
+| Example | [`examples/P_Demo_stLibVersion_Tc2_Standard.TcPOU`](../examples/P_Demo_stLibVersion_Tc2_Standard.TcPOU) |
 
 ---
 
@@ -74,7 +74,7 @@ END_VAR
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_stLibVersion_Tc2_Standard.xml`](../examples/P_Demo_stLibVersion_Tc2_Standard.xml)（PLCopenXML，可直接导入 TwinCAT 3 XAE）
+> 配套可导入文件：[`examples/P_Demo_stLibVersion_Tc2_Standard.TcPOU`](../examples/P_Demo_stLibVersion_Tc2_Standard.TcPOU)（TwinCAT 3 原生 .TcPOU，可直接拖入 XAE 的 PLC POUs 文件夹）
 
 ```iecst
 // 场景：工程启动校验 Tc2_Standard 库至少 1.3.4，否则报警

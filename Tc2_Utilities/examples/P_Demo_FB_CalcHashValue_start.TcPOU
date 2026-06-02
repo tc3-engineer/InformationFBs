@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_CalcHashValue_start" Id="{51e9c409-cb19-50b4-8fcf-2c896883abb7}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_CalcHashValue_start
+VAR
+    fbHashCalculator : FB_CalcHashValue;
+    eHashMode        : E_HashMode := E_HashMode.HashMode_Sha256; // 本次使用的 hash 算法
+    bStartInit       : BOOL; // 上升沿触发一次 start 初始化
+    bStartOk         : BOOL; // start 返回值监视
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_Utilities.FB_CalcHashValue.start() 演示程序
+// ============================================================
+// 场景：单独演示 hash 计算三段中的第一步 start()——选定算法并清空内部状态。
+//       这是任何 hash 计算的开局，且复用 FB 实例做下一次 hash 时也要重新调。
+// 价值：让读者理解"start 不可省、不可乱调"——FB 内部 hash 上下文只有在 start
+//       后才是确定的，乱跳会让后续 update/finish 输出不可预期。
+// 验证：
+//   1. 编译 + 登录
+//   2. 在线写 bStartInit := TRUE 触发一次 start 调用
+//   3. 监视 bStartOk 应翻 TRUE（合法 hashMode 总成功）
+//   4. 真要算 hash 必须接着调 update/finish，见 FB_CalcHashValue 顶层例程
+// ============================================================
+
+IF bStartInit THEN
+    bStartInit := FALSE;
+    bStartOk := fbHashCalculator.start(hashMode := eHashMode);
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

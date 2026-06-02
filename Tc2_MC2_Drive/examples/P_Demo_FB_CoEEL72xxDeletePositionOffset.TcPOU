@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_CoEEL72xxDeletePositionOffset" Id="{be658e35-9d3e-51ba-9e8c-3de58d30184b}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_CoEEL72xxDeletePositionOffset
+VAR
+    fbEL72xxDelOffset : FB_CoEEL72xxDeletePositionOffset; // EL72xx 删位置偏置 FB 实例
+    axisServo         : AXIS_REF; // EL72xx 伺服轴轴引用；必须先在 System Manager 配好并 Link
+    rtDelTrig         : R_TRIG; // 把电平转上升沿
+    bDeleteOffsetReq  : BOOL := FALSE; // 在线写 TRUE 触发一次删除
+    bDelBusy          : BOOL;
+    bDelError         : BOOL;
+    nDelErrorID       : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：EL72xx 端子伺服驱动的轴维修后要重新做机械找正，先把上一次写进驱动器
+//       内存的位置偏置清掉，否则新找正会叠加在旧偏置上导致零点错位。
+//
+// 价值：1) 偏置常驻 EL72xx 驱动器内存，要清理时 EL72xx 专用 FB 直达
+//       2) 也可用硬件无关的 FB_DeletePositionOffset，行为等价
+//       3) Memory 选对就只删目标内存里的偏置
+//
+// !! 注意：EL72xx 偏置存在驱动器内存，删除 Memory 选 _Drive。删偏置改变绝对
+//          位置参考，轴静止时删。VAR 含 Position/Relative 字段照常填即可。
+//
+// 验证步骤：
+//   1. System Manager 配好 EL72xx NC 轴并 Link 给 axisServo，引用 Tc2_MC2_Drive
+//   2. Add Existing Item (.TcPOU) 选本文件，加进 PlcTask，编译登录
+//   3. 确认轴静止
+//   4. 在线写 bDeleteOffsetReq := TRUE → bDelBusy 置 TRUE
+//   5. 等 bDelBusy 落回 FALSE 且 bDelError = FALSE 即删除成功
+//   6. 若 bDelError = TRUE，看 nDelErrorID 对照 ADS Return Codes 表
+// =============================================================================
+
+// 用 R_TRIG 把"持续按住的 TRUE"转成真正的上升沿
+rtDelTrig(CLK := bDeleteOffsetReq);
+
+// 单次调用：Memory 选驱动器内存；Axis 是 VAR_IN_OUT 必传
+// 本 FB 无 Done，靠 Busy 落回 FALSE 且 Error=FALSE 判成功
+fbEL72xxDelOffset(
+    Execute  := rtDelTrig.Q,
+    Position := 0.0,
+    Relative := FALSE,
+    Feedback := ePositionOffsetFeedback1,
+    Memory   := ePositionOffsetMemory_Drive,
+    Axis     := axisServo,
+    Busy     => bDelBusy,
+    Error    => bDelError,
+    ErrorID  => nDelErrorID
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

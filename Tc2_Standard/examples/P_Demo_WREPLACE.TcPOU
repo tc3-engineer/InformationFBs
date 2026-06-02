@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_WREPLACE" Id="{f58931b4-726f-5a4c-a7d0-84b0b846b0e4}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_WREPLACE
+VAR
+    sLogLine    : WSTRING(255) := "警告 电机异常"; // 原始中文日志：等级 + 空格 + 消息体
+    sNewLevel   : WSTRING(255) := "错误"; // 升级后的等级标识
+    sResult     : WSTRING(255); // 等级升级后的完整日志
+    nReplaceLen : INT := 2; // 被替换段字符数 = 2（"警告" 2 个汉字）
+    nReplacePos : INT := 1; // 替换起点 = 第 1 字符
+    bUpgrade    : BOOL; // 触发一次等级升级
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：报警系统判定某条 "警告" 级中文日志在 30 秒内累积 5 次未恢复，需要
+//       升级为 "错误" 重发到值班手机。WREPLACE 一行调用把前 2 字 "警告"
+//       换成 "错误"，消息体保持不变。
+//
+// 价值：WREPLACE 按 UCS-2 字符算位置和长度，业务侧看到"前 2 字"就是 2 字。
+//       STRING + REPLACE 要传 nReplaceLen = 6（按 UTF-8 字节）才行，错位风险大。
+//       另：本函数不是模式匹配替换，要替换所有出现必须配合 WFIND 写循环。
+//
+// 验证步骤：
+//   1. 导入本文件、引用 Tc2_Standard、编译、登录、运行
+//   2. 在线 monitor sResult（Unicode 显示）
+//   3. 在线写 bUpgrade := TRUE
+//   4. 下一周期 sResult = "错误 电机异常"
+//   5. 把 sNewLevel 改成 "紧急停机"（4 字）+ 再触发 →
+//      sResult = "紧急停机 电机异常"（长度自动变长，验证替换段可不等长）
+// =============================================================================
+
+// 入参顺序：(STR1, STR2, L, P) — L 在 P 前，按字符算
+IF bUpgrade THEN
+    sResult := WREPLACE(sLogLine, sNewLevel, nReplaceLen, nReplacePos);
+    bUpgrade := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>
