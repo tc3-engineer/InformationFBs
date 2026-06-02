@@ -78,7 +78,7 @@
 | Tc2_Hydraulic | ~40 | ⏳ pending | 液压闭环（走 TF5810 别名） |
 | Tc2_BACnet | ~30 | ⏳ pending | 楼宇自动化（走 TF8020 别名） |
 | Tc2_DALI | ~30 | ⏳ pending | 照明总线 |
-| Tc2_DMX | ~10 | ⏳ pending | 舞台灯光 |
+| Tc2_DMX | 34 ✅ done (34 FB, v1.8.1) | ✅ done | 舞台灯光 DMX512/RDM（主站/发现/RDM 参数/状态/EL6851；含 1 outdated FB） |
 | Tc2_KNXLib | ~30 | ❌ unavailable | KNX/EIB（PDF 404） |
 | Tc2_EIB | ~20 | ⏳ pending | EIB（旧 KNX） |
 | Tc2_EnOcean | ~20 | ⏳ pending | 无线传感 |

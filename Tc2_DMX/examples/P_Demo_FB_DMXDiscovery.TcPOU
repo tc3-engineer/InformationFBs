@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_DMXDiscovery" Id="{acba379c-3ada-5e8b-8a7b-3c13e92b5861}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_DMXDiscovery
+VAR
+    fbDmxDiscovery     : FB_DMXDiscovery;                  // 高层设备搜索（最多 50 台）
+    stDmxCmdBuffer     : ST_DMXCommandBuffer;              // 与通讯 FB 共用的命令缓冲区
+    bStartDiscovery    : BOOL := FALSE;                    // 在线给一次上升沿触发搜索
+    dwDiscoveryOptions : DWORD;                            // 搜索选项（OR 组合）
+    // --- 监视输出 ---
+    bDiscoveryBusy     : BOOL;                             // 搜索进行中
+    bDiscoveryError    : BOOL;                             // 搜索出错
+    udiDiscoveryErrId  : UDINT;                            // 错误码
+    arrFoundDevices    : ARRAY [1..50] OF ST_DMXDeviceInfo;// 找到的设备清单
+    iFoundDeviceCount  : INT;                              // 已找到设备数
+    uiNextStartAddr    : UINT;                             // 下一个待分配的起始地址
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_DMX.FB_DMXDiscovery 演示程序
+// ============================================================
+// 场景：剧场布线后首次上电，要扫出 DMX 总线上所有设备并自动从 1 起连续编排起始地址。
+// 价值：一次触发完成"全总线扫描 + 收集 UID/厂商等信息 + 自动编址"，免去逐台手设地址，
+//       也免去自己实现 RDM 二分发现协议（Mute/UniqueBranch/UnMute）。
+// 验证：本 FB 需与一个 FB_EL6851CommunicationEx 实例共用 stDmxCmdBuffer，且通讯 FB 处于
+//       非 CycleMode。登录后给 bStartDiscovery 一次上升沿 → bDiscoveryBusy 变 TRUE，
+//       iFoundDeviceCount 随发现过程递增；bDiscoveryBusy 回 FALSE 后，arrFoundDevices[1..N]
+//       应填入各设备信息，N = iFoundDeviceCount。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_DMX；在同项目里放一个 FB_EL6851CommunicationEx 实例并共用 stDmxCmdBuffer
+//   3. 编译 → 登录 → 运行；按上方『验证』行在线给上升沿观察
+// ============================================================
+
+// 选项：完全重新发现 + 自动从 1 连续编址（生产环境若不想改地址可去掉 SET_START_ADDRESS）
+dwDiscoveryOptions := DMX_OPTION_COMPLETE_NEW_DISCOVERY OR DMX_OPTION_SET_START_ADDRESS;
+
+// 上升沿触发一次搜索；需每周期调用并等 bDiscoveryBusy 落回 FALSE 后再读结果
+fbDmxDiscovery(
+    bStart                   := bStartDiscovery,
+    dwOptions                := dwDiscoveryOptions,
+    stCommandBuffer          := stDmxCmdBuffer,
+    bBusy                    => bDiscoveryBusy,
+    bError                   => bDiscoveryError,
+    udiErrorId               => udiDiscoveryErrId,
+    arrDMXDeviceInfoList     => arrFoundDevices,
+    uiNextDMX512StartAddress => uiNextStartAddr,
+    iFoundDevices            => iFoundDeviceCount
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

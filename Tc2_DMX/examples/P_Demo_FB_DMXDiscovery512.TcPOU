@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_DMXDiscovery512" Id="{56ed35eb-105c-5834-8632-6c2094e24208}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_DMXDiscovery512
+VAR
+    fbDmxDiscovery512  : FB_DMXDiscovery512;               // 高层设备搜索（最多 512 台）
+    stDmxCmdBuffer     : ST_DMXCommandBuffer;              // 与通讯 FB 共用的命令缓冲区
+    bStartDiscovery    : BOOL := FALSE;                    // 在线给一次上升沿触发搜索
+    dwDiscoveryOptions : DWORD;                            // 搜索选项（OR 组合）
+    bDiscoveryBusy     : BOOL;                             // 搜索进行中
+    bDiscoveryError    : BOOL;                             // 搜索出错
+    udiDiscoveryErrId  : UDINT;                            // 错误码
+    arrFoundDevices    : ARRAY [1..512] OF ST_DMXDeviceInfo;  // 找到的设备清单
+    iFoundDeviceCount  : INT;                              // 已找到设备数
+    uiNextStartAddr    : UINT;                             // 下一个待分配的起始地址
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_DMX.FB_DMXDiscovery512 演示程序
+// ============================================================
+// 场景：演艺中心 DMX 总线挂了上百台灯，首次上电要扫出全部设备并自动从 1 连续编址。
+// 价值：一次触发完成全总线（最多 512 台）扫描 + 收集信息 + 自动编址，不受 FB_DMXDiscovery 的 50 台上限约束。
+// 验证：给 bStartDiscovery 一次上升沿 -> bDiscoveryBusy 变 TRUE，iFoundDeviceCount 递增；bDiscoveryBusy 回 FALSE 后 arrFoundDevices[1..N] 填入设备信息。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_DMX；同项目里放一个 FB_EL6851CommunicationEx 实例并共用 stDmxCmdBuffer（非 CycleMode）
+//   3. 编译 → 登录 → 运行；按上方『验证』行在线给上升沿观察
+// ============================================================
+
+dwDiscoveryOptions := DMX_OPTION_COMPLETE_NEW_DISCOVERY OR DMX_OPTION_SET_START_ADDRESS;
+
+fbDmxDiscovery512(
+    bStart                   := bStartDiscovery,
+    dwOptions                := dwDiscoveryOptions,
+    stCommandBuffer          := stDmxCmdBuffer,
+    bBusy                    => bDiscoveryBusy,
+    bError                   => bDiscoveryError,
+    udiErrorId               => udiDiscoveryErrId,
+    arrDMXDeviceInfoList     => arrFoundDevices,
+    uiNextDMX512StartAddress => uiNextStartAddr,
+    iFoundDevices            => iFoundDeviceCount
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

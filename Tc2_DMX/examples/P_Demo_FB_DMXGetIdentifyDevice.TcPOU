@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_DMXGetIdentifyDevice" Id="{85a698f3-0eb3-56ae-b8de-91e4a5ca41cc}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_DMXGetIdentifyDevice
+VAR
+    fbGetIdentify     : FB_DMXGetIdentifyDevice;      // 读识别状态
+    stDmxCmdBuffer    : ST_DMXCommandBuffer;          // 与通讯 FB 共用
+    wTargetManufId    : WORD := 16#4241;              // 目标灯具厂商 ID
+    dwTargetDeviceId  : DWORD := 16#12131415;         // 目标灯具设备 ID
+    byTargetPort      : BYTE := 0;                    // 根设备通道 0
+    bDoRead           : BOOL := FALSE;                // 在线给一次上升沿触发
+    bBusy             : BOOL;
+    bError            : BOOL;
+    udiErrId          : UDINT;
+    bIsIdentifying    : BOOL;                         // 设备识别是否激活
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_DMX.FB_DMXGetIdentifyDevice 演示程序
+// ============================================================
+// 场景：一排相同灯具中确认某 UID 对应现场哪盏：回读识别状态确认其是否在闪。
+// 价值：把识别状态做成可读接口，HMI 上可显示哪台设备在识别，无需现场凭记忆判断。
+// 验证：先用 FB_DMXSetIdentifyDevice 让目标灯进入识别，再给 bDoRead 一次上升沿 -> bBusy 短暂 TRUE -> 回 FALSE 后 bIsIdentifying 应为 TRUE。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_DMX；同项目里放一个 FB_EL6851CommunicationEx 实例并共用 stDmxCmdBuffer（非 CycleMode）
+//   3. 编译 → 登录 → 运行；按上方『验证』行在线给上升沿观察
+// ============================================================
+
+fbGetIdentify(
+    bStart                     := bDoRead,
+    wDestinationManufacturerId := wTargetManufId,
+    dwDestinationDeviceId      := dwTargetDeviceId,
+    byPortId                   := byTargetPort,
+    dwOptions                  := 0,
+    stCommandBuffer            := stDmxCmdBuffer,
+    bBusy                      => bBusy,
+    bError                     => bError,
+    udiErrorId                 => udiErrId,
+    bIdentifyActive            => bIsIdentifying
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_DMXGetStatusIdDescription" Id="{bc650127-fb21-5450-8445-6237d68276a8}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_DMXGetStatusIdDescription
+VAR
+    fbGetStatusDesc   : FB_DMXGetStatusIdDescription; // 状态 ID 转文本
+    stDmxCmdBuffer    : ST_DMXCommandBuffer;          // 与通讯 FB 共用
+    wTargetManufId    : WORD := 16#4241;              // 目标灯具厂商 ID
+    dwTargetDeviceId  : DWORD := 16#12131415;         // 目标灯具设备 ID
+    byTargetPort      : BYTE := 0;                    // 根设备通道 0
+    uiQueryStatusId   : UINT := 1;                    // 要查询的状态 ID
+    bDoRead           : BOOL := FALSE;                // 在线给一次上升沿触发
+    bBusy             : BOOL;
+    bError            : BOOL;
+    udiErrId          : UDINT;
+    sStatusText       : STRING;                       // 状态 ID 对应文本
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_DMX.FB_DMXGetStatusIdDescription 演示程序
+// ============================================================
+// 场景：HMI 故障显示：把从设备读到的状态 ID 转成厂商提供的文本说明直接显示给运维，无需查表。
+// 价值：把数字状态 ID 自动翻成人类可读文本，HMI 报警条目自解释，省去人工维护对照表。
+// 验证：设 uiQueryStatusId 为 FB_DMXGetStatusMessages 读回的某个 ID，给 bDoRead 一次上升沿 -> bBusy 短暂 TRUE -> 回 FALSE 后 sStatusText 即该 ID 的文本描述。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_DMX；同项目里放一个 FB_EL6851CommunicationEx 实例并共用 stDmxCmdBuffer（非 CycleMode）
+//   3. 编译 → 登录 → 运行；按上方『验证』行在线给上升沿观察
+// ============================================================
+
+fbGetStatusDesc(
+    bStart                     := bDoRead,
+    wDestinationManufacturerId := wTargetManufId,
+    dwDestinationDeviceId      := dwTargetDeviceId,
+    byPortId                   := byTargetPort,
+    uiStatusMessageId          := uiQueryStatusId,
+    dwOptions                  := 0,
+    stCommandBuffer            := stDmxCmdBuffer,
+    bBusy                      => bBusy,
+    bError                     => bError,
+    udiErrorId                 => udiErrId,
+    sStatusMessage             => sStatusText
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>
