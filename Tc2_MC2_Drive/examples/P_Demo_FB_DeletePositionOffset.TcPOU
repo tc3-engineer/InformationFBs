@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_DeletePositionOffset" Id="{f4b042c4-a531-5b47-957d-e71f5f549389}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_DeletePositionOffset
+VAR
+    fbDeleteOffset  : FB_DeletePositionOffset; // 删除位置偏置 FB 实例
+    axisRotaryTable : AXIS_REF; // 回转工作台轴引用；必须先在 System Manager 配好并 Link
+    rtClearTrig     : R_TRIG; // 把电平转上升沿，避免 Execute 一直高
+    bClearOffsetReq : BOOL := FALSE; // 在线写 TRUE 触发一次删除
+    bClearBusy      : BOOL;
+    bClearError     : BOOL;
+    nClearErrorID   : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：回转工作台维修换了编码器，重新做机械找正前需要把上一次写进编码器
+//       数字铭牌里的位置偏置清掉，否则新找正会叠加在旧偏置上导致零点错位。
+//
+// 价值：1) 偏置存在编码器/驱动器侧，PLC 重启不丢；要清理时一个 FB 搞定
+//       2) 硬件无关：不管接的是 AX5000/AX8000/EL72xx 自动选 SoE/CoE 通道
+//       3) 不用人工进 DriveManager 逐台手动删
+//
+// 验证步骤：
+//   1. 在 System Manager 配好 NC 轴并 Link 给 axisRotaryTable
+//   2. 引用 Tc2_MC2_Drive 库
+//   3. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件，加进 PlcTask，编译登录
+//   4. 确认轴处于静止（删除偏置会改变绝对位置参考）
+//   5. 在线写 bClearOffsetReq := TRUE → 应看到 bClearBusy 立刻 TRUE
+//   6. 等 bClearBusy 落回 FALSE 且 bClearError = FALSE 即删除成功
+//   7. 若 bClearError = TRUE，看 nClearErrorID 对照 ADS Return Codes 表
+//   8. 把 bClearOffsetReq 拉回 FALSE 复位边沿，下次再触发
+// =============================================================================
+
+// 用 R_TRIG 把"持续按住的 TRUE"转成真正的上升沿
+rtClearTrig(CLK := bClearOffsetReq);
+
+// 单次调用：Feedback 选反馈系统 1，Memory 选编码器铭牌；Axis 是 VAR_IN_OUT 必传
+// 注意本 FB 无 Done 输出，靠 Busy 落回 FALSE 且 Error=FALSE 判成功
+fbDeleteOffset(
+    Execute  := rtClearTrig.Q,
+    Feedback := ePositionOffsetFeedback1,
+    Memory   := ePositionOffsetMemory_Encoder,
+    Axis     := axisRotaryTable,
+    Busy     => bClearBusy,
+    Error    => bClearError,
+    ErrorID  => nClearErrorID
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

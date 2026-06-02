@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_CheckWatchdog" Id="{17124c33-2061-5aa3-ba32-1ab7309726c4}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_CheckWatchdog
+VAR
+    fbCheckWatchdog            : FB_CheckWatchdog; // 接收端 watchdog 监视器实例
+    nWatchdogCounterFromMaster : UDINT; // 从 Master 控制器 ADS 读到的递增计数；在线写值可模拟"还活着"
+    bEnableLinkMonitor         : BOOL := TRUE; // 使能链路监视
+    tLinkTimeoutWindow         : TIME := T#5S; // 超时窗口 = 5 × Master 发送周期 1s
+    bWatchdogTripped           : BOOL; // FB 原始输出：TRUE = 咬人（链路超时）
+    bLinkAlive                 : BOOL; // 取反后业务侧观察值：TRUE = 链路活
+    nLastSeenCounter           : UDINT; // 最近一次观察到变化时的计数值（诊断）
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：本机是接收端 Slave PLC，Master PLC（NetID 192.168.1.20.1.1）每 1 秒往本机
+//       某个 UDINT 变量写一次递增计数。本程序用 FB_CheckWatchdog 监视该计数器，
+//       如果 5 秒内没动就报"链路断"。
+//
+// 价值：业务代码只需提供"读到的计数"+"超时门限"两个量，不用自己写超时计时/状态
+//       复位/首次启动初始化。配套 FB_WriteWatchdog 形成完整 PLC↔PLC 保活方案。
+//
+// 验证步骤：
+//   1. 引用 Tc2_DataExchange（含依赖 Tc2_System）
+//   2. 在 PLC 项目中右键 → Add Existing Item (.TcPOU) → 选本文件 → OK
+//   3. 编译、登录、运行
+//   4. 在线 monitor 看 bLinkAlive 与 nLastSeenCounter
+//   5. 在线持续递增 nWatchdogCounterFromMaster（模拟 Master 正常）
+//      → bLinkAlive 应保持 TRUE
+//   6. 停止递增超过 5 秒 → bLinkAlive 应翻为 FALSE
+//   7. 恢复递增 → bLinkAlive 下一周期立刻回 TRUE
+// =============================================================================
+
+// 单次调用形式：所有 VAR_INPUT 显式赋值；输出端用 => 截获
+fbCheckWatchdog(
+    bEnable       := bEnableLinkMonitor,
+    tWatchdogTime := tLinkTimeoutWindow,
+    nCnt          := nWatchdogCounterFromMaster,
+    bWatchdog     => bWatchdogTripped,
+    nLastCnt      => nLastSeenCounter
+);
+
+// 业务侧取反：bWatchdog 语义是"咬人"，取反后 bLinkAlive 才符合直觉
+bLinkAlive := NOT bWatchdogTripped;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

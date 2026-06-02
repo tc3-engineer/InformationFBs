@@ -13,7 +13,7 @@
 | Verified | 2026-05-11 ✅ |
 | InfoSys-checked | ✅ 2026-05-11 |
 | Status | `verified` |
-| Example | [`examples/P_Demo_REPLACE.xml`](../examples/P_Demo_REPLACE.xml) |
+| Example | [`examples/P_Demo_REPLACE.TcPOU`](../examples/P_Demo_REPLACE.TcPOU) |
 
 ---
 
@@ -85,7 +85,7 @@ PDF §4.8 原例：`REPLACE('SUXYSI', 'K', 2, 2)` → 从第 2 字符起删 2 �
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_REPLACE.xml`](../examples/P_Demo_REPLACE.xml)（PLCopenXML，可直接导入 TwinCAT 3 XAE）
+> 配套可导入文件：[`examples/P_Demo_REPLACE.TcPOU`](../examples/P_Demo_REPLACE.TcPOU)（TwinCAT 3 原生 .TcPOU，可直接拖入 XAE 的 PLC POUs 文件夹）
 
 ```iecst
 // 场景：日志行 'WARN_ Motor stalled' 升级为 ERROR 时，把前 5 字符 'WARN_' 替换成 'ERROR'

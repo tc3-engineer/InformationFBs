@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_IOF_SER_DRIVE_Reset" Id="{7d4dbaac-5be4-55e9-94f8-9872589410a2}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_IOF_SER_DRIVE_Reset
+VAR
+    fbSercosDriveReset : IOF_SER_DRIVE_Reset; // SERCOS 单 drive 清错 FB
+    sLocalNetId        : T_AmsNetId := ''; // 本机
+    nDrivePort         : UINT := 5; // drive port
+    bClearDriveErrReq  : BOOL := FALSE; // 上升沿触发
+    tClearTimeout      : TIME := T#5S; // 超时
+    bClearBusy         : BOOL; // 工作中
+    bClearErr          : BOOL; // 出错
+    nLastErrCode       : UDINT; // 错误号
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：生产线 drive 5 报警；不打断其它 drive 的情况下单独清错。
+// 价值：细粒度清错。
+// 验证：登录后 nDrivePort := 5、bClearDriveErrReq := TRUE → bClearBusy 短暂 TRUE → 回 FALSE 后 nLastErrCode = 0 表示发出复位命令成功；若 drive 仍有硬件故障，下一周期还会重新报错。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_IoFunctions（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』行的指示在线写值观察
+// =============================================================================
+
+fbSercosDriveReset(
+    sNetId   := sLocalNetId,
+    nPort    := nDrivePort,
+    bReset   := bClearDriveErrReq,
+    tTimeout := tClearTimeout,
+    bBusy    => bClearBusy,
+    bError   => bClearErr,
+    nErrId   => nLastErrCode
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

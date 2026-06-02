@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_MC_Home" Id="{f3ead42a-13a6-5a57-be3c-3c86ed1d86b6}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_MC_Home
+VAR
+    fbAxisHoming   : MC_Home;
+    axisX          : AXIS_REF;
+    rtHomeTrig     : R_TRIG;
+    bRequestHoming : BOOL := FALSE; // 在线 TRUE 触发归零
+    bHomeCamSignal : BOOL := FALSE; // 在线模拟原点开关信号；实机接 PLC 输入
+    bHomingDone    : BOOL;
+    bHomingActive  : BOOL;
+    nErrorID       : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：CNC 机床开机自动归零 X 轴 — 走到原点接近开关 + 锁编码器 Z 后把当前
+//       位置设为 System Manager 中配置的"参考位置"（用 DEFAULT_HOME_POSITION
+//       常量自动取系统配置而非脑补 0）。
+// 价值：把"找原点 → 锁 Z → 设零位"三段标准化序列封装；切换编码器硬件不改代码。
+// 验证：先确保 axisX 已用 MC_Power 使能；bRequestHoming := TRUE →
+//       bHomingActive 立即 TRUE；轴自动跑到原点开关附近；bHomeCamSignal
+//       上升沿后轴锁 Z；bHomingDone 短暂 TRUE，之后 axisX.Status.HomingDone = TRUE。
+// =============================================================================
+
+rtHomeTrig(CLK := bRequestHoming);
+
+fbAxisHoming(
+    Execute         := rtHomeTrig.Q,
+    Position        := DEFAULT_HOME_POSITION,
+    HomingMode      := MC_DefaultHoming,
+    BufferMode      := MC_Aborting,
+    bCalibrationCam := bHomeCamSignal,
+    Axis            := axisX,
+    Done            => bHomingDone,
+    Active          => bHomingActive,
+    ErrorID         => nErrorID
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

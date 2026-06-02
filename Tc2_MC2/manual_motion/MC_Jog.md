@@ -13,7 +13,7 @@
 | Verified | 2026-05-21 ✅ |
 | InfoSys-checked | ✅ 2026-05-21 |
 | Status | `verified` |
-| Example | [`examples/P_Demo_MC_Jog.xml`](../examples/P_Demo_MC_Jog.xml) |
+| Example | [`examples/P_Demo_MC_Jog.TcPOU`](../examples/P_Demo_MC_Jog.TcPOU) |
 
 ---
 
@@ -126,7 +126,7 @@ END_VAR
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_MC_Jog.xml`](../examples/P_Demo_MC_Jog.xml)
+> 配套可导入文件：[`examples/P_Demo_MC_Jog.TcPOU`](../examples/P_Demo_MC_Jog.TcPOU)
 
 ```iecst
 // 场景：HMI 手动模式面板 — 操作员按住"X+"快速正向走，按住"X-"快速反向走

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_UInt64Mul64Ex" Id="{65ff607a-199a-5710-9997-1164333ea9f6}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_UInt64Mul64Ex
+VAR
+    uliTorque : T_ULARGE_INTEGER;
+    uliAngle  : T_ULARGE_INTEGER;
+    uliWork   : T_ULARGE_INTEGER;; // 累计做功
+    bOverflow : BOOL;; // 溢出报警
+    bCompute  : BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_Utilities.UInt64Mul64Ex 演示程序（FUNCTION，单周期触发）
+// ============================================================
+// 场景：计算累计扭矩 × 累计转角，结果可能超 64 位，需溢出报警。
+// 价值：替代手写'先转 LREAL 估算溢出再走整数路径'的判断；一次调用拿乘积 + 溢出位。
+// 验证步骤：
+//   1. 把本 PROGRAM 加到 PlcTask 调用列表
+//   2. 编译 + 登录
+//   3. 在线把 b... 触发位置 TRUE 一个周期
+//   4. 观察输出变量是否符合期望
+// ============================================================
+
+bOverflow := FALSE;                                    // 每周期先清零
+IF bCompute THEN
+    uliWork := UInt64Mul64Ex(uliTorque, uliAngle, bOverflow);
+    IF bOverflow THEN
+        // 工程响应：饱和并触发上层报警
+        uliWork := ULARGE_INTEGER(16#FFFFFFFF, 16#FFFFFFFF);
+    END_IF;
+    bCompute := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

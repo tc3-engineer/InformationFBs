@@ -13,7 +13,7 @@
 | Verified | 2026-05-21 ✅ |
 | InfoSys-checked | ✅ 2026-05-21 |
 | Status | `verified` |
-| Example | [`examples/P_Demo_MC_AbortSuperposition.xml`](../examples/P_Demo_MC_AbortSuperposition.xml) |
+| Example | [`examples/P_Demo_MC_AbortSuperposition.TcPOU`](../examples/P_Demo_MC_AbortSuperposition.TcPOU) |
 
 ---
 
@@ -103,7 +103,7 @@ END_VAR
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_MC_AbortSuperposition.xml`](../examples/P_Demo_MC_AbortSuperposition.xml)
+> 配套可导入文件：[`examples/P_Demo_MC_AbortSuperposition.TcPOU`](../examples/P_Demo_MC_AbortSuperposition.TcPOU)
 
 ```iecst
 // 场景：套色检测系统在叠加运动启动后发现方向算错，立刻终止叠加避免错色印更多

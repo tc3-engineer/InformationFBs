@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_PLREAL_TO_LREAL" Id="{41776a31-70e1-5ce0-b1b0-492928701255}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_PLREAL_TO_LREAL
+VAR
+    fRealValue           : LREAL := 3.141592653589793; // 模拟 wire 缓冲区中的 LREAL 字段
+    pLREALField          : POINTER TO LREAL; // 业务侧先算好的字段地址（ADR 或 pBase+nOff）
+    bExtractField        : BOOL; // 在线置 TRUE 触发一次解析
+    fRealValue_extracted : LREAL; // 解析后的副本，供业务逻辑使用
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_Utilities.PLREAL_TO_LREAL 演示程序（FUNCTION）
+// ============================================================
+// 场景：从一段二进制 wire 缓冲区里按偏移取 LREAL 字段（Modbus/CAN/ADS Raw）。
+// 价值：替代手写 pField + nOff + ^ 指针算术；一次调用取值，少打错符号。
+// 验证：在线写 fRealValue := 3.141592653589793；bExtractField := TRUE；
+//       下一周期 fRealValue_extracted 应等于 fRealValue。
+// ============================================================
+
+// 业务代码通常已经算好字段地址（pBase + 协议偏移）；演示用 ADR 等价
+pLREALField := ADR(fRealValue);
+
+IF bExtractField AND pLREALField <> 0 THEN
+    // 单次完整调用：避免手写 ^ 解引用，统一风格便于和字节序转换串联
+    fRealValue_extracted := PLREAL_TO_LREAL(pLREALField);
+    bExtractField := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

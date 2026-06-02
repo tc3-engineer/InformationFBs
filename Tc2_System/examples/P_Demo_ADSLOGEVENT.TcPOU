@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_ADSLOGEVENT" Id="{0ac6018a-06ee-5a12-ac26-7a5dce5c339c}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_ADSLOGEVENT
+VAR
+    fbADSLOGEVENT : ADSLOGEVENT; // ADSLOGEVENT 实例
+    bEventActive  : BOOL; // 电平 TRUE = 事件 active；FALSE = 事件复位
+    bEventAckReq  : BOOL; // 上升沿确认事件
+    stEventCfg    : TcEvent; // 事件配置结构（事件 ID、源 ID 等）
+    nEventState   : UDINT; // 事件内部状态
+    bAdsErr       : BOOL; // ADS 错误
+    nLastAdsError : UDINT; // ADS 错误码
+    bEventAcked   : BOOL; // 事件已被确认
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_System.ADSLOGEVENT 演示程序
+// ============================================================
+// 场景：旧 TwinCAT 3.1.4024 项目里温度报警推到 EventLogger。
+// 价值：替代手写日志 + HMI 报警表，EventLogger 内置可视化。
+// 验证：填好 stEventCfg.iEvent 与 stEventCfg.iSourceId（用 SimpleAdsLogEvent 演示更直观），写 bEventActive := TRUE 后 System Manager 报警面板出现该事件；写 bEventActive := FALSE 后事件消失。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_System（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』指引在线写值观察
+// ============================================================
+
+fbADSLOGEVENT(
+    NETID := '', PORT := 110, Event := bEventActive, EventQuit := bEventAckReq, EventConfigData := stEventCfg, EventDataAddress := 0, EventDataLength := 0, FbCleanup := FALSE, TMOUT := DEFAULT_ADS_TIMEOUT,
+    EventState => nEventState, Err => bAdsErr, ErrId => nLastAdsError, Quit => bEventAcked
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

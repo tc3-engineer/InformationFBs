@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_FileGets" Id="{1570bed4-ca5d-568b-a59c-e840dc076135}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_FileGets
+VAR
+    fbFileGets       : FB_FileGets; // FB_FileGets 实例
+    hOpenedFile      : UINT; // 已打开的句柄（文本模式）
+    sLineRead        : T_MaxString; // 读到的一行文本
+    bReadLineRequest : BOOL; // 在线写 TRUE 触发读下一行
+    bEofReached      : BOOL; // TRUE = 已到 EOF（隐式：sLineRead 为空且 bBusy 落沿）
+    bGetsError       : BOOL; // TRUE = 读失败
+    nErrIdLast       : UDINT; // ADS 错误号
+    bBusyMon         : BOOL; // ADS 通讯中
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：按行从 D:/config/recipe.csv 读出文本，每按一次 bReadLineRequest 读下一行；用作配方导入流程。
+// 价值：不用本 FB 要 FB_FileRead + 手写扫描换行，约 20 行；本 FB 一次调用即可。
+// 验证：bReadLineRequest 升沿 → sLineRead 在 1-2 周期后被填充；多次触发直到 bEofReached = TRUE。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_System（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』行的指示在线写值观察
+// =============================================================================
+
+// 单次完整调用；读完后 sLineRead 含末尾换行，业务侧再去除
+fbFileGets(
+    sNetId   := '',
+    hFile    := hOpenedFile,
+    bExecute := bReadLineRequest,
+    tTimeout := T#10S,
+    bBusy    => bBusyMon,
+    bError   => bGetsError,
+    nErrId   => nErrIdLast,
+    sLine    => sLineRead
+);
+
+// 业务侧：bBusy 落沿且 sLineRead 为空字符串 = EOF（FB_FileGets 没显式 bEOF 输出）
+IF (NOT bBusyMon) AND (NOT bGetsError) AND (LEN(sLineRead) = 0) AND bReadLineRequest THEN
+    bEofReached := TRUE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

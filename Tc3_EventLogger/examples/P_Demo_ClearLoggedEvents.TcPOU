@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_ClearLoggedEvents" Id="{a97699dc-7bcc-5570-a019-6925057bfc41}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_ClearLoggedEvents
+VAR
+    fbLogger        : FB_TcEventLogger; // EventLogger 实例
+    fbClearSettings : FB_TcClearLoggedEventsSettings; // 清除过滤器实例（在线配置时间范围）
+    bDoClear        : BOOL := FALSE; // 上升沿触发
+    bRequestDone    : BOOL; // 异步请求是否结束
+    bError          : BOOL; // 执行结果错误标志
+    hrErrorCode     : HRESULT; // 错误码
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：按时间范围异步清除一年前的旧事件日志
+// 价值：可控的事件日志清理，避免数据库膨胀
+// 验证：登录后写 bDoClear := TRUE 触发；持续观察 bRequestDone 应在多个周期后变 TRUE；若 bError = TRUE 看 hrErrorCode 排错；EventLogger 日志视图应少掉对应时间段事件
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_EventLogger（System → References → Add library）
+//   3. 编译 → 登录 → 运行；按 verify 注释里给出的在线写值操作
+// =============================================================================
+
+// 每周期都调用本方法以推进异步状态；返回 TRUE 表示请求结束
+IF bDoClear THEN
+    bRequestDone := fbLogger.ClearLoggedEvents(
+        ipClearSettings := fbClearSettings,
+        bError => bError,
+        hrErrorCode => hrErrorCode);
+    IF bRequestDone THEN
+        bDoClear := FALSE;                     // 流程结束，等下次触发
+    END_IF;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

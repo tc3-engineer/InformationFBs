@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_WCHAR_TO_CHAR" Id="{f24a0c29-29e9-5379-8a50-0641dcd007e4}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_WCHAR_TO_CHAR
+VAR
+    sTextIn : WSTRING(1) := "A"; // 输入单字符 WSTRING(1)
+    sOut    : STRING(1); // 转换得到的 STRING(1)
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：HMI 把 WSTRING 字符变量复制到只支持 STRING 的旧 ADS 接口。
+// 价值：单字符场景比 `WSTRING_TO_STRING2`（整串）省事。
+// 验证步骤：
+//   1. 引用 Tc2_Utilities
+//   2. 编译 + 登录 + 运行
+//   3. 在线写触发位 TRUE，monitor 输出变量
+// =============================================================================
+sOut := WCHAR_TO_CHAR(sTextIn);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

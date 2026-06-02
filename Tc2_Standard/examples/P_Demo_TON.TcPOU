@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_TON" Id="{e2d625a8-d422-54c8-8b74-0b3f7143b43c}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_TON
+VAR
+    fbStartupDelay : TON; // 接通延时定时器实例：用于电机启动按钮防抖
+    bMotorStartReq : BOOL; // 启动按钮（在线置 TRUE 模拟按下；置 FALSE 模拟松开）
+    tStartupHold   : TIME := T#3S; // 必须按住的最短时长 = 3 秒（防误触）
+    bMotorRun      : BOOL; // 电机允许运行（按住 3 秒后置 TRUE）
+    tHoldElapsed   : TIME; // 当前已按住时长（监视用，看 ET 累加是否到 3s）
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：变频电机的"启动按钮防误触"。操作员按下启动按钮后，必须保持 3 秒不松手
+//       才算真正启动；松开就清零重新计时。这是工业惯例：避免操作员手肘碰一下
+//       按钮就启动重型设备。
+//
+// 价值：业务代码只需 1 次调用就完成"上升沿启动、ET 累加、PT 到点 Q 置位、下降沿
+//       清零"完整逻辑；手写需要约 8-10 行 IF + 上一周期值保存 + 边界判断。
+//
+// 验证步骤：
+//   1. 在 PLC 项目中右键 → Add Existing Item (.TcPOU) → 选本文件
+//   2. 引用 Tc2_Standard 库（System 节点 → References）
+//   3. 编译、登录、运行
+//   4. 在线 monitor bMotorRun 与 tHoldElapsed
+//   5. 在线写 bMotorStartReq := TRUE → 观察 tHoldElapsed 从 0 累加
+//      到 3s 时 bMotorRun 变 TRUE；之后 tHoldElapsed 保持 3s 不再增长
+//   6. 在线写 bMotorStartReq := FALSE → bMotorRun 立刻回 FALSE，tHoldElapsed 清零
+//   7. 试中途打断（按 1 秒就松开再按）→ 验证计时确实从 0 重新开始而不是续计
+// =============================================================================
+
+// 单次调用形式：所有 VAR_INPUT 显式赋值，输出端用 => 截获
+fbStartupDelay(
+    IN := bMotorStartReq,
+    PT := tStartupHold,
+    Q  => bMotorRun,
+    ET => tHoldElapsed
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

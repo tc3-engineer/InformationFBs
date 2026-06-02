@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_BYTEARR_TO_MAXSTRING" Id="{c74543a4-4e11-5546-a05b-b4b9fa883965}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_BYTEARR_TO_MAXSTRING
+VAR
+    aSerialBuf : ARRAY[0..255] OF BYTE; // 串口接收缓冲
+    sLabel     : STRING(255); // 提取的 ASCII 标签
+    bExtract   : BOOL; // 在线触发
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：从串口收到的 256 字节缓冲含 EtherNet/IP 设备 SCSI 标签——前部 ASCII 标签 + 后部二进制数据。本函数把前部 ASCII 提取为可读日志。
+// 价值：替代 FOR + 字节复制 + null 终结的 8 行手写循环；本函数 1 调用。
+// 验证步骤：
+//   1. 引用 Tc2_Utilities
+//   2. 编译 + 登录 + 运行
+//   3. 在线写触发位 TRUE，monitor 输出变量
+// =============================================================================
+
+IF bExtract THEN
+    aSerialBuf[0] := 16#52; aSerialBuf[1] := 16#41; aSerialBuf[2] := 16#43; aSerialBuf[3] := 16#4B; // 'RACK'
+    aSerialBuf[4] := 0;  // null 终结
+    sLabel := BYTEARR_TO_MAXSTRING(aSerialBuf);
+    bExtract := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

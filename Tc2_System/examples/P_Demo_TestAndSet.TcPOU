@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_TestAndSet" Id="{19032778-044c-5ae8-984b-b51054bd82bd}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_TestAndSet
+VAR
+    bGlobalLock   : BOOL := FALSE; // 全局互斥标志（应放在 GVL，这里 demo 用本地）
+    bAcquiredLock : BOOL; // 本周期是否成功拿到锁
+    aSharedParams : ARRAY[0..7] OF DINT; // 受保护的共享数组
+    nWriteValue   : DINT := 0; // 本周期要写入的值
+    nBlockedCnt   : DINT; // 未拿到锁的次数（用于诊断争用）
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：MAIN 与 SLOW 任务共享一组工艺参数；用 TestAndSet 保护短临界区写入，避免脏读。
+// 价值：替代关中断；CPU 友好。
+// 验证：并发任务下观察 nDataInconsistency 永远 = 0；故意改成不加锁版本 → 偶尔出现脏读。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_System（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』行的指示在线写值观察
+// =============================================================================
+
+// 状态/计数标志按周期刷新：本周期默认未持锁
+bAcquiredLock := FALSE;
+
+IF TestAndSet(Flag := bGlobalLock) THEN
+    bAcquiredLock := TRUE;
+    // === 临界区开始：原子地更新共享数据 ===
+    aSharedParams[0] := nWriteValue;
+    aSharedParams[1] := nWriteValue + 1;
+    aSharedParams[2] := nWriteValue + 2;
+    // === 临界区结束 ===
+    bGlobalLock := FALSE;   // 显式释放
+ELSE
+    // 没拿到锁，记一次争用次数
+    nBlockedCnt := nBlockedCnt + 1;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_Dpv1Read" Id="{24afe242-407a-57b7-a827-9b485b82f97b}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_Dpv1Read
+VAR
+    fbDpv1Read           : FB_Dpv1Read; // SINAMICS DPV1 读 FB
+    sProfibusMasterNetId : T_AmsNetId := ''; // Profibus 主站 AMS Net ID
+    iSinamicsStation     : USINT := 5; // SINAMICS Profibus 站号
+    iDriveObjectId       : USINT := 2; // drive A
+    aDpv1ReqBuffer       : ARRAY[1..240] OF BYTE; // 请求缓冲
+    aDpv1ResBuffer       : ARRAY[1..240] OF BYTE; // 响应缓冲
+    iReqBufLen           : UDINT := 240; // 请求缓冲最大长度
+    iResBufLen           : UDINT := 240; // 响应缓冲最大长度
+    arrDpv1ReqParams     : ARRAY[1..39] OF ST_Dpv1ParamAddrEx; // 参数清单
+    arrDpv1ValueHdr      : ARRAY[1..39] OF ST_Dpv1ValueHeaderEx; // 解析输出
+    iNumParamsToRead     : USINT := 3; // 读 3 个参数
+    nReqPkgLen           : USINT; // 请求帧长度
+    nReadResPkgLen       : USINT; // 响应帧长度
+    bBuildReqPkg         : BOOL := FALSE; // 触发：构造请求
+    bDpv1ReadReq         : BOOL := FALSE; // 触发：发送
+    bSplitReadResPkg     : BOOL := FALSE; // 触发：解析
+    tDpv1ReadTimeout     : TIME := T#10S; // ADS 超时
+    bDpv1ReadBusy        : BOOL; // 工作中
+    iDpv1ReadRequestRef  : USINT; // 请求引用号
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：SINAMICS S120 周期读 3 个参数：先 F_CreateDpv1ReadReqPkg 准备帧 → bExecute 触发 FB_Dpv1Read → bBusy 落回后 F_SplitDpv1ReadResPkg 解析。
+// 价值：完整异步流程封装。
+// 验证：登录后 sProfibusMasterNetId 设为 FC310x 主卡 NetId，iSinamicsStation := 5；先 bBuildReqPkg 触发 F_CreateDpv1ReadReqPkg → nReqPkgLen > 0；再 bDpv1ReadReq := TRUE → bDpv1ReadBusy 短暂 TRUE → 落回后 bSplitReadResPkg := TRUE 解析 → arrDpv1ValueHdr 含读到的参数值。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_IoFunctions（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』行的指示在线写值观察
+// =============================================================================
+
+// 步骤 1：构造 DPV1 读请求帧
+IF bBuildReqPkg THEN
+    nReqPkgLen := F_CreateDpv1ReadReqPkg(
+        pDpv1ReqData    := ADR(aDpv1ReqBuffer),
+        iNumOfParams    := iNumParamsToRead,
+        iDriveId        := iDriveObjectId,
+        stDpv1Parameter := arrDpv1ReqParams
+    );
+    bBuildReqPkg := FALSE;
+END_IF;
+
+// 步骤 2：bDpv1ReadReq 上升沿发出请求（请求帧必须先构造好）
+fbDpv1Read(
+    bExecute          := bDpv1ReadReq,
+    aNetId            := sProfibusMasterNetId,
+    iProfibusSlaveAdr := iSinamicsStation,
+    iDriveId          := iDriveObjectId,
+    pDpv1ReqData      := ADR(aDpv1ReqBuffer),
+    iDpv1ReqDataLen   := iReqBufLen,
+    pDpv1ResData      := ADR(aDpv1ResBuffer),
+    iDpv1ResDataLen   := iResBufLen,
+    tTmOut            := tDpv1ReadTimeout,
+    iRequestRef       => iDpv1ReadRequestRef
+);
+
+// 跟踪 bBusy 用 R_TRIG 等监测下降沿
+bDpv1ReadBusy := fbDpv1Read.bBusy;
+
+// 步骤 3：bBusy 落回后解析响应（业务侧做下降沿监测后置 bSplitReadResPkg）
+IF bSplitReadResPkg THEN
+    nReadResPkgLen := F_SplitDpv1ReadResPkg(
+        pDpv1ResData        := ADR(aDpv1ResBuffer),
+        stDpv1Parameter     := arrDpv1ReqParams,
+        stDpv1ValueHeaderEx := arrDpv1ValueHdr
+    );
+    bSplitReadResPkg := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_UTF8_TO_STRING" Id="{c7df2a19-340c-5409-854b-83f3ec992c29}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_UTF8_TO_STRING
+VAR
+    aUtf8    : ARRAY[0..63] OF BYTE; // 工业语义：上云收到的 UTF-8 报警
+    sLocal   : STRING(64); // 转回的本地 Codepage STRING
+    bOk      : BOOL; // 转换成功
+    nDstLen  : UDINT; // 目标字符数
+    bConvert : BOOL; // 在线触发
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：从云端 MQTT 收到 UTF-8 报警 → 转 STRING 写到 PLC 本地报警表（仅显示）。
+// 价值：替代手写 UTF-8 解码循环；统一与 `STRING_TO_UTF8` 的双向通道。
+// 验证步骤：
+//   1. 引用 Tc2_Utilities
+//   2. 编译 + 登录 + 运行
+//   3. 在线写触发位 TRUE，monitor 输出变量
+// =============================================================================
+// 实际工程中 aUtf8 从 ADS / MQTT 消息读出
+IF bConvert THEN
+    // 模拟一个 UTF-8 ASCII 串作为示例
+    aUtf8[0] := 16#48; aUtf8[1] := 16#69; aUtf8[2] := 16#00;  // "Hi"
+    bOk := UTF8_TO_STRING(pDstSTRING := ADR(sLocal),
+                          pSrcUTF8   := ADR(aUtf8),
+                          nDstSize   := SIZEOF(sLocal),
+                          nDstLen    => nDstLen);
+    bConvert := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

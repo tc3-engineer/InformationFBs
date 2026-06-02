@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_F_GetTaskTime" Id="{7d3b376b-638c-5620-a140-d4316cc5ef7d}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_F_GetTaskTime
+VAR
+    ulTaskScheduledTime : ULINT; // 本周期开始时间戳
+    ulFirstEventTs      : ULINT; // 周期内第一个事件时间戳
+    ulSecondEventTs     : ULINT; // 周期内第二个事件时间戳（应与 First 完全相同）
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_System.F_GetTaskTime 演示程序
+// ============================================================
+// 场景：周期内多事件需共享同一时间戳便于在日志里识别『同周期事件』。
+// 价值：替代每事件各取 F_GetSystemTime（值不同），本函数同周期保持一致。
+// 验证：登录后 ulFirstEventTs 与 ulSecondEventTs 在同一 PLC 周期内应完全相同；下一周期才一起前进任务周期对应的 100ns 数（1ms 任务前进 10000）。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_System（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』指引在线写值观察
+// ============================================================
+
+ulFirstEventTs := F_GetTaskTime();
+// 假装做点事
+ulSecondEventTs := F_GetTaskTime();
+// 同周期内两者应相等
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

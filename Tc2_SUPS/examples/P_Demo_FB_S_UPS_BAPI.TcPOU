@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_S_UPS_BAPI" Id="{00edba7b-8579-5e85-80fc-200a39d06165}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_S_UPS_BAPI
+VAR
+    fbSUPS                  : FB_S_UPS_BAPI; // 通用 BAPI 版 1-second UPS 管家（BIOS-API v1.15+）
+    sLastClientConfigRetain : STRING(80); // 最近一次 OPC UA 客户端配置；工程里加 VAR RETAIN
+    nMsgSentRetain          : UDINT; // 已发送报文计数；工程里加 VAR RETAIN
+    bPowerFailNow           : BOOL; // 实时电源标志：掉电中 = TRUE
+    eUpsState               : E_S_UPS_State; // 应急流程当前阶段（启动几个周期后才稳定到 eSUPS_PowerOK）
+    nCapacityPct            : BYTE; // UPS 电容剩余百分比 0..100（电容老化趋势预警用）
+    bUpsBusy                : BOOL; // FB 活动期标志（启动探测 / 写 retain / quick shutdown 期间为 TRUE）
+    bUpsError               : BOOL; // 错误标志：TRUE = 出错（PDF 描述疑似笔误，按工程惯例理解）
+    nUpsErrID               : UDINT; // 错误号（出错时记录用于 Beckhoff 现场支持）
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：某新型 CX52x0 控制器（BIOS-API v1.18）做 SCADA 网关，断电时要保存
+//       最近一次 OPC UA 客户端配置 sLastClientConfigRetain 和已发送报文计数
+//       nMsgSentRetain。BAPI 版还可监视电容老化（nCapacityPct < 90 持续报）。
+//
+// 价值：BAPI 版不依赖具体型号 → 后续升级 CX9240 / CX52x0 也能保留同一段
+//       代码。多出 nCapacity 让电容老化能在 HMI 上做趋势预警；多出
+//       bError/nErrID 让代码可捕获故障并通过 OPC UA / E-Mail 告警。
+//
+// 验证步骤：
+//   1. 引用 Tc2_SUPS（含依赖 Tc2_System）
+//   2. 在 PLC 项目中右键 → Add Existing Item (.TcPOU) → 选本文件 → OK
+//   3. 工程里把 sLastClientConfigRetain / nMsgSentRetain 改为 VAR RETAIN
+//   4. Properties → PLC → Router Memory 调到 retain 总量的 1.5-2 倍
+//   5. 编译、登录、运行
+//   6. 等 eUpsState = eSUPS_PowerOK 且 bUpsBusy = FALSE（启动后探测完成）
+//   7. 在线把 nMsgSentRetain 改到非零（例如 42）
+//   8. 模拟掉电（仅台架拔 24V）→ 观察 eUpsState 走 eSUPS_PowerFailure →
+//      eSUPS_WritePersistentData → eSUPS_QuickShutdown → 系统重启
+//   9. 上电后再连接 → 验证 nMsgSentRetain 仍是掉电前的值
+//  10. 观察 nCapacityPct 长期范围（新板应能稳到 100，老化后停在 85-90）
+// =============================================================================
+
+// 单次调用形式：所有 VAR_INPUT 显式赋值，输出端 6 项全部接出
+// 全部 PDF 推荐默认；BAPI 版不应改动
+fbSUPS(
+    sNetID           := '',
+    iPLCPort         := 0,
+    tTimeout         := DEFAULT_ADS_TIMEOUT,
+    eUpsMode         := eSUPS_WrPersistData_Shutdown,
+    ePersistentMode  := SPDM_2PASS,
+    tRecoverTime     := T#10S,
+    bPowerFailDetect => bPowerFailNow,
+    eState           => eUpsState,
+    nCapacity        => nCapacityPct,
+    bBusy            => bUpsBusy,
+    bError           => bUpsError,
+    nErrID           => nUpsErrID
+);
+
+// 业务侧典型用法：bError 应作 "TRUE = 出错" 理解（PDF 字面写反，按惯例）
+// IF bUpsError THEN
+//     fbAlarmEmail(sMsg := CONCAT('UPS error nErrID=', UDINT_TO_STRING(nUpsErrID)));
+// END_IF
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -13,7 +13,7 @@
 | Verified | 2026-05-25 ✅ |
 | InfoSys-checked | ✅ 2026-05-25 |
 | Status | `verified` |
-| Example | [`examples/P_Demo_FB_SoEAX5000FirmwareUpdate.xml`](../examples/P_Demo_FB_SoEAX5000FirmwareUpdate.xml) |
+| Example | [`examples/P_Demo_FB_SoEAX5000FirmwareUpdate.TcPOU`](../examples/P_Demo_FB_SoEAX5000FirmwareUpdate.TcPOU) |
 
 ---
 
@@ -129,7 +129,7 @@ END_VAR
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_FB_SoEAX5000FirmwareUpdate.xml`](../examples/P_Demo_FB_SoEAX5000FirmwareUpdate.xml)
+> 配套可导入文件：[`examples/P_Demo_FB_SoEAX5000FirmwareUpdate.TcPOU`](../examples/P_Demo_FB_SoEAX5000FirmwareUpdate.TcPOU)
 
 ```iecst
 // 场景：产线批量上线前统一把 AX5000 固件刷到指定版本，避免不同站固件不一致引发的偶发问题

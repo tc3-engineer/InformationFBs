@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_WDELETE" Id="{6930c7c4-09e6-5c04-94bf-ead0c96ad2ae}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_WDELETE
+VAR
+    sFullAlarm : WSTRING(255) := "[报警] 1号电机过流"; // 完整中文报警，含前缀 '[报警] '
+    sBody      : WSTRING(255); // 剥离前缀后的消息体
+    nPrefixLen : INT := 5; // 前缀字符数 = 5（'[','报','警',']','空格' 各 1 个 UCS-2 字符）
+    bStrip     : BOOL; // 触发一次 WDELETE
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：HMI 收到的中文报警都带统一前缀 '[报警] '，但下游短信通知模块只想
+//       要消息体（用了独立的 SMS 模板）。WDELETE 一行清掉前缀 5 个字符，
+//       剩下纯中文消息体。
+//
+// 价值：WDELETE 按 UCS-2 字符计数，删 1 个汉字传 LEN := 1 而不是 3。同样
+//       的需求用 STRING + DELETE 会把汉字拆出半个，HMI 显示乱码。
+//
+// 验证步骤：
+//   1. 导入本文件、引用 Tc2_Standard、编译、登录、运行
+//   2. 在线 monitor sBody（监视面板要选 Unicode）
+//   3. 在线写 bStrip := TRUE
+//   4. 下一周期 sBody = "1号电机过流"（前缀剥离干净）
+//   5. WLEN(sBody) 应等于 6（按 UCS-2 字符算），不是 14（按 UTF-8 字节算）
+// =============================================================================
+
+// POS=1 表示从第 1 字符起；LEN=5 按 UCS-2 字符算，汉字 = 1 字符
+IF bStrip THEN
+    sBody := WDELETE(sFullAlarm, nPrefixLen, 1);
+    bStrip := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

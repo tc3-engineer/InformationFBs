@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_ROUTETRANSPORT_TO_STRING" Id="{ade4d16b-edba-5728-b6c9-bd7a95df832d}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_ROUTETRANSPORT_TO_STRING
+VAR
+    eTpType : E_RouteTransportType; // 工业语义：从 ADS 路由查询拿到的传输层
+    sTpName : STRING(32); // 可读字符串
+    bRender : BOOL; // 在线触发
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：HMI 显示 ADS 路由表：每行路由的传输层标识用本函数转为可读字符串。
+// 价值：替代手写枚举 → 字符串 switch 表；统一与 Beckhoff 工具的命名风格。
+// 验证步骤：
+//   1. 引用 Tc2_Utilities
+//   2. 编译 + 登录 + 运行
+//   3. 在线写触发位 TRUE，monitor 输出变量
+// =============================================================================
+
+IF bRender THEN
+    sTpName := ROUTETRANSPORT_TO_STRING(eType := eTpType);
+    bRender := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

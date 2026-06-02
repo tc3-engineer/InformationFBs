@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_GETBIT32" Id="{fb23fe8a-75f3-54ab-a6a0-778aa22d104f}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_GETBIT32
+VAR
+    dwCommandWord : DWORD := 0; // HMI 写入的命令字
+    bCmdStart     : BOOL; // bit0 = 启动
+    bCmdStop      : BOOL; // bit1 = 停止
+    bCmdReset     : BOOL; // bit2 = 复位
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：解码 HMI 命令字：DWORD 中 bit0=启动 / bit1=停止 / bit2=复位，逐位提取成 BOOL 喂给业务状态机。
+// 价值：比 AND + 移位 + 比较可读得多。
+// 验证：在线写 dwCommandWord := 1 → bCmdStart = TRUE；写 5（bit0+bit2）→ bCmdStart + bCmdReset = TRUE。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_System（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』行的指示在线写值观察
+// =============================================================================
+
+// 每周期解码命令字
+bCmdStart := GETBIT32(inVal32 := dwCommandWord, bitNo := 0);
+bCmdStop  := GETBIT32(inVal32 := dwCommandWord, bitNo := 1);
+bCmdReset := GETBIT32(inVal32 := dwCommandWord, bitNo := 2);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_TOF" Id="{05babbf6-cae2-5833-a948-b47456b0c3ce}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_TOF
+VAR
+    fbCoolDownDelay : TOF; // 断开延时定时器实例：电机停后风扇延时关
+    bMotorRun       : BOOL; // 电机运行信号（在线写值模拟）
+    tCoolDownPeriod : TIME := T#60S; // 停机后散热延时 = 60 秒
+    bFanOn          : BOOL; // 风扇运行输出
+    tCoolElapsed    : TIME; // 已散热时长（监视：电机停后从 0 累加到 60s）
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：风冷电机停机后散热风扇延时关闭。电机运行时风扇随之运行；操作员发出
+//       停机指令后，电机立刻停，但风扇还要继续转 60 秒散热，防止电机过热损坏。
+//
+// 价值：用一行 TOF 完成"立即通、延时断"语义；不用本 FB 就要自己实现"上一周期
+//       状态保存 + 下降沿启动计时 + 期间被打断要清零"，约 8-10 行边界容易写错。
+//
+// 验证步骤：
+//   1. PLC 项目 → Add Existing Item (.TcPOU) → 选本文件
+//   2. 引用 Tc2_Standard 库
+//   3. 编译、登录、运行
+//   4. 在线 monitor bFanOn 与 tCoolElapsed
+//   5. 在线 bMotorRun := TRUE → bFanOn 立刻变 TRUE，tCoolElapsed 保持 0
+//   6. 在线 bMotorRun := FALSE → bFanOn 仍 TRUE，tCoolElapsed 从 0 开始累加
+//   7. tCoolElapsed 到 60s → bFanOn 变 FALSE
+//   8. 测试中途打断：散热 30s 时把 bMotorRun 再置 TRUE 一下，看 tCoolElapsed
+//      立刻清零、bFanOn 继续 TRUE；再 FALSE，重新从 0 数 60s
+// =============================================================================
+
+fbCoolDownDelay(
+    IN := bMotorRun,
+    PT := tCoolDownPeriod,
+    Q  => bFanOn,
+    ET => tCoolElapsed
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

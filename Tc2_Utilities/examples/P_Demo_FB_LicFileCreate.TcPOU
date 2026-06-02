@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_LicFileCreate" Id="{b8fe7845-8bd1-598d-b795-a3adc8ff5abe}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_LicFileCreate
+VAR
+    fbFB_LicFileCreate : FB_LicFileCreate; // FB_LicFileCreate 实例
+    bExec              : BOOL := FALSE;
+    bBusy_             : BOOL;
+    bErrFlag           : BOOL;
+    nErrCode           : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：生成 License 申请文件。
+// 价值：脚本化授权申请。
+// 验证：触发后观察 bDone / bErr，错误号 nErrId 反映 ADS Return Codes。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_Utilities（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』行的指示在线写值观察
+// =============================================================================
+
+fbFB_LicFileCreate(
+    bExecute := bExec, tTimeout := DEFAULT_ADS_TIMEOUT,
+    bBusy => bBusy_, bError => bErrFlag, nErrorId => nErrCode
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_F_TRIG" Id="{bc2ada7f-d289-5dc4-9e09-1be0ecb05f9f}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_F_TRIG
+VAR
+    fbSensorLossEdge : F_TRIG; // 下降沿检测器实例
+    bLevelSensorOk   : BOOL := TRUE; // 料位传感器（默认 TRUE = OK；变 FALSE 表示断线/料尽）
+    bSensorLostPulse : BOOL; // "刚断开"单 PLC 周期脉冲
+    nAlarmLogCount   : UDINT; // 累计断线告警事件数
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：传感器掉线/料尽事件告警。料位传感器正常 TRUE；变 FALSE 时业务关心的是
+//       "刚刚断的那一拍"（用于写日志/上报 SCADA/触发 LED 闪烁），而不是
+//       "持续断"。F_TRIG 把电平信号转成"事件"信号，避免日志反复重复写入。
+//
+// 价值：1 行 F_TRIG 拿到下降沿事件；手写需要维护"上一周期值"变量加比较，每个
+//       信号 3 行散落，N 个监视点要写 3N 行。
+//
+// 验证步骤：
+//   1. PLC 项目 → Add Existing Item (.TcPOU) → 选本文件
+//   2. 引用 Tc2_Standard 库
+//   3. 编译、登录、运行
+//   4. 在线 monitor nAlarmLogCount
+//   5. 初始：bLevelSensorOk = TRUE，nAlarmLogCount = 0
+//   6. 在线 bLevelSensorOk := FALSE → nAlarmLogCount 加 1（在那一拍）
+//   7. bLevelSensorOk 保持 FALSE → nAlarmLogCount 不再增加（证明只在边沿触发）
+//   8. bLevelSensorOk := TRUE → nAlarmLogCount 不变（上升沿不是 F_TRIG 关心的）
+//   9. 再次 bLevelSensorOk := FALSE → nAlarmLogCount 再加 1
+// =============================================================================
+
+// 每周期无条件调用：提取传感器下降沿
+fbSensorLossEdge(CLK := bLevelSensorOk, Q => bSensorLostPulse);
+
+// 下降沿那一拍累加告警计数（实际工程可换成 ADS 写日志、SCADA 上报等）
+IF bSensorLostPulse THEN
+    nAlarmLogCount := nAlarmLogCount + 1;
+END_IF
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

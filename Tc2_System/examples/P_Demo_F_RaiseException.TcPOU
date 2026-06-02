@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_F_RaiseException" Id="{d65fab84-150d-51a4-b160-eaf91d4eb3ec}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_F_RaiseException
+VAR
+    bTriggerAssertion : BOOL; // 在线写 TRUE 触发一次断言失败
+    nExceptionCaught  : UDINT; // 捕获到的异常码
+    nCounterCatch     : UDINT; // 进入 __CATCH 的次数
+    nCounterAfter     : UDINT; // 异常处理后继续执行的次数
+    rtTrig            : R_TRIG; // 上升沿检测
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：在状态机的 default 分支（不可达）主动抛异常，让 PLC 停在现场便于事后分析。用 __TRY/__CATCH 演示捕获 + 恢复模式。
+// 价值：替代 printf 日志 + 静默继续，真正强制中止。
+// 验证：bTriggerAssertion := TRUE → 观察 nExceptionCaught 非零且 nCounterCatch 递增；恢复执行流。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_System（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』行的指示在线写值观察
+// =============================================================================
+
+rtTrig(CLK := bTriggerAssertion);
+IF rtTrig.Q THEN
+    __TRY
+        // 模拟『不可达分支』的断言失败
+        F_RaiseException(ExceptionCode := 16#80000001);
+    __CATCH(nExceptionCaught)
+        // 捕获后记录并恢复
+        nCounterCatch := nCounterCatch + 1;
+    __ENDTRY
+END_IF;
+
+// 异常处理完后业务继续
+nCounterAfter := nCounterAfter + 1;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

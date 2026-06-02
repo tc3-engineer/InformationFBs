@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_AX2000_Reference" Id="{d512bdb9-3841-5f2a-ad22-2820824830b8}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_AX2000_Reference
+VAR
+    fbAx2000Ref     : FB_AX2000_Reference; // AX2000 回零 FB
+    stAx2000PzdIn   : ST_PZD_IN; // PZD 输入
+    stAx2000PzdOut  : ST_PZD_OUT; // PZD 输出
+    bSetRefPointReq : BOOL := FALSE; // HMI：设定当前为零位
+    bHomingStartReq : BOOL := FALSE; // HMI：启动 homing
+    bHomingStopReq  : BOOL := FALSE; // HMI：停 homing
+    iHomingVelocity : WORD := 50; // homing 基础速度
+    bHomingBusy     : BOOL; // 工作中
+    bHomingErrFlag  : BOOL; // 驱动器故障
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：维修后重新对零：HMI 按钮触发本 FB 启动 homing，伺服按机械原点感应器找零位。
+// 价值：homing 程序化，工人按一键完成。
+// 验证：登录后 stAx2000PzdIn / stAx2000PzdOut 已链；在线写 bHomingStartReq := TRUE → fbAx2000Ref.bBusy 短暂 TRUE → 驱动器开始 homing → 找到零位后 bBusy 落回 FALSE，bHomingErrFlag = FALSE 表示成功。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_IoFunctions（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』行的指示在线写值观察
+// =============================================================================
+
+fbAx2000Ref(
+    bSetRefPoint := bSetRefPointReq,
+    bCalibrStart := bHomingStartReq,
+    bCalibrStop  := bHomingStopReq,
+    iCalVelo     := iHomingVelocity,
+    stPZDIN      := stAx2000PzdIn,
+    stPZDOUT     := stAx2000PzdOut,
+    bBusy        => bHomingBusy,
+    bErr         => bHomingErrFlag
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

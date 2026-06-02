@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_FileSeek" Id="{a088a14b-1ee9-5f0f-bdd9-966cb5a04a4b}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_FileSeek
+VAR
+    fbFileSeek   : FB_FileSeek; // FB_FileSeek 实例
+    hOpenedFile  : UINT; // 已打开句柄
+    bSeekRequest : BOOL; // 在线写 TRUE 触发一次 Seek
+    bSeekError   : BOOL; // TRUE = 移动失败
+    nErrIdLast   : UDINT; // ADS 错误号
+    bBusyMon     : BOOL; // ADS 通讯中
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：读取已打开二进制日志中倒数第 512 字节窗口：用 SEEK_END + nSeekPos = -512 跳到该位置准备 FB_FileRead。
+// 价值：替代手算文件长度 - 512 再用 SEEK_SET 的方案，简化 3-5 行代码。
+// 验证：在线置 bSeekRequest := TRUE → 观察 bBusy 跳动后落下；故意传 hOpenedFile = 0 → bSeekError = TRUE。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_System（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』行的指示在线写值观察
+// =============================================================================
+
+// 跳到文件末尾向前 512 字节处准备读最后一段
+fbFileSeek(
+    sNetId   := '',
+    hFile    := hOpenedFile,
+    nSeekPos := -512,
+    eOrigin  := SEEK_END,
+    bExecute := bSeekRequest,
+    tTimeout := T#10S,
+    bBusy    => bBusyMon,
+    bError   => bSeekError,
+    nErrId   => nErrIdLast
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

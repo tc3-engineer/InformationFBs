@@ -13,7 +13,7 @@
 | Verified | 2026-05-11 ✅ |
 | InfoSys-checked | ✅ 2026-05-11 |
 | Status | `verified` |
-| Example | [`examples/P_Demo_FIND.xml`](../examples/P_Demo_FIND.xml) |
+| Example | [`examples/P_Demo_FIND.TcPOU`](../examples/P_Demo_FIND.TcPOU) |
 
 ---
 
@@ -93,7 +93,7 @@ InfoSys topic 74414091 与 PDF §4.3 文本一致，无额外行为补充。
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_FIND.xml`](../examples/P_Demo_FIND.xml)（PLCopenXML，可直接导入 TwinCAT 3 XAE）
+> 配套可导入文件：[`examples/P_Demo_FIND.TcPOU`](../examples/P_Demo_FIND.TcPOU)（TwinCAT 3 原生 .TcPOU，可直接拖入 XAE 的 PLC POUs 文件夹）
 
 ```iecst
 // 场景：从 'IP:192.168.1.10,PORT:502' 这种 KV 串中定位 ',' 的位置，

@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_SendMessageEx2" Id="{a828c01d-6af7-5f2a-a8a6-7a41697ff10b}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_SendMessageEx2
+VAR
+    fbLogger       : FB_TcEventLogger; // EventLogger 实例
+    stEventEntry   : TcEventEntry; // 事件定义
+    sJsonAttribute : STRING(255) := '{"batch":"B-001"}'; // 合法 JSON
+    bDoSend        : BOOL := FALSE; // 上升沿触发
+    bDoSendPrev    : BOOL; // 边沿检测
+    hr             : HRESULT; // 返回值监视
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：结构体 + JSON 一次性发送
+// 价值：覆盖所有事件元数据的最完整免实例发送
+// 验证：登录后写 bDoSend := TRUE，HMI 事件含 JSON 字段；改 sJsonAttribute 再发可看到 JSON 内容更新
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_EventLogger（System → References → Add library）
+//   3. 编译 → 登录 → 运行；按 verify 注释里给出的在线写值操作
+// =============================================================================
+
+IF bDoSend AND NOT bDoSendPrev THEN
+    hr := fbLogger.SendMessageEx2(
+        stEventEntry := stEventEntry,
+        ipSourceInfo := 0,
+        nTimeStamp := 0,
+        ipArguments := 0,
+        sJsonAttribute := sJsonAttribute);
+END_IF;
+bDoSendPrev := bDoSend;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

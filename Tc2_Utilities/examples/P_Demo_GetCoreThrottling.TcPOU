@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_GetCoreThrottling" Id="{d268cf31-23a3-53be-b8a0-629a9dfb6dcb}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_GetCoreThrottling
+VAR
+    fbCBM                    : TC_CoreBoostMonitor; // TC_CoreBoostMonitor 实例
+    hrResult                 : HRESULT; // 方法返回的 HRESULT
+    out_bInThermalThrottling : BOOL; // 方法 REFERENCE TO bInThermalThrottling 出参
+    out_bInPowerThrottling   : BOOL; // 方法 REFERENCE TO bInPowerThrottling 出参
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_Utilities.TC_CoreBoostMonitor.GetCoreThrottling 演示程序（METHOD）
+// ============================================================
+// 注意：必须 Intel Core i 11 代+ 且 TwinCAT Core Boost 已启用
+// 验证步骤：
+//   1. 引用 Tc2_Utilities
+//   2. 编译 + 登录
+//   3. 在 Real-time Settings 启用 Core Boost
+//   4. 在线监视 hrResult 与 out_* 出参
+// ============================================================
+
+hrResult := fbCBM.GetCoreThrottling(out_bInThermalThrottling, out_bInPowerThrottling);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

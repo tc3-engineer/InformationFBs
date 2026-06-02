@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_WLEN2" Id="{3813d9ef-3e16-529a-9f8e-51177aee58db}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_WLEN2
+VAR
+    wsBuf  : WSTRING(1024) := "HMI text..."; // 工业语义：HMI 多语言长缓冲
+    nLen   : UDINT; // 字符数
+    bCheck : BOOL; // 在线触发
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：HMI WSTRING 缓冲已写入字符数统计；下一次 `WCONCAT2` 的偏移计算。
+// 价值：`Tc2_Standard.WLEN` 限 255；本函数无限制。
+// 验证步骤：
+//   1. 引用 Tc2_Utilities
+//   2. 编译 + 登录 + 运行
+//   3. 在线写触发位 TRUE，monitor 输出变量
+// =============================================================================
+IF bCheck THEN
+    nLen := WLEN2(pWSTRING := ADR(wsBuf));
+    bCheck := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

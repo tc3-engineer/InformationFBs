@@ -13,7 +13,7 @@
 | Verified | 2026-05-21 ✅ |
 | InfoSys-checked | ✅ 2026-05-21 |
 | Status | `verified` |
-| Example | [`examples/P_Demo_MC_Halt.xml`](../examples/P_Demo_MC_Halt.xml) |
+| Example | [`examples/P_Demo_MC_Halt.TcPOU`](../examples/P_Demo_MC_Halt.TcPOU) |
 
 ---
 
@@ -119,7 +119,7 @@ END_VAR
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_MC_Halt.xml`](../examples/P_Demo_MC_Halt.xml)
+> 配套可导入文件：[`examples/P_Demo_MC_Halt.TcPOU`](../examples/P_Demo_MC_Halt.TcPOU)
 
 ```iecst
 // 场景：传送带在工艺结束时正常停车，停后允许下一节拍再启动

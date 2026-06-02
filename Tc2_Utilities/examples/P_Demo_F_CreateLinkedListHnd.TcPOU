@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_F_CreateLinkedListHnd" Id="{d840e07d-490e-5537-a507-2e8ef143da38}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_F_CreateLinkedListHnd
+VAR
+    aEntries : ARRAY[0..99] OF T_LinkedListEntry; // 工业语义：100 槽位报警历史链表池
+    hList    : T_HLINKEDLIST; // 链表句柄
+    bOk      : BOOL; // 初始化成功
+    bInit    : BOOL; // 在线触发（启动一次）
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：报警历史记录的环形缓冲：最近 100 条报警按时序入链表，超过 100 自动剔除最早一条。
+// 价值：替代手写 ARRAY + head/tail 索引环形缓冲——本函数提供库支持的双向链表数据结构。
+// 验证步骤：
+//   1. 引用 Tc2_Utilities
+//   2. 编译 + 登录 + 运行
+//   3. 在线写触发位 TRUE，monitor 输出变量
+// =============================================================================
+
+IF bInit THEN
+    bOk := F_CreateLinkedListHnd(pEntries  := ADR(aEntries),
+                                 cbEntries := SIZEOF(aEntries),
+                                 hList     := hList);
+    bInit := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

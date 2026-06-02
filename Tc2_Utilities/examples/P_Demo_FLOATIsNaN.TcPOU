@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FLOATIsNaN" Id="{e2ba526a-ae83-5143-93d4-b2e36503b48b}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FLOATIsNaN
+VAR
+    rDifferentialPressure : LREAL := 4.0; // 压差信号（在线写 -1.0 模拟传感器零漂）
+    rFlowValue            : LREAL; // 流量计算结果
+    bFlowIsNaN            : BOOL; // 流量值是否为 NaN
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_Utilities.FLOATIsNaN 演示程序（FUNCTION，已弃用）
+// ============================================================
+// 场景：流量计算公式 rFlow := SQRT(rDeltaP / rRho)，若现场压力差信号在低
+//       温下偶尔为负（传感器零漂）会让 SQRT 输出 NaN，污染下游累积流量。
+//       专门检测 NaN 比一并拦 Inf 更精细——本工程允许 Inf（极端工况确实
+//       可能高压差）但不允许 NaN（数学非法）。
+// 价值：用 FLOATIsNaN 而不是 FLOATIsFinite 让"Inf 表示极端高流量"这种业务
+//       语义保留下来，只把真正非法的 NaN 拦掉。
+// 验证：
+//   1. 引用 Tc2_Utilities，编译 + 登录
+//   2. 在线写 rDifferentialPressure := -1.0
+//      → 监视 rFlowValue 变 NaN；bFlowIsNaN 翻 TRUE
+//   3. 改回 rDifferentialPressure := 4.0
+//      → bFlowIsNaN 翻 FALSE；rFlowValue ≈ 2.0
+// 注：新代码请改用 LrealIsNaN；本例仅为旧工程兼容演示。
+// ============================================================
+
+// SQRT 接到负数会产 NaN（IEEE 754 标准）
+rFlowValue := SQRT(rDifferentialPressure);
+
+// 检测 NaN（已弃用函数；新代码用 LrealIsNaN）
+bFlowIsNaN := FLOATIsNaN(rFlowValue);
+// 真实工程：IF bFlowIsNaN THEN 报警 + fail-safe END_IF
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

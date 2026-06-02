@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_TC_Stop" Id="{a96d553b-3917-5fa8-a9f5-44efc64f0a1c}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_TC_Stop
+VAR
+    fbTC_Stop : TC_Stop; // TC_Stop 实例
+    NETID     : T_AmsNetId := '';
+    STOP      : BOOL := FALSE;
+    TMOUT     : TIME := DEFAULT_ADS_TIMEOUT;
+    BUSY      : BOOL;
+    ERR       : BOOL;
+    ERRID     : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：TC_Stop 的最小可编译演示——所有 VAR_INPUT 均以 doc/PDF 中真实引脚名调用。
+//       业务侧请在线 monitor / 在线写值触发对应输入，看输出端 monitor 结果。
+//
+// 价值：保证示例 ST 代码所有引脚名与 TC_Stop 的 VAR_INPUT/VAR_OUTPUT 一致，
+//       Add Existing Item (.TcPOU) → 编译 → 登录 流程能跑通，作为 hand-curated 例程
+//       的脚手架。
+//
+// 验证步骤：
+//   1. 引用 Tc2_Utilities（及其依赖 Tc2_System）
+//   2. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件 → OK → 编译、登录
+//   3. 在线对 VAR_INPUT 写入合适触发值（典型 bExecute / RUN / START 上升沿）
+//   4. 在线 monitor VAR_OUTPUT 观察 FB 反应
+// =============================================================================
+
+fbTC_Stop(
+    NETID := NETID,
+    STOP := STOP,
+    TMOUT := TMOUT,
+    BUSY => BUSY,
+    ERR => ERR,
+    ERRID => ERRID
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

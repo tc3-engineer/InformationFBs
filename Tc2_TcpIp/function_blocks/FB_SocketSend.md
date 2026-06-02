@@ -13,7 +13,7 @@
 | Verified | 2026-05-21 ✅ |
 | InfoSys-checked | ✅ 2026-05-21 |
 | Status | `verified` |
-| Example | [`examples/P_Demo_FB_SocketSend.xml`](../examples/P_Demo_FB_SocketSend.xml) |
+| Example | [`examples/P_Demo_FB_SocketSend.TcPOU`](../examples/P_Demo_FB_SocketSend.TcPOU) |
 
 ---
 
@@ -97,7 +97,7 @@ END_VAR
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_FB_SocketSend.xml`](../examples/P_Demo_FB_SocketSend.xml)
+> 配套可导入文件：[`examples/P_Demo_FB_SocketSend.TcPOU`](../examples/P_Demo_FB_SocketSend.TcPOU)
 
 ```iecst
 // 场景：连接已建立（hRemote），现在向对端发一段固定字符串。

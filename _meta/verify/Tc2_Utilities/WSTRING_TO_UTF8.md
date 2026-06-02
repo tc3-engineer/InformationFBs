@@ -4,6 +4,6 @@
 - Library: Tc2_Utilities 2.18.2
 - Source PDF: https://download.beckhoff.com/download/document/automation/twincat3/TwinCAT_3_PLC_Lib_Tc2_Utilities_EN.pdf
 - Doc: `Tc2_Utilities/extended_string/WSTRING_TO_UTF8.md` — PASS
-- Example: `Tc2_Utilities/examples/P_Demo_WSTRING_TO_UTF8.xml` — PASS
+- Example: `Tc2_Utilities/examples/P_Demo_WSTRING_TO_UTF8.TcPOU` — PASS
 - Doc result: ✅ PASS
 - Example result: ✅ PASS

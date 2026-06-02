@@ -13,7 +13,7 @@
 | Verified | 2026-05-21 ✅ |
 | InfoSys-checked | ✅ 2026-05-21 |
 | Status | `verified` |
-| Example | [`examples/P_Demo_FB_TlsSocketSetCert.xml`](../examples/P_Demo_FB_TlsSocketSetCert.xml) |
+| Example | [`examples/P_Demo_FB_TlsSocketSetCert.TcPOU`](../examples/P_Demo_FB_TlsSocketSetCert.TcPOU) |
 
 ---
 
@@ -108,7 +108,7 @@ END_VAR
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_FB_TlsSocketSetCert.xml`](../examples/P_Demo_FB_TlsSocketSetCert.xml)
+> 配套可导入文件：[`examples/P_Demo_FB_TlsSocketSetCert.TcPOU`](../examples/P_Demo_FB_TlsSocketSetCert.TcPOU)
 
 ```iecst
 // 场景：服务端 TLS socket 已 Create(bListener:=TRUE)，加载本机证书 + 加密私钥。

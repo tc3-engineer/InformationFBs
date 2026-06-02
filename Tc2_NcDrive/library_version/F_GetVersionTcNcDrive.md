@@ -13,7 +13,7 @@
 | Verified | 2026-05-25 ✅ |
 | InfoSys-checked | ✅ 2026-05-25 |
 | Status | `verified` |
-| Example | [`examples/P_Demo_F_GetVersionTcNcDrive.xml`](../examples/P_Demo_F_GetVersionTcNcDrive.xml) |
+| Example | [`examples/P_Demo_F_GetVersionTcNcDrive.TcPOU`](../examples/P_Demo_F_GetVersionTcNcDrive.TcPOU) |
 
 ---
 
@@ -71,7 +71,7 @@ END_VAR
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_F_GetVersionTcNcDrive.xml`](../examples/P_Demo_F_GetVersionTcNcDrive.xml)
+> 配套可导入文件：[`examples/P_Demo_F_GetVersionTcNcDrive.TcPOU`](../examples/P_Demo_F_GetVersionTcNcDrive.TcPOU)
 
 ```iecst
 // 场景：上电初始化时把 Tc2_NcDrive 库版本读出来，拼成 "x.y.z" 写进诊断日志/HMI

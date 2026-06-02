@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_GetDPRAMInfoEx" Id="{746f9868-1c05-5400-8ad9-a763e0037386}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_GetDPRAMInfoEx
+VAR
+    fbGetDpramInfoEx   : FB_GetDPRAMInfoEx; // NOV/DP-RAM Ex 信息查询 FB
+    nDpramDeviceId     : UDINT := 1; // NOVRAM 卡 Device Id
+    bGetDpramInfoExReq : BOOL := FALSE; // 上升沿触发查询
+    tInfoQueryTimeout  : TIME := T#5S; // 超时
+    bGetInfoExBusy     : BOOL; // 工作中
+    bGetInfoExError    : BOOL; // 出错
+    nLastInfoExErrCode : UDINT; // 错误号
+    stDpramAddrInfoEx  : ST_NovRamAddrInfoEx; // NOV/DP-RAM Ex 信息结构
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：通用 NOV-RAM 访问框架：上电查访问类型 + 地址，按类型分支选用普通 / Ex 读写。
+// 价值：跨硬件平台 PLC 程序复用。
+// 验证：登录后 nDeviceId := 1；触发 bGetDpramInfoExReq → 完成后 stDpramAddrInfoEx 中可看到 eAccessType（BYTE/WORD/DWORD）与地址指针。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_IoFunctions（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』行的指示在线写值观察
+// =============================================================================
+
+fbGetDpramInfoEx(
+    nDevId   := nDpramDeviceId,
+    bExecute := bGetDpramInfoExReq,
+    tTimeOut := tInfoQueryTimeout,
+    bBusy    => bGetInfoExBusy,
+    bError   => bGetInfoExError,
+    nErrId   => nLastInfoExErrCode,
+    stInfo   => stDpramAddrInfoEx
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

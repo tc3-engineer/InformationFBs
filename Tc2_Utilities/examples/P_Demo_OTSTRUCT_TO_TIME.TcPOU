@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_OTSTRUCT_TO_TIME" Id="{942ab604-4222-5d65-9312-5ae8eeef963e}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_OTSTRUCT_TO_TIME
+VAR
+    otDryingTime : OTSTRUCT; // HMI 输入的多字段时间结构
+    tDryingDelay : TIME; // PLC 内部用的 TIME 值（喂给 TON.PT）
+    bRunOnce     : BOOL; // 脉冲触发
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：HMI 上让操作员拨「时」「分」「秒」三个轮子设置烘干时间，PLC 需合并喂给 TON
+//
+// 价值：1 行合并多字段，避免手写 BYTE_TO_TIME 后多次相乘
+//
+// 验证步骤：
+//   1. 引用 Tc2_Utilities
+//   2. 编译 + 登录 + 运行
+//   3. 在线给 otDryingTime.byHours:=2, byMinutes:=30, bySeconds:=0
+//   4. 强制 bRunOnce := TRUE
+//   5. 在线观察 tDryingDelay = T#2h30m
+// =============================================================================
+tDryingDelay := OTSTRUCT_TO_TIME(otDryingTime);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

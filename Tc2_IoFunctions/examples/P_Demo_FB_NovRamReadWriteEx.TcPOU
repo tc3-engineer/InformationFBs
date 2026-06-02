@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_NovRamReadWriteEx" Id="{833bf572-dee7-5bac-8328-5b0d39005f94}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_NovRamReadWriteEx
+VAR
+    fbNovRamAccessEx        : FB_NovRamReadWriteEx; // NOV-RAM 读写 Ex FB
+    nNovRamDeviceId         : UDINT := 1; // NOVRAM 卡 Device Id
+    nProductionCountToWrite : UDINT := 0; // 要写入的批次产量
+    nReadbackProduction     : UDINT := 0; // 读回的批次产量
+    nReadOffsetFromNov      : UDINT := 4; // 读偏移（字节）
+    nWriteOffsetToNov       : UDINT := 4; // 写偏移（字节）
+    bReadFromNovRam         : BOOL := FALSE; // 上升沿读
+    bWriteToNovRam          : BOOL := FALSE; // 上升沿写
+    tNovRamTimeout          : TIME := T#5S; // 超时
+    bNovRamBusy             : BOOL; // 工作中
+    bNovRamErr              : BOOL; // 出错
+    nLastNovErrCode         : UDINT; // ADS 错误号
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：CX9000 NOVRAM 按批次号偏移存"批次产量"：批次 N 的产量存在偏移 N*4 处。
+// 价值：灵活偏移寻址；适应非标 NOV-RAM 硬件。
+// 验证：登录后 nReadOffsetFromNov := 4 (第 1 批位置)、触发 bReadFromNovRam → bNovRamBusy 短暂 TRUE → 回 FALSE 后 nReadbackProduction 显示上次写入的批次 1 产量；改 nWriteOffsetToNov := 8 后写新批次再读验证。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_IoFunctions（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』行的指示在线写值观察
+// =============================================================================
+
+fbNovRamAccessEx(
+    nDevId     := nNovRamDeviceId,
+    bRead      := bReadFromNovRam,
+    bWrite     := bWriteToNovRam,
+    cbSrcLen   := SIZEOF(nProductionCountToWrite),
+    cbDestLen  := SIZEOF(nReadbackProduction),
+    pSrcAddr   := ADR(nProductionCountToWrite),
+    pDestAddr  := ADR(nReadbackProduction),
+    nReadOffs  := nReadOffsetFromNov,
+    nWriteOffs := nWriteOffsetToNov,
+    tTimeOut   := tNovRamTimeout,
+    bBusy      => bNovRamBusy,
+    bErr       => bNovRamErr,
+    nErrId     => nLastNovErrCode
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

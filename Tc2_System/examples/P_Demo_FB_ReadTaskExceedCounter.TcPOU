@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_ReadTaskExceedCounter" Id="{a2a25fd8-3f09-5143-bd65-a734b79bda13}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_ReadTaskExceedCounter
+VAR
+    fbFB_ReadTaskExceedCounter : FB_ReadTaskExceedCounter; // FB_ReadTaskExceedCounter 实例
+    bReadExceedReq             : BOOL; // 在线上升沿触发读取
+    nMyTaskPort                : UINT; // 目标任务 ADS 端口（运行时填充）
+    bExceedReading             : BOOL; // 正在读
+    bExceedReadErr             : BOOL; // ADS 读错误
+    nLastAdsError              : UDINT; // ADS 错误码
+    nCurrentExceedCount        : UDINT; // 当前 Exceed Counter 累计
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_System.FB_ReadTaskExceedCounter 演示程序
+// ============================================================
+// 场景：CX 上 1ms 任务偶发卡顿，量化每分钟超限次数。
+// 价值：替代登录 System Manager 翻 Task 属性窗口，FB 直接把 Exceed Counter 拿到 PLC 变量便于趋势化。
+// 验证：登录后 nMyTaskPort 自动取当前任务端口；写 bReadExceedReq := TRUE，bExceedReading 一闪后 nCurrentExceedCount 装入数值。若 PLC 实时性正常应保持 0。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_System（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』指引在线写值观察
+// ============================================================
+
+// 自动取本任务 ADS 端口
+nMyTaskPort := TwinCAT_SystemInfoVarList._TaskInfo[GETCURTASKINDEXEX()].AdsPort;
+
+fbFB_ReadTaskExceedCounter(
+    bExecute := bReadExceedReq, nTaskAdsPort := nMyTaskPort,
+    bBusy => bExceedReading, bError => bExceedReadErr, nErrorID => nLastAdsError, nExceedCounter => nCurrentExceedCount
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -13,7 +13,7 @@
 | Verified | 2026-05-21 ✅ |
 | InfoSys-checked | ✅ 2026-05-21 |
 | Status | `verified` |
-| Example | [`examples/P_Demo_FB_CoERead.xml`](../examples/P_Demo_FB_CoERead.xml) |
+| Example | [`examples/P_Demo_FB_CoERead.TcPOU`](../examples/P_Demo_FB_CoERead.TcPOU) |
 
 ---
 
@@ -122,7 +122,7 @@ END_VAR
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_FB_CoERead.xml`](../examples/P_Demo_FB_CoERead.xml)
+> 配套可导入文件：[`examples/P_Demo_FB_CoERead.TcPOU`](../examples/P_Demo_FB_CoERead.TcPOU)
 
 ```iecst
 // 场景：读 AX8000 对象字典里 Identity 对象 (16#1018) 子索引 1 = Vendor ID

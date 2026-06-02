@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_CalcHashValue" Id="{371abd00-f757-5add-93f1-8efcf583c30c}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_CalcHashValue
+VAR
+    fbHashCalculator : FB_CalcHashValue; // FB 实例，复用做多次 hash
+    eHashMode        : E_HashMode := E_HashMode.HashMode_Sha256; // 本次使用的 hash 算法
+    sRecipePayload   : STRING(255) := 'recipe-v1:tank=70C,time=120s'; // 待 hash 的配方文本
+    aRecipeHash      : ARRAY[0..31] OF BYTE; // SHA-256 结果（32 字节）
+    bStartCalc       : BOOL; // 上升沿触发一次完整 hash 计算
+    bStartOk         : BOOL;
+    bUpdateOk        : BOOL;
+    bFinishOk        : BOOL;
+    bHashReady       : BOOL; // 本周期是否产出 hash
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_Utilities.FB_CalcHashValue 演示程序
+// ============================================================
+// 场景：生产线 PLC 周期读取一段配方数据，把它的 SHA-256 摘要发到 MES 用于
+//       数据完整性校验。配方一次读完即可，不需要分段——但用 FB 演示完整
+//       start/update/finish 三段调用。
+// 价值：MES 端只信 hash 一致；不用 hash 时 MES 拿到的"配方"可能在通讯链路
+//       任何环节被静默篡改而无人察觉。一行调用得到 32 字节摘要可让数据完整
+//       性问题在通讯下游立刻被发现。
+// 验证：
+//   1. 引用 Tc2_Utilities ≥ 3.3.51.0
+//   2. 编译 + 登录，把 P_Demo_FB_CalcHashValue 加入 PlcTask 调用
+//   3. 在线写 bStartCalc := TRUE 触发一次 hash 计算
+//   4. 监视 aRecipeHash 字节数组应非全 0（成功）；bStartOk/bUpdateOk 应为 TRUE
+//   5. 与同输入数据离线命令行 (echo -n 'recipe-v1:tank=70C,time=120s' | sha256sum) 对比
+// ============================================================
+
+// 每周期先清零 bHashReady：语义是"本周期产出有效"，下一周期若没新计算就该
+// 自动回 FALSE，避免下游消费者把旧 hash 当新数据反复处理。
+bHashReady := FALSE;
+
+// 上升沿触发一次三段调用：start → update → finish
+IF bStartCalc THEN
+    bStartCalc := FALSE;                                // 自动复位
+    bStartOk   := fbHashCalculator.start(hashMode := eHashMode);
+    bUpdateOk  := fbHashCalculator.update(pData := ADR(sRecipePayload),
+                                           nData := LEN(sRecipePayload));
+    bFinishOk  := fbHashCalculator.finish(pHash := ADR(aRecipeHash),
+                                           nHash := SIZEOF(aRecipeHash));
+    // 三段全部成功才标 hash 有效。finish 失败时 aRecipeHash 内容未定义，
+    // 不能让 MES 把坏 hash 当好 hash 用而引入完整性误判。
+    bHashReady := bStartOk AND bUpdateOk AND bFinishOk;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

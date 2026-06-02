@@ -13,7 +13,7 @@
 | Verified | 2026-05-21 ✅ |
 | InfoSys-checked | ✅ 2026-05-21 |
 | Status | `verified` |
-| Example | [`examples/P_Demo_MC_ReadMotionFunctionPoint.xml`](../examples/P_Demo_MC_ReadMotionFunctionPoint.xml) |
+| Example | [`examples/P_Demo_MC_ReadMotionFunctionPoint.TcPOU`](../examples/P_Demo_MC_ReadMotionFunctionPoint.TcPOU) |
 
 ---
 
@@ -111,7 +111,7 @@ END_VAR
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_MC_ReadMotionFunctionPoint.xml`](../examples/P_Demo_MC_ReadMotionFunctionPoint.xml)
+> 配套可导入文件：[`examples/P_Demo_MC_ReadMotionFunctionPoint.TcPOU`](../examples/P_Demo_MC_ReadMotionFunctionPoint.TcPOU)
 
 例程演示"工艺工程师做料厚自适应：先用 `MC_ReadMotionFunctionPoint` 读出指定 `PointID` 处的当前主从轴位置，与 HMI 上设定值对比，再决定要不要写回"。
 

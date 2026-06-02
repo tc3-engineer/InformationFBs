@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_AX2000_JogMode" Id="{0512c411-6fac-5393-a187-187e8ed7465c}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_AX2000_JogMode
+VAR
+    fbAx2000Jog        : FB_AX2000_JogMode; // AX2000 点动 FB
+    stAx2000PzdIn      : ST_PZD_IN; // PZD 输入
+    stAx2000PzdOut     : ST_PZD_OUT; // PZD 输出
+    iJogBasicSpeed     : INT := 100; // 点动基础速度
+    bJogPositiveReq    : BOOL := FALSE; // HMI 按钮：点动正方向
+    bJogStopReq        : BOOL := FALSE; // HMI 按钮：停点动
+    tJogTimeout        : TIME := T#5S; // 超时
+    bJogBusy           : BOOL; // 工作中
+    bJogErrFlag        : BOOL; // 驱动器故障
+    bJogTimeoutErrFlag : BOOL; // 通讯超时
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：AX2000 调试期间通过 HMI 手动点动伺服轴，基础速度 100。
+// 价值：调试人员不用打开柜门接调试软件。
+// 验证：登录后 stAx2000PzdIn / stAx2000PzdOut 已链到 PZD；按 bJogPositiveReq := TRUE → 轴开始正方向点动；松开 → 调 bJogStopReq := TRUE → 轴停止。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_IoFunctions（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』行的指示在线写值观察
+// =============================================================================
+
+// 循环调用以维持 PZD 通讯
+fbAx2000Jog(
+    bStart      := bJogPositiveReq,
+    bStop       := bJogStopReq,
+    iBasicVelo  := iJogBasicSpeed,
+    tTimeOut    := tJogTimeout,
+    stPZDIN     := stAx2000PzdIn,
+    stPZDOUT    := stAx2000PzdOut,
+    bBusy       => bJogBusy,
+    bErr        => bJogErrFlag,
+    bTimeOutErr => bJogTimeoutErrFlag
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

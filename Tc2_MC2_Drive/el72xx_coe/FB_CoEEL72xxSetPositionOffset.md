@@ -13,7 +13,7 @@
 | Verified | 2026-05-21 ✅ |
 | InfoSys-checked | ✅ 2026-05-21 |
 | Status | `verified` |
-| Example | [`examples/P_Demo_FB_CoEEL72xxSetPositionOffset.xml`](../examples/P_Demo_FB_CoEEL72xxSetPositionOffset.xml) |
+| Example | [`examples/P_Demo_FB_CoEEL72xxSetPositionOffset.TcPOU`](../examples/P_Demo_FB_CoEEL72xxSetPositionOffset.TcPOU) |
 
 ---
 
@@ -108,7 +108,7 @@ END_VAR
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_FB_CoEEL72xxSetPositionOffset.xml`](../examples/P_Demo_FB_CoEEL72xxSetPositionOffset.xml)
+> 配套可导入文件：[`examples/P_Demo_FB_CoEEL72xxSetPositionOffset.TcPOU`](../examples/P_Demo_FB_CoEEL72xxSetPositionOffset.TcPOU)
 
 ```iecst
 // 场景：EL72xx 轴回机械参考点后把当前点设为绝对零点，偏置存驱动器内存

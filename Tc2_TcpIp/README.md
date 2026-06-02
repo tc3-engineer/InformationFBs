@@ -115,10 +115,10 @@
 
 ## 例程导入
 
-每篇文档配套 `examples/P_Demo_<Name>.xml`：
+每篇文档配套 `examples/P_Demo_<Name>.TcPOU`：
 
-1. 在 TwinCAT 3 XAE 中右键 PLC 项目 → **Import PLCopenXML…**
-2. 选择 `P_Demo_<Name>.xml`
+1. 在 TwinCAT 3 XAE 中右键 PLC 项目下 POUs 文件夹 → **Add → Existing Item…**
+2. 选择 `P_Demo_<Name>.TcPOU`
 3. 编译 → 登录 → 运行
 4. 按文档 §6 / §7 中的"验证步骤"在线观察输入输出
 

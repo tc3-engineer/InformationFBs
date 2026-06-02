@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_ASI_WriteParameter" Id="{11a2f3e3-4768-533d-9450-9612c0db32af}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_ASI_WriteParameter
+VAR
+    fbAsiWriteParam    : FB_ASI_WriteParameter; // ASI slave 参数写 FB
+    fbAsiParamControl  : FB_ASI_ParameterControl; // 后台调度
+    stAsiParamBuffer   : ST_ParameterBuffer; // 共享缓冲
+    stAsiInProcessImg  : ST_Parameter_IN; // 链到 %I*
+    stAsiOutProcessImg : ST_Parameter_OUT; // 链到 %Q*
+    iTargetParamNumber : WORD := 1; // 要写的参数编号
+    iNewParamValue     : DWORD := 1; // 新参数值（低 4 bit）
+    bStartWriteParam   : BOOL := FALSE; // 上升沿触发
+    nAsiCmdError       : DWORD; // 错误号
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：ASI 光电传感器 slave 5 调试期间需要在线翻转输出极性（写参数 1 = 1）。
+// 价值：不拆机柜改 slave 配置。
+// 验证：登录后 iTargetParamNumber := 1、iNewParamValue := 1（翻转极性）、bStartWriteParam := TRUE → fbAsiWriteParam.bBusy 短暂 TRUE → 回 FALSE 后 nAsiCmdError = 0 表示写入成功；再用 FB_ASI_ReadParameter 读回该参数应为 1。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_IoFunctions（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』行的指示在线写值观察
+// =============================================================================
+
+fbAsiParamControl(
+    stParameterBuffer := stAsiParamBuffer,
+    stParameter_IN    := stAsiInProcessImg,
+    stParameter_OUT   := stAsiOutProcessImg
+);
+
+fbAsiWriteParam(
+    iParameternumber  := iTargetParamNumber,
+    iParametervalue   := iNewParamValue,
+    bStart            := bStartWriteParam,
+    stParameterBuffer := stAsiParamBuffer,
+    bErrornumber      => nAsiCmdError
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_LTRUNC" Id="{4ac3bbfe-a580-51e4-ba1c-2e1a9c7b2d59}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_LTRUNC
+VAR
+    lrServoPositionMm   : LREAL := 12.7; // 伺服轴位置（毫米，含小数零头）；在线写值模拟实时位置
+    lrPositionTruncMm   : LREAL; // LTRUNC 输出：朝零截断的整毫米；送给对端 PLC
+    lrSubMillimeterPart : LREAL; // FRAC 输出：丢掉的小数零头，仅诊断用
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：伺服轴位置（LREAL 毫米）要转给 PROFINET 总线上的老 PLC，对端
+//       要求"对齐到整毫米"。位置可能为负（撤回原点以外），需要朝零截断
+//       语义——避免 FLOOR 在负数侧把 -1.3 截成 -2 让对端误判撤回深度。
+//
+// 价值：LTRUNC 一行做朝零截断；返回 LREAL 直接对接总线，无中间 DINT 转换。
+//       比 IEC TRUNC 能处理超大位置（极少见但理论存在）而不溢出。
+//
+// 验证步骤：
+//   1. 引用 Tc2_Math
+//   2. 在 PLC 项目右键 → Add Existing Item (.TcPOU) → 选本文件 → OK
+//   3. 编译、登录、运行
+//   4. 在线 monitor 看：
+//      - lrServoPositionMm = 12.7 → lrPositionTruncMm = 12.0
+//      - 在线改 -12.7 → -12.0 （验证朝零截，不像 FLOOR 给 -13）
+//      - 改 12.0 → 12.0 （整数值不变）
+//      - lrSubMillimeterPart 始终是 lrServoPositionMm - lrPositionTruncMm
+// =============================================================================
+
+// 单行调用：LTRUNC 朝零截断；正负数都丢掉小数部分
+lrPositionTruncMm := LTRUNC(lrServoPositionMm);
+
+// 互补函数 FRAC 拿走小数零头；FRAC(x) + LTRUNC(x) ≡ x （LREAL 精度内）
+// 这里仅作演示——若实际不需要也可省去
+lrSubMillimeterPart := FRAC(lrServoPositionMm);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

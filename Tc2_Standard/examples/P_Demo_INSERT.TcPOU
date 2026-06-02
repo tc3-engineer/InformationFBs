@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_INSERT" Id="{bc0e7e12-a8ad-5934-add2-7baa868a0579}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_INSERT
+VAR
+    sLogLine   : STRING(255) := 'INFO Motor started'; // 原始日志行：等级 + 消息体
+    sTimestamp : STRING(255) := ' [12:34:56]'; // 待插入的时间戳（前置空格便于阅读）
+    sResult    : STRING(255); // 插入时间戳后的完整日志行
+    nInsertPos : INT := 4; // 插入点 = 第 4 字符后（即 'INFO' 之后）
+    bGenerate  : BOOL; // 触发一次 INSERT
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：日志收集模块拿到原始消息 'INFO Motor started'，要在等级标识 'INFO'
+//       之后插入时间戳变成 'INFO [12:34:56] Motor started' 再发往 syslog。
+//       插入点不在首也不在尾，必须用 INSERT 而不是 CONCAT。
+//
+// 价值：一行调用完成中间插入；不用本 FC 要写 LEFT+CONCAT+CONCAT+RIGHT 4 步、
+//       3 个临时 STRING(255) 变量。注意 POS=4 表示"在第 4 字符之后插入"
+//       不是"在下标 4 处插入"——这是新手最常踩的坑。
+//
+// 验证步骤：
+//   1. 导入本文件、引用 Tc2_Standard、编译、登录、运行
+//   2. 在线 monitor sResult
+//   3. 在线写 bGenerate := TRUE
+//   4. 下一周期 sResult = 'INFO [12:34:56] Motor started'
+//   5. 把 nInsertPos 改成 0 再触发 → 时间戳插到最前面
+//   6. 把 nInsertPos 改成 100（远大于 sLogLine 长度）再触发 → 时间戳追加到末尾
+// =============================================================================
+
+// POS=4 表示"在 sLogLine 第 4 个字符（'O' of 'INFO'）之后"插入 sTimestamp
+IF bGenerate THEN
+    sResult := INSERT(sLogLine, sTimestamp, nInsertPos);
+    bGenerate := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

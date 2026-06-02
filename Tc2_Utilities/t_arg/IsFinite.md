@@ -13,7 +13,7 @@
 | Verified | 2026-05-11 ✅ |
 | InfoSys-checked | ✅ 2026-05-11 |
 | Status | `verified` |
-| Example | [`examples/P_Demo_IsFinite.xml`](../examples/P_Demo_IsFinite.xml) |
+| Example | [`examples/P_Demo_IsFinite.TcPOU`](../examples/P_Demo_IsFinite.TcPOU) |
 
 ---
 
@@ -103,7 +103,7 @@ END_IF;
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_IsFinite.xml`](../examples/P_Demo_IsFinite.xml)
+> 配套可导入文件：[`examples/P_Demo_IsFinite.TcPOU`](../examples/P_Demo_IsFinite.TcPOU)
 
 ```iecst
 // 场景：温度传感器接入，PLC 把模拟量原始值算成 LREAL；偶发 sensor 短路或

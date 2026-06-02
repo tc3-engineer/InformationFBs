@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_IOF_SER_IDN_Write" Id="{b2573b24-9f9f-5dd8-9aaf-a7bd53a2d53c}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_IOF_SER_IDN_Write
+VAR
+    fbSercosIdnWrite     : IOF_SER_IDN_Write; // SERCOS IDN 写 FB
+    sLocalNetId          : T_AmsNetId := ''; // 本机
+    nIdnToWrite          : UINT := 100; // 要写的 IDN
+    bStartIdnWrite       : BOOL := FALSE; // 上升沿触发
+    nDrivePort           : UINT := 1; // drive port
+    nCachedAttrib        : DWORD := 0; // 已知属性
+    aWriteBuffer         : ARRAY[1..4] OF BYTE; // 要写入的数据缓冲（4 字节 = DINT 大小）
+    cbWriteBufferLen     : UDINT := 4; // 缓冲长度
+    tIdnWriteTimeout     : TIME := T#5S; // 超时
+    nWriteAttribOut      : DWORD; // 属性返回
+    stWriteAttribDecoded : ST_SercosParamAttrib; // 属性分解
+    bIdnWriteBusy        : BOOL; // 工作中
+    bIdnWriteErr         : BOOL; // 出错
+    nIdnWriteErrId       : UDINT; // 错误号
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：调试期：phase 2 下把 drive 1 的 IDN-100 写为工程定制值。
+// 价值：参数纳入 PLC 程序版本控制。
+// 验证：先用 IOF_SER_SetPhase 切到 phase 2；填好 aWriteBuffer 含要写入的值，写 bStartIdnWrite := TRUE → bIdnWriteBusy 短暂 TRUE → 回 FALSE 后 nIdnWriteErrId = 0 表示成功；再用 IOF_SER_IDN_Read 读回校验。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_IoFunctions（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』行的指示在线写值观察
+// =============================================================================
+
+// 单次调用；PDF VAR 描述写 dwDestAddr，但实际入口名是 dwSrcAddr（写时用 dwSrcAddr）
+fbSercosIdnWrite(
+    sNetId    := sLocalNetId,
+    nIDN      := nIdnToWrite,
+    bExecute  := bStartIdnWrite,
+    nPort     := nDrivePort,
+    nAttrib   := nCachedAttrib,
+    cbLen     := cbWriteBufferLen,
+    dwSrcAddr := ADR(aWriteBuffer),
+    tTimeout  := tIdnWriteTimeout,
+    nAttribRd => nWriteAttribOut,
+    sAttrib   => stWriteAttribDecoded,
+    bBusy     => bIdnWriteBusy,
+    bError    => bIdnWriteErr,
+    nErrId    => nIdnWriteErrId
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

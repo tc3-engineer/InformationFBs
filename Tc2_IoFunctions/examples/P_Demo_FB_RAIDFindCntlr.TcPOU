@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_RAIDFindCntlr" Id="{5aef31b2-931e-5bc5-83da-cd801ac33d9a}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_RAIDFindCntlr
+VAR
+    fbFindRaidCtlr    : FB_RAIDFindCntlr; // RAID 控制器枚举 FB（仅一次）
+    sLocalNetId       : T_AmsNetId := ''; // 本机
+    bDoFindRaidCtlrs  : BOOL := FALSE; // 上升沿触发（仅一次！）
+    tRaidQueryTimeout : TIME := T#5S; // ADS 超时
+    stFoundRaidCtlrs  : ST_RAIDCntlrFound; // 查得控制器列表
+    nRaidBytesRead    : UDINT; // 返回字节数
+    bRaidFindBusy     : BOOL; // 工作中
+    bRaidFindError    : BOOL; // 出错
+    nRaidFindErrId    : UDINT; // 错误号
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：工业服务器上电诊断：调一次拿到所有 RAID 控制器的 ID 后存起来，给后续 FB_RAIDGetInfo / FB_RAIDGetStatus 用。
+// 价值：RAID 健康状态可程序化监控。
+// 验证：登录后写 bDoFindRaidCtlrs := TRUE → bRaidFindBusy 短暂 TRUE → 回 FALSE 后 stFoundRaidCtlrs 含数量与 ID；**只能调一次**，不要放在循环里。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_IoFunctions（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』行的指示在线写值观察
+// =============================================================================
+
+// 警告：本 FB 不能循环调用，会严重影响性能！
+// 业务侧应该确保 bDoFindRaidCtlrs 只在上电时给一次上升沿。
+fbFindRaidCtlr(
+    sNETID           := sLocalNetId,
+    bWrtRd           := bDoFindRaidCtlrs,
+    tTimeOut         := tRaidQueryTimeout,
+    stRAIDCntlrFound => stFoundRaidCtlrs,
+    nBytesRead       => nRaidBytesRead,
+    bBusy            => bRaidFindBusy,
+    bError           => bRaidFindError,
+    nErrorID         => nRaidFindErrId
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

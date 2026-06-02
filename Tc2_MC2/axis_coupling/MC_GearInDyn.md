@@ -13,7 +13,7 @@
 | Verified | 2026-05-21 ✅ |
 | InfoSys-checked | ✅ 2026-05-21 |
 | Status | `verified` |
-| Example | [`examples/P_Demo_MC_GearInDyn.xml`](../examples/P_Demo_MC_GearInDyn.xml) |
+| Example | [`examples/P_Demo_MC_GearInDyn.TcPOU`](../examples/P_Demo_MC_GearInDyn.TcPOU) |
 
 ---
 
@@ -121,7 +121,7 @@ END_VAR
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_MC_GearInDyn.xml`](../examples/P_Demo_MC_GearInDyn.xml)
+> 配套可导入文件：[`examples/P_Demo_MC_GearInDyn.TcPOU`](../examples/P_Demo_MC_GearInDyn.TcPOU)
 
 ```iecst
 // 场景：卷料机收线辊根据卷径变化实时调齿比 — 卷越大主轴 1 圈 = 从轴少几度

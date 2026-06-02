@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_SocketSend" Id="{9041fb6b-1235-5ea2-b47a-3c5b8e5b7a85}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_SocketSend
+VAR
+    fbConnectToMes   : FB_SocketConnect; // 先建连，给 Send 提供一个真实句柄
+    fbSendOrderResp  : FB_SocketSend;
+    bRequestConnect  : BOOL;
+    bConnectBusy     : BOOL;
+    bConnectError    : BOOL;
+    nConnectErrId    : UDINT;
+    hRemoteMes       : T_HSOCKET;
+    sResponsePayload : STRING(128) := 'OK,ORDER_ACCEPTED$N'; // 应答字串：以 LF 结尾让对端按行解析
+    bRequestSend     : BOOL; // 在线上升沿发一次
+    bSendBusy        : BOOL;
+    bSendError       : BOOL;
+    nSendErrId       : UDINT;
+    nSentTotal       : UDINT; // 累计成功发送次数，监控用
+    bRtrigSendDone   : R_TRIG;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：PLC 收到 MES 下发的订单（外部触发，本 demo 中由 bRequestSend 代表）
+//       立刻回送一段固定应答字串"OK,ORDER_ACCEPTED\n"。
+//
+// 价值：演示"建连成功之后才允许 Send；cbLen 必须算上字串终止符；bBusy 期间
+//       不要改 sResponsePayload"的标准纪律。
+//
+// 验证步骤：
+//   1. 对端起 ncat -l 9000 监听
+//   2. 在线 bRequestConnect := TRUE，等 hRemoteMes.handle 非 0
+//   3. 在线脉冲 bRequestSend := TRUE
+//      → ncat 端立刻打印 "OK,ORDER_ACCEPTED"
+//      → nSentTotal 每次脉冲 +1
+//   4. 故意把 ncat 杀掉再脉冲 bRequestSend
+//      → bSendError 置 TRUE，nSendErrId 为 0x00008004 (NOTCONNECTED)
+// =============================================================================
+
+// 阶段 1：建连（提供 hRemoteMes 给 Send 用）
+fbConnectToMes(
+    sSrvNetId   := '',
+    sRemoteHost := '172.16.6.180',
+    nRemotePort := 9000,
+    bExecute    := bRequestConnect,
+    tTimeout    := T#10S,
+    bBusy       => bConnectBusy,
+    bError      => bConnectError,
+    nErrId      => nConnectErrId,
+    hSocket     => hRemoteMes
+);
+
+// 阶段 2：发字串。+1 是因为 LEN 不含 $00 终止符，对端如按 null 判结尾需要它
+fbSendOrderResp(
+    sSrvNetId := '',
+    hSocket   := hRemoteMes,
+    cbLen     := TO_UDINT(LEN(sResponsePayload) + 1),
+    pSrc      := ADR(sResponsePayload),
+    bExecute  := bRequestSend,
+    tTimeout  := T#5S,
+    bBusy     => bSendBusy,
+    bError    => bSendError,
+    nErrId    => nSendErrId
+);
+
+// 在 bBusy 下降沿（即一次发送刚完成那一周期）累加计数
+bRtrigSendDone(CLK := NOT bSendBusy AND bRequestSend AND NOT bSendError);
+IF bRtrigSendDone.Q THEN
+    nSentTotal := nSentTotal + 1;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

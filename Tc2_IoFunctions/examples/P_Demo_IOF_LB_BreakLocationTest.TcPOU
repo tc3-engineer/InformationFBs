@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_IOF_LB_BreakLocationTest" Id="{3427b6c4-6e7e-5c97-9c4d-f5123a133662}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_IOF_LB_BreakLocationTest
+VAR
+    fbLightbusBreakTest : IOF_LB_BreakLocationTest; // Lightbus 断纤定位 FB
+    sTargetNetId        : T_AmsNetId := ''; // 本机
+    nLightbusDeviceId   : UDINT := 1; // Lightbus 主站 Device Id
+    bStartBreakTest     : BOOL := FALSE; // 上升沿触发测试
+    tBreakTestTimeout   : TIME := T#10S; // ADS 超时（光纤环大时给足）
+    bBreakTestBusy      : BOOL; // 工作中
+    bBreakTestErr       : BOOL; // 失败
+    nLastErrCode        : UDINT; // 错误号
+    bBreakDetected      : BOOL; // 断纤标志
+    nLastModuleNo       : WORD; // 模块号 / 总数
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：Lightbus 通讯故障：HMI 按钮触发断纤定位，BOXNO 显示断点位置帮助现场人员快速找到问题模块。
+// 价值：把断纤定位做成 HMI 一键操作。
+// 验证：登录后 nLightbusDeviceId := 系统中 Lightbus 主站 DeviceId；写 bStartBreakTest := TRUE → bBreakTestBusy 短暂 TRUE → 回 FALSE 后 bBreakDetected 表示是否有断纤；正常时 nLastModuleNo 应等于工程配置的 Lightbus 模块总数。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_IoFunctions（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』行的指示在线写值观察
+// =============================================================================
+
+fbLightbusBreakTest(
+    NETID    := sTargetNetId,
+    DEVICEID := nLightbusDeviceId,
+    START    := bStartBreakTest,
+    TMOUT    := tBreakTestTimeout,
+    BUSY     => bBreakTestBusy,
+    ERR      => bBreakTestErr,
+    ERRID    => nLastErrCode,
+    BREAK    => bBreakDetected,
+    BOXNO    => nLastModuleNo
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

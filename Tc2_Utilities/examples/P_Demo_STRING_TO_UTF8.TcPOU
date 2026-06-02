@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_STRING_TO_UTF8" Id="{aa9c3fc5-63af-53f6-80a6-702a3299a1da}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_STRING_TO_UTF8
+VAR
+    sLocal   : STRING(128) := 'Hühner alarm'; // 工业语义：本地 Codepage STRING（含 Umlaut）
+    aUtf8    : ARRAY[0..255] OF BYTE; // UTF-8 输出缓冲
+    bOk      : BOOL; // 转换成功
+    bConvert : BOOL; // 在线触发
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：把 PLC 报警消息（STRING 区域码）发送到云端 MQTT broker——broker 要求 UTF-8 payload。
+// 价值：替代手写 Codepage→UTF-8 编码表；统一上云接口编码。
+// 验证步骤：
+//   1. 引用 Tc2_Utilities
+//   2. 编译 + 登录 + 运行
+//   3. 在线写触发位 TRUE，monitor 输出变量
+// =============================================================================
+IF bConvert THEN
+    bOk := STRING_TO_UTF8(pDstUTF8   := ADR(aUtf8),
+                          pSrcSTRING := ADR(sLocal),
+                          nDstSize   := SIZEOF(aUtf8));
+    bConvert := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_MC_Stop" Id="{82a9d051-23d9-54ee-881f-aabccc53a6b0}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_MC_Stop
+VAR
+    fbEmergencyStop : MC_Stop;
+    fbResetAxis     : MC_Reset;
+    axisLoader      : AXIS_REF;
+    rtFaultDetected : R_TRIG;
+    rtOperatorReset : R_TRIG;
+    bFaultDetected  : BOOL := FALSE; // 在线 TRUE 模拟故障检测
+    bOperatorAck    : BOOL := FALSE; // 在线 TRUE 模拟操作员按 Reset
+    bStopDone       : BOOL;
+    bStopBusy       : BOOL;
+    bResetDone      : BOOL;
+    nStopErrorID    : UDINT;
+    nResetErrorID   : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：上料轴检测到工件卡死（外部传感器报警）→ 立刻紧急停 + 锁轴，
+//       等操作员现场确认排障 + 按 Reset 才允许继续。
+// 价值：停 + 锁一体完成，避免上位机或操作员在故障未确认时误重启。
+// 验证：1) 让 axisLoader 运行（例如先在另一个 PRG 里发 MC_MoveVelocity）
+//       2) bFaultDetected := TRUE → bStopBusy 立 TRUE，ActVelo 快速降到 0
+//       3) bStopDone 短暂 TRUE，但此时再发 Move 会报错（轴被锁）
+//       4) bFaultDetected := FALSE 让 Stop 释放，bStopBusy 几周期后 FALSE
+//       5) bOperatorAck := TRUE → MC_Reset 解锁，bResetDone 短暂 TRUE
+//       6) 之后再发 Move 才能正常执行
+// =============================================================================
+
+rtFaultDetected(CLK := bFaultDetected);
+rtOperatorReset(CLK := bOperatorAck);
+
+// MC_Stop 的 Execute 持续保持 TRUE 直到 Done 出现 + 业务确认要"释放"才置 FALSE
+// 但锁状态会一直保持到 MC_Reset
+fbEmergencyStop(
+    Execute      := bFaultDetected,
+    Deceleration := 10000.0,
+    Jerk         := 100000.0,
+    Axis         := axisLoader,
+    Done         => bStopDone,
+    Busy         => bStopBusy,
+    ErrorID      => nStopErrorID
+);
+
+// 操作员 Reset 后解锁
+fbResetAxis(
+    Execute := rtOperatorReset.Q,
+    Axis    := axisLoader,
+    Done    => bResetDone,
+    ErrorID => nResetErrorID
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_UInt64Add64" Id="{b1ef5eda-46ca-5960-87b2-eab52db84542}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_UInt64Add64
+VAR
+    uliRuntime  : T_ULARGE_INTEGER;; // 64 位运行时长（ns）累加器
+    uliDelta    : T_ULARGE_INTEGER;; // 本周期增量
+    bAccumulate : BOOL;; // 在线触发一次累加
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_Utilities.UInt64Add64 演示程序（FUNCTION，单周期触发）
+// ============================================================
+// 场景：纳秒级 64 位时间戳累加：累计运行时间从 0 累加，2⁶⁴ ns ≈ 584 年才会回绕，工程上视为永不溢出。
+// 价值：替代手写双倍长加法（先低 32 位加 + 进位、再高 32 位加）的两行汇编风格代码；一次调用，可读性更高。
+// 验证步骤：
+//   1. 把本 PROGRAM 加到 PlcTask 调用列表
+//   2. 编译 + 登录
+//   3. 在线把 b... 触发位置 TRUE 一个周期
+//   4. 观察输出变量是否符合期望
+// ============================================================
+
+IF bAccumulate THEN
+    // 静默 wrap-around：纳秒计数 2⁶⁴ ns ≈ 584 年才回绕，工程上忽略
+    uliRuntime := UInt64Add64(uliRuntime, uliDelta);
+    bAccumulate := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

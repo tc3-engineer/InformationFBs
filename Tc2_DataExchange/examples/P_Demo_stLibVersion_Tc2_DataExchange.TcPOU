@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_stLibVersion_Tc2_DataExchange" Id="{1d123999-3004-5e93-9696-09660de643ad}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_stLibVersion_Tc2_DataExchange
+VAR
+    stCurrentLibVer : ST_LibVersion; // 运行时实际加载的库版本快照（在线 monitor 用）
+    bLibVersionOk   : BOOL; // 启动门禁结果：版本是否满足业务最低要求
+    sLibCheckMsg    : STRING(80); // HMI 显示用的检查结果消息
+    bChecked        : BOOL; // 只检查一次的 latch（避免每周期重跑）
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：工程代码依赖 Tc2_DataExchange ≥ 1.2.2 的 FB_WriteWatchdog 修复行为。
+//       PLC 启动时先检查所引用的库版本是否够新，不够就停机并给 HMI 报警，
+//       避免现场升级时无意降到旧库引入隐蔽 bug。
+//
+// 价值：把"版本依赖"从注释里的口头约定变成运行时强制门禁，让版本不匹配在启动
+//       一瞬间被发现，而不是在故障复现时苦苦排查。
+//
+// 验证步骤：
+//   1. 引用 Tc2_DataExchange + Tc2_System
+//   2. 在 PLC 项目右键 → Add Existing Item (.TcPOU) → 选本文件 → OK
+//   3. 编译、登录、运行
+//   4. 在线 monitor 看 stCurrentLibVer 应显示 iMajor=1 iMinor=2 iBuild=2
+//   5. 看 bLibVersionOk 应为 TRUE，sLibCheckMsg 显示 "version OK"
+//   6. 反例验证：在 XAE 把 Tc2_DataExchange 库降到 1.2.1 → 重新下载
+//      → bLibVersionOk 应变 FALSE，sLibCheckMsg 显示 "too old, need 1.2.2+"
+// =============================================================================
+
+// 启动只跑一次（PLC 进入 Run 后第一个周期）
+IF NOT bChecked THEN
+    bChecked := TRUE;
+
+    // 快照当前库版本号（仅诊断给 HMI 看）
+    stCurrentLibVer := stLibVersion_Tc2_DataExchange;
+
+    // 调 Tc2_System 提供的版本比较器，要求 ≥ 1.2.2.0
+    bLibVersionOk := F_CmpLibVersion(
+        stLibVersion := stLibVersion_Tc2_DataExchange,
+        iMajor       := 1,
+        iMinor       := 2,
+        iBuild       := 2,
+        iRevision    := 0,
+        nCmpType     := E_CmpLibVersion.GreaterOrEqual
+    );
+
+    // 决策分支：不够就把消息丢出来给 HMI / 报警系统
+    IF bLibVersionOk THEN
+        sLibCheckMsg := 'Tc2_DataExchange version OK';
+    ELSE
+        sLibCheckMsg := 'Tc2_DataExchange too old, need 1.2.2+';
+        // 真实工程在这里应该把 PLC 切到 SAFE_STOP，而不是继续跑业务
+    END_IF;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_F_BIGTYPE" Id="{3d961fee-968e-5bd7-b43b-7d240bd88796}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_F_BIGTYPE
+VAR
+    stCurrentRecipe : ST_Recipe; // 当前配方
+    argRecipe       : T_Arg; // 配方打包后的 T_Arg
+    bPackRecipe     : BOOL; // 在线置 TRUE 触发一次打包
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_Utilities.F_BIGTYPE 演示程序
+// ============================================================
+// 场景：把整段配方结构体作为一个 T_Arg 送给 EventLogger 当报警上下文。
+// 价值：结构体没有专用 F_<TYPE>，本函数按字节打包；下游靠 cbLen 取整段。
+// 验证：在线写 stCurrentRecipe.nRecipeId := 7、bPackRecipe := TRUE；
+//       下一周期 argRecipe.cbLen 应等于 SIZEOF(stCurrentRecipe)，argRecipe.pData <> 0。
+// ============================================================
+
+IF bPackRecipe THEN
+    // 用 ADR + SIZEOF 把整个结构体打包，eType 自动选 BIGTYPE 枚举
+    argRecipe := F_BIGTYPE(pData := ADR(stCurrentRecipe),
+                           cbLen := SIZEOF(stCurrentRecipe));
+    bPackRecipe := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

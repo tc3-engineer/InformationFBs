@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_CreateDir" Id="{19ade2ca-ad66-509c-a804-141c7eaccb26}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_CreateDir
+VAR
+    fbCreateDir       : FB_CreateDir; // FB_CreateDir 实例
+    sDirToCreate      : T_MaxString := 'D:/log/20260520'; // 要创建的目录路径
+    bCreateDirRequest : BOOL; // 在线写 TRUE 触发一次创建
+    bCreateDirError   : BOOL; // TRUE = 创建失败
+    nErrIdLast        : UDINT; // ADS / OS 错误号
+    bBusyMon          : BOOL; // ADS 通讯中
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：每天 0 点确保 'D:/log/20260520' 目录存在，存放当天日志。
+// 价值：一次调用即可，省去 OS 命令转发。
+// 验证：在线置 bCreateDirRequest := TRUE → 目标目录出现；目录已存在时 bCreateDirError = TRUE 且 nErrIdLast = 183。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_System（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』行的指示在线写值观察
+// =============================================================================
+
+fbCreateDir(
+    sNetId    := '',
+    sPathName := sDirToCreate,
+    ePath     := PATH_GENERIC,
+    bExecute  := bCreateDirRequest,
+    tTimeout  := T#10S,
+    bBusy     => bBusyMon,
+    bError    => bCreateDirError,
+    nErrId    => nErrIdLast
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

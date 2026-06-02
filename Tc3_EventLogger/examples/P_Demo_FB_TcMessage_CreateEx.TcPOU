@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_TcMessage_CreateEx" Id="{ce218907-3454-5846-a75e-83480130ee1a}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_TcMessage_CreateEx
+VAR
+    fbMessage    : FB_TcMessage; // message 实例
+    bCreated     : BOOL; // Create latch
+    hr           : HRESULT; // 返回值监视
+    stEventEntry : TcEventEntry; // 在线写入事件定义
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：从结构体一次性注册一个 message
+// 价值：结构体形式更适合循环批量注册
+// 验证：登录后第一周期 hr = S_OK；第二次手动 bCreated := FALSE 再触发会得到 ERROR_ALREADY_EXISTS
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_EventLogger（System → References → Add library）
+//   3. 编译 → 登录 → 运行；按 verify 注释里给出的在线写值操作
+// =============================================================================
+
+IF NOT bCreated THEN
+    hr := fbMessage.CreateEx(
+        stEventEntry := stEventEntry,
+        ipSourceInfo := 0);
+    bCreated := SUCCEEDED(hr);
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

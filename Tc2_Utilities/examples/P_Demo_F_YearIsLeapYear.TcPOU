@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_F_YearIsLeapYear" Id="{4825f5b9-c1a0-51fa-b490-5d13c5ed184f}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_F_YearIsLeapYear
+VAR
+    wYear       : WORD := 2024; // 要判断的年份
+    bIsLeapYear : BOOL; // TRUE = 闰年
+    bRunOnce    : BOOL; // 脉冲触发
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：HMI 让用户输入日期时需校验 2 月 29 日是否合法
+//
+// 价值：1 行调用避免手写 100/400 三段判定，最容易漏的是「能被 100 整除但不被 400 整除非闰年」
+//
+// 验证步骤：
+//   1. 引用 Tc2_Utilities
+//   2. 编译 + 登录 + 运行
+//   3. 强制 bRunOnce := TRUE
+//   4. 在线观察 bIsLeapYear = TRUE（2024 是闰年）
+//   5. wYear:=1900 → FALSE（100 整除但 400 不整除）
+//   6. wYear:=2000 → TRUE（400 整除）
+// =============================================================================
+bIsLeapYear := F_YearIsLeapYear(wYear);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

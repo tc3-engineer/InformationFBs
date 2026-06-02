@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_HSOCKET_TO_STRINGEX" Id="{5ae9590b-ee2a-5c61-9d56-b67feea14339}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_HSOCKET_TO_STRINGEX
+VAR
+    fbConnect       : FB_SocketConnect;
+    bRequestConnect : BOOL;
+    bConnectBusy    : BOOL;
+    bConnectError   : BOOL;
+    nConnectErrId   : UDINT;
+    hClient         : T_HSOCKET;
+    sBothEnds       : STRING(80); // 默认全输出（同 HSOCKET_TO_STRING）
+    sLocalOnly      : STRING(80); // 仅本地地址，常用 listener 场景
+    sRemoteOnly     : STRING(80); // 仅远端地址，常用客户端连接监控
+    sHandleOnly     : STRING(80); // 仅句柄值，最紧凑
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：HMI 上要分别在 4 个字段显示 socket 信息：综合、仅 Local、仅 Remote、
+//       仅 Handle。本例程演示 HSOCKET_TO_STRINGEX 四种组合，便于设计 HMI
+//       时按需取字段。
+//
+// 价值：同一个句柄一次生成四种视图，省去手工字段拼接代码；ngOn-line monitor
+//       可视化对比 BOOL 选项的影响。
+//
+// 验证步骤：
+//   1. 启 ncat -l 2404 监听
+//   2. 在线 bRequestConnect := TRUE → hClient.handle 非 0
+//   3. 同周期内：
+//      sBothEnds   = "Handle:0xNNNN Local:LIP:LP Remote:RIP:RP"
+//      sLocalOnly  = "Handle:0xNNNN Local:LIP:LP"
+//      sRemoteOnly = "Handle:0xNNNN Remote:RIP:RP"
+//      sHandleOnly = "Handle:0xNNNN"
+// =============================================================================
+
+fbConnect(
+    sSrvNetId := '', sRemoteHost := '172.16.6.180', nRemotePort := 2404,
+    bExecute := bRequestConnect, tTimeout := T#10S,
+    bBusy => bConnectBusy, bError => bConnectError, nErrId => nConnectErrId,
+    hSocket => hClient);
+
+// 四种组合，单次调用
+sBothEnds   := HSOCKET_TO_STRINGEX(hSocket := hClient, bLocal := TRUE,  bRemote := TRUE);
+sLocalOnly  := HSOCKET_TO_STRINGEX(hSocket := hClient, bLocal := TRUE,  bRemote := FALSE);
+sRemoteOnly := HSOCKET_TO_STRINGEX(hSocket := hClient, bLocal := FALSE, bRemote := TRUE);
+sHandleOnly := HSOCKET_TO_STRINGEX(hSocket := hClient, bLocal := FALSE, bRemote := FALSE);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_CTU" Id="{39a8a566-578f-5d9f-a562-e0590fdca397}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_CTU
+VAR
+    fbBoxCounter   : CTU; // 向上计数器实例：传送带满箱计数
+    bProductSensor : BOOL; // 光电传感器（每经过一件工件来一个上升沿）
+    bBoxChangedAck : BOOL; // 操作员"换箱完成"按钮（上升沿复位）
+    nBoxCapacity   : WORD := 100; // 满箱产品数门限 = 100
+    bBoxFull       : BOOL; // 满箱信号（CV ≥ 100 时 TRUE）
+    nCurrentCount  : WORD; // 当前已数件数（监视：从 0 数到 100）
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：传送带上每过一个工件，光电传感器发一个上升沿；累计满 100 件后输出
+//       "满箱"通知打包工位换箱子；操作员换完按"换箱完成"复位计数器从 0 重新数。
+//
+// 价值：1 次调用拿到"边沿检测+自加+门限比较+复位"完整状态机；手写约 8 行
+//       （含上一周期值保存防止误重复计数）。
+//
+// 验证步骤：
+//   1. PLC 项目 → Add Existing Item (.TcPOU) → 选本文件
+//   2. 引用 Tc2_Standard 库
+//   3. 编译、登录、运行
+//   4. 在线 monitor nCurrentCount 与 bBoxFull
+//   5. 反复在线把 bProductSensor 在 TRUE/FALSE 间切换（每来一次上升沿
+//      nCurrentCount 加 1）；连发 100 次 → bBoxFull 变 TRUE
+//   6. 在线 bBoxChangedAck := TRUE → nCurrentCount 立即回 0、bBoxFull 回 FALSE；
+//      再把 bBoxChangedAck := FALSE 即可继续数下一箱
+//   7. 测试边沿语义：把 bProductSensor 一直 TRUE，nCurrentCount 不会持续累加，
+//      只在第一次进入 TRUE 时加 1
+// =============================================================================
+
+fbBoxCounter(
+    CU    := bProductSensor,
+    RESET := bBoxChangedAck,
+    PV    := nBoxCapacity,
+    Q     => bBoxFull,
+    CV    => nCurrentCount
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

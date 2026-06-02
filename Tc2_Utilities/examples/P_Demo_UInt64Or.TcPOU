@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_UInt64Or" Id="{7bfb83ba-723f-513a-9206-8087d3774ae1}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_UInt64Or
+VAR
+    uliFaultModuleA : T_ULARGE_INTEGER;; // 模块 A 故障字
+    uliFaultModuleB : T_ULARGE_INTEGER;; // 模块 B 故障字
+    uliFaultSys     : T_ULARGE_INTEGER;; // 系统总故障字
+    bMerge          : BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_Utilities.UInt64Or 演示程序（FUNCTION，单周期触发）
+// ============================================================
+// 场景：把多个子模块的 64 位故障位合并成系统级故障字。
+// 价值：替代手写两次 DWORD OR。
+// 验证步骤：
+//   1. 把本 PROGRAM 加到 PlcTask 调用列表
+//   2. 编译 + 登录
+//   3. 在线把 b... 触发位置 TRUE 一个周期
+//   4. 观察输出变量是否符合期望
+// ============================================================
+
+IF bMerge THEN
+    uliFaultSys := UInt64Or(uliFaultModuleA, uliFaultModuleB);
+    bMerge := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

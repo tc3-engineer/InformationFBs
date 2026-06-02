@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_NT_AbortShutdown" Id="{6a8af3ed-da91-5bb2-a3f4-1b6918f5f7cd}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_NT_AbortShutdown
+VAR
+    fbNT_AbortShutdown : NT_AbortShutdown; // NT_AbortShutdown 实例
+    bAbort             : BOOL := FALSE;
+    bBusy_             : BOOL;
+    bErrFlag           : BOOL;
+    nErrCode           : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：取消已发起的 Reboot/Shutdown。
+// 价值：提供 Undo 路径。
+// 验证：先发 NT_Reboot 延迟 60 秒；在倒计时期间触发本 FB，观察目标机器不再重启。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_Utilities（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』行的指示在线写值观察
+// =============================================================================
+
+fbNT_AbortShutdown(
+    NETID := '', START := bAbort, TMOUT := DEFAULT_ADS_TIMEOUT,
+    BUSY => bBusy_, ERR => bErrFlag, ERRID => nErrCode
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_F_GetMappingStatus" Id="{3eb5029b-941b-5a3f-a6d4-e6780efa3f12}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_F_GetMappingStatus
+VAR
+    bMonitoredInput : BOOL; // 应映射的关键输入变量
+    eMapStatus      : EPlcMappingStatus; // 映射状态枚举
+    bMappingOk      : BOOL; // TRUE = 已完全映射
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：启动时扫描一个关键 IO 输入变量的映射状态，未完全映射即告警。
+// 价值：自动化映射诊断。
+// 验证：未映射 → eMapStatus = MS_Unmapped；正常映射 → MS_Mapped。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_System（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』行的指示在线写值观察
+// =============================================================================
+
+eMapStatus := F_GetMappingStatus(
+    p := ADR(bMonitoredInput),
+    n := SIZEOF(bMonitoredInput)
+);
+
+// 只把『完全映射』算 OK；部分映射或未映射都视为异常
+bMappingOk := (eMapStatus = MS_Mapped);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

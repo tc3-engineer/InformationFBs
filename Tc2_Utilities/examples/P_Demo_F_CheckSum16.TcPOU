@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_F_CheckSum16" Id="{f7148fba-8956-5967-88d8-82234e2b493f}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_F_CheckSum16
+VAR
+    aBuf  : ARRAY[0..63] OF BYTE; // 工业语义：64 字节配方区
+    wSum  : WORD; // 16 位 checksum 结果
+    bCalc : BOOL; // 在线触发
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：PLC 启动时校验非易失存储中的配方表完整性：算 checksum 并与存储的预期 checksum 比对，不一致则报警。
+// 价值：替代手写累加循环；O(N) 时间但码量最小。
+// 验证步骤：
+//   1. 引用 Tc2_Utilities
+//   2. 编译 + 登录 + 运行
+//   3. 在线写触发位 TRUE，monitor 输出变量
+// =============================================================================
+
+IF bCalc THEN
+    wSum := F_CheckSum16(dwSrcAddr := ADR(aBuf),
+                        cbLen     := SIZEOF(aBuf),
+                        wChkSum   := 0);
+    bCalc := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_SoEAX5000SetMotorCtrlWord" Id="{4ae74759-6bde-5f89-a47b-665875e33ec1}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_SoEAX5000SetMotorCtrlWord
+VAR
+    fbSetMotorCtrl    : FB_SoEAX5000SetMotorCtrlWord;
+    NcToPlcAxis       : NCTOPLC_AXIS_REF; // NC 轴过程映像（实际工程映射到 %I*）
+    bManualReleaseReq : BOOL; // 维护"松闸"请求（带载时危险，需先确认机械安全）
+    bForceLockReq     : BOOL; // 维护"锁闸"请求；与松闸同时为 TRUE 时锁闸优先
+    rtApply           : R_TRIG;
+    bApplyRequest     : BOOL; // 在线置 TRUE 应用一次锁/松闸设置
+    bBusy             : BOOL;
+    bError            : BOOL;
+    iAdsErr           : UINT;
+    iSercosErr        : UINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_NcDrive.FB_SoEAX5000SetMotorCtrlWord 演示程序
+// ============================================================
+// 场景：维护人员需要在驱动器去使能状态下手动松开电机抱闸，盘动联轴器
+//       检查机械。抱闸位写在 AX5000 的 Motor Control Word（P-0-0096）。
+// 价值：不用本 FB 时要自己用 FB_SoEWrite 拼 P-0-0096 的位掩码并管时序；
+//       本 FB 把锁/松闸抽象成两个布尔，并内建"锁优先"安全规则。
+// 验证：确认轴无带载风险后，置 bManualReleaseReq := TRUE、bApplyRequest := TRUE，
+//       观察 bBusy 短暂为 TRUE 后落回、bError 保持 FALSE，电机抱闸应松开
+//       （可听到/手感到联轴器可盘动）。同时置 bForceLockReq := TRUE 验证
+//       锁优先：抱闸应保持锁定。
+// ============================================================
+
+// 上升沿：每次"应用"只写一次控制字
+rtApply(CLK := bApplyRequest);
+
+// 单次完整调用：锁/松闸意图通过两个输入传入
+fbSetMotorCtrl(
+    Axis         := NcToPlcAxis,
+    sNetId       := '',
+    bExecute     := rtApply.Q,
+    tTimeout     := DEFAULT_ADS_TIMEOUT,
+    bForceLock   := bForceLockReq,
+    bForceUnlock := bManualReleaseReq,
+    bBusy        => bBusy,
+    bError       => bError,
+    iAdsErrId    => iAdsErr,
+    iSercosErrId => iSercosErr
+);
+
+// 完成后复位应用信号，准备下一次设置
+IF NOT bBusy THEN
+    bApplyRequest := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

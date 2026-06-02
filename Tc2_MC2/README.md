@@ -82,7 +82,7 @@
 
 ## 例程
 
-所有 22 个文档都配套一个 [`examples/P_Demo_<Name>.xml`](examples/) — 标准 PLCopenXML 格式，右键 PLC 项目 → Import PLCopenXML 即可导入。每个例程都按本仓库 2026-05-11 行动纲领的 D 节要求，头部带 **场景 / 价值 / 验证步骤** 三件套中文注释，变量名贴近工业语义，注释比例 ≥ 1/3。
+所有 22 个文档都配套一个 [`examples/P_Demo_<Name>.TcPOU`](examples/) — TwinCAT 3 原生 .TcPOU 格式，右键 PLC 项目下 POUs 文件夹 → Add → Existing Item 即可导入。每个例程都按本仓库 2026-05-11 行动纲领的 D 节要求，头部带 **场景 / 价值 / 验证步骤** 三件套中文注释，变量名贴近工业语义，注释比例 ≥ 1/3。
 
 ## 与其它库的搭配
 
@@ -95,7 +95,7 @@
 所有 22 篇通过：
 
 - `_meta/tools/verify_doc.py` — VAR 区一致、占位短语 / 中文长度 / InfoSys URL 检查全 PASS
-- `_meta/tools/lint_plcopen.py` — 例程 XML 结构合法
+- `_meta/tools/lint_tcpou.py` — 例程 XML 结构合法
 - 引脚名审计（Pin-name audit）— 例程里每个 `pin := value` 的 LEFT 名称与对应 FB 文档的 VAR_INPUT / VAR_OUTPUT / VAR_IN_OUT 完全一致
 
 InfoSys 主题 URL 已逐条校验（`InfoSys-checked: ✅ 2026-05-21`）。

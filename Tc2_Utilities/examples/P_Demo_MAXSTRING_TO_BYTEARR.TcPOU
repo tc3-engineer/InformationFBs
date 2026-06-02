@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_MAXSTRING_TO_BYTEARR" Id="{9304c886-3291-559c-abdc-94135a059f7c}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_MAXSTRING_TO_BYTEARR
+VAR
+    sTag    : STRING(255) := 'PumpAlpha-01'; // 工业语义：设备标签 STRING
+    aBytes  : ARRAY[0..255] OF BYTE; // 字节数组输出
+    bExport : BOOL; // 在线触发
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：把配置文件中的 STRING 标签写入 ModBus 寄存器区（按字节数组对齐）。
+// 价值：替代手写 FOR + 字节复制；本函数 1 调用。
+// 验证步骤：
+//   1. 引用 Tc2_Utilities
+//   2. 编译 + 登录 + 运行
+//   3. 在线写触发位 TRUE，monitor 输出变量
+// =============================================================================
+
+IF bExport THEN
+    aBytes := MAXSTRING_TO_BYTEARR(in := sTag);
+    bExport := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_STRING_TO_SYSTEMTIME" Id="{589fdd1c-217e-5deb-82bd-adb6e228b067}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_STRING_TO_SYSTEMTIME
+VAR
+    sScheduleTime  : STRING(23) := '2026-05-11-12:34:56.789'; // 上位机下发的计划时间字符串
+    stScheduleTime : TIMESTRUCT; // 解析后的系统时间
+    bLengthOk      : BOOL; // 长度校验：必须 23 字节
+    bRunOnce       : BOOL; // 脉冲触发
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：上位机通过 ADS 字符串协议下发计划维护时间「2026-05-11-12:34:56.789」
+//
+// 价值：1 行调用完成 23 字节字符串到 8 字段结构体的解析，省去手写 7 次 STRING_TO_INT
+//
+// 验证步骤：
+//   1. 引用 Tc2_Utilities
+//   2. 编译 + 登录 + 运行
+//   3. 强制 bRunOnce := TRUE一次
+//   4. 在线观察 stScheduleTime.wYear=2026, wMonth=5, wDay=11, ...wMilliseconds=789
+//   5. 改 sScheduleTime 长度后会得到不可预测结果（PDF 未规定错误行为）
+// =============================================================================
+bLengthOk := LEN(sScheduleTime) = 23;
+IF bLengthOk THEN
+    stScheduleTime := STRING_TO_SYSTEMTIME(sScheduleTime);
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_AnalyzeExpressionCombined" Id="{dd233a22-74e4-56cb-a48b-fdcfdabd40ae}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_AnalyzeExpressionCombined
+VAR
+    fbAnalyzeExpressionCombined : AnalyzeExpressionCombined; // AnalyzeExpressionCombined 实例
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_System.AnalyzeExpressionCombined 演示程序
+// ============================================================
+// 场景：演示在 SFC 工程中引用 Tc2_System 后本 FB 由编译器自动启用。
+// 价值：业务代码零调用，复杂表达式分析照常工作。
+// 验证：在 SFC POU 中按 AnalyzeExpression 文档配齐 4 个 flag；编写复杂转换条件如 (a AND b) OR (c AND (d OR e))，超时后 SFCErrorAnalyzation 应正确指出未满足子表达式。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_System（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』指引在线写值观察
+// ============================================================
+
+// 本 FB 不由用户直接调用，仅需 Tc2_System 库引用即可启用。本例程为占位演示。
+;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

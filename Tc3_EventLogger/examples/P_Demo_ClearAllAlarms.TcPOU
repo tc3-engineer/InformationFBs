@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_ClearAllAlarms" Id="{2fd8f05e-8bdf-5679-925f-986f180e946c}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_ClearAllAlarms
+VAR
+    fbLogger      : FB_TcEventLogger; // EventLogger 实例
+    bClearAll     : BOOL := FALSE; // 上升沿触发
+    bClearAllPrev : BOOL; // 边沿检测
+    hr            : HRESULT; // 返回值监视
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：设备维护后一键全清当前所有 Raised 报警准备复产
+// 价值：一句调用清除全部 Raised alarm
+// 验证：操作前 HMI 看到若干 Raised；写 bClearAll := TRUE 后全部变 Cleared
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_EventLogger（System → References → Add library）
+//   3. 编译 → 登录 → 运行；按 verify 注释里给出的在线写值操作
+// =============================================================================
+
+IF bClearAll AND NOT bClearAllPrev THEN
+    hr := fbLogger.ClearAllAlarms(
+        nTimeStamp := 0,
+        bResetConfirmation := FALSE);          // 保留确认状态以便审计
+END_IF;
+bClearAllPrev := bClearAll;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

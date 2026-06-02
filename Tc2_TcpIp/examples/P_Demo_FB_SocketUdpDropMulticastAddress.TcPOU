@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_SocketUdpDropMulticastAddress" Id="{ce078c4b-aed3-5ee9-bcdf-995fabc543e1}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_SocketUdpDropMulticastAddress
+VAR
+    fbCreateMulticastSocket : FB_SocketUdpCreate;
+    fbJoinOldGroup          : FB_SocketUdpAddMulticastAddress;
+    fbDropOldGroup          : FB_SocketUdpDropMulticastAddress;
+    fbJoinNewGroup          : FB_SocketUdpAddMulticastAddress;
+    bRequestCreate          : BOOL;
+    bCreateBusy             : BOOL;
+    bCreateError            : BOOL;
+    nCreateErrId            : UDINT;
+    hUdpSocket              : T_HSOCKET;
+    bRequestJoinOld         : BOOL;
+    bJoinOldBusy            : BOOL;
+    bJoinOldError           : BOOL;
+    nJoinOldErrId           : UDINT;
+    bRequestSwitch          : BOOL; // 切换订阅：上升沿先 Drop 旧 再 Add 新
+    bDropBusy               : BOOL;
+    bDropError              : BOOL;
+    nDropErrId              : UDINT;
+    bJoinNewBusy            : BOOL;
+    bJoinNewError           : BOOL;
+    nJoinNewErrId           : UDINT;
+    bSwitchInProgress       : BOOL;
+    bDropDone               : BOOL;
+    rtrigSwitch             : R_TRIG;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：PLC 当多播订阅者，订阅 239.1.1.100；班次切换时需要换订到 239.1.1.200。
+//       本例程演示"先 Drop 旧组、再 Add 新组"的安全切换流程，避免同时收两组
+//       重复数据。
+//
+// 价值：演示 Drop 与 Add 必须配对、且业务侧用 bSwitchInProgress 等串行标志
+//       保证 ADS 异步状态机一前一后跑完才进入下一步。
+//
+// 验证步骤：
+//   1. 在线 bRequestCreate := TRUE → hUdpSocket 创建
+//   2. 在线 bRequestJoinOld := TRUE → 加入 239.1.1.100
+//   3. 用 ncat -u 239.1.1.100 6000 发包，PLC 能收到
+//   4. 在线脉冲 bRequestSwitch := TRUE
+//      → bSwitchInProgress 期间：先 bDropBusy 闪烁、bDropDone 置 TRUE，
+//        再 bJoinNewBusy 闪烁完成
+//   5. 切换完成后只能收到 239.1.1.200 的包，原 239.1.1.100 不再收
+// =============================================================================
+
+// 阶段 1：创建 socket
+fbCreateMulticastSocket(
+    sSrvNetId := '', sLocalHost := '0.0.0.0', nLocalPort := 6000,
+    bExecute := bRequestCreate, tTimeout := T#5S,
+    bBusy => bCreateBusy, bError => bCreateError, nErrId => nCreateErrId,
+    hSocket => hUdpSocket);
+
+// 阶段 2：加入旧组（一次性）
+fbJoinOldGroup(
+    sSrvNetId := '', hSocket := hUdpSocket,
+    sMulticastAddr := '239.1.1.100',
+    bExecute := bRequestJoinOld, tTimeout := T#5S,
+    bBusy => bJoinOldBusy, bError => bJoinOldError, nErrId => nJoinOldErrId);
+
+// 阶段 3：切换 — 用 rtrig 把 bRequestSwitch 单脉冲转成 bSwitchInProgress 高电平
+rtrigSwitch(CLK := bRequestSwitch);
+IF rtrigSwitch.Q THEN
+    bSwitchInProgress := TRUE;
+    bDropDone := FALSE;
+END_IF;
+
+// 切换第 1 步：Drop 旧组（仅在 bSwitchInProgress AND NOT bDropDone 时跑）
+fbDropOldGroup(
+    sSrvNetId := '', hSocket := hUdpSocket,
+    sMulticastAddr := '239.1.1.100',
+    bExecute := bSwitchInProgress AND NOT bDropDone,
+    tTimeout := T#5S,
+    bBusy => bDropBusy, bError => bDropError, nErrId => nDropErrId);
+
+// Drop 完成后置位 bDropDone，让 Add 新组开始
+IF bSwitchInProgress AND NOT bDropDone AND NOT bDropBusy THEN
+    bDropDone := TRUE;
+END_IF;
+
+// 切换第 2 步：Add 新组（仅在 bDropDone 后跑）
+fbJoinNewGroup(
+    sSrvNetId := '', hSocket := hUdpSocket,
+    sMulticastAddr := '239.1.1.200',
+    bExecute := bSwitchInProgress AND bDropDone,
+    tTimeout := T#5S,
+    bBusy => bJoinNewBusy, bError => bJoinNewError, nErrId => nJoinNewErrId);
+
+// Add 完成 → 切换流程结束
+IF bSwitchInProgress AND bDropDone AND NOT bJoinNewBusy THEN
+    bSwitchInProgress := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

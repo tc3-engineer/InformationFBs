@@ -13,7 +13,7 @@
 | Verified | 2026-05-21 ✅ |
 | InfoSys-checked | ✅ 2026-05-21 |
 | Status | `verified` |
-| Example | [`examples/P_Demo_FB_SoEAX5000SetMotorCtrlWord.xml`](../examples/P_Demo_FB_SoEAX5000SetMotorCtrlWord.xml) |
+| Example | [`examples/P_Demo_FB_SoEAX5000SetMotorCtrlWord.TcPOU`](../examples/P_Demo_FB_SoEAX5000SetMotorCtrlWord.TcPOU) |
 
 ---
 
@@ -118,7 +118,7 @@ END_VAR
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_FB_SoEAX5000SetMotorCtrlWord.xml`](../examples/P_Demo_FB_SoEAX5000SetMotorCtrlWord.xml)
+> 配套可导入文件：[`examples/P_Demo_FB_SoEAX5000SetMotorCtrlWord.TcPOU`](../examples/P_Demo_FB_SoEAX5000SetMotorCtrlWord.TcPOU)
 
 ```iecst
 // 场景：手动松开 AX5000 抱闸做机械对位（ForceUnlock），用完清两个 Force 位

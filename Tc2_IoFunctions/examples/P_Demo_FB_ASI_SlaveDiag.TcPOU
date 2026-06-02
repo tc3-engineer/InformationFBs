@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_ASI_SlaveDiag" Id="{e04c6a73-ebb3-5584-b7d8-af55f7c16ee1}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_ASI_SlaveDiag
+VAR
+    fbAsiSlaveDiag       : FB_ASI_SlaveDiag; // ASI slave 诊断 FB
+    fbAsiParamControl    : FB_ASI_ParameterControl; // 后台调度（必须循环调用）
+    stAsiParamBuffer     : ST_ParameterBuffer; // 共享缓冲
+    stAsiInProcessImg    : ST_Parameter_IN; // 链到 %I*
+    stAsiOutProcessImg   : ST_Parameter_OUT; // 链到 %Q*
+    iTargetAsiSlaveAddr  : BYTE := 5; // 目标 slave 地址
+    iSelectedCounterType : INT := 1; // 1=PhysicalFault 2=Timeout 3=Response 4=LeaveDX 5=DXFailed
+    bReadIdentifiedList  : BOOL := FALSE; // 读 LES
+    bReadActivatedList   : BOOL := TRUE; // 读 LAS
+    bEnableCyclicRead    : BOOL := TRUE; // 0=单次读 1=连续读 (PDF: bCyleMode)
+    bStartDiag           : BOOL := FALSE; // 上升沿触发
+    iLatestCounterValue  : WORD; // 最新计数器值
+    iActiveSlaveBitmap   : DWORD; // LES / LAS 位图
+    nAsiCmdError         : DWORD; // ASI 主端子错误号
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：ASI 总线下挂 8 台 slave，运维要求 PLC 周期读 slave 5 的物理错计数器，超过 100 时报警；并定期读 LAS 确认所有 slave 在通讯。
+// 价值：让 SCADA 能拿到 ASI 主端子的内部诊断字段，做趋势 + 报警。
+// 验证：登录后 iTargetAsiSlaveAddr := 5、iSelectedCounterType := 1（物理错计数器）、bEnableCyclicRead := TRUE（连续读模式）、bStartDiag := TRUE，观察 iLatestCounterValue 实时刷新；切 bReadActivatedList := TRUE、bReadIdentifiedList := FALSE 时 iActiveSlaveBitmap 显示当前激活 slave 位图。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_IoFunctions（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』行的指示在线写值观察
+// =============================================================================
+
+// 后台调度必须循环调用
+fbAsiParamControl(
+    stParameterBuffer := stAsiParamBuffer,
+    stParameter_IN    := stAsiInProcessImg,
+    stParameter_OUT   := stAsiOutProcessImg
+);
+
+// PDF VAR 名是 bCyleMode（拼写错误），保持原名调用
+fbAsiSlaveDiag(
+    iSlaveaddress     := iTargetAsiSlaveAddr,
+    iCounter          := iSelectedCounterType,
+    bReadLES          := bReadIdentifiedList,
+    bReadLAS          := bReadActivatedList,
+    bCyleMode         := bEnableCyclicRead,
+    bStart            := bStartDiag,
+    stParameterBuffer := stAsiParamBuffer,
+    iCounterValue     => iLatestCounterValue,
+    iErrornumber      => nAsiCmdError,
+    iSlaveList        => iActiveSlaveBitmap
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

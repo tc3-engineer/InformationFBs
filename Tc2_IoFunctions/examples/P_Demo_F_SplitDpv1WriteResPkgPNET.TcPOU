@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_F_SplitDpv1WriteResPkgPNET" Id="{10f09909-2724-5f1b-88ba-29df58e0ed7b}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_F_SplitDpv1WriteResPkgPNET
+VAR
+    aDpv1WriteResBuffer   : ARRAY[1..240] OF BYTE; // 响应缓冲
+    arrDpv1ReqParams      : ARRAY[1..39] OF ST_Dpv1ParamAddrEx; // 清单
+    arrDpv1ValueHdr       : ARRAY[1..39] OF ST_Dpv1ValueHeaderEx; // 解析输出
+    bSplitWriteResPkgPNET : BOOL := FALSE; // 触发解析
+    nWriteResPkgLenPNET   : USINT; // 响应长度
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：Profinet SINAMICS 写响应解析。
+// 价值：对称。
+// 验证：写 bSplitWriteResPkgPNET := TRUE → nWriteResPkgLenPNET > 0；arrDpv1ValueHdr[k].nError 全 0 表示成功。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_IoFunctions（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』行的指示在线写值观察
+// =============================================================================
+
+IF bSplitWriteResPkgPNET THEN
+    nWriteResPkgLenPNET := F_SplitDpv1WriteResPkgPNET(
+        pDpv1ResData        := ADR(aDpv1WriteResBuffer),
+        stDpv1Parameter     := arrDpv1ReqParams,
+        stDpv1ValueHeaderEx := arrDpv1ValueHdr
+    );
+    bSplitWriteResPkgPNET := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

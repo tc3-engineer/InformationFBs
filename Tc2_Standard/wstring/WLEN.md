@@ -13,7 +13,7 @@
 | Verified | 2026-05-11 ✅ |
 | InfoSys-checked | ✅ 2026-05-11 |
 | Status | `verified` |
-| Example | [`examples/P_Demo_WLEN.xml`](../examples/P_Demo_WLEN.xml) |
+| Example | [`examples/P_Demo_WLEN.TcPOU`](../examples/P_Demo_WLEN.TcPOU) |
 
 ---
 
@@ -76,7 +76,7 @@ PDF §5.6 原例：`WLEN("SUSI")` → `4`。
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_WLEN.xml`](../examples/P_Demo_WLEN.xml)（PLCopenXML，可直接导入 TwinCAT 3 XAE）
+> 配套可导入文件：[`examples/P_Demo_WLEN.TcPOU`](../examples/P_Demo_WLEN.TcPOU)（TwinCAT 3 原生 .TcPOU，可直接拖入 XAE 的 PLC POUs 文件夹）
 
 ```iecst
 // 场景：HMI 中文输入框限制最多 50 字（汉字算 1 字），用 WLEN 校验

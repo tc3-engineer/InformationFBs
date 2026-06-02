@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_HEXCHRNIBBLE_TO_BYTE" Id="{5ad5b6f2-75e1-52b6-b128-6899651e50b7}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_HEXCHRNIBBLE_TO_BYTE
+VAR
+    sHexChar : STRING(1) := 'F'; // 工业语义：要解码的 hex 字符
+    nNibble  : BYTE; // 解码 nibble
+    bDecode  : BOOL; // 在线触发
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：手工解码 hex 配置串（如 `'AB'` → 0xAB 字节）；小量数据场景，避免引入 `HEXSTR_TO_DATA` 的完整 API。
+// 价值：比 `HEXASCNIBBLE_TO_BYTE` 直观——字符常量直接传。
+// 验证步骤：
+//   1. 引用 Tc2_Utilities
+//   2. 编译 + 登录 + 运行
+//   3. 在线写触发位 TRUE，monitor 输出变量
+// =============================================================================
+
+IF bDecode THEN
+    nNibble := HEXCHRNIBBLE_TO_BYTE(chr := sHexChar);
+    // 'F' -> 15
+    bDecode := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

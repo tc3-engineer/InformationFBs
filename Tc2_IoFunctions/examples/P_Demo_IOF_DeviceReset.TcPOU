@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_IOF_DeviceReset" Id="{99a026e4-c68a-5f6e-9969-edbe537b8f18}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_IOF_DeviceReset
+VAR
+    fbResetIoDevice   : IOF_DeviceReset; // I/O 设备复位 FB 实例
+    sTargetNetId      : T_AmsNetId := ''; // 本机用空串；远端填 AMS Net ID
+    nProfibusDeviceId : UDINT := 1; // System Manager 中 Profibus 主站的 Device Id
+    bResetProfibusReq : BOOL := FALSE; // HMI 按钮：复位 Profibus 主站请求（上升沿触发）
+    tResetCmdTimeout  : TIME := T#5S; // ADS 复位命令超时
+    bResetBusy        : BOOL; // FB 工作中
+    bResetErrorFlag   : BOOL; // 复位命令出错
+    nLastResetErrId   : UDINT; // ADS 错误号
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：Profibus 卡 FC3101 在长时间运行后偶发通讯故障，HMI 上按「复位 Profibus 主站」按钮触发本 FB，让总线重新走一遍上电流程。
+// 价值：把 System Manager 的「在线复位」做成 PLC 接口，可被 HMI / SCADA 触发；不用工程模式登录工控机。
+// 验证：登录后把 nProfibusDeviceId 设为 System Manager 显示的 Device Id（例如 1），在线写 bResetProfibusReq := TRUE → bResetBusy 短暂置 TRUE → 几百毫秒后回 FALSE，期间 Profibus 端子的输入数据会闪一下；nLastResetErrId 非 0 查 ADS Return Codes。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_IoFunctions（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』行的指示在线写值观察
+// =============================================================================
+
+// 单次调用形式：bResetProfibusReq 上升沿触发；HMI 应在 bResetBusy 落回后复位 bResetProfibusReq
+fbResetIoDevice(
+    NETID    := sTargetNetId,
+    DEVICEID := nProfibusDeviceId,
+    RESET    := bResetProfibusReq,
+    TMOUT    := tResetCmdTimeout,
+    BUSY     => bResetBusy,
+    ERR      => bResetErrorFlag,
+    ERRID    => nLastResetErrId
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_F_RTrim" Id="{9c7f5fae-532f-56d7-847b-cc4909ccabc4}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_F_RTrim
+VAR
+    sRawInput : STRING(255) := sensor_id_42   ; // 模拟收到的原始字符串；在线写值改测试不同输入
+    sCleaned  : STRING(255); // 处理后的字符串；在线 monitor 验证结果
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：从 HMI/串口/文件读到的字符串需要做去除尾部空格后再与配方/命令字比较。
+//       例：操作员录入"  PUMP_1 "（前后有空格）需要 trim 才能匹配配方表。
+// 价值：避免手写循环；一行调用、行为明确、PDF 列出空串等边界用例。
+// 验证步骤：
+//   1. 引用 Tc2_Utilities
+//   2. 编译 + 登录 + 运行
+//   3. 在线 monitor sCleaned；改 sRawInput 观察：
+//      - 默认输入 -> 看 sCleaned 是否符合 PDF 描述
+//      - 写 '' -> 应返回 ''
+//      - 写全空格 '     ' -> 应返回 ''
+// =============================================================================
+
+// 单行调用：纯字符串处理，无副作用
+sCleaned := F_RTrim(sRawInput);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

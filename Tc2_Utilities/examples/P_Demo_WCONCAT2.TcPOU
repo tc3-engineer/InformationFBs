@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_WCONCAT2" Id="{c9268a0c-7662-5f92-b165-4ee55f52f14e}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_WCONCAT2
+VAR
+    wsPrefix   : WSTRING(255) := "Pump Status: "; // 工业语义：HMI 多语言消息前缀
+    wsStateMsg : WSTRING(255) := "Running"; // 工业语义：HMI 状态文字
+    wsLogLine  : WSTRING(512); // 工业语义：拼接后完整消息
+    bCheckLog  : BOOL; // 在线置 TRUE 触发一次拼接
+    bConcatOk  : BOOL; // 拼接成功
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：HMI 多语言消息拼装：`'Pump '` + `'Status: '` + `'Running'`（WSTRING）。
+// 价值：`Tc2_Standard.WCONCAT` 限 255 字符；本函数无限制。
+// 验证步骤：
+//   1. 引用 Tc2_Utilities
+//   2. 编译 + 登录 + 运行
+//   3. 在线写触发位 TRUE，monitor 输出变量
+// =============================================================================
+IF bCheckLog THEN
+    bConcatOk := WCONCAT2(pSrcWString1 := ADR(wsPrefix),
+                          pSrcWString2 := ADR(wsStateMsg),
+                          pDstWString  := ADR(wsLogLine),
+                          nDstSize     := SIZEOF(wsLogLine));
+    bCheckLog := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

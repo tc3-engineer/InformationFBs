@@ -13,7 +13,7 @@
 | Verified | 2026-05-25 ✅ |
 | InfoSys-checked | ✅ 2026-05-25 |
 | Status | `verified` |
-| Example | [`examples/P_Demo_MC_FlyingSawCharacValues.xml`](../examples/P_Demo_MC_FlyingSawCharacValues.xml) |
+| Example | [`examples/P_Demo_MC_FlyingSawCharacValues.TcPOU`](../examples/P_Demo_MC_FlyingSawCharacValues.TcPOU) |
 
 ---
 
@@ -125,7 +125,7 @@ END_TYPE
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_MC_FlyingSawCharacValues.xml`](../examples/P_Demo_MC_FlyingSawCharacValues.xml)
+> 配套可导入文件：[`examples/P_Demo_MC_FlyingSawCharacValues.TcPOU`](../examples/P_Demo_MC_FlyingSawCharacValues.TcPOU)
 
 ```iecst
 // 场景：飞锯调试，声明特征值结构供 MC_ReadFlyingSawCharacteristics 填充，读出后取关键极值做安全校核

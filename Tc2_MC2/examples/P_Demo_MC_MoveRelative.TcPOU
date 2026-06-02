@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_MC_MoveRelative" Id="{94b634fd-00ea-5d23-a296-5259f3356f87}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_MC_MoveRelative
+VAR
+    fbStepFeed     : MC_MoveRelative; // 送料相对定位 FB 实例
+    axisFeeder     : AXIS_REF; // 送料轴 AXIS_REF（VAR_IN_OUT 必须传引用）
+    rtStepTrigger  : R_TRIG; // 上升沿触发器
+    bIndexStep     : BOOL := FALSE; // 在线写 TRUE 触发一次送料
+    lrStepLengthMM : LREAL := 50.0; // 每格送料长度 mm
+    bStepDone      : BOOL;
+    bStepBusy      : BOOL;
+    nErrorID       : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：步进送料机 — 每个生产节拍把卷料相对前进 50 mm。上位 PLC 给一次脉冲，
+//       本 FB 把轴走 50 mm 然后等下一次脉冲。
+//
+// 价值：业务不用维护"上次走到哪"，FB 自动以 NC 当前设定位置为起点；
+//       Done/Busy 三态符合 PLCopen 标准。
+//
+// 验证步骤：
+//   1. System Manager 配好 NC 轴 → Link 给 axisFeeder
+//   2. MC_Power 先把轴使能（demo 假设外部已使能）
+//   3. 在线写 bIndexStep := TRUE → 应看到 axisFeeder.NcToPlc.ActPos
+//      在 ~167 ms 内增加 50 mm（300 mm/s + 加减速）
+//   4. bStepDone 短暂置 TRUE 一个周期
+//   5. 把 bIndexStep 拉低再 TRUE → 再走 50 mm
+//   6. 累计 10 次后看 ActPos ≈ 500 mm（如有漂移说明被中断过）
+// =============================================================================
+
+rtStepTrigger(CLK := bIndexStep);
+
+fbStepFeed(
+    Execute      := rtStepTrigger.Q,
+    Distance     := lrStepLengthMM,
+    Velocity     := 300.0,
+    Acceleration := 3000.0,
+    Deceleration := 3000.0,
+    Jerk         := 30000.0,
+    BufferMode   := MC_Aborting,
+    Axis         := axisFeeder,
+    Done         => bStepDone,
+    Busy         => bStepBusy,
+    ErrorID      => nErrorID
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

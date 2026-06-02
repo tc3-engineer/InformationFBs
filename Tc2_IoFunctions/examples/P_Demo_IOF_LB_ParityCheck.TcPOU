@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_IOF_LB_ParityCheck" Id="{77e3759a-f3c3-5b6f-8e99-940dcfd73331}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_IOF_LB_ParityCheck
+VAR
+    fbLightbusParityRead : IOF_LB_ParityCheck; // Lightbus 奇偶错读 FB
+    sTargetNetId         : T_AmsNetId := ''; // 本机
+    nLightbusDeviceId    : UDINT := 1; // 主站 Device Id
+    aParityErrCounters   : ARRAY[1..256] OF BYTE; // 奇偶错计数缓冲
+    nParityCounterCount  : UDINT := 5; // 要读的模块数（= 字节数）
+    bStartReadParity     : BOOL := FALSE; // 上升沿触发
+    tReadTimeout         : TIME := T#5S; // 超时
+    bReadBusy            : BOOL; // 工作中
+    bReadErr             : BOOL; // 失败
+    nLastErrCode         : UDINT; // 错误号
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：Lightbus 长期运行下趋势监控：每天定时读 5 个模块的奇偶错计数到本地缓冲。
+// 价值：让 SCADA 看光纤层的故障趋势。
+// 验证：登录后 nLightbusDeviceId 设为主站 ID；nParityCounterCount := 5；写 bStartReadParity := TRUE → bReadBusy 短暂 TRUE → 回 FALSE 后 aParityErrCounters[1..5] 显示 5 个模块的奇偶错累积值。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_IoFunctions（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』行的指示在线写值观察
+// =============================================================================
+
+// LEN 是字节数 = 计数器个数；DESTADDR 用 ADR()
+fbLightbusParityRead(
+    NETID    := sTargetNetId,
+    DEVICEID := nLightbusDeviceId,
+    LEN      := nParityCounterCount,
+    DESTADDR := ADR(aParityErrCounters),
+    START    := bStartReadParity,
+    TMOUT    := tReadTimeout,
+    BUSY     => bReadBusy,
+    ERR      => bReadErr,
+    ERRID    => nLastErrCode
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

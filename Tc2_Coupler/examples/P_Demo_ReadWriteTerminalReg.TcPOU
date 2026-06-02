@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_ReadWriteTerminalReg" Id="{6d834a2b-4e90-5cc5-ba80-11735c39ddc7}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_ReadWriteTerminalReg
+VAR
+    fbTermReg               : ReadWriteTerminalReg; // 智能端子寄存器访问 FB 实例
+    nKL3464Ch1Status        : BYTE; // KL3464 通道 1 status byte（System Manager 链接）
+    wKL3464Ch1DataIn        : WORD; // KL3464 通道 1 data input word（链接）
+    nKL3464Ch1Control       : BYTE; // KL3464 通道 1 control byte（链接）
+    wKL3464Ch1DataOut       : WORD; // KL3464 通道 1 data output word（链接）
+    bReadTerminalIdRequest  : BOOL; // 单脉冲触发：读端子型号寄存器 reg 8
+    bWriteFeatureRegRequest : BOOL; // 单脉冲触发：写 feature register reg 32
+    tAccessTimeout          : TIME := T#500MS; // 单次访问最大允许时长，建议 不短于 100ms
+    wNewFeatureRegValue     : WORD := 16#0006; // 要写入 reg 32 的值：bit1=user scaling, bit2=filter
+    bAccessBusy             : BOOL; // FB 执行中
+    bAccessError            : BOOL; // 访问错误标志
+    nLastAccessErrId        : UDINT; // 错误号 0/16#100/16#200/16#300
+    wCurrentRegValue        : WORD; // 当前寄存器值（KL3464 reg 8 应为 16#0D80）
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：现场是 BK1120 + KL3464（4 通道 ±10V 模拟输入）端子排。需要：
+//   1) 上电时读 KL3464 通道 1 的端子型号寄存器（reg 8）校验布线；
+//   2) 单脉冲写 feature register（reg 32 = 16#0006）启用 user scaling + filter。
+//
+// 价值：不用本 FB 就得手写 control/status 握手 + 密码寄存器 31 解锁 + 写后读回
+//       校验 + 超时管理。本 FB 把这一整套 K-bus 寄存器通信协议封装为 1 个调用。
+//
+// 验证步骤：
+//   1. 在 System Manager 中给 KL3464 通道 1 选 Complex mapping（暴露
+//      control/status 字节），并把本程序的 4 个 IO 变量逐一链接到位
+//   2. 引用 Tc2_Coupler，编译，登录
+//   3. 单脉冲 bReadTerminalIdRequest（FALSE->TRUE->FALSE）
+//      -> 观察 wCurrentRegValue 应等于 16#0D80（KL3464 端子号 3456 = 0x0D80），
+//        bAccessError 保持 FALSE
+//   4. 单脉冲 bWriteFeatureRegRequest
+//      -> 观察 wCurrentRegValue 应等于 16#0006（写后读回校验通过）
+//   5. 把 KL3464 物理断开 -> 再单脉冲读 -> 观察 bAccessError = TRUE，
+//      nLastAccessErrId = 16#100（超时）
+//   6. 关耦合器电源再上电 -> 重启后 reg 32 改动写入 EEPROM 持久化
+// =============================================================================
+
+// 单次调用形式：READ 与 WRITE 互斥；工程实践由上层状态机保证同周期仅一个上升沿。
+// REGNO 这里按"哪个请求来就用哪个 reg 号"算，避免再加 IF 分支。
+fbTermReg(
+    STATE       := nKL3464Ch1Status,
+    DATAIN      := wKL3464Ch1DataIn,
+    REGNO       := 8 * BOOL_TO_BYTE(bReadTerminalIdRequest)
+                  + 32 * BOOL_TO_BYTE(bWriteFeatureRegRequest),
+    READ        := bReadTerminalIdRequest,
+    WRITE       := bWriteFeatureRegRequest,
+    TMOUT       := tAccessTimeout,
+    NEWREGVALUE := wNewFeatureRegValue,
+    CTRL        => nKL3464Ch1Control,
+    DATAOUT     => wKL3464Ch1DataOut,
+    BUSY        => bAccessBusy,
+    ERR         => bAccessError,
+    ERRID       => nLastAccessErrId,
+    CURREGVALUE => wCurrentRegValue
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

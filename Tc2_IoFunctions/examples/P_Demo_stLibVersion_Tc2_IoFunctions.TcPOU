@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_stLibVersion_Tc2_IoFunctions" Id="{8812ce69-23e6-56c5-87f4-163989072514}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_stLibVersion_Tc2_IoFunctions
+VAR
+    stLibVer          : ST_LibVersion; // 本库版本副本（赋值后查看）
+    bLibVersionTooOld : BOOL; // 若库版本 < 1.5.0 则置 TRUE
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：上电库版本检查：要求 Tc2_IoFunctions ≥ 1.5.0，否则拒绝启动。
+// 价值：让 PLC 程序对库版本做硬约束。
+// 验证：登录后 monitor stLibVer.iMajor / .iMinor / .iBuild 应显示 1 / 5 / 3；bLibVersionTooOld 在版本不足时为 TRUE。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_IoFunctions（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』行的指示在线写值观察
+// =============================================================================
+
+// 全局常量像变量访问；演示直接读字段
+stLibVer := stLibVersion_Tc2_IoFunctions;
+
+// 简易版本检查：要求 major.minor &gt;= 1.5
+bLibVersionTooOld := (stLibVer.iMajor &lt; 1) OR
+                     ((stLibVer.iMajor = 1) AND (stLibVer.iMinor &lt; 5));
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

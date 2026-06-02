@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_GetDPRAMInfo" Id="{73cb184d-5f82-593e-bc89-2f588fab6069}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_GetDPRAMInfo
+VAR
+    fbGetDpramInfo    : FB_GetDPRAMInfo; // NOV/DP-RAM 信息查询 FB
+    nDpramDeviceId    : UDINT := 1; // NOVRAM 卡 Device Id
+    bGetDpramInfoReq  : BOOL := FALSE; // 上升沿触发查询
+    tInfoQueryTimeout : TIME := T#5S; // 超时
+    bGetInfoBusy      : BOOL; // 工作中
+    bGetInfoError     : BOOL; // 出错
+    nLastInfoErrCode  : UDINT; // 错误号
+    stDpramAddrInfo   : ST_NovRamAddrInfo; // NOV/DP-RAM 地址 + 大小结构
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：上电时一次性查询 FC3101 卡 NOV-RAM 的地址指针，存到全局指针变量，后续业务直接通过 POINTER TO STRUCT 读写。
+// 价值：拿到地址指针后访问 NOV-RAM 比走 FB 接口快得多（直接 MEMCPY，一个 PLC 周期完成）。
+// 验证：登录后 nDeviceId := 1（NOVRAM 卡 ID），触发 bGetDpramInfoReq → bGetInfoBusy 短暂 TRUE → 回 FALSE 后 stDpramAddrInfo 含地址指针与大小；可在线 monitor 这些字段。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_IoFunctions（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』行的指示在线写值观察
+// =============================================================================
+
+fbGetDpramInfo(
+    nDevId   := nDpramDeviceId,
+    bExecute := bGetDpramInfoReq,
+    tTimeOut := tInfoQueryTimeout,
+    bBusy    => bGetInfoBusy,
+    bError   => bGetInfoError,
+    nErrId   => nLastInfoErrCode,
+    stInfo   => stDpramAddrInfo
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

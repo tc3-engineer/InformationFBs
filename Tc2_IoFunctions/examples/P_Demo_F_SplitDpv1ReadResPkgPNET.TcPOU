@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_F_SplitDpv1ReadResPkgPNET" Id="{49f75282-a94e-549d-83a7-7925160296a5}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_F_SplitDpv1ReadResPkgPNET
+VAR
+    aDpv1ReadResBuffer   : ARRAY[1..240] OF BYTE; // 响应缓冲
+    arrDpv1ReqParams     : ARRAY[1..39] OF ST_Dpv1ParamAddrEx; // 请求清单
+    arrDpv1ValueHdr      : ARRAY[1..39] OF ST_Dpv1ValueHeaderEx; // 解析输出
+    bSplitReadResPkgPNET : BOOL := FALSE; // 触发解析
+    nReadResPkgLenPNET   : USINT; // 响应长度
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：Profinet SINAMICS 读响应解析。
+// 价值：对称封装。
+// 验证：收到响应后 bSplitReadResPkgPNET := TRUE → nReadResPkgLenPNET > 0。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_IoFunctions（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』行的指示在线写值观察
+// =============================================================================
+
+IF bSplitReadResPkgPNET THEN
+    nReadResPkgLenPNET := F_SplitDpv1ReadResPkgPNET(
+        pDpv1ResData        := ADR(aDpv1ReadResBuffer),
+        stDpv1Parameter     := arrDpv1ReqParams,
+        stDpv1ValueHeaderEx := arrDpv1ValueHdr
+    );
+    bSplitReadResPkgPNET := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

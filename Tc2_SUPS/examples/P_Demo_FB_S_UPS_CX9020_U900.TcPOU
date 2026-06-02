@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_S_UPS_CX9020_U900" Id="{85e30e4a-2c05-5d18-a008-18e5cf7a49a6}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_S_UPS_CX9020_U900
+VAR
+    fbSUPS             : FB_S_UPS_CX9020_U900; // CX9020-U900 平台 1-second UPS 管家
+    tPumpRunTimeRetain : TIME; // 变频泵累计运行时间；工程里加 VAR RETAIN
+    eModeRetain        : INT; // 设备模式 1=Manual 2=Auto 3=Maintenance；工程里加 VAR RETAIN
+    bPowerFailNow      : BOOL; // 实时电源标志：掉电中 = TRUE
+    eUpsState          : E_S_UPS_State; // 在线 monitor 观察应急流程当前阶段
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：某 CX9020-U900 控制器装在远程泵站本地控制柜，监视水位 + 控制变频泵。
+//       掉电时要保留变频泵累计运行时间 tPumpRunTimeRetain 和当前模式 eModeRetain，
+//       重启后能从上次状态继续而不需要现场工程师手动回填。
+//
+// 价值：CX9020-U900 上 UPS 状态由 FB 内部读取（不暴露 iUPSPort），业务侧只
+//       需每周期调一次 + 看 eUpsState 即可。不用本 FB 要自己读 UPS 寄存器 +
+//       写双段持久化 + 调 QuickShutdown，约 70-90 行手写代码。
+//
+// 验证步骤：
+//   1. 引用 Tc2_SUPS（含依赖 Tc2_System）
+//   2. 在 PLC 项目中右键 → Add Existing Item (.TcPOU) → 选本文件 → OK
+//   3. 工程里把 tPumpRunTimeRetain / eModeRetain 改为 VAR RETAIN
+//   4. Properties → PLC → Router Memory 调到 retain 总量的 1.5-2 倍
+//   5. 编译、登录、运行
+//   6. 在线把 tPumpRunTimeRetain 改到非零（例如 T#1234H）
+//   7. 模拟掉电（仅台架拔 24V）→ 观察 eUpsState 走 eSUPS_PowerFailure →
+//      eSUPS_WritePersistentData → eSUPS_QuickShutdown → 系统重启
+//   8. 上电后再连接 → 验证 tPumpRunTimeRetain 仍是掉电前的值
+// =============================================================================
+
+// 单次调用形式：CX9020-U900 接口里没有 iUPSPort（与 CX5x 系列不同）
+fbSUPS(
+    sNetID           := '',
+    iPLCPort         := 0,
+    tTimeout         := DEFAULT_ADS_TIMEOUT,
+    eUpsMode         := eSUPS_WrPersistData_Shutdown,
+    ePersistentMode  := SPDM_2PASS,
+    tRecoverTime     := T#10S,
+    bPowerFailDetect => bPowerFailNow,
+    eState           => eUpsState
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_IsAlarmRaised" Id="{d4102415-33f5-5d78-8073-f0011ff4ba8f}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_IsAlarmRaised
+VAR
+    fbLogger         : FB_TcEventLogger; // EventLogger 实例
+    guidEventClass   : GUID; // 要查询的事件类 GUID
+    nEventId         : UDINT := 9001; // 急停事件 ID
+    bIsRaised        : BOOL; // 查询结果
+    bMotorStartReq   : BOOL := FALSE; // 操作员启动请求
+    bMotorAllowStart : BOOL; // 联锁后的允许启动
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：启动联锁：检查急停安全报警是否 Raised，若是则禁用电机启动
+// 价值：一次查询替代手写引用持有 + 状态访问
+// 验证：先让某 alarm Create+Raise；写本程序的 guidEventClass+nEventId 与之匹配 → bIsRaised = TRUE；对该 alarm 调 Clear → bIsRaised 变 FALSE
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_EventLogger（System → References → Add library）
+//   3. 编译 → 登录 → 运行；按 verify 注释里给出的在线写值操作
+// =============================================================================
+
+// 每周期查询急停报警是否 Raised
+bIsRaised := fbLogger.IsAlarmRaised(
+    eventClass := guidEventClass,
+    nEventId := nEventId,
+    ipSourceInfo := 0);
+
+// 联锁逻辑：报警 Raised 时禁止启动
+bMotorAllowStart := bMotorStartReq AND NOT bIsRaised;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

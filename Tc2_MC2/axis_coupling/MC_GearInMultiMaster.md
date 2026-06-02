@@ -13,7 +13,7 @@
 | Verified | 2026-05-21 ✅ |
 | InfoSys-checked | ✅ 2026-05-21 |
 | Status | `verified` |
-| Example | [`examples/P_Demo_MC_GearInMultiMaster.xml`](../examples/P_Demo_MC_GearInMultiMaster.xml) |
+| Example | [`examples/P_Demo_MC_GearInMultiMaster.TcPOU`](../examples/P_Demo_MC_GearInMultiMaster.TcPOU) |
 
 ---
 
@@ -136,7 +136,7 @@ END_VAR
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_MC_GearInMultiMaster.xml`](../examples/P_Demo_MC_GearInMultiMaster.xml)
+> 配套可导入文件：[`examples/P_Demo_MC_GearInMultiMaster.TcPOU`](../examples/P_Demo_MC_GearInMultiMaster.TcPOU)
 
 ```iecst
 // 场景：龙门双驱机床 — 左右两个 X 轴严格同步驱动横梁，叠加后驱动一根"工件 X 虚轴"

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_AnalyzeExpression" Id="{543ca687-bd23-5b23-aa8b-7333d47bacc3}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_AnalyzeExpression
+VAR
+    fbAnalyzeExpression : AnalyzeExpression; // AnalyzeExpression 实例
+    bSensorA            : BOOL; // 传感器 A 到位
+    bSensorB            : BOOL; // 传感器 B 到位
+    bSensorC            : BOOL; // 传感器 C 到位
+    SFCEnableLimit      : BOOL := TRUE; // 启用 SFC 步最大激活时间监控
+    SFCError            : BOOL; // SFC 系统 flag：有步超时
+    SFCErrorAnalyzation : STRING; // SFC 系统 flag：本 FB 写入未满足子表达式
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_System.AnalyzeExpression 演示程序
+// ============================================================
+// 场景：在 SFC POU 中启用 AnalyzeExpression 自动分析超时转换。
+// 价值：编译器自动调本 FB；业务代码零侵入，HMI 直接读 SFCErrorAnalyzation。
+// 验证：把本声明区拷到一个 SFC POU 里，加一个 Step（最大激活时间 1 s）+ 转换 (bSensorA AND (bSensorB OR bSensorC))。运行 1 秒未触发，SFCErrorAnalyzation 应填入未满足子表达式。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_System（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』指引在线写值观察
+// ============================================================
+
+// 演示用：在 SFC POU 中本 FB 会被系统自动调用，无需手动 fbXxx() 调用。
+// 该例程仅展示 SFC flag 声明区的必备变量；真正功能在 SFC 流程图上体现。
+;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

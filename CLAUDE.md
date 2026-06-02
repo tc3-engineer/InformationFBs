@@ -32,7 +32,7 @@ python3 _meta/tools/parse_toc.py <Library>               # JSON 输出 section/n
 python3 _meta/tools/extract_section.py <Lib> <sec>       # 抽指定章节正文（支持 <sec>#mN 切 inline method）
 python3 _meta/tools/infosys_fetch.py <url>               # 抓 + 解析 InfoSys topic 页（结构化 JSON）
 python3 _meta/tools/verify_doc.py <doc.md>               # 自验证：VAR/默认值/版本/占位短语/InfoSys 链接
-python3 _meta/tools/lint_plcopen.py <P_Demo_X.xml>       # 例程结构 lint
+python3 _meta/tools/lint_tcpou.py <P_Demo_X.TcPOU>       # 例程结构 lint
 ```
 
 缓存：`_meta/.pdf-cache/<Library>.{pdf,txt,meta.json}`（gitignore）、`_meta/.infosys-cache/<sha1>.html`（gitignore）。
@@ -69,7 +69,7 @@ python3 _meta/tools/lint_plcopen.py <P_Demo_X.xml>       # 例程结构 lint
 11. **§3 行为说明不可退化为"见上方"+"看 PDF"**：必须用中文叙述时序、状态机分支、上升沿/边沿/电平触发语义、典型用法、典型陷阱；InfoSys 行为段落必须翻译进去。
 
 ### D. 例程必须有业务价值（新增 2026-05-11）
-12. **例程不可只是"声明 + 实例化 + 调用 + 看输出"**。每个 P_Demo_X.xml 必须在头部用中文注释回答：
+12. **例程不可只是"声明 + 实例化 + 调用 + 看输出"**。每个 P_Demo_X.TcPOU 必须在头部用中文注释回答：
     - **场景**：这个 FB 在真实工程里解决什么问题？（例：FB_S_UPS_CB3011 → CX 控制器掉电时 2 秒内把 retain 数据写入 SD 卡，避免下次开机数据丢失）
     - **价值**：用 vs 不用的区别是什么？
     - **验证步骤**：如何在线观察这个例程"真的在做事"，而不只是编译过？（"在线写 bEnable := TRUE，观察 systemTime 在 2-3 秒后开始变化"）
@@ -101,28 +101,28 @@ verify_doc.py 现在检的不仅是 VAR 一致性，还包括：
 
 ## 例程文件（每篇文档必产）
 
-输出到 `<library>/examples/P_Demo_<Name>.xml`。
+输出到 `<library>/examples/P_Demo_<Name>.TcPOU`。
 
 要求：
-1. 格式：PLCopenXML（IEC 61131-10），根节点 `<project xmlns="http://www.plcopen.org/xml/tc6_0200">`
+1. 格式：TwinCAT 3 原生 .TcPOU（XML / TcPlcObject schema），根节点 `<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">`
 2. POU 类型 `pouType="program"`，名为 `P_Demo_<Name>`
-3. 基于 `_templates/plcopen-program.xml` 骨架
-4. 用户右键 PLC 项目 → Import PLCopenXML → 选此文件 → 编译 → 登录 → 运行验证
+3. 基于 `_templates/tcpou-program.xml` 骨架（顶层 `<TcPlcObject>` + 单个 `<POU>` + `<Declaration>` + `<Implementation>/<ST>`）
+4. 用户右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本文件 → 编译 → 登录 → 运行验证
 5. **demo 内容（D 节硬规则）**：
    - 顶部中文注释三件套：**场景 / 价值 / 验证步骤**
    - 局部变量名贴近工业语义（`bMotorStartReq` 不是 `bSig1`）
    - 包含 FB 实例 `fb<Name> : <Name>;`，所有 VAR_INPUT 显式赋值
    - 调用风格：`fbX(IN := ..., PT := T#3S, Q => bRunOk);` 单次调用形式
    - 注释行数 ≥ 代码行数的 1/3，解释 WHY 不复述 WHAT
-6. XML 实体转义：`<` `>` `&` 转为 `&lt;` `&gt;` `&amp;`
-7. 类型映射：
-   - 基本类型用空元素 `<BOOL/>` / `<INT/>` / `<TIME/>` 等
-   - `STRING(N)` 用 `<string><length>N</length></string>`
-   - `POINTER TO X` 用 `<pointer><baseType>...</baseType></pointer>`
-   - `ARRAY[L..U] OF X` 用 `<array><dimension lower="L" upper="U"/><baseType>...</baseType></array>`
-   - 命名 DUT/FB/接口/枚举用 `<derived name="..."/>`
-8. 不加 TwinCAT 私有特性（无 attribute pragma、无 access modifier、无 namespace）
-9. `lint_plcopen.py` 退出 0 才算通过
+6. 文本编码：Declaration 和 ST 体均放在 `<![CDATA[...]]>` 内，IEC 文本里的 `<` `>` `&` **不需要转义**（CDATA 透传）
+7. 类型直接写 IEC 文本（在 Declaration CDATA 内）：
+   - 基本类型直接写 `BOOL` / `INT` / `TIME` 等
+   - `STRING(N)` 直接写 `STRING(80)` 等
+   - `POINTER TO X` 直接写 `POINTER TO BOOL` 等
+   - `ARRAY[L..U] OF X` 直接写 `ARRAY[0..9] OF BYTE` 等
+   - 命名 DUT/FB/接口/枚举直接写类型名
+8. 不加 TwinCAT 私有 attribute pragma；POU `SpecialFunc="None"`；Id 用稳定 UUID5（`_meta/tools/plcopen_to_tcpou.py` 里的 `_stable_guid`）
+9. `lint_tcpou.py` 退出 0 才算通过
 
 ## 流程
 
@@ -133,14 +133,14 @@ verify_doc.py 现在检的不仅是 VAR 一致性，还包括：
 
 ## 文档模板
 
-`_templates/fb-template.md`（文档主体）与 `_templates/plcopen-program.xml`（例程）。
+`_templates/fb-template.md`（文档主体）与 `_templates/tcpou-program.xml`（例程，TwinCAT 3 原生 `.TcPOU` 骨架）。
 **模板章节顺序与字段名固定，不许增删章节**。当前章节：
 1. 功能简述（中文 2-4 句，不抄英文原句）
 2. 接口定义（VAR_INPUT/OUTPUT/IN_OUT + 中文 Description 表）
 3. 行为说明（时序、状态机、触发语义、典型用法、典型陷阱；不准 "见上方"）
 4. 错误码 / 返回值（按 FUNCTION/METHOD 实际返回类型写；HRESULT/BOOL/无返回各自模板）
 5. 使用注意 / 常见坑（工程经验补充允许标"工程经验补充"区分）
-6. 最小例程（指向 .xml 文件）
+6. 最小例程（指向 .TcPOU 文件）
 7. 业务场景与实际价值（新增 D 节要求）
 8. 参考资料（PDF 章节 + InfoSys URL）
 
@@ -157,7 +157,7 @@ verify_doc.py 现在检的不仅是 VAR 一致性，还包括：
 - `fetch_pdf.py` 非 200 → `_meta/blocked.md`，列原因，停止该库（不试 InfoSys 替代 PDF）
 - `parse_toc.py` 与人工估算偏差大 → PR body 列 JSON + 标 `⚠️ 待 review TOC`
 - `verify_doc.py` 退出 2 → 整篇重写一次；二次仍 FAIL 标 `⚠️ verify-failed` 进 blocked.md
-- `lint_plcopen.py` 退出 2 → 重写例程；二次失败标 `⚠️ example-build-failed`
+- `lint_tcpou.py` 退出 2 → 重写例程；二次失败标 `⚠️ example-build-failed`
 - InfoSys 取不到 / 404 → `InfoSys-checked` 标 `⚠️ not-on-infosys`，**不停止流程**
 - 任何不确定 → 标 `⚠️` 而非编造
 
@@ -228,7 +228,7 @@ fbLocalTime(sNetID := '', bEnable := bEnableSync, dwCycle := 5, dwOpt := 1,
 ❌ `fbTON.IN := bMotorReq;` 单独成行 + `fbTON();` 双步调用
 ✅ `fbTON(IN := bMotorReq, PT := T#3S, Q => bRunOk);` 单次完整调用
 
-❌ PLCopenXML body 里 `if x < 5 then` 没转义
+❌ TcPOU CDATA 外的 ST 文本 `if x < 5 then` 没转义
 ✅ `if x &lt; 5 then`
 
 ## 当前数据基线（2026-05-11）

@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_MC_MoveAbsolute" Id="{2b4443b2-a8c5-55fe-8e6d-4a9f79f0a174}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_MC_MoveAbsolute
+VAR
+    fbMoveToPlace         : MC_MoveAbsolute; // 绝对定位 FB 实例
+    axisYHead             : AXIS_REF; // 贴片头 Y 轴轴引用；必须先在 System Manager 配好
+    rtMoveTrigger         : R_TRIG; // 把电平信号转上升沿，避免 Execute 一直高的常见误用
+    bStartPlaceMove       : BOOL := FALSE; // 在线写 TRUE 触发一次绝对定位
+    lrPlacementPositionMM : LREAL := 150.25; // PCB 上的贴装绝对位 (mm)
+    lrTraverseVelocity    : LREAL := 500.0; // 最大行进速度 (mm/s)
+    bMoveDone             : BOOL;
+    bMoveBusy             : BOOL;
+    bMoveAborted          : BOOL;
+    bMoveError            : BOOL;
+    nMoveErrorID          : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：贴片机贴装头 Y 轴：每次接到上位机"贴下一片"信号，从料带取料位 0 mm
+//       移动到 PCB 上目标贴装绝对坐标 150.25 mm。这是 SMT 行业最高频的运动
+//       原语之一。
+//
+// 价值：1) 不需要自己写 NC 通道命令（NCTOPLC/PLCTONC 30+ 字段）
+//       2) Done/Busy/Error 三态符合 PLCopen 标准，便于后续上层状态机消费
+//       3) 切换轴硬件（伺服换品牌）业务代码不变
+//
+// 验证步骤：
+//   1. 在 TwinCAT System Manager 配好 NC 轴并 Link 给 axisYHead
+//   2. 引用 Tc2_MC2 库
+//   3. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   4. 把 P_Demo_MC_MoveAbsolute 加进 PlcTask，编译登录
+//   5. 先用 MC_Power 给轴上使能（这个 demo 不含 Power，假设已经使能）
+//   6. 在线写 bStartPlaceMove := TRUE → 应看到 bMoveBusy 立刻 TRUE，
+//      axisYHead.NcToPlc.ActPos 从 0 一路爬升到 ≈150.25，bMoveDone 置 TRUE
+//   7. 把 bStartPlaceMove 拉回 FALSE 再 TRUE → 再触发一次（验证边沿语义）
+//   8. 如果 bMoveError = TRUE，看 nMoveErrorID 对照 NC 错误码表
+// =============================================================================
+
+// 用 R_TRIG 把"持续按住的 TRUE"转成真正的上升沿；这是新手最容易踩的坑
+rtMoveTrigger(CLK := bStartPlaceMove);
+
+// 单次调用形式：所有 VAR_INPUT 显式赋值；Axis 是 VAR_IN_OUT，用 := 传引用
+fbMoveToPlace(
+    Execute        := rtMoveTrigger.Q,
+    Position       := lrPlacementPositionMM,
+    Velocity       := lrTraverseVelocity,
+    Acceleration   := 5000.0,
+    Deceleration   := 5000.0,
+    Jerk           := 50000.0,
+    BufferMode     := MC_Aborting,
+    Axis           := axisYHead,
+    Done           => bMoveDone,
+    Busy           => bMoveBusy,
+    CommandAborted => bMoveAborted,
+    Error          => bMoveError,
+    ErrorID        => nMoveErrorID
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

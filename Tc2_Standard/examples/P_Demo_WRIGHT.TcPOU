@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_WRIGHT" Id="{ac8a2602-ee52-51e5-beb5-b4b7d3eb29bd}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_WRIGHT
+VAR
+    sOrderID   : WSTRING(255) := "客户A订单20260511-00123"; // 中文订单号：前缀（部门）+ 日期 + 流水号
+    sSerial    : WSTRING(255); // 提取出的流水号（订单号尾 5 字符）
+    nSerialLen : INT := 5; // 流水号固定长度 = 5 字符
+    bExtract   : BOOL; // 触发一次 WRIGHT
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：MES 系统下发中文订单号 "客户X订单yyyymmdd-NNNNN"。HMI 上现场操作员
+//       只想看流水号 NNNNN（避免长字符串挤显示）。WRIGHT 从尾部取 5 字符
+//       就拿到流水号；按 UCS-2 字符算，5 字符就是 5 字符。
+//
+// 价值：UCS-2 安全。STRING + RIGHT 在此场景会按字节取，5 字节可能拆出 1.x
+//       个汉字，HMI 乱码。WRIGHT 直接返回视觉上的"最后 5 个字符"。
+//
+// 验证步骤：
+//   1. 导入本文件、引用 Tc2_Standard、编译、登录、运行
+//   2. 在线 monitor sSerial（Unicode 显示）
+//   3. 在线写 bExtract := TRUE
+//   4. 下一周期 sSerial = "00123"（订单号尾 5 字符）
+//   5. 把 sOrderID 改成 "短"（只 1 字符）+ 再触发 →
+//      sSerial = "短"（SIZE>WLEN 时返回整个源串）
+// =============================================================================
+
+// WRIGHT(s, 5) 表示"从右往左数 5 个字符"，按 UCS-2 字符算
+IF bExtract THEN
+    sSerial := WRIGHT(sOrderID, nSerialLen);
+    bExtract := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

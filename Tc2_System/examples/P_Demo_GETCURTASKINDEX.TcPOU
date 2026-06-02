@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_GETCURTASKINDEX" Id="{c2a6e027-37ed-509b-8a65-7757e5f38cd4}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_GETCURTASKINDEX
+VAR
+    fbGETCURTASKINDEX : GETCURTASKINDEX; // GETCURTASKINDEX 实例
+    nCurrentTaskIndex : BYTE; // 当前任务索引 1..4；FB_init 中调用结果不可靠
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_System.GETCURTASKINDEX 演示程序
+// ============================================================
+// 场景：老项目里日志染色：每条日志带上任务索引便于排查。
+// 价值：保留兼容旧代码；新代码改用 GETCURTASKINDEXEX 函数。
+// 验证：把本 PROGRAM 加到第 2 个 PLC 任务，登录后 nCurrentTaskIndex 应为 2。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_System（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』指引在线写值观察
+// ============================================================
+
+fbGETCURTASKINDEX(index => nCurrentTaskIndex);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

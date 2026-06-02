@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_TlsSocketCreate" Id="{1b8b3219-5b4e-5a0b-8513-78d6ed632a30}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_TlsSocketCreate
+VAR
+    fbCreateTlsClient : FB_TlsSocketCreate;
+    fbCreateTlsServer : FB_TlsSocketCreate;
+    hClientSocket     : T_HSOCKET;
+    hServerSocket     : T_HSOCKET;
+    bRequestClient    : BOOL;
+    bRequestServer    : BOOL;
+    bClientBusy       : BOOL;
+    bClientError      : BOOL;
+    nClientErrId      : UDINT;
+    bServerBusy       : BOOL;
+    bServerError      : BOOL;
+    nServerErrId      : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：PLC 既要往云端发安全遥测（客户端 TLS），又要在本地 8443 端口提供
+//       加密 API（服务端 TLS）；同一 PLC 内并存两种 TLS 角色的 socket。
+//
+// 价值：演示 bListener 输入如何切换 socket 角色——同一 FB 通过 TRUE/FALSE
+//       就能生成 server / client 两种 TLS context。
+//
+// 验证步骤：
+//   1. 在线 bRequestClient := TRUE → hClientSocket.handle 非 0
+//   2. 在线 bRequestServer := TRUE → hServerSocket.handle 非 0
+//   3. 两个句柄不同，独立维护
+//   4. 后续可分别给 hClientSocket 配 AddCa + TlsConnect、给 hServerSocket
+//      配 SetCert + TlsListen
+//   5. 不再用时各自 FB_SocketClose
+// =============================================================================
+
+// 客户端 TLS socket
+fbCreateTlsClient(
+    sSrvNetId := '',
+    bListener := FALSE,
+    bExecute  := bRequestClient,
+    tTimeout  := T#5S,
+    bBusy     => bClientBusy,
+    bError    => bClientError,
+    nErrId    => nClientErrId,
+    hSocket   => hClientSocket
+);
+
+// 服务端 TLS socket
+fbCreateTlsServer(
+    sSrvNetId := '',
+    bListener := TRUE,
+    bExecute  := bRequestServer,
+    tTimeout  := T#5S,
+    bBusy     => bServerBusy,
+    bError    => bServerError,
+    nErrId    => nServerErrId,
+    hSocket   => hServerSocket
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

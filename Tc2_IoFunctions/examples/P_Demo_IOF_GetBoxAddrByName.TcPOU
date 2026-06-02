@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_IOF_GetBoxAddrByName" Id="{80b7b9fa-8da2-5f2a-b68c-04d5292f151e}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_IOF_GetBoxAddrByName
+VAR
+    fbResolveBoxAddr  : IOF_GetBoxAddrByName; // box 名字 → 现场总线地址 FB 实例
+    sTargetNetId      : T_AmsNetId := ''; // 本机空串
+    nProfibusDeviceId : UDINT := 1; // Profibus 主站的 Device Id
+    sQueryBoxName     : T_MaxString := 'Drive3'; // 要查的 box 名（与 System Manager 配置一致，区分大小写）
+    bStartLookup      : BOOL := FALSE; // 上升沿触发查询
+    tLookupTimeout    : TIME := T#5S; // ADS 超时
+    bLookupBusy       : BOOL; // FB 工作中
+    bLookupError      : BOOL; // 查询失败
+    nLastErrCode      : UDINT; // ADS 错误号
+    nResolvedBoxAddr  : UINT; // 查得的现场总线站地址
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：调试期间 Profibus 现场总线下挂 6 台变频器 (Drive1..Drive6)，运维要在 PLC 启动时核对每台的站号，与工程图纸做比对存档。
+// 价值：查表逻辑封装在一次调用里：业务代码只关心名字，不必读 System Manager 配置。
+// 验证：登录后 sQueryBoxName 写 "Drive3" → 在线写 bStartLookup := TRUE → 观察 bLookupBusy 短暂 TRUE → 回 FALSE 后 nResolvedBoxAddr 显示 Drive3 的 Profibus 站号；若 bLookupError = TRUE，nLastErrCode 给出错误号（常见 0x6 = 名字找不到）。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_IoFunctions（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』行的指示在线写值观察
+// =============================================================================
+
+// 单次调用形式，bStartLookup 上升沿触发
+fbResolveBoxAddr(
+    NETID    := sTargetNetId,
+    DEVICEID := nProfibusDeviceId,
+    BOXNAME  := sQueryBoxName,
+    START    := bStartLookup,
+    TMOUT    := tLookupTimeout,
+    BUSY     => bLookupBusy,
+    ERR      => bLookupError,
+    ERRID    => nLastErrCode,
+    BOXADDR  => nResolvedBoxAddr
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

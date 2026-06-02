@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_FileOpen" Id="{d5c2be43-987e-5c3e-9965-ebd85b6d8bd4}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_FileOpen
+VAR
+    fbFileOpen   : FB_FileOpen; // FB_FileOpen 实例
+    sFilePath    : T_MaxString := 'D:/log/process.csv'; // 目标 CSV 文件本地绝对路径
+    bOpenRequest : BOOL; // 在线写 TRUE 触发一次打开
+    hOpenedFile  : UINT; // 成功后存放文件句柄；0 = 未打开
+    bOpenDone    : BOOL; // TRUE = 上次打开成功
+    bOpenError   : BOOL; // TRUE = 上次打开失败
+    nErrIdLast   : UDINT; // 最近一次 ADS 错误号（0x70C / 0x70D / 0x745 等）
+    bBusyMon     : BOOL; // ADS 通讯中
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：设备启动后在 D 盘新建一份 CSV 文件 'D:/log/process.csv' 用于追加写入工艺参数；首次打开后保留 hFile 供后续 FB_FilePuts 使用。
+// 价值：不用本 FB 需要自己拼 ADS Write 报文 + 跟 IndexGroup 0x10005 状态，本 FB 一行调用就拿到 hFile。
+// 验证：登录后置 bOpenRequest := TRUE → 观察 hOpenedFile 在 1-2 PLC 周期后非零；置 FALSE 后再次置 TRUE 重新打开；故意改 sFilePath 到不存在的盘符 → nErrIdLast = 0x70C。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_System（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』行的指示在线写值观察
+// =============================================================================
+
+// 注：单次完整调用形式；nMode 用 'wa+' 组合 = 追加读写文本
+// FOPEN_MODEWRITE(2) OR FOPEN_MODEAPPEND(4) OR FOPEN_MODEPLUS(16) OR FOPEN_MODETEXT(64) = 86
+// 这里直接拼数字常量，避免引入额外的 enum 依赖
+fbFileOpen(
+    sNetId    := '',
+    sPathName := sFilePath,
+    nMode     := FOPEN_MODEAPPEND OR FOPEN_MODEPLUS OR FOPEN_MODETEXT,
+    ePath     := PATH_GENERIC,
+    bExecute  := bOpenRequest,
+    tTimeout  := T#10S,
+    bBusy     => bBusyMon,
+    bError    => bOpenError,
+    nErrId    => nErrIdLast,
+    hFile     => hOpenedFile
+);
+
+// 业务侧：把 bBusy 落沿当作 done
+bOpenDone := (NOT bBusyMon) AND (NOT bOpenError) AND (hOpenedFile <> 0);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

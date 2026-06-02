@@ -13,7 +13,7 @@
 | Verified | 2026-05-21 ✅ |
 | InfoSys-checked | ✅ 2026-05-21 |
 | Status | `verified` |
-| Example | [`examples/P_Demo_MC_SetCamOnlineChangeMode.xml`](../examples/P_Demo_MC_SetCamOnlineChangeMode.xml) |
+| Example | [`examples/P_Demo_MC_SetCamOnlineChangeMode.TcPOU`](../examples/P_Demo_MC_SetCamOnlineChangeMode.TcPOU) |
 
 ---
 
@@ -120,7 +120,7 @@ END_VAR
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_MC_SetCamOnlineChangeMode.xml`](../examples/P_Demo_MC_SetCamOnlineChangeMode.xml)
+> 配套可导入文件：[`examples/P_Demo_MC_SetCamOnlineChangeMode.TcPOU`](../examples/P_Demo_MC_SetCamOnlineChangeMode.TcPOU)
 
 例程演示"系统初始化时为生产凸轮表配置激活策略：cam 写入后排队等主轴到达 0 位才切换"。
 

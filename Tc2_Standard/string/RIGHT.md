@@ -13,7 +13,7 @@
 | Verified | 2026-05-11 ✅ |
 | InfoSys-checked | ✅ 2026-05-11 |
 | Status | `verified` |
-| Example | [`examples/P_Demo_RIGHT.xml`](../examples/P_Demo_RIGHT.xml) |
+| Example | [`examples/P_Demo_RIGHT.TcPOU`](../examples/P_Demo_RIGHT.TcPOU) |
 
 ---
 
@@ -80,7 +80,7 @@ PDF §4.9 原例：`RIGHT('SUSI', 3)` → 取最右 3 字符 → `'USI'`。
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_RIGHT.xml`](../examples/P_Demo_RIGHT.xml)（PLCopenXML，可直接导入 TwinCAT 3 XAE）
+> 配套可导入文件：[`examples/P_Demo_RIGHT.TcPOU`](../examples/P_Demo_RIGHT.TcPOU)（TwinCAT 3 原生 .TcPOU，可直接拖入 XAE 的 PLC POUs 文件夹）
 
 ```iecst
 // 场景：订单号 'ORD2026051100123' 最后 5 位是流水号，HMI 显示时只展示流水号

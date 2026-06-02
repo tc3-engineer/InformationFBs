@@ -13,7 +13,7 @@
 | Verified | 2026-05-11 ✅ |
 | InfoSys-checked | ✅ 2026-05-11 |
 | Status | `verified` |
-| Example | [`examples/P_Demo_WDELETE.xml`](../examples/P_Demo_WDELETE.xml) |
+| Example | [`examples/P_Demo_WDELETE.TcPOU`](../examples/P_Demo_WDELETE.TcPOU) |
 
 ---
 
@@ -82,7 +82,7 @@ PDF §5.2 原例：`WDELETE("SUXYSI", 2, 3)` → 从第 3 字符（`X`）起删 
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_WDELETE.xml`](../examples/P_Demo_WDELETE.xml)（PLCopenXML，可直接导入 TwinCAT 3 XAE）
+> 配套可导入文件：[`examples/P_Demo_WDELETE.TcPOU`](../examples/P_Demo_WDELETE.TcPOU)（TwinCAT 3 原生 .TcPOU，可直接拖入 XAE 的 PLC POUs 文件夹）
 
 ```iecst
 // 场景：从中文报警 "[报警] 1号电机过流" 中剔除前缀 "[报警] " 共 5 字符

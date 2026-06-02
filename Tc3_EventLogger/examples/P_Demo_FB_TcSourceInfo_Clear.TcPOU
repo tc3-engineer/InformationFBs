@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_TcSourceInfo_Clear" Id="{6d86bf38-4074-51c1-bd34-c047b190ffd3}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_TcSourceInfo_Clear
+VAR
+    fbSrc        : FB_TcSourceInfo; // 源信息实例
+    bDoClear     : BOOL := FALSE; // 上升沿触发
+    bDoClearPrev : BOOL; // 边沿检测
+    hr           : HRESULT; // 返回值监视
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：清空 SourceInfo 字段以便重新填写
+// 价值：一次调用让字段回到初始状态
+// 验证：登录后调用 Clear；之后 fbSrc 的字段应为空/0/全 0 GUID
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_EventLogger（System → References → Add library）
+//   3. 编译 → 登录 → 运行；按 verify 注释里给出的在线写值操作
+// =============================================================================
+
+IF bDoClear AND NOT bDoClearPrev THEN
+    hr := fbSrc.Clear();
+END_IF;
+bDoClearPrev := bDoClear;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

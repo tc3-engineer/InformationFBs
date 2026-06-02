@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_EqualsTo" Id="{bff7a3a4-c09a-58c2-8693-ac2bc0e0011f}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_EqualsTo
+VAR
+    fbAlarmA : FB_TcAlarm; // 事件 A
+    fbAlarmB : FB_TcAlarm; // 事件 B
+    ipEvent  : I_TcEvent; // 事件 B 的接口
+    bSame    : BOOL; // 比较结果
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：判断刚收到的 alarm 是否与上一条完全相同（含参数）以做去重
+// 价值：一次调用替代多字段手写比较
+// 验证：需要两条事件实例。可以新建两个 FB_TcAlarm，分别 Create 不同 EventID 后比较 → 应为 FALSE；同 EventID + 同参数 → TRUE
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_EventLogger（System → References → Add library）
+//   3. 编译 → 登录 → 运行；按 verify 注释里给出的在线写值操作
+// =============================================================================
+
+// 假定两个 FB_TcAlarm 已 Create()。完整比较（含 Arguments）
+ipEvent := fbAlarmB;
+IF ipEvent &lt;&gt; 0 THEN
+    bSame := fbAlarmA.EqualsTo(ipEvent := ipEvent);
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

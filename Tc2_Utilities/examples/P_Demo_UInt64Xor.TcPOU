@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_UInt64Xor" Id="{c76cb9c6-d0a2-584a-ba34-dbc9e2e3afe7}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_UInt64Xor
+VAR
+    uliPrev  : T_ULARGE_INTEGER;; // 上周期状态
+    uliCurr  : T_ULARGE_INTEGER;; // 本周期状态
+    uliDelta : T_ULARGE_INTEGER;; // 翻转位掩码
+    bDetect  : BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_Utilities.UInt64Xor 演示程序（FUNCTION，单周期触发）
+// ============================================================
+// 场景：检测控制字 64 位中哪些位在本周期发生了翻转。
+// 价值：替代手写两次 DWORD XOR。
+// 验证步骤：
+//   1. 把本 PROGRAM 加到 PlcTask 调用列表
+//   2. 编译 + 登录
+//   3. 在线把 b... 触发位置 TRUE 一个周期
+//   4. 观察输出变量是否符合期望
+// ============================================================
+
+IF bDetect THEN
+    uliDelta := UInt64Xor(uliPrev, uliCurr);   // 1 表示该 bit 翻转过
+    bDetect := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

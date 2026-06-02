@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_Subscribe2" Id="{d2760e80-bc44-5f87-ac9f-42889dc96787}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_Subscribe2
+VAR
+    fbListener  : FB_ListenerBase2; // listener 实例
+    fbFilter    : FB_TcEventFilter; // 事件过滤器实例（在线配置规则）
+    bSubscribed : BOOL; // 订阅 latch
+    hr          : HRESULT; // 返回值监视
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：新工程统一过滤器订阅
+// 价值：单过滤器实例同时控制 message + alarm 的接收
+// 验证：登录后 monitor bSubscribed 第一周期变 TRUE
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_EventLogger（System → References → Add library）
+//   3. 编译 → 登录 → 运行；按 verify 注释里给出的在线写值操作
+// =============================================================================
+
+IF NOT bSubscribed THEN
+    hr := fbListener.Subscribe2(ipEventFilter := fbFilter);
+    bSubscribed := SUCCEEDED(hr);
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

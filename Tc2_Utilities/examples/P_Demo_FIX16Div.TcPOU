@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FIX16Div" Id="{1e70503d-64b4-5832-baab-9104a2921637}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FIX16Div
+VAR
+    fp8A     : T_FIX16;
+    fp8B     : T_FIX16;
+    fp8Quot  : T_FIX16;
+    lrResult : LREAL;
+    bDivide  : BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_Utilities.FIX16Div 演示程序（FUNCTION，单周期触发）
+// ============================================================
+// 场景：把两个定点测量量做比值（如电压 / 电流 = 电阻）显示。
+// 价值：替代手写分辨率对齐 + INT 除法。
+// 验证步骤：
+//   1. 把本 PROGRAM 加到 PlcTask 调用列表
+//   2. 编译 + 登录
+//   3. 在线把 b... 触发位置 TRUE 一个周期
+//   4. 观察输出变量是否符合期望
+// ============================================================
+
+fp8A := LREAL_TO_FIX16(-22.5, 8);
+fp8B := LREAL_TO_FIX16(10.0, 8);
+IF bDivide AND fp8B <> 0 THEN
+    fp8Quot  := FIX16Div(fp8A, fp8B);
+    lrResult := FIX16_TO_LREAL(fp8Quot);   // 应为 -2.25
+    bDivide := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

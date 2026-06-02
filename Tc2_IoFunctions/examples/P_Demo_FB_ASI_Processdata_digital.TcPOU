@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_ASI_Processdata_digital" Id="{42d10979-3cf9-5826-ae2b-576df675a91d}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_ASI_Processdata_digital
+VAR
+    fbAsiProcessDataDigital : FB_ASI_Processdata_digital; // ASI 数字过程数据 FB
+    fbAsiParamControl       : FB_ASI_ParameterControl; // 后台调度
+    stAsiParamBuffer        : ST_ParameterBuffer; // 共享缓冲
+    stAsiInProcessImg       : ST_Parameter_IN; // 链到 %I*
+    stAsiOutProcessImg      : ST_Parameter_OUT; // 链到 %Q*
+    iTargetAsiSlaveAddr     : BYTE := 7; // slave 地址
+    iValueToWrite           : WORD := 0; // 写入数据（4 bit 有效）
+    bIsWriteMode            : BOOL := FALSE; // 0=读 1=写
+    bEnableCyclicMode       : BOOL := FALSE; // 0=单次 1=连续
+    bMaskedAccess           : BOOL := FALSE; // 0=普通 1=屏蔽访问
+    bStartTransfer          : BOOL := FALSE; // 上升沿触发
+    iReadbackDataNibble     : WORD; // 读得数据
+    iParamGroupInfo         : WORD; // 参数分组
+    nAsiCmdError            : DWORD; // 错误号
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：ASI slave 7 是 4 路数字输入；按需读取这 4 个状态而不占用永久过程映像。
+// 价值：节省 PLC 过程映像；按需访问。
+// 验证：登录后 iTargetAsiSlaveAddr := 7、bIsWriteMode := FALSE、bEnableCyclicMode := FALSE、bStartTransfer := TRUE → 回 FALSE 后 iReadbackDataNibble 显示该 slave 4 个数字输入状态（低 4 bit）。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_IoFunctions（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』行的指示在线写值观察
+// =============================================================================
+
+fbAsiParamControl(
+    stParameterBuffer := stAsiParamBuffer,
+    stParameter_IN    := stAsiInProcessImg,
+    stParameter_OUT   := stAsiOutProcessImg
+);
+
+// bCommMode 与 bRegComm 在当前固件中必须保持 FALSE（PDF: currently always 0）
+fbAsiProcessDataDigital(
+    iSlaveaddress     := iTargetAsiSlaveAddr,
+    iSlavevalue       := iValueToWrite,
+    bParametermode    := bIsWriteMode,
+    bCycleMode        := bEnableCyclicMode,
+    bCommMode         := FALSE,
+    bRegComm          := FALSE,
+    bmaskAccess       := bMaskedAccess,
+    bStart            := bStartTransfer,
+    stParameterBuffer := stAsiParamBuffer,
+    iReadValue        => iReadbackDataNibble,
+    iParametergroup   => iParamGroupInfo,
+    iErrornumber      => nAsiCmdError
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

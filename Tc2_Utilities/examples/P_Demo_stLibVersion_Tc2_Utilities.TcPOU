@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_stLibVersion_Tc2_Utilities" Id="{54de6bf6-eb81-5706-a99a-19528ad83887}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_stLibVersion_Tc2_Utilities
+VAR
+    stCurrentLibVer : ST_LibVersion; // 运行时版本快照，HMI / 报表展示用
+    bLibVersionOk   : BOOL; // 启动门禁结果
+    sLibCheckMsg    : STRING(80); // HMI 显示用消息
+    bChecked        : BOOL; // 只检查一次的 latch
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_Utilities.stLibVersion_Tc2_Utilities 演示程序
+// ============================================================
+// 场景：工程代码依赖 Tc2_Utilities ≥ 3.7.4.0 的 TC_CoreBoostMonitor FB（旧版本
+//       没有这个 FB）。需要在 PLC 启动时检查版本，不达标就停机并点亮 HMI 报警，
+//       避免在不兼容的库上跑生产。
+// 价值：一次性的启动版本门禁可在编译 / 下载阶段就发现版本错配，把"隐蔽现场
+//       bug"变成"启动时立刻报错"。代码与库版本绑定写在源码里。
+// 验证：
+//   1. 引用 Tc2_Utilities + Tc2_System，编译 + 登录
+//   2. 在线监视 stCurrentLibVer 应显示 iMajor=2 iMinor=18 iBuild=2
+//   3. bLibVersionOk 应为 TRUE
+//   4. 在 XAE 把库降级到 2.17.x 重新下载 → bLibVersionOk 翻 FALSE，
+//      sLibCheckMsg 显示 "Tc2_Utilities too old, need 2.18.2+"
+// ============================================================
+
+// 启动只跑一次（PLC 进入 Run 后第一个周期）
+IF NOT bChecked THEN
+    bChecked := TRUE;
+
+    // 1. 快照当前库的版本号（仅诊断用，给 HMI 看）
+    stCurrentLibVer := stLibVersion_Tc2_Utilities;
+
+    // 2. 调用 Tc2_System 提供的版本比较器，要求 ≥ 2.18.2.0
+    bLibVersionOk := F_CmpLibVersion(
+        stLibVersion := stLibVersion_Tc2_Utilities,
+        iMajor       := 2,
+        iMinor       := 18,
+        iBuild       := 2,
+        iRevision    := 0,
+        nCmpType     := E_CmpLibVersion.GreaterOrEqual
+    );
+
+    // 3. 决策：不满足就把状态消息填进去给 HMI / 报警系统
+    IF bLibVersionOk THEN
+        sLibCheckMsg := 'Tc2_Utilities version OK';
+    ELSE
+        sLibCheckMsg := 'Tc2_Utilities too old, need 2.18.2+';
+        // 真实工程在这里应该把 PLC 切到 SAFE_STOP，而不是继续跑业务
+    END_IF;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

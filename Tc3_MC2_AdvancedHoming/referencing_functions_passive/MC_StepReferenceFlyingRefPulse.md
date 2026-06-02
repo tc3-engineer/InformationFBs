@@ -13,7 +13,7 @@
 | Verified | 2026-05-25 ✅ |
 | InfoSys-checked | ✅ 2026-05-25 |
 | Status | `verified` |
-| Example | [`examples/P_Demo_MC_StepReferenceFlyingRefPulse.xml`](../examples/P_Demo_MC_StepReferenceFlyingRefPulse.xml) |
+| Example | [`examples/P_Demo_MC_StepReferenceFlyingRefPulse.TcPOU`](../examples/P_Demo_MC_StepReferenceFlyingRefPulse.TcPOU) |
 
 ---
 
@@ -113,9 +113,9 @@ END_VAR
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_MC_StepReferenceFlyingRefPulse.xml`](../examples/P_Demo_MC_StepReferenceFlyingRefPulse.xml)
+> 配套可导入文件：[`examples/P_Demo_MC_StepReferenceFlyingRefPulse.TcPOU`](../examples/P_Demo_MC_StepReferenceFlyingRefPulse.TcPOU)
 
-详见上述 XML 文件，内含场景 / 价值 / 验证步骤注释，可右键 PLC 项目 → Import PLCopenXML 导入后编译运行。
+详见上述 XML 文件，内含场景 / 价值 / 验证步骤注释，可右键 PLC 项目下 POUs 文件夹 → Add → Existing Item 导入后编译运行。
 
 ## 7. 业务场景与实际价值
 

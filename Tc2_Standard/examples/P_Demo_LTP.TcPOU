@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_LTP" Id="{6ae42519-721d-5e89-92e1-ac47e3224f56}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_LTP
+VAR
+    fbStepPulse    : LTP; // LTP 实例：步进电机 μs 级 STEP 脉冲
+    bStepTrigger   : BOOL; // 步进触发（在线置 TRUE 触发一次脉冲）
+    tStepHighWidth : LTIME := LTIME#50US; // STEP 脉冲宽度 = 50 μs（驱动器要求）
+    bStepPulseOut  : BOOL; // STEP 脉冲输出
+    tPulseElapsed  : LTIME; // 脉冲已经过时长（LTIME 纳秒）
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：步进电机驱动器要求 STEP 信号高电平宽度精确到 50 μs。1 ms 任务的 TP 做
+//       不到这个精度；用 NC 任务（50 μs 周期）+ LTP 可输出 ±1 μs 内的精确脉冲。
+//
+// 价值：保留 TP 的"边沿触发、固定宽度、不可重入"语义，扩展到纳秒分辨率；
+//       步进电机 / 激光 / 高速 IO 的标配。
+//
+// 验证步骤：
+//   1. PLC 项目 → Add Existing Item (.TcPOU) → 选本文件
+//   2. 引用 Tc2_Standard 库
+//   3. 编译、登录、运行
+//   4. 在线 monitor bStepPulseOut 与 tPulseElapsed
+//   5. 在线 bStepTrigger 短按（TRUE 然后 FALSE）→ bStepPulseOut 变 TRUE
+//      50μs 后自动 FALSE；tPulseElapsed 从 0 累加到 50us 后保持
+//   6. 测试不可重触发：bStepPulseOut 仍是 TRUE 时再点 bStepTrigger，脉冲不重启
+//   7. 注：实际看到 μs 精度需要把任务调到 ≤ 50μs 周期，否则 tPulseElapsed
+//      会按 PLC 周期跳变
+// =============================================================================
+
+fbStepPulse(
+    IN := bStepTrigger,
+    PT := tStepHighWidth,
+    Q  => bStepPulseOut,
+    ET => tPulseElapsed
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

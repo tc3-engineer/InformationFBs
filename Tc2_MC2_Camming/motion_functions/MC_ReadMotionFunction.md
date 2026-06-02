@@ -13,7 +13,7 @@
 | Verified | 2026-05-21 ✅ |
 | InfoSys-checked | ✅ 2026-05-21 |
 | Status | `verified` |
-| Example | [`examples/P_Demo_MC_ReadMotionFunction.xml`](../examples/P_Demo_MC_ReadMotionFunction.xml) |
+| Example | [`examples/P_Demo_MC_ReadMotionFunction.TcPOU`](../examples/P_Demo_MC_ReadMotionFunction.TcPOU) |
 
 ---
 
@@ -120,7 +120,7 @@ END_VAR
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_MC_ReadMotionFunction.xml`](../examples/P_Demo_MC_ReadMotionFunction.xml)
+> 配套可导入文件：[`examples/P_Demo_MC_ReadMotionFunction.TcPOU`](../examples/P_Demo_MC_ReadMotionFunction.TcPOU)
 
 例程演示"包装机料厚自适应：先读出当前生效的凸轮表点列，备份到 PLC 数组以便后续 HMI 显示/重算"。
 

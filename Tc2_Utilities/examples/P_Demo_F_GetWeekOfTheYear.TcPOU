@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_F_GetWeekOfTheYear" Id="{bf0fb796-d49e-5bee-a025-a77daa8a8fc4}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_F_GetWeekOfTheYear
+VAR
+    dtProduction  : DATE_AND_TIME := DT#2026-05-11-08:00:00; // 投产日期
+    wCalendarWeek : WORD; // ISO 8601 周编号（1~53）
+    bRunOnce      : BOOL; // 脉冲触发
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：与 MES 系统对接，按 ISO 周编号下发周生产计划「CW19 投产 A 型号」
+//
+// 价值：1 行得到 ISO 周编号，自动处理跨年情形（12/29 可能属于下年第 1 周）
+//
+// 验证步骤：
+//   1. 引用 Tc2_Utilities
+//   2. 编译 + 登录 + 运行
+//   3. 强制 bRunOnce := TRUE
+//   4. 在线观察 wCalendarWeek = 20（2026-05-11 是 CW20）
+//   5. dtProduction := DT#2027-01-01 → wCalendarWeek = 53（属于 2026 第 53 周，跨年规则）
+// =============================================================================
+wCalendarWeek := F_GetWeekOfTheYear(dtProduction);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

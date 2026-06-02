@@ -13,7 +13,7 @@
 | Verified | 2026-05-11 ✅ |
 | InfoSys-checked | ✅ 2026-05-11 |
 | Status | `verified` |
-| Example | [`examples/P_Demo_F_ToUCase.xml`](../examples/P_Demo_F_ToUCase.xml) |
+| Example | [`examples/P_Demo_F_ToUCase.TcPOU`](../examples/P_Demo_F_ToUCase.TcPOU) |
 
 ---
 
@@ -71,9 +71,9 @@ END_VAR
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_F_ToUCase.xml`](../examples/P_Demo_F_ToUCase.xml)（PLCopenXML，可直接导入 TwinCAT 3 XAE）
+> 配套可导入文件：[`examples/P_Demo_F_ToUCase.TcPOU`](../examples/P_Demo_F_ToUCase.TcPOU)（TwinCAT 3 原生 .TcPOU，可直接拖入 XAE 的 PLC POUs 文件夹）
 >
-> 导入步骤：右键 PLC 项目 → Import PLCopenXML → 选该文件 → OK
+> 导入步骤：右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选该文件 → OK
 > 详见 [`examples/README.md`](../examples/README.md)
 
 ```iecst

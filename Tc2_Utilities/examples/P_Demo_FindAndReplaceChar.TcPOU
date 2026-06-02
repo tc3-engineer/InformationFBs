@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FindAndReplaceChar" Id="{46028135-ca1c-5634-9b53-16a4f18ab870}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FindAndReplaceChar
+VAR
+    sFileName  : STRING(128) := 'recipe alpha 2026.csv'; // 工业语义：原始文件名含空格
+    sSafeName  : STRING(128); // 规范化后的文件名
+    nReplaced  : UDINT; // 替换次数
+    bNormalize : BOOL; // 在线触发
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：文件名规范化：把空格 `' '` 替换为下划线 `'_'`；CSV 字段清洗：把字段内的逗号 `,` 替换为分号 `;`。
+// 价值：比 `FOR` + 字节比较 + 写入的手动循环更直观；O(N) 时间。
+// 验证步骤：
+//   1. 引用 Tc2_Utilities
+//   2. 编译 + 登录 + 运行
+//   3. 在线写触发位 TRUE，monitor 输出变量
+// =============================================================================
+// 把文件名中的空格替换为下划线
+IF bNormalize THEN
+    nReplaced := FindAndReplaceChar(pSrcString  := ADR(sFileName),
+                                    sDeleteChar := ' ',
+                                    sInsertChar := '_',
+                                    pDstString  := ADR(sSafeName),
+                                    nDstSize    := SIZEOF(sSafeName));
+    bNormalize := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

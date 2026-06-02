@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_CoEDriveMoveVelocity" Id="{21a7f58e-be77-54ca-9f07-2c57c9aced0f}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_CoEDriveMoveVelocity
+VAR
+    fbDriveEnable  : FB_CoEDriveEnable; // 先使能 CoE 驱动器
+    fbMoveVelocity : FB_CoEDriveMoveVelocity; // 再喂速度曲线
+    stCoEDriveIo   : ST_CoeDriveIoInterface; // 两个 FB 共用同一过程映像实例
+    stVelOptions   : ST_DriveMoveVelocityOptions; // 含速度阈值等附加参数
+    bEnableDrive   : BOOL := FALSE; // 在线置 TRUE 使能驱动器
+    bRunConveyor   : BOOL := FALSE; // 在线置 TRUE 开始跑速度曲线
+    fTargetVel     : LREAL := 1000.0; // 目标速度（驱动器速度单位）
+    bDriveReady    : BOOL; // 使能完成
+    bDriveFault    : BOOL; // 驱动器 Fault 态
+    bAtSpeed       : BOOL; // 已达目标速度
+    bMoveBusy      : BOOL; // 速度型材计算中
+    bMoveError     : BOOL; // 速度生成出错
+    iMoveErrId     : UDINT; // 错误号
+    fActVel        : LREAL; // 实际速度
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：CoE 伺服驱动输送带做纯调速运行，需要带加减速的平滑起停且能运行中改速度，
+//       但不需要位置插补/同步，不想配 NC。
+//
+// 价值：把"三段速度曲线 + 双段加减速 + 实时改速 + 写 CoE 设定值"封装成一个 FB，
+//       配 FB_CoEDriveEnable 即可纯 PLC 实现带加减速的调速。
+//
+// 验证步骤：
+//   1. 引用 Tc2_Drive 库
+//   2. System Manager 里把 CoE 驱动器 PDO 链接到 stCoEDriveIo（两个 FB 共用此实例）
+//   3. 编译、登录、运行
+//   4. 在线置 bEnableDrive := TRUE，等 bDriveReady 变 TRUE（驱动器已使能）
+//   5. 在线置 bRunConveyor := TRUE
+//      → fActVel 按 fAcceleration1/2 加速到 fTargetVel，到速后 bAtSpeed 变 TRUE
+//   6. 运行中在线改 fTargetVel（如改成 2000.0）
+//      → fActVel 平滑过渡到新目标（高于阈值段用加速度 2）
+//   7. 置 bRunConveyor := FALSE → 按减速度降速到 0
+//   8. 注意引脚名 fAccelaration2 是库字面拼写（少个 e），写成 fAcceleration2 会报错
+// =============================================================================
+
+// 第一步：使能 CoE 驱动器（VAR_IN_OUT 必传）
+fbDriveEnable(
+    bEnable := bEnableDrive,
+    bReset  := FALSE,
+    stCoeDriveIoInterface := stCoEDriveIo,
+    bStatus     => bDriveReady,
+    bDriveError => bDriveFault
+);
+
+// 第二步：使能成功后才喂速度；引脚名 fAccelaration2 按库字面拼写（少个 e）
+fbMoveVelocity(
+    bEnable            := bRunConveyor AND bDriveReady,
+    fVelocity          := fTargetVel,
+    fAcceleration1     := 500.0,
+    fAccelaration2     := 800.0,
+    fDeceleration1     := 500.0,
+    fDeceleration2     := 800.0,
+    bNegativeDirection := FALSE,
+    stOptions          := stVelOptions,
+    stCoEDriveIoInterface := stCoEDriveIo,
+    bInVelocity     => bAtSpeed,
+    bBusy           => bMoveBusy,
+    bError          => bMoveError,
+    iErrorID        => iMoveErrId,
+    fActualVelocity => fActVel
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

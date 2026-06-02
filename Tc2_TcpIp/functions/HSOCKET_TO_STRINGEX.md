@@ -13,7 +13,7 @@
 | Verified | 2026-05-21 ✅ |
 | InfoSys-checked | ✅ 2026-05-21 |
 | Status | `verified` |
-| Example | [`examples/P_Demo_HSOCKET_TO_STRINGEX.xml`](../examples/P_Demo_HSOCKET_TO_STRINGEX.xml) |
+| Example | [`examples/P_Demo_HSOCKET_TO_STRINGEX.TcPOU`](../examples/P_Demo_HSOCKET_TO_STRINGEX.TcPOU) |
 
 ---
 
@@ -82,7 +82,7 @@ END_VAR
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_HSOCKET_TO_STRINGEX.xml`](../examples/P_Demo_HSOCKET_TO_STRINGEX.xml)
+> 配套可导入文件：[`examples/P_Demo_HSOCKET_TO_STRINGEX.TcPOU`](../examples/P_Demo_HSOCKET_TO_STRINGEX.TcPOU)
 
 ```iecst
 // 场景：HMI 两栏分别显示 local / remote 地址，互不干扰。

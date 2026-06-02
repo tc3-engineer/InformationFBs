@@ -13,7 +13,7 @@
 | Verified | 2026-05-21 ✅ |
 | InfoSys-checked | ✅ 2026-05-21 |
 | Status | `verified` |
-| Example | [`examples/P_Demo_FB_SocketCloseAll.xml`](../examples/P_Demo_FB_SocketCloseAll.xml) |
+| Example | [`examples/P_Demo_FB_SocketCloseAll.TcPOU`](../examples/P_Demo_FB_SocketCloseAll.TcPOU) |
 
 ---
 
@@ -115,7 +115,7 @@ END_IF
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_FB_SocketCloseAll.xml`](../examples/P_Demo_FB_SocketCloseAll.xml)
+> 配套可导入文件：[`examples/P_Demo_FB_SocketCloseAll.TcPOU`](../examples/P_Demo_FB_SocketCloseAll.TcPOU)
 
 ```iecst
 // 场景：PLC 启动时一次性清空遗留 socket，然后业务逻辑才开始跑。

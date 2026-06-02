@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_PMAXSTRING_TO_MAXSTRING" Id="{2a5332fb-82b5-5f02-b418-9a41e1656301}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_PMAXSTRING_TO_MAXSTRING
+VAR
+    sRealValue           : T_MaxString := 'Hello T_MaxString'; // 模拟 wire 缓冲区中的 T_MaxString 字段
+    pT_MaxStringField    : POINTER TO T_MaxString; // 业务侧先算好的字段地址（ADR 或 pBase+nOff）
+    bExtractField        : BOOL; // 在线置 TRUE 触发一次解析
+    sRealValue_extracted : T_MaxString; // 解析后的副本，供业务逻辑使用
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_Utilities.PMAXSTRING_TO_MAXSTRING 演示程序（FUNCTION）
+// ============================================================
+// 场景：从一段二进制 wire 缓冲区里按偏移取 T_MaxString 字段（Modbus/CAN/ADS Raw）。
+// 价值：替代手写 pField + nOff + ^ 指针算术；一次调用取值，少打错符号。
+// 验证：在线写 sRealValue := 'Hello T_MaxString'；bExtractField := TRUE；
+//       下一周期 sRealValue_extracted 应等于 sRealValue。
+// ============================================================
+
+// 业务代码通常已经算好字段地址（pBase + 协议偏移）；演示用 ADR 等价
+pT_MaxStringField := ADR(sRealValue);
+
+IF bExtractField AND pT_MaxStringField <> 0 THEN
+    // 单次完整调用：避免手写 ^ 解引用，统一风格便于和字节序转换串联
+    sRealValue_extracted := PMAXSTRING_TO_MAXSTRING(pT_MaxStringField);
+    bExtractField := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

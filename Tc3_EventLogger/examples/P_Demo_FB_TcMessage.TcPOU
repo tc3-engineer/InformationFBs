@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_TcMessage" Id="{4f4f4888-8a7d-555a-ac77-d2397181895b}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_TcMessage
+VAR
+    fbMessage          : FB_TcMessage; // 配方切换消息实例
+    bCreated           : BOOL; // Create() 仅在第一次扫描调用
+    bRecipeChanged     : BOOL := FALSE; // 上层在配方切换瞬间置 TRUE
+    bRecipeChangedPrev : BOOL; // 边沿检测
+    hr                 : HRESULT; // 返回值监视
+    guidEventClass     : GUID; // 实际事件类 GUID
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：配方切换审计：每次工艺工程师改配方都送一条结构化消息进 EventLogger
+// 价值：一句 Send() 替代手写 ADSLOGSTR + CSV 拼接 + 时间戳格式化，且自动进 EventLogger 审计窗
+// 验证：登录后写 bRecipeChanged := TRUE，HMI EventLogger 视图应立刻出现一条 Message 行（带时间戳/严重级别/来源 FB）；再次置位还会再发一条；下沿不发
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_EventLogger（System → References → Add library）
+//   3. 编译 → 登录 → 运行；按 verify 注释里给出的在线写值操作
+// =============================================================================
+
+// 一次性注册
+IF NOT bCreated THEN
+    hr := fbMessage.Create(
+        eventClass := guidEventClass,
+        nEventId := 2001,                  // "配方切换" 事件 ID
+        eSeverity := TcEventSeverity.Info,
+        ipSourceInfo := 0);
+    bCreated := SUCCEEDED(hr);
+END_IF;
+
+// 上升沿触发 Send（继承自 I_TcMessage）
+IF bRecipeChanged AND NOT bRecipeChangedPrev THEN
+    fbMessage.Send(nTimeStamp := 0);       // 0 = 用当前系统时间
+END_IF;
+bRecipeChangedPrev := bRecipeChanged;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

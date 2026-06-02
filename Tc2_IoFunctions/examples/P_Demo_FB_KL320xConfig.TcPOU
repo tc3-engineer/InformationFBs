@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_KL320xConfig" Id="{289778c5-6174-5746-b90b-8dfa0e2255fa}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_KL320xConfig
+VAR
+    fbKl320x              : FB_KL320xConfig; // KL3201/3202/3204 配置 FB（每通道一个实例）
+    stKl3204InProcessImg  : ST_KL320xInData; // 过程映像 输入
+    stKl3204OutProcessImg : ST_KL320xOutData; // 过程映像 输出
+    bDoConfigure          : BOOL := FALSE; // 上升沿写配置
+    bDoReadConfig         : BOOL := FALSE; // 上升沿只读
+    iSensorTypeCode       : INT := 0; // 传感器类型（具体表见 PDF）
+    tConfigTimeout        : TIME := T#5S; // 超时
+    bKl320xBusy           : BOOL; // 工作中
+    bKl320xError          : BOOL; // 出错
+    iLastError            : UDINT; // 错误号
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：炉温监控：KL3204 端子 4 路接 PT100，上电时配 4 个通道全为 PT100。
+// 价值：配置代码化，便于多炉子工程批量复制。
+// 验证：登录确认 stKl3204InProcessImg / OutProcessImg 已链；写 bDoConfigure := TRUE → fbKl320x.bBusy 短暂 TRUE → 回 FALSE 后 iLastError = 0 表示成功。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_IoFunctions（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』行的指示在线写值观察
+// =============================================================================
+
+fbKl320x(
+    bConfigurate   := bDoConfigure,
+    bReadConfig    := bDoReadConfig,
+    iSetSensorType := iSensorTypeCode,
+    tTimeout       := tConfigTimeout,
+    stInData       := stKl3204InProcessImg,
+    stOutData      := stKl3204OutProcessImg,
+    bBusy          => bKl320xBusy,
+    bError         => bKl320xError,
+    iErrorId       => iLastError
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

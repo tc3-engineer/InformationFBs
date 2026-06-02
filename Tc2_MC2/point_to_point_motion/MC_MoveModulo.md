@@ -13,7 +13,7 @@
 | Verified | 2026-05-21 ✅ |
 | InfoSys-checked | ✅ 2026-05-21 |
 | Status | `verified` |
-| Example | [`examples/P_Demo_MC_MoveModulo.xml`](../examples/P_Demo_MC_MoveModulo.xml) |
+| Example | [`examples/P_Demo_MC_MoveModulo.TcPOU`](../examples/P_Demo_MC_MoveModulo.TcPOU) |
 
 ---
 
@@ -126,7 +126,7 @@ END_VAR
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_MC_MoveModulo.xml`](../examples/P_Demo_MC_MoveModulo.xml)
+> 配套可导入文件：[`examples/P_Demo_MC_MoveModulo.TcPOU`](../examples/P_Demo_MC_MoveModulo.TcPOU)
 
 ```iecst
 // 场景：分度盘工位旋转 — 每个生产节拍把工件旋转到下一工位（90°），始终取最短路径

@@ -13,7 +13,7 @@
 | Verified | 2026-05-21 ✅ |
 | InfoSys-checked | ✅ 2026-05-21 |
 | Status | `verified` |
-| Example | [`examples/P_Demo_FB_CoEEL72xxDeletePositionOffset.xml`](../examples/P_Demo_FB_CoEEL72xxDeletePositionOffset.xml) |
+| Example | [`examples/P_Demo_FB_CoEEL72xxDeletePositionOffset.TcPOU`](../examples/P_Demo_FB_CoEEL72xxDeletePositionOffset.TcPOU) |
 
 ---
 
@@ -112,7 +112,7 @@ END_VAR
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_FB_CoEEL72xxDeletePositionOffset.xml`](../examples/P_Demo_FB_CoEEL72xxDeletePositionOffset.xml)
+> 配套可导入文件：[`examples/P_Demo_FB_CoEEL72xxDeletePositionOffset.TcPOU`](../examples/P_Demo_FB_CoEEL72xxDeletePositionOffset.TcPOU)
 
 ```iecst
 // 场景：EL72xx 轴重新找正前，先删掉上次写进驱动器内存的位置偏置

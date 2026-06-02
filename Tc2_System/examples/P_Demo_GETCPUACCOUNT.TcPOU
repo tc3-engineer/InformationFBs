@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_GETCPUACCOUNT" Id="{a35c0d8d-039e-5002-9799-bf7a2dfd967c}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_GETCPUACCOUNT
+VAR
+    fbGETCPUACCOUNT : GETCPUACCOUNT; // GETCPUACCOUNT 实例
+    udwTickerStart  : UDINT; // 段起始 ticker
+    udwTickerNow    : UDINT; // 当前 ticker
+    udwElapsedTicks : UDINT; // 差值（×100ns）
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_System.GETCPUACCOUNT 演示程序
+// ============================================================
+// 场景：profiling 一段轨迹生成代码的耗时，100 ns 精度。
+// 价值：替代 logic analyzer / 调试打印；任务内即可计时。
+// 验证：登录后观察 udwElapsedTicks 持续接近某稳定值（如 50 = 5 us）。在被 profiling 代码里插入 FOR 循环，udwElapsedTicks 应明显升高。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_System（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』指引在线写值观察
+// ============================================================
+
+fbGETCPUACCOUNT(cpuAccountDW => udwTickerNow);
+
+udwTickerStart := udwTickerNow;
+// 在这里放被 profiling 的代码段（演示用空段）；上下两次调用之间的差值就是耗时
+fbGETCPUACCOUNT(cpuAccountDW => udwTickerNow);
+udwElapsedTicks := udwTickerNow - udwTickerStart;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

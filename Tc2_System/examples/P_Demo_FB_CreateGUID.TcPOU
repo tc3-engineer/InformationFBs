@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_CreateGUID" Id="{12a4399d-1223-51ee-ba5b-2f2fd0b27faa}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_CreateGUID
+VAR
+    fbFB_CreateGUID : FB_CreateGUID; // FB_CreateGUID 实例
+    bGenGuidReq     : BOOL; // 上升沿一次生成一批 GUID
+    arrGuidPool     : ARRAY[0..9] OF GUID; // 一次生成 10 个 GUID 的池
+    bGenGuidBusy    : BOOL; // 生成中
+    bGenGuidErr     : BOOL; // ADS 错误
+    nLastAdsError   : UDINT; // 错误码
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_System.FB_CreateGUID 演示程序
+// ============================================================
+// 场景：包装线给每件出箱品分配 GUID 写二维码做追溯。
+// 价值：替代手写时间戳+计数器伪 GUID；本 FB 调系统服务生成 RFC4122 标准 GUID。
+// 验证：在线写 bGenGuidReq := TRUE，bGenGuidBusy 一闪后 arrGuidPool 全部 10 元素装入互不相同的 GUID（每个 16 字节）。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_System（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』指引在线写值观察
+// ============================================================
+
+fbFB_CreateGUID(
+    bExecute := bGenGuidReq, sNetId := '', tTimeout := DEFAULT_ADS_TIMEOUT, pGuidBuffer := ADR(arrGuidPool), nGuidBufferSize := SIZEOF(arrGuidPool),
+    bBusy => bGenGuidBusy, bError => bGenGuidErr, nErrorId => nLastAdsError
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

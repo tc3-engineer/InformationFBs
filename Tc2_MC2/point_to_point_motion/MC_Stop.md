@@ -13,7 +13,7 @@
 | Verified | 2026-05-21 ✅ |
 | InfoSys-checked | ✅ 2026-05-21 |
 | Status | `verified` |
-| Example | [`examples/P_Demo_MC_Stop.xml`](../examples/P_Demo_MC_Stop.xml) |
+| Example | [`examples/P_Demo_MC_Stop.TcPOU`](../examples/P_Demo_MC_Stop.TcPOU) |
 
 ---
 
@@ -123,7 +123,7 @@ END_VAR
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_MC_Stop.xml`](../examples/P_Demo_MC_Stop.xml)
+> 配套可导入文件：[`examples/P_Demo_MC_Stop.TcPOU`](../examples/P_Demo_MC_Stop.TcPOU)
 
 ```iecst
 // 场景：检测到工件卡死，立刻停轴并锁住等操作员手动 Reset 后才能再开

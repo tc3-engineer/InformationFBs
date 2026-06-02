@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_PLARGE_TO_LARGE" Id="{d57ca450-1bda-5756-9ffe-a02304e2d4ed}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_PLARGE_TO_LARGE
+VAR
+    lgRealValue           : LARGE; // 模拟 wire 缓冲区中的 LARGE 字段
+    pLARGEField           : POINTER TO LARGE; // 业务侧先算好的字段地址（ADR 或 pBase+nOff）
+    bExtractField         : BOOL; // 在线置 TRUE 触发一次解析
+    lgRealValue_extracted : LARGE; // 解析后的副本，供业务逻辑使用
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_Utilities.PLARGE_TO_LARGE 演示程序（FUNCTION）
+// ============================================================
+// 场景：从一段二进制 wire 缓冲区里按偏移取 LARGE 字段（Modbus/CAN/ADS Raw）。
+// 价值：替代手写 pField + nOff + ^ 指针算术；一次调用取值，少打错符号。
+// 验证：在线写 lgRealValue := 示例值；bExtractField := TRUE；
+//       下一周期 lgRealValue_extracted 应等于 lgRealValue。
+// ============================================================
+
+// 业务代码通常已经算好字段地址（pBase + 协议偏移）；演示用 ADR 等价
+pLARGEField := ADR(lgRealValue);
+
+IF bExtractField AND pLARGEField <> 0 THEN
+    // 单次完整调用：避免手写 ^ 解引用，统一风格便于和字节序转换串联
+    lgRealValue_extracted := PLARGE_TO_LARGE(pLARGEField);
+    bExtractField := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

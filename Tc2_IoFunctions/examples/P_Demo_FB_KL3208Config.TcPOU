@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_KL3208Config" Id="{384116e9-f003-524f-b668-acb09e843f19}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_KL3208Config
+VAR
+    fbKl3208              : FB_KL3208Config; // KL3208-0010 配置 FB（每通道一个实例）
+    stKl3208InProcessImg  : ST_KL3208InData; // 过程映像 输入
+    stKl3208OutProcessImg : ST_KL3208OutData; // 过程映像 输出
+    bDoConfigure          : BOOL := FALSE; // 上升沿写配置
+    bDoReadConfig         : BOOL := FALSE; // 上升沿只读
+    iSensorTypeCode       : INT := 1; // PT1000 编码（具体表见 PDF）
+    tConfigTimeout        : TIME := T#5S; // 超时
+    bKl3208Busy           : BOOL; // 工作中
+    bKl3208Error          : BOOL; // 出错
+    iLastError            : UDINT; // 错误号
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：8 路 PT1000 上电批量配置；本 demo 只演示一个通道，实际要 8 个 FB 实例。
+// 价值：代码化配置。
+// 验证：登录确认 stKl3208InProcessImg / OutProcessImg 已链；写 bDoConfigure := TRUE → fbKl3208.bBusy 短暂 TRUE → 回 FALSE 后 iLastError = 0。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_IoFunctions（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』行的指示在线写值观察
+// =============================================================================
+
+fbKl3208(
+    bConfigurate   := bDoConfigure,
+    bReadConfig    := bDoReadConfig,
+    iSetSensorType := iSensorTypeCode,
+    tTimeout       := tConfigTimeout,
+    stInData       := stKl3208InProcessImg,
+    stOutData      := stKl3208OutProcessImg,
+    bBusy          => bKl3208Busy,
+    bError         => bKl3208Error,
+    iErrorId       => iLastError
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

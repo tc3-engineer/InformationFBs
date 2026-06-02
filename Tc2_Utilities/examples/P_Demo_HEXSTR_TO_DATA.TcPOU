@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_HEXSTR_TO_DATA" Id="{8ce49477-c862-5c4b-a7c0-961de31e5f52}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_HEXSTR_TO_DATA
+VAR
+    sHexIn  : STRING(64) := '01 23 AB CD'; // 工业语义：配置 hex 串
+    aBytes  : ARRAY[0..15] OF BYTE; // 解析输出缓冲
+    nParsed : UDINT; // 解析字节数（0 = 失败）
+    bParse  : BOOL; // 在线触发
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：从配置文件 / HMI 输入读出的 hex 字符串写入 EtherCAT 配置区。
+// 价值：基础 hex 解析；新代码迁移到 `HEXSTR_TO_DATA2`。
+// 验证步骤：
+//   1. 引用 Tc2_Utilities
+//   2. 编译 + 登录 + 运行
+//   3. 在线写触发位 TRUE，monitor 输出变量
+// =============================================================================
+
+IF bParse THEN
+    nParsed := HEXSTR_TO_DATA(sHex   := sHexIn,
+                              pData  := ADR(aBytes),
+                              cbData := SIZEOF(aBytes));
+    bParse := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

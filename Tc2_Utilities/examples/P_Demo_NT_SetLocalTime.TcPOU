@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_NT_SetLocalTime" Id="{d7031182-4be0-5cfb-b92c-e7daa58ee919}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_NT_SetLocalTime
+VAR
+    fbNT_SetLocalTime : NT_SetLocalTime; // NT_SetLocalTime 实例
+    bSet              : BOOL := FALSE;
+    stTimeToSet       : TIMESTRUCT;
+    bBusy_            : BOOL;
+    bErrFlag          : BOOL;
+    nErrCode          : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：开机后写入 NTP 来的时间。
+// 价值：PLC 程序可控时钟。
+// 验证：改 stTimeToSet 给一个具体时间，触发后桌面时钟立刻跳到该值。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_Utilities（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』行的指示在线写值观察
+// =============================================================================
+
+fbNT_SetLocalTime(
+    NETID := '', START := bSet, TMOUT := DEFAULT_ADS_TIMEOUT, TIMESTR := stTimeToSet,
+    BUSY => bBusy_, ERR => bErrFlag, ERRID => nErrCode
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

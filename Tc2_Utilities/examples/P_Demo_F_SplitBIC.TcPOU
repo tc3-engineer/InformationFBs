@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_F_SplitBIC" Id="{8e402c12-3795-5eaf-88eb-84025b0e3a66}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_F_SplitBIC
+VAR
+    sBicRaw : STRING(255) := 1P193995SBTN0002agdw1KEL7411 Q1 2P112104020018; // 完整的 BIC 原始串；在线写值替换
+    stSplit : ST_SplittedBIC; // 拆分结果；展开查看每个子字段
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：产线 MES 追溯——一次性拆出物料号、BTN、订单号、序列号等多字段。
+// 价值：替代多次 BIC_TO_BTN + 自写其他段提取，单次调用拿到全部结构化字段。
+// 验证步骤：
+//   1. 引用 Tc2_Utilities
+//   2. 编译 + 登录 + 运行
+//   3. 在线展开 stSplit 看各字段填充情况
+//   4. 改 sBicRaw 加入未知段 -> 验证 stSplit.sUndefined 非空
+// =============================================================================
+
+stSplit := F_SplitBIC(sBicRaw);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

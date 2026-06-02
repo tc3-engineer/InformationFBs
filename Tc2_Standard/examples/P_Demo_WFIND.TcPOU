@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_WFIND" Id="{df0069ac-d5a7-57a9-8b3b-d2835b30335b}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_WFIND
+VAR
+    sConfig   : WSTRING(255) := "IP：192.168.1.10，端口：502"; // 中文风格的配置串：用全角逗号分隔字段
+    sDelim    : WSTRING(255) := "，"; // 全角逗号（中文分隔符）
+    nDelimPos : INT; // WFIND 返回位置：0 = 未找到，>0 = 字符位置（1-based）
+    bSearch   : BOOL; // 触发一次 WFIND
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：中文 HMI 配置串 "IP：xxx，端口：yyy" 用全角冒号 + 逗号分隔。PLC
+//       要先用 WFIND 定位全角逗号字符位置，再用 WLEFT/WRIGHT 把 IP 段和
+//       端口段切开。STRING + FIND 在这里会返回字节位置（每汉字 3 字节），
+//       下游切段要做字节-字符换算，错位风险大；WFIND 直接返回字符位置。
+//
+// 价值：一行调用拿到全角分隔符的字符位置，下游 WMID/WLEFT/WRIGHT 都按
+//       字符计数，索引语义统一。0 是 miss 的统一约定。
+//
+// 验证步骤：
+//   1. 导入本文件、引用 Tc2_Standard、编译、登录、运行
+//   2. 在线 monitor nDelimPos（监视面板选 Unicode 显示更友好）
+//   3. 在线写 bSearch := TRUE
+//   4. 下一周期 nDelimPos > 0（找到全角逗号在 sConfig 中的字符位置）
+//   5. 把 sConfig 改成 "IP：192.168.1.10"（去掉逗号 + 端口段）+ 再触发
+//      → nDelimPos = 0 表示 miss，业务侧走错误分支
+// =============================================================================
+
+// WFIND 按 UCS-2 字符计数；返回 0 = 未找到，>0 = 字符位置（1-based）
+IF bSearch THEN
+    nDelimPos := WFIND(sConfig, sDelim);
+    bSearch := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

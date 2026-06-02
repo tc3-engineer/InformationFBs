@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_UInt64Div64" Id="{915dd1a1-4e82-5bcb-b3a5-e9828414a013}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_UInt64Div64
+VAR
+    uliTotalBytes : T_ULARGE_INTEGER;; // 累计字节数
+    uliCycles     : T_ULARGE_INTEGER;; // 周期数
+    uliAvgBytes   : T_ULARGE_INTEGER;; // 平均吞吐
+    bCompute      : BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_Utilities.UInt64Div64 演示程序（FUNCTION，单周期触发）
+// ============================================================
+// 场景：把累计字节数 / 周期数 = 平均每周期字节数（吞吐率），用于在 HMI 显示。
+// 价值：替代手写双倍长除法；一次调用直接拿商。
+// 验证步骤：
+//   1. 把本 PROGRAM 加到 PlcTask 调用列表
+//   2. 编译 + 登录
+//   3. 在线把 b... 触发位置 TRUE 一个周期
+//   4. 观察输出变量是否符合期望
+// ============================================================
+
+IF bCompute AND NOT UInt64isZero(uliCycles) THEN
+    // 除 0 校验：除数是结构体，用 UInt64isZero 不是 = 0
+    uliAvgBytes := UInt64Div64(uliTotalBytes, uliCycles);
+    bCompute := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

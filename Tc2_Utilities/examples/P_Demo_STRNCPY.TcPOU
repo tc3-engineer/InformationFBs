@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_STRNCPY" Id="{81e4ee6d-7942-54b3-965c-4f7473db18dc}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_STRNCPY
+VAR
+    sSrc    : STRING(255) := 'Recipe alpha description'; // 工业语义：源 STRING
+    sDst    : STRING(64); // 目标缓冲（故意短于源以验证截断）
+    bOk     : BOOL; // 完整复制
+    nSrcLen : UDINT; // 源字符数
+    nDstLen : UDINT; // 目标字符数（截断时 &lt; 源长）
+    bCopy   : BOOL; // 在线触发
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：从动态数组 `ARRAY OF STRING(N)` 中按索引复制一行到固定 buffer——索引可能越界，需要边界保护的 `STRNCPY` 比 `:=` 更安全。
+// 价值：替代 `:=` + 自写长度检查；返回值 + 长度输出便于诊断越界场景。
+// 验证步骤：
+//   1. 引用 Tc2_Utilities
+//   2. 编译 + 登录 + 运行
+//   3. 在线写触发位 TRUE，monitor 输出变量
+// =============================================================================
+IF bCopy THEN
+    bOk := STRNCPY(pDst     := ADR(sDst),
+                   pSrc     := ADR(sSrc),
+                   nDstSize := SIZEOF(sDst),
+                   nSrcLen  => nSrcLen,
+                   nDstLen  => nDstLen);
+    // bOk = FALSE -> 截断；用 nSrcLen vs nDstLen 量化丢失字符数
+    bCopy := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

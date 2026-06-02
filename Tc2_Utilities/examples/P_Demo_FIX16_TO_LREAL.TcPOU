@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FIX16_TO_LREAL" Id="{34f8a19b-1a8b-518f-975d-9101e22f2927}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FIX16_TO_LREAL
+VAR
+    fp8Setpoint : T_FIX16 := 154;; // 0.6 在 Q8 编码 ≈ 154/256 = 0.6015625
+    lrDisp      : LREAL;
+    bDecode     : BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_Utilities.FIX16_TO_LREAL 演示程序（FUNCTION，单周期触发）
+// ============================================================
+// 场景：把 0.6 的定点数（Q8）转回 LREAL 显示，结果为 0.6015625（误差来自 0.6 不能精确表达）。
+// 价值：替代手写 `LREAL(in) / 256.0`；可读性更高，与 `LREAL_TO_FIX16` 对称使用。
+// 验证步骤：
+//   1. 把本 PROGRAM 加到 PlcTask 调用列表
+//   2. 编译 + 登录
+//   3. 在线把 b... 触发位置 TRUE 一个周期
+//   4. 观察输出变量是否符合期望
+// ============================================================
+
+IF bDecode THEN
+    // 注：解码方必须知道 n（这里 n=8）；本函数不接受 n 参数
+    lrDisp := FIX16_TO_LREAL(fp8Setpoint);
+    bDecode := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

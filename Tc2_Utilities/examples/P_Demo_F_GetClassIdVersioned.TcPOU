@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_F_GetClassIdVersioned" Id="{bf106d75-43a2-5dc2-a1ba-5c46d6270079}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_F_GetClassIdVersioned
+VAR
+    sLibId  : STRING(255) := 'MyCorp|PumpCtrlCpp|1.0.0.5'; // 工业语义：库标识
+    clsBase : CLSID; // 基础 Class ID
+    clsVer  : CLSID; // 版本化 Class ID（输出）
+    bOk     : BOOL; // 成功
+    bCalc   : BOOL; // 在线触发
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：工业控制器跨版本兼容：CX5020 升级 C++ Class lib 后，PLC 用版本化 ID 加载，新版数据不会被老 PLC 解读错位。
+// 价值：替代手写 GUID 派生算法；标准库提供版本化 ID 计算，确保跨版本兼容性失败时立即报错而不是数据错位。
+// 验证步骤：
+//   1. 引用 Tc2_Utilities
+//   2. 编译 + 登录 + 运行
+//   3. 在线写触发位 TRUE，monitor 输出变量
+// =============================================================================
+
+IF bCalc THEN
+    bOk := F_GetClassIdVersioned(sLibraryId     := sLibId,
+                                 clsId          := clsBase,
+                                 clsIdVersioned := clsVer);
+    bCalc := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

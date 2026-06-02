@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_IOF_SER_DRIVE_Backup" Id="{75adf30a-a778-5982-b6cc-f219ba520f7e}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_IOF_SER_DRIVE_Backup
+VAR
+    fbSercosDriveBackup : IOF_SER_DRIVE_Backup; // SERCOS drive 备份 FB
+    sLocalNetId         : T_AmsNetId := ''; // 本机
+    nDrivePort          : UINT := 1; // drive port
+    sBackupComment      : T_MaxString := 'Line A Drive 1 backup'; // 备份文件注释
+    eBackupFilePath     : E_OpenPath := PATH_BOOTPATH; // 路径常量
+    sBackupFileName     : T_MaxString := 'DRIVEPAR_DRIVE1.BIN'; // 文件名
+    bDoCheckReq         : BOOL := FALSE; // CRC 校验
+    bDoBackupReq        : BOOL := FALSE; // 备份
+    bDoRestoreReq       : BOOL := FALSE; // 恢复
+    bEnableCRC          : BOOL := TRUE; // 启用 CRC
+    bUseStdBackupList   : BOOL := TRUE; // TRUE = IDN-192 可 restore
+    tBackupTimeout      : TIME := T#30S; // 超时（大文件慢）
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：SERCOS drive 1 参数备份到工控机 `\Boot\DRIVEPAR_DRIVE1.BIN`。
+// 价值：drive 参数版本化存档。
+// 验证：先确保 SERCOS 在 phase 2；填好 sBackupFileName := "DRIVEPAR_DRIVE1.BIN"、bDoBackupReq := TRUE → bBackupBusy 短暂 TRUE → 文件创建；可用 SCP 拷出文件查看。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_IoFunctions（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』行的指示在线写值观察
+// =============================================================================
+
+// 触发前确保 SERCOS 已在 phase 2
+fbSercosDriveBackup(
+    bCheck         := bDoCheckReq,
+    bBackup        := bDoBackupReq,
+    bRestore       := bDoRestoreReq,
+    bCRCEnable     := bEnableCRC,
+    bStdBackupList := bUseStdBackupList,
+    sNetId         := sLocalNetId,
+    nPort          := nDrivePort,
+    sComment       := sBackupComment,
+    ePath          := eBackupFilePath,
+    sPathName      := sBackupFileName,
+    tTimeout       := tBackupTimeout
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

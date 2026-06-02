@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_stLibVersion_Tc2_SUPS" Id="{a2212072-0258-59a1-b712-7b929222363e}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_stLibVersion_Tc2_SUPS
+VAR
+    stCurrentVersion  : ST_LibVersion; // 从 stLibVersion_Tc2_SUPS 拷贝到本地的版本副本（在线 monitor 查看各字段）
+    nRequiredMajor    : USINT := 1; // 业务要求的最小主版本号
+    nRequiredMinor    : USINT := 5; // 业务要求的最小次版本号
+    nRequiredBuild    : USINT := 2; // 业务要求的最小 build 号
+    nRequiredRevision : USINT := 0; // 业务要求的最小 revision
+    bLibOK            : BOOL; // 版本检查结果：TRUE = 库版本满足要求
+    bLibVersionTooOld : BOOL; // 便于 HMI 接：库版本过低标志
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：设备厂同一份 PLC 代码部署到多家客户，不同客户 TwinCAT 镜像里
+//       Tc2_SUPS 版本可能不同；业务依赖 1.5.2 的新特性。PLC init 阶段做一次
+//       版本检查，不满足就置 bLibVersionTooOld 让 HMI 弹「请联系系统集成商
+//       升级 Tc2_SUPS 库」。
+//
+// 价值：上电 1 秒内立刻发现版本不够、停在 init 等运维处理；
+//       vs 编译通过 + 运行隐蔽错乱 + 几天后排查到。
+//
+// 验证步骤：
+//   1. 引用 Tc2_SUPS（含依赖 Tc2_System，提供 ST_LibVersion / F_CmpLibVersion /
+//      E_CmpLibVersion）
+//   2. 在 PLC 项目中右键 → Add Existing Item (.TcPOU) → 选本文件 → OK
+//   3. 编译、登录、运行
+//   4. 在线 monitor stCurrentVersion.iMajor / iMinor / iBuild — 应为 1 / 5 / 2
+//   5. 在线 monitor bLibOK 应为 TRUE（基线 1.5.2 ≥ 1.5.2）
+//   6. 在线把 nRequiredMajor 改为 99 → bLibOK 应翻 FALSE、bLibVersionTooOld 翻 TRUE
+//   7. 改回 1 → 恢复正常
+// =============================================================================
+
+// 拷贝到本地变量便于在线 monitor 各字段
+stCurrentVersion := stLibVersion_Tc2_SUPS;
+
+// init 阶段调一次即可——常量值不变，不需要每周期重复
+bLibOK := F_CmpLibVersion(
+    stLibVersion := stLibVersion_Tc2_SUPS,
+    iMajor       := nRequiredMajor,
+    iMinor       := nRequiredMinor,
+    iBuild       := nRequiredBuild,
+    iRevision    := nRequiredRevision,
+    nCmpType     := E_CmpLibVersion.GreaterOrEqual
+);
+bLibVersionTooOld := NOT bLibOK;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

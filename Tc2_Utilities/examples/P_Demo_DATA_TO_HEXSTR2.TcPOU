@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_DATA_TO_HEXSTR2" Id="{3e032eb6-a085-5f36-be8c-a181d169dcac}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_DATA_TO_HEXSTR2
+VAR
+    aPdoBytes  : ARRAY[0..15] OF BYTE; // 工业语义：CoE 字典对象 16 字节缓冲
+    sHexOut    : STRING(80); // 转换后的 hex 字符串（用于日志）
+    bDumpHex   : BOOL; // 在线置 TRUE 触发一次 dump
+    nConverted : UDINT; // 成功转换的源字节数
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：把 EtherCAT 从站的 CoE 对象字典对象（任意字节流）转为 hex 字符串写入日志，便于诊断协议级问题。
+// 价值：替代手写 `FOR i := 0 TO N DO sHex := CONCAT(sHex, ...)` 的 30 行代码；本函数 1 行调用，O(N) 时间且带 size 保护。
+// 验证步骤：
+//   1. 引用 Tc2_Utilities
+//   2. 编译 + 登录 + 运行
+//   3. 在线写触发位 TRUE，monitor 输出变量
+// =============================================================================
+// 模拟初值：实际工程从 EtherCAT slave 读出
+// 演示：dump 一段 PDO 字节流为 hex 串便于诊断
+IF bDumpHex THEN
+    aPdoBytes[0] := 16#01; aPdoBytes[1] := 16#23;
+    aPdoBytes[2] := 16#AB; aPdoBytes[3] := 16#CD;
+    nConverted := DATA_TO_HEXSTR2(pSrcData   := ADR(aPdoBytes),
+                                  nSrcSize   := SIZEOF(aPdoBytes),
+                                  pDstHexStr := ADR(sHexOut),
+                                  nDstSize   := SIZEOF(sHexOut),
+                                  bLoCase    := FALSE);
+    // nConverted < SIZEOF(aPdoBytes) 意味目标 buffer 不够，结果末尾有 '.'
+    bDumpHex := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

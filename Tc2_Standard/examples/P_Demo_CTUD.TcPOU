@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_CTUD" Id="{45b10d1d-34aa-5206-9f61-f82151abb0a4}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_CTUD
+VAR
+    fbStockCounter     : CTUD; // 双向计数器实例：仓库入出库计数
+    bIncomingScan      : BOOL; // 入库扫码上升沿 → CV+1
+    bOutgoingScan      : BOOL; // 出库扫码上升沿 → CV-1
+    bMonthlyReset      : BOOL; // 月底盘点清零
+    bRestoreLast       : BOOL; // 把上月结余 LOAD 回（PV 即默认结余值）
+    nWarehouseCapacity : WORD := 500; // 仓库容量门限 = 500 件
+    bWarehouseFull     : BOOL; // 仓库已满（CV ≥ 500）禁止入库
+    bWarehouseEmpty    : BOOL; // 仓库已空（CV = 0）禁止出库
+    nCurrentStock      : WORD; // 当前库存件数
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：仓库入出库双向计数。每次入库扫码 CV+1，每次出库扫码 CV-1；满 500 件
+//       禁止入库（防爆仓），剩 0 件禁止出库（防超卖）；月底可整体清零或装回
+//       上月结余继续计数。
+//
+// 价值：1 次调用拿到"+/-/复位/装载"完整双向状态机，QU/QD 双输出方便上层判断
+//       两端边界；手写需要约 15-20 行（4 路控制优先级 + 防上下溢出 + 边沿）。
+//
+// 验证步骤：
+//   1. PLC 项目 → Add Existing Item (.TcPOU) → 选本文件
+//   2. 引用 Tc2_Standard 库
+//   3. 编译、登录、运行
+//   4. 在线 monitor nCurrentStock、bWarehouseFull、bWarehouseEmpty
+//   5. 反复短按 bIncomingScan（TRUE 然后 FALSE）→ nCurrentStock 累加
+//   6. 反复短按 bOutgoingScan → nCurrentStock 递减；到 0 时 bWarehouseEmpty=TRUE
+//      并且继续按 bOutgoingScan 不会减为 65535（CTUD 已防下溢）
+//   7. bMonthlyReset := TRUE 一拍 → nCurrentStock 立即 0
+//   8. 把 PV 改成 100 后 bRestoreLast := TRUE 一拍 → nCurrentStock 跳到 100
+//   9. 注意：bIncomingScan 与 bOutgoingScan 在同一 PLC 周期都上升沿 → 抵消，
+//      生产现场扫码若可能同时发生应避免送入同一周期
+// =============================================================================
+
+fbStockCounter(
+    CU    := bIncomingScan,
+    CD    := bOutgoingScan,
+    RESET := bMonthlyReset,
+    LOAD  := bRestoreLast,
+    PV    := nWarehouseCapacity,
+    QU    => bWarehouseFull,
+    QD    => bWarehouseEmpty,
+    CV    => nCurrentStock
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

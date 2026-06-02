@@ -13,7 +13,7 @@
 | Verified | 2026-05-11 ✅ |
 | InfoSys-checked | ✅ 2026-05-11 |
 | Status | `verified` |
-| Example | [`examples/P_Demo_WCONCAT.xml`](../examples/P_Demo_WCONCAT.xml) |
+| Example | [`examples/P_Demo_WCONCAT.TcPOU`](../examples/P_Demo_WCONCAT.TcPOU) |
 
 ---
 
@@ -79,7 +79,7 @@ PDF §5.1 原例：`WCONCAT("SUS","WILLI")` → `"SUSWILLI"`（注意 IL 例中 
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_WCONCAT.xml`](../examples/P_Demo_WCONCAT.xml)（PLCopenXML，可直接导入 TwinCAT 3 XAE）
+> 配套可导入文件：[`examples/P_Demo_WCONCAT.TcPOU`](../examples/P_Demo_WCONCAT.TcPOU)（TwinCAT 3 原生 .TcPOU，可直接拖入 XAE 的 PLC POUs 文件夹）
 
 ```iecst
 // 场景：HMI 报警栏拼"报警前缀（中文）" + "原因（中文）"，结果直接显示

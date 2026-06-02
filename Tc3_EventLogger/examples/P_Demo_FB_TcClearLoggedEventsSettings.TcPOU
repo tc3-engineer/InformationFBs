@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_TcClearLoggedEventsSettings" Id="{1a673038-5a90-5e52-ad16-3ce6eeec927a}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_TcClearLoggedEventsSettings
+VAR
+    fbSettings : FB_TcClearLoggedEventsSettings; // 清除规则实例
+    nMaxClear  : UDINT := 1000; // 最多清 1000 条
+    hr         : HRESULT; // 返回值监视
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：配置「清除 30 天前 Info 级 message」规则
+// 价值：精细清理规则
+// 验证：实例化后调 AddFilter/SetLimit/SetSorting；之后传给 ClearLoggedEvents
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_EventLogger（System → References → Add library）
+//   3. 编译 → 登录 → 运行；按 verify 注释里给出的在线写值操作
+// =============================================================================
+
+// 配置：限制清除数量为 1000，避免误清整个日志
+hr := fbSettings.SetLimit(nLimit := nMaxClear);
+// 实际工程还应调 AddFilter 添加时间/级别条件；本例仅展示限制
+// 之后：fbLogger.ClearLoggedEvents(ipClearSettings := fbSettings, ...);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

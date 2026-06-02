@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_ConfirmAlarms" Id="{abab3b28-368b-51c3-acd5-96810d7b3dab}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_ConfirmAlarms
+VAR
+    fbLogger        : FB_TcEventLogger; // EventLogger 实例
+    fbFilter        : FB_TcEventFilter; // 过滤器实例
+    bConfirmReq     : BOOL := FALSE; // 上升沿触发
+    bConfirmReqPrev : BOOL; // 边沿检测
+    hr              : HRESULT; // 返回值监视
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：按过滤器批量确认 Warning 及以上级别的所有 alarm
+// 价值：一次调用完成批量确认
+// 验证：先有几条 WaitForConfirmation 状态 alarm；写 bConfirmReq := TRUE，相应 alarm 变 Confirmed
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_EventLogger（System → References → Add library）
+//   3. 编译 → 登录 → 运行；按 verify 注释里给出的在线写值操作
+// =============================================================================
+
+IF bConfirmReq AND NOT bConfirmReqPrev THEN
+    hr := fbLogger.ConfirmAlarms(
+        nTimeStamp := 0,
+        ipFilter := fbFilter);                 // 0 也行：fbFilter 用于按类别筛选
+END_IF;
+bConfirmReqPrev := bConfirmReq;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_ADSRDWRTEX" Id="{a60a738f-b05e-52df-9c50-1b708b7d5fb2}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_ADSRDWRTEX
+VAR
+    fbADSRDWRTEX   : ADSRDWRTEX; // ADSRDWRTEX 实例
+    bReadErrMsgReq : BOOL; // 上升沿触发
+    sSymbolName    : STRING(80) := '.sLastErrorMsg'; // 对端 PLC 全局字符串变量名
+    nSymNameLen    : UDINT; // LEN(sSymbolName)+1
+    sErrorMsg      : STRING(255); // 读到的错误消息
+    bAdsBusy       : BOOL; // 正在读
+    bAdsErr        : BOOL; // 错误
+    nLastAdsError  : UDINT; // 错误码
+    nActualBytes   : UDINT; // 实际读到字节数
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_System.ADSRDWRTEX 演示程序
+// ============================================================
+// 场景：诊断界面按名读对端 PLC 错误消息字符串 .sLastErrorMsg。
+// 价值：替代 ADSRDWRT + 手动 STRLEN，本 FB 直接给真实字节数。
+// 验证：触发后 sErrorMsg 装入错误文本，nActualBytes = 真实字节数（通常 < 256）。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_System（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』指引在线写值观察
+// ============================================================
+
+nSymNameLen := LEN(sSymbolName) + 1;
+
+fbADSRDWRTEX(
+    NETID := '', PORT := 851, IDXGRP := 16#0000F004, IDXOFFS := 0, WRITELEN := nSymNameLen, READLEN := SIZEOF(sErrorMsg), SRCADDR := ADR(sSymbolName), DESTADDR := ADR(sErrorMsg), WRTRD := bReadErrMsgReq, TMOUT := DEFAULT_ADS_TIMEOUT,
+    BUSY => bAdsBusy, ERR => bAdsErr, ERRID => nLastAdsError, COUNT_R => nActualBytes
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

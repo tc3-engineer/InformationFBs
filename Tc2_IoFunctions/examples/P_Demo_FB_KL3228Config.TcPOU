@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_KL3228Config" Id="{688545c9-d8ab-54d0-b4a5-3786ba74a92a}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_KL3228Config
+VAR
+    fbKl3228              : FB_KL3228Config; // KL3228 配置 FB
+    stKl3228InProcessImg  : ST_KL3228InData; // 过程映像 输入
+    stKl3228OutProcessImg : ST_KL3228OutData; // 过程映像 输出
+    bDoConfigure          : BOOL := FALSE; // 上升沿写配置
+    bDoReadConfig         : BOOL := FALSE; // 上升沿只读
+    iSensorTypeCode       : INT := 0; // PT100 编码（KL3228 手册）
+    tConfigTimeout        : TIME := T#5S; // 超时
+    bKl3228Busy           : BOOL; // 工作中
+    bKl3228Error          : BOOL; // 出错
+    iLastError            : UDINT; // 错误号
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：KL3228 端子 8 通道全部接 PT100 监控生产线 8 个工位温度。
+// 价值：端子配置代码化。
+// 验证：登录确认 stKl3228InProcessImg / OutProcessImg 已链；写 bDoConfigure := TRUE → 回 FALSE 后 iLastError = 0。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_IoFunctions（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』行的指示在线写值观察
+// =============================================================================
+
+fbKl3228(
+    bConfigurate   := bDoConfigure,
+    bReadConfig    := bDoReadConfig,
+    iSetSensorType := iSensorTypeCode,
+    tTimeout       := tConfigTimeout,
+    stInData       := stKl3228InProcessImg,
+    stOutData      := stKl3228OutProcessImg,
+    bBusy          => bKl3228Busy,
+    bError         => bKl3228Error,
+    iErrorId       => iLastError
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

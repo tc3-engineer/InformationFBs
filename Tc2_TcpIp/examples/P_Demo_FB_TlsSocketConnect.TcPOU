@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_TlsSocketConnect" Id="{f182908c-4c3e-5422-bc00-887c95334666}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_TlsSocketConnect
+VAR
+    fbCreateTlsSocket : FB_TlsSocketCreate;
+    fbAddCaCert       : FB_TlsSocketAddCa;
+    fbTlsConnect      : FB_TlsSocketConnect;
+    hCloudSocket      : T_HSOCKET;
+    bRequestCreate    : BOOL;
+    bCreateBusy       : BOOL;
+    bCreateError      : BOOL;
+    nCreateErrId      : UDINT;
+    bSocketReady      : BOOL;
+    bRequestAddCa     : BOOL;
+    sCaPath           : STRING(255) := 'C:\TwinCAT\3.1\Boot\Plc\TcpIpServer\ca.pem';
+    bAddCaBusy        : BOOL;
+    bAddCaError       : BOOL;
+    nAddCaErrId       : UDINT;
+    bCaReady          : BOOL;
+    bRequestConnect   : BOOL;
+    stConnFlags       : ST_TlsConnectFlags; // 生产环境保持默认（严格校验）。开发时可置 bNoServerCertCheck := TRUE 绕过
+    bConnBusy         : BOOL;
+    bConnError        : BOOL;
+    nConnErrId        : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：PLC（CX 工控机）上传车间生产数据到云端 MQTT broker
+//       (mqtt.example.com:8883)，使用 TLS 1.2/1.3 加密。CA 证书事先放在
+//       C:\TwinCAT\3.1\Boot\Plc\TcpIpServer\ca.pem。
+//
+// 价值：演示 TLS 连接的"Create → AddCa → Connect" 顺序纪律，缺一不可。
+//       任何 TLS 设置（AddCa/AddCrl/SetCert/SetPsk）都必须在 Connect 之前
+//       完成，否则报 TLS_INVALID_STATE。
+//
+// 验证步骤：
+//   1. 把云端 MQTT broker 的 CA 链 PEM 文件放到 sCaPath 指定位置
+//   2. 在线 bRequestCreate := TRUE
+//      → hCloudSocket 创建好，bSocketReady := TRUE
+//   3. 在线 bRequestAddCa := TRUE → bCaReady := TRUE
+//   4. 在线 bRequestConnect := TRUE
+//      → bConnBusy 闪烁数百毫秒到几秒（TLS 握手）
+//      → 成功：bConnError=FALSE，可以用 FB_SocketSend 发 MQTT CONNECT
+//      → 证书 CN 不匹配：bConnError=TRUE, nConnErrId=0x0000808F
+//      → CA 找不到：bConnError=TRUE, nConnErrId=0x00008081
+// =============================================================================
+
+// 阶段 1：创建 TLS socket（客户端模式：bListener := FALSE）
+fbCreateTlsSocket(
+    sSrvNetId := '',
+    bListener := FALSE,
+    bExecute  := bRequestCreate,
+    tTimeout  := T#5S,
+    bBusy     => bCreateBusy,
+    bError    => bCreateError,
+    nErrId    => nCreateErrId,
+    hSocket   => hCloudSocket
+);
+IF NOT bCreateBusy AND NOT bCreateError AND hCloudSocket.handle <> 0 THEN
+    bSocketReady := TRUE;
+END_IF;
+
+// 阶段 2：配置 CA 证书（验对端服务器证书用）
+fbAddCaCert(
+    sSrvNetId := '',
+    hSocket   := hCloudSocket,
+    sCaPath   := sCaPath,
+    bExecute  := bRequestAddCa,
+    tTimeout  := T#5S,
+    bBusy     => bAddCaBusy,
+    bError    => bAddCaError,
+    nErrId    => nAddCaErrId
+);
+IF NOT bAddCaBusy AND NOT bAddCaError AND bRequestAddCa THEN
+    bCaReady := TRUE;
+END_IF;
+
+// 阶段 3：发起 TLS 建连
+fbTlsConnect(
+    sSrvNetId   := '',
+    sRemoteHost := 'mqtt.example.com',
+    nRemotePort := 8883,
+    flags       := stConnFlags,
+    bExecute    := bRequestConnect,
+    tTimeout    := T#45S,
+    hSocket     := hCloudSocket,
+    bBusy       => bConnBusy,
+    bError      => bConnError,
+    nErrId      => nConnErrId
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_NovRamReadWrite" Id="{49713e39-2e7a-56ff-ba88-4ea5fcec11c6}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_NovRamReadWrite
+VAR
+    fbNovRamAccess        : FB_NovRamReadWrite; // NOV-RAM 读写 FB（老接口）
+    nNovRamDeviceId       : UDINT := 1; // NOVRAM 卡 Device Id
+    stMachineStateToNov   : ARRAY[1..32] OF BYTE; // 要写入 NOV 的状态结构（32 字节）
+    stMachineStateFromNov : ARRAY[1..32] OF BYTE; // 从 NOV 读出的状态结构
+    bReadFromNovRam       : BOOL := FALSE; // 上升沿触发读
+    bWriteToNovRam        : BOOL := FALSE; // 上升沿触发写
+    tNovRamTimeout        : TIME := T#5S; // 超时
+    bNovRamBusy           : BOOL; // 工作中
+    bNovRamErr            : BOOL; // 出错
+    nLastNovErrCode       : UDINT; // ADS 错误号
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：早期 FC3101-0002 卡 NOV-RAM 存"机器姿态"结构（坐标 + 工件计数 + 当前模式）；上电读出恢复，关机前写入。
+// 价值：掉电不丢工艺状态。
+// 验证：登录后 nDeviceId 设为 FC3101 的 ID；触发 bReadFromNovRam → bNovRamBusy 短暂 TRUE → 回 FALSE 后 stMachineStateFromNov 含上次写入的内容；修改 stMachineStateToNov 后触发 bWriteToNovRam → 重新读应得到新值。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_IoFunctions（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』行的指示在线写值观察
+// =============================================================================
+
+// pSrcAddr / pDestAddr 用 ADR() 取地址；cbXxxLen 用 SIZEOF 自动算字节数
+fbNovRamAccess(
+    nDevId    := nNovRamDeviceId,
+    bRead     := bReadFromNovRam,
+    bWrite    := bWriteToNovRam,
+    cbSrcLen  := SIZEOF(stMachineStateToNov),
+    cbDestLen := SIZEOF(stMachineStateFromNov),
+    pSrcAddr  := ADR(stMachineStateToNov),
+    pDestAddr := ADR(stMachineStateFromNov),
+    tTimeOut  := tNovRamTimeout,
+    bBusy     => bNovRamBusy,
+    bErr      => bNovRamErr,
+    nErrId    => nLastNovErrCode
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

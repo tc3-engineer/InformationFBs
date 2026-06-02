@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_F_CreateMacAddr" Id="{fd04f750-bc1e-566e-8277-e11b6e934a35}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_F_CreateMacAddr
+VAR
+    aMacBytes      : T_MacAddrArr := [16#1C, 16#2C, 16#3C, 16#4C, 16#5C, 16#6C]; // 6 字节 MAC 地址
+    sSeparatorChar : STRING(1) := '-'; // 分隔符：'-' 或 ':'
+    bUseLowerCase  : BOOL := FALSE; // TRUE 用小写
+    sMacDisplay    : T_MacAddr := ''; // 格式化后的 MAC 字符串
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：HMI 显示本机网卡 MAC：从 ADS 读取 6 字节 MAC 转 '1C-2C-3C-4C-5C-6C' 字符串。
+// 价值：替代手写 6 次 hex 转换 + 5 次拼接 8-10 行。
+// 验证：改 aMacBytes 任一字节 → sMacDisplay 跟着变；bUseLowerCase := TRUE → 输出转小写。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_System（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』行的指示在线写值观察
+// =============================================================================
+
+// 每周期格式化一次
+sMacDisplay := F_CreateMacAddr(
+    aMacAddr   := aMacBytes,
+    sSeparator := sSeparatorChar,
+    bLoCase    := bUseLowerCase
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

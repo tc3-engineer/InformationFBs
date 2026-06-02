@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_F_ARGISZERO" Id="{0a65bbb1-1377-5f7f-86fc-616d23728569}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_F_ARGISZERO
+VAR
+    nLiveValue     : INT := 42; // 业务值
+    argInUse       : T_Arg; // 会被 F_INT 绑定的槽位
+    argUnused      : T_Arg; // 不绑定，模拟空槽位
+    bInUseIsEmpty  : BOOL; // 期望 FALSE
+    bUnusedIsEmpty : BOOL; // 期望 TRUE
+    bCheck         : BOOL; // 在线置 TRUE 触发一次检查
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_Utilities.F_ARGISZERO 演示程序
+// ============================================================
+// 场景：遍历 T_ArgList 时跳过未填的空槽位，避免 deref pData=0 崩溃。
+// 价值：一行替代 IF a.pData = 0 OR a.cbLen = 0 OR a.eType = 0 THEN 三段判空。
+// 验证：bCheck := TRUE；bInUseIsEmpty 应为 FALSE，bUnusedIsEmpty 应为 TRUE。
+// ============================================================
+
+// 只绑定 argInUse；argUnused 保持默认（三字段都为 0）
+argInUse := F_INT(nLiveValue);
+
+IF bCheck THEN
+    bInUseIsEmpty  := F_ARGISZERO(arg := argInUse);
+    bUnusedIsEmpty := F_ARGISZERO(arg := argUnused);
+    bCheck := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

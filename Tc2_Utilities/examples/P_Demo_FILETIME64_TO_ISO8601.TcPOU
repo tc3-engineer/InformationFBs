@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FILETIME64_TO_ISO8601" Id="{1ffcbaf3-2d16-525f-a100-d61bc9445b5c}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FILETIME64_TO_ISO8601
+VAR
+    ftAlarm       : T_FILETIME64; // 报警发生的 T_FILETIME64 时间戳
+    nBiasUTC      : INT := 0; // UTC = 本地 + nBias；UTC 输入时此值无关
+    bIsUTC        : BOOL := TRUE; // 输入是 UTC 吗？
+    nDecimalSec   : USINT := 3; // 秒后小数位数
+    sISOTimestamp : STRING(39); // 输出的 ISO 8601 字符串
+    bRunOnce      : BOOL; // 脉冲触发
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：MQTT 报警消息要求时间字段为 ISO 8601 字符串以便上层 Node-RED 解析
+//
+// 价值：1 行拿到带 TZD 的 ISO 字符串，手写至少 30+ 行（sprintf + 拼接 + DST）
+//
+// 验证步骤：
+//   1. 引用 Tc2_Utilities（≥ 3.3.46.0）
+//   2. 编译 + 登录 + 运行
+//   3. 用 DT_TO_FILETIME64(DT#2026-05-11-12:34:56) 给 ftAlarm 赋值
+//   4. 强制 bRunOnce := TRUE
+//   5. 在线观察 sISOTimestamp = «2026-05-11T12:34:56.000Z»
+//   6. 改 nDecimalSec := 0 重测 → «2026-05-11T12:34:56Z»
+// =============================================================================
+sISOTimestamp := FILETIME64_TO_ISO8601(ftAlarm, nBiasUTC, bIsUTC, nDecimalSec);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

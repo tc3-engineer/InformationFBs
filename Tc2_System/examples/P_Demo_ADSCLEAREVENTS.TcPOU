@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_ADSCLEAREVENTS" Id="{dd29a36d-b643-5911-a7a3-da7c755b8f6d}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_ADSCLEAREVENTS
+VAR
+    fbADSCLEAREVENTS : ADSCLEAREVENTS; // ADSCLEAREVENTS 实例
+    bClearEventsReq  : BOOL; // 上升沿触发清除
+    nClearMode       : UDINT := 0; // 清除模式（来自 E_TcEventClearModes）
+    bClearing        : BOOL; // 正在清
+    bClearErr        : BOOL; // 清错误
+    nLastAdsError    : UDINT; // ADS 错误码
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_System.ADSCLEAREVENTS 演示程序
+// ============================================================
+// 场景：每日维护把 EventLogger 清空准备新一轮告警监控。
+// 价值：替代逐条 ADSWRITE，单调用按模式批清。
+// 验证：先用 ADSLOGEVENT 推几个事件，再写 bClearEventsReq := TRUE；System Manager 报警面板里的事件应在 1 秒内消失。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_System（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』指引在线写值观察
+// ============================================================
+
+fbADSCLEAREVENTS(
+    NETID := '', bClear := bClearEventsReq, iMode := nClearMode, tTimeout := DEFAULT_ADS_TIMEOUT,
+    bBusy => bClearing, bErr => bClearErr, iErrId => nLastAdsError
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

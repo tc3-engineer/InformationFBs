@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_STRING_TO_CSVFIELD" Id="{e585fccd-c06f-5516-88c6-63c84d53d086}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_STRING_TO_CSVFIELD
+VAR
+    sOperName : STRING(64) := "O'Brien"; // 工业语义：操作员名（可能含引号）
+    sCsvField : STRING(128); // CSV 转义后字段
+    bFormat   : BOOL; // 在线触发
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：把 PLC 设备名 / 操作员名等 STRING 字段写入 CSV 报表文件。
+// 价值：替代手写引号转义代码——CSV 规范严格，自写易出 bug。
+// 验证步骤：
+//   1. 引用 Tc2_Utilities
+//   2. 编译 + 登录 + 运行
+//   3. 在线写触发位 TRUE，monitor 输出变量
+// =============================================================================
+
+IF bFormat THEN
+    sCsvField := STRING_TO_CSVFIELD(in := sOperName, bQM := TRUE);
+    bFormat := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

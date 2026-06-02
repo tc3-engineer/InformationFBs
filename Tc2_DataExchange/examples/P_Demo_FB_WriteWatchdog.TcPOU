@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_WriteWatchdog" Id="{ecf9ab01-2bba-5332-939c-4cbd6a9644b2}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_WriteWatchdog
+VAR
+    fbWriteWatchdog  : FB_WriteWatchdog; // 发送端心跳生成器实例
+    bEnableHeartbeat : BOOL := FALSE; // 在线置 TRUE 启动周期心跳
+    sSlaveNetId      : T_AmsNetId := '192.168.1.20.1.1'; // 对端 Slave PLC 的 AMS NetID
+    nSlavePort       : T_AmsPort := 851; // TwinCAT3 第一个 PLC 任务端口
+    sSlaveSymbol     : STRING := 'GVL.nMasterHeartbeat'; // 对端目标符号名（与 IdxGrp/IdxOffs 二选一）
+    tHeartbeatPeriod : TIME := T#2S; // 心跳周期，不应短于 1s
+    bDiagnosticPing  : BOOL; // 上升沿强制立刻发一次（诊断用）
+    bWriting         : BOOL; // FB 内部 ADS Write 正在执行
+    nLastCounterSent : UDINT; // 最近一次成功发出的计数值（应每 2 秒 +1）
+    bWriteError      : BOOL; // 上次 ADS Write 失败
+    nLastAdsError    : UDINT; // ADS 错误号
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：本机是冗余主备里的 Master PLC，对端是 Slave PLC（NetID 192.168.1.20.1.1
+//       端口 851）。每 2 秒往 Slave 的 GVL.nMasterHeartbeat 写一次递增计数，让
+//       Slave 用 FB_CheckWatchdog 监视主机是否还活着。
+//
+// 价值：业务代码只关心 NetID/端口/周期；本 FB 内部封装了周期触发、计数递增、ADS Write
+//       状态机、错误诊断、即时触发 bSendNow 五件事。
+//
+// 验证步骤：
+//   1. 引用 Tc2_DataExchange（含依赖 Tc2_System）
+//   2. 在 XAE SYSTEM → Routes 加上 Slave PLC 的 AMS 路由
+//   3. Slave 端用 P_Demo_FB_CheckWatchdog 例程接收
+//   4. 编译、登录、运行
+//   5. 在线把 bEnableHeartbeat := TRUE
+//      → nLastCounterSent 应每 2 秒 +1，bWriting 短暂闪烁
+//   6. 在线给 Slave 断电（拔网线模拟）
+//      → bWriteError 被点亮，nLastAdsError 显示 6 或 7
+//   7. 恢复 Slave → bWriteError 在下一周期自动清零
+//   8. 按下 bDiagnosticPing 单脉冲
+//      → 即使保持 bEnableHeartbeat=FALSE 也会立刻发一次（nLastCounterSent +1）
+// =============================================================================
+
+// 单次调用形式：所有 VAR_INPUT 显式赋值（IdxGrp / IdxOffs 不用 时传 0）
+fbWriteWatchdog(
+    bEnable       := bEnableHeartbeat,
+    sNetId        := sSlaveNetId,
+    nPort         := nSlavePort,
+    nIdxGrp       := 0,
+    nIdxOffs      := 0,
+    sVarName      := sSlaveSymbol,
+    tWatchdogTime := tHeartbeatPeriod,
+    bSendNow      := bDiagnosticPing,
+    bBusy         => bWriting,
+    nLastCnt      => nLastCounterSent,
+    bError        => bWriteError,
+    nErrorId      => nLastAdsError
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

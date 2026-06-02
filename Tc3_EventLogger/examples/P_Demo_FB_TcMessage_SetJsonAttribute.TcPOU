@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_TcMessage_SetJsonAttribute" Id="{79d6894c-f4c3-5e28-8ce5-1cb8686cc04e}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_TcMessage_SetJsonAttribute
+VAR
+    fbMessage      : FB_TcMessage; // message 实例（已 Create）
+    bSetAttr       : BOOL := FALSE; // 上升沿触发
+    bSetAttrPrev   : BOOL; // 边沿检测
+    sBatchId       : STRING(64) := 'B-2026-0511-001'; // 批次号
+    sJsonAttribute : STRING(255); // 拼接好的完整 JSON
+    hr             : HRESULT; // 返回值监视
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：配方切换消息附加批次追溯 JSON
+// 价值：一句调用绑定上下文到 message
+// 验证：登录后写 bSetAttr := TRUE，HMI 事件详情应能看到 JSON 字段
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_EventLogger（System → References → Add library）
+//   3. 编译 → 登录 → 运行；按 verify 注释里给出的在线写值操作
+// =============================================================================
+
+sJsonAttribute := CONCAT('{"batch":"', CONCAT(sBatchId, '"}'));
+
+IF bSetAttr AND NOT bSetAttrPrev THEN
+    hr := fbMessage.SetJsonAttribute(sJsonAttribute := sJsonAttribute);
+END_IF;
+bSetAttrPrev := bSetAttr;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

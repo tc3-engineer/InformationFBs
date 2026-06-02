@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_UInt64Shr" Id="{3947d9fa-a42a-54df-9b59-bfb627d2760c}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_UInt64Shr
+VAR
+    uliRegister : T_ULARGE_INTEGER;; // 64 位寄存器
+    dwShiftBits : DWORD := 32;
+    uliHigh32   : T_ULARGE_INTEGER;; // 高 32 位
+    bExtract    : BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_Utilities.UInt64Shr 演示程序（FUNCTION，单周期触发）
+// ============================================================
+// 场景：把 64 位寄存器右移取高 32 位作为另一报文字段使用。
+// 价值：替代除法；性能 1 条指令。
+// 验证步骤：
+//   1. 把本 PROGRAM 加到 PlcTask 调用列表
+//   2. 编译 + 登录
+//   3. 在线把 b... 触发位置 TRUE 一个周期
+//   4. 观察输出变量是否符合期望
+// ============================================================
+
+IF bExtract AND dwShiftBits < 64 THEN
+    uliHigh32 := UInt64Shr(uliRegister, dwShiftBits);
+    bExtract := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

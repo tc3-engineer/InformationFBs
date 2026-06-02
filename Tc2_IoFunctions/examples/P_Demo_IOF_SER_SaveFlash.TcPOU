@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_IOF_SER_SaveFlash" Id="{cc73ef1c-f502-5227-a366-f4c75f6e1867}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_IOF_SER_SaveFlash
+VAR
+    fbSercosSaveFlash : IOF_SER_SaveFlash; // SERCOS 配置保存到 EEPROM FB
+    sLocalNetId       : T_AmsNetId := ''; // 本机
+    nSercosDeviceId   : UDINT := 1; // 主站 Device Id
+    bSaveConfigReq    : BOOL := FALSE; // HMI 按钮：保存配置（上升沿触发）
+    tSaveTimeout      : TIME := T#10S; // 超时（EEPROM 写较慢）
+    bSaveBusy         : BOOL; // 工作中
+    bSaveErr          : BOOL; // 出错
+    nLastErrCode      : UDINT; // 错误号
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：调试完 SERCOS 参数后，工程师 HMI 点"保存配置"按钮，写入主站 EEPROM。
+// 价值：避免每次重启重配。
+// 验证：⚠️ 不要随便测试——会写 EEPROM。仅在工程师确认参数无误时触发：写 bSaveConfigReq := TRUE → bSaveBusy 短暂 TRUE → 回 FALSE 后 nLastErrCode = 0 表示写入成功。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_IoFunctions（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』行的指示在线写值观察
+// =============================================================================
+
+// 警告：本 FB 会写 EEPROM，10 万次寿命；不要循环调用！
+// 仅在工程师手动触发时调用。
+fbSercosSaveFlash(
+    NETID    := sLocalNetId,
+    DEVICEID := nSercosDeviceId,
+    SAVE     := bSaveConfigReq,
+    TMOUT    := tSaveTimeout,
+    BUSY     => bSaveBusy,
+    ERR      => bSaveErr,
+    ERRID    => nLastErrCode
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

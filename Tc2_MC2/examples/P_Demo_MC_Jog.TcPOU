@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_MC_Jog" Id="{a641041b-7117-5509-9c1c-8be673fda003}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_MC_Jog
+VAR
+    fbJogX          : MC_Jog;
+    axisX           : AXIS_REF;
+    bHmiJogForward  : BOOL := FALSE; // HMI 正方向按钮电平
+    bHmiJogBackward : BOOL := FALSE; // HMI 反方向按钮电平
+    bJogDone        : BOOL;
+    bJogBusy        : BOOL;
+    nErrorID        : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：HMI 手动面板 — 操作员按住"X+"快速正向走，按住"X-"快速反向走。
+//       用 MC_JOGMODE_STANDARD_FAST 表示"用 System Manager 中的高速预设"，
+//       FB 入口 Velocity 不生效（这点新手容易迷惑）。
+// 价值：业务不用自己写 MoveVelocity + Halt 的按钮状态机，FB 直接收电平。
+// 验证：先 MC_Power 使能 axisX；bHmiJogForward := TRUE 持续 1 秒 → ActPos
+//       增加约 100 mm（按 SysMgr 高速预设），松开后自动减速到 0；
+//       bHmiJogBackward 反方向同理。
+// =============================================================================
+
+fbJogX(
+    JogForward   := bHmiJogForward,
+    JogBackwards := bHmiJogBackward,
+    Mode         := MC_JOGMODE_STANDARD_FAST,
+    Position     := 0.0,
+    Velocity     := 100.0,
+    Acceleration := 1000.0,
+    Deceleration := 1000.0,
+    Jerk         := 10000.0,
+    Axis         := axisX,
+    Done         => bJogDone,
+    Busy         => bJogBusy,
+    ErrorID      => nErrorID
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

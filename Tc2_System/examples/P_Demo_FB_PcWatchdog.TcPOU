@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_PcWatchdog" Id="{3c01dc69-0a60-5a96-9c5a-ca5a2d9fefbe}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_PcWatchdog
+VAR
+    fbPcWatchdog     : FB_PcWatchdog; // FB_PcWatchdog 实例
+    bEnableWatchdog  : BOOL := FALSE; // 在线置 TRUE 启用；调试前先置 FALSE
+    tWatchdogTimeout : TIME := T#8S; // 8 秒超时窗口
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：生产线 7×24 无人值守：PLC 主任务末尾启用 8 秒硬件看门狗。PLC 一旦卡死 8 秒，主板自动冷启动恢复。
+// 价值：替代外置看门狗硬件 + 接线 + IO；省一组 DO 通道。
+// 验证：正常运行 → bEnableWatchdog := TRUE 后持续每周期调用 → PC 正常；故意让 PLC 死循环 8 秒（在线 IF bForceHang THEN WHILE TRUE DO ; END_WHILE; END_IF）→ PC 自动重启。注意：调试时务必先 bEnableWatchdog := FALSE！
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_System（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』行的指示在线写值观察
+// =============================================================================
+
+// 单次完整调用：必须每个 PLC 周期都跑到这一行才算喂狗
+fbPcWatchdog(
+    tTimeOut := tWatchdogTimeout,
+    bEnable  := bEnableWatchdog
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

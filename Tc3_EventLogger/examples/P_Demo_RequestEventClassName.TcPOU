@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_RequestEventClassName" Id="{2cba882d-cf1d-530b-9df1-3a9cc83c19b5}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_RequestEventClassName
+VAR
+    fbAlarm           : FB_TcAlarm; // alarm 实例（已 Create）
+    fbAsync           : FB_AsyncStrResult; // 异步结果句柄
+    nLangId           : UDINT := 2052; // 简体中文 LCID
+    bReqClassName     : BOOL := FALSE; // 上升沿触发请求
+    bReqClassNamePrev : BOOL; // 边沿检测
+    sClassName        : STRING(80); // 拿到的事件类名
+    bDone             : BOOL; // 完成状态
+    hr                : HRESULT; // 返回值监视
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：HMI 异步取报警的事件类名做本地化显示
+// 价值：非阻塞获取多语言文本
+// 验证：登录后写 bReqClassName := TRUE，下一周期 fbAsync.IsCompleted() 应在几周期内变 TRUE，sClassName 拿到字符串
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_EventLogger（System → References → Add library）
+//   3. 编译 → 登录 → 运行；按 verify 注释里给出的在线写值操作
+// =============================================================================
+
+// 边沿触发：发起一次异步请求
+IF bReqClassName AND NOT bReqClassNamePrev THEN
+    hr := fbAlarm.RequestEventClassName(
+        nLangId := nLangId,
+        fbAsyncResult := fbAsync);
+END_IF;
+bReqClassNamePrev := bReqClassName;
+
+// 每周期检查异步是否完成
+bDone := fbAsync.IsCompleted();
+IF bDone THEN
+    fbAsync.GetResult(sValue := sClassName);
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

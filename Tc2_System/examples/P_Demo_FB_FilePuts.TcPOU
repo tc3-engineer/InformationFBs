@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_FilePuts" Id="{e0654084-1166-55ba-b805-9f285fffa671}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_FilePuts
+VAR
+    fbFilePuts   : FB_FilePuts; // FB_FilePuts 实例
+    hOpenedFile  : UINT; // 已打开的句柄（文本模式追加）
+    sEventLine   : T_MaxString := '2026-05-20T12:00:00,event,OK$N'; // 一行事件文本，末尾必须自己加 $N 换行
+    bPutsRequest : BOOL; // 在线写 TRUE 触发一次写入
+    bPutsError   : BOOL; // TRUE = 写失败
+    nErrIdLast   : UDINT; // ADS 错误号
+    bBusyMon     : BOOL; // ADS 通讯中
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：把 sEventLine ('2026-05-20T12:00:00,设备启动,OK') 追加写入 D:/log/events.csv（文本模式）。
+// 价值：一行调用替代 FB_FileWrite + ADR + LEN，约省 5-8 行。
+// 验证：在线写 sEventLine 后置 bPutsRequest := TRUE → 用文本编辑器打开 events.csv 应见新行；bPutsError 始终 FALSE。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_System（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』行的指示在线写值观察
+// =============================================================================
+
+// 单次完整调用；sEventLine 末尾自己加了 $N 确保换行
+fbFilePuts(
+    sNetId   := '',
+    hFile    := hOpenedFile,
+    sLine    := sEventLine,
+    bExecute := bPutsRequest,
+    tTimeout := T#10S,
+    bBusy    => bBusyMon,
+    bError   => bPutsError,
+    nErrId   => nErrIdLast
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

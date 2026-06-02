@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_PLC_Start" Id="{24459c8b-2c0b-54cb-9df6-efd68eff3bfd}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_PLC_Start
+VAR
+    fbPLC_Start : PLC_Start; // PLC_Start 实例
+    bExec       : BOOL := FALSE;
+    bBusy_      : BOOL;
+    bErrFlag    : BOOL;
+    nErrCode    : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：远程拉起 PLC
+// 价值：脚本化。
+// 验证：改 bExec := TRUE 触发；观察目标 PLC 状态变化（XAE 状态图标 / SystemService 日志）。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_Utilities（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』行的指示在线写值观察
+// =============================================================================
+
+fbPLC_Start(
+    NETID := '', PORT := 851, START := bExec, TMOUT := DEFAULT_ADS_TIMEOUT,
+    BUSY => bBusy_, ERR => bErrFlag, ERRID => nErrCode
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_STRING_TO_WSTRING2" Id="{908ed01e-1244-5752-b3cb-cc061cfd16c3}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_STRING_TO_WSTRING2
+VAR
+    sLocal   : STRING(1024) := 'Long log line...'; // 工业语义：长 STRING
+    wsOut    : WSTRING(1024); // 转换后 WSTRING
+    bOk      : BOOL; // 完整转换
+    bConvert : BOOL; // 在线触发
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：HMI 模块用 WSTRING 显示多语言字符串；从配置文件读出的 STRING 配置项需要转 WSTRING 才能显示。
+// 价值：`Tc2_Standard` 的 255 限制；本函数无限制。
+// 验证步骤：
+//   1. 引用 Tc2_Utilities
+//   2. 编译 + 登录 + 运行
+//   3. 在线写触发位 TRUE，monitor 输出变量
+// =============================================================================
+IF bConvert THEN
+    bOk := STRING_TO_WSTRING2(pDstWSTRING := ADR(wsOut),
+                              pSrcSTRING  := ADR(sLocal),
+                              nDstSize    := SIZEOF(wsOut));
+    bConvert := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

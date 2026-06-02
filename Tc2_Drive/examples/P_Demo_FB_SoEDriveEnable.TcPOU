@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_SoEDriveEnable" Id="{ce5f844a-e175-5a8d-be64-05c4b5af828e}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_SoEDriveEnable
+VAR
+    fbDriveEnable : FB_SoEDriveEnable; // SoE 驱动器使能 FB 实例
+    stSoEDriveIo  : ST_SoEDriveIoInterface; // 在 System Manager 链接 SoE 驱动器过程数据
+    bEnableDrive  : BOOL := FALSE; // 在线置 TRUE 推动使能状态机（电平型）
+    bDriveReady   : BOOL; // 到达运行使能为 TRUE
+    bDriveFault   : BOOL; // 驱动器错误态
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：用 SoE 伺服（如 AX5000）做简单速度控制，不引入完整 NC 配置，直接由 PLC
+//       使能并喂速度（输送带/风机/卷绕等纯调速场合）。本例程先把驱动器使能到运行态。
+//
+// 价值：把 Sercos 驱动器使能状态机的逐步控制字操作封装成一个 bEnable 布尔，业务侧
+//       不必手写 Sercos 状态字解析和控制字时序。
+//
+// 验证步骤：
+//   1. 引用 Tc2_Drive 库
+//   2. System Manager 里把 SoE 驱动器过程数据（控制字/状态字/设定值/实际值）链接
+//      到 stSoEDriveIo 各字段（VAR_IN_OUT 必须正确链接，否则 bDriveReady 上不来）
+//   3. 编译、登录、运行
+//   4. 在线置 bEnableDrive := TRUE（电平型，要保持）
+//      → 状态机逐步推进，几个周期后 bDriveReady 变 TRUE（运行使能）
+//   5. 置 bEnableDrive := FALSE 验证去使能：bDriveReady 应回 FALSE
+//   6. 若 bDriveFault = TRUE：本 FB 无 bReset，需另用 FB_SoEReset_ByDriveRef
+//      复位 S-0-0099 清错后再重新使能
+//   7. 之后可配合 FB_SoEDriveMoveVelocity 在 bDriveReady=TRUE 时喂速度
+// =============================================================================
+
+// 单次调用形式：VAR_IN_OUT stSoeDriveIoInterface 必传；每周期调用推进状态机
+// 注意：本 SoE 版没有 bReset 输入，故障复位需另用 FB_SoEReset_ByDriveRef
+fbDriveEnable(
+    bEnable := bEnableDrive,
+    stSoeDriveIoInterface := stSoEDriveIo,
+    bStatus     => bDriveReady,
+    bDriveError => bDriveFault
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

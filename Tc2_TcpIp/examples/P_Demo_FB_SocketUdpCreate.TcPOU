@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_SocketUdpCreate" Id="{3fa37526-8156-5f24-b330-74a2f4d1b93d}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_SocketUdpCreate
+VAR
+    fbCreateDiscoverySocket : FB_SocketUdpCreate;
+    bRequestCreate          : BOOL;
+    bCreateBusy             : BOOL;
+    bCreateError            : BOOL;
+    nCreateErrId            : UDINT;
+    hDiscoverySocket        : T_HSOCKET; // UDP 句柄；用于设备发现广播包收发
+    sActualLocalAddr        : STRING(15); // 观察实际绑到的网卡 IP，验证 sLocalHost 解析行为
+    nActualLocalPort        : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：PLC 在 0.0.0.0:5005 绑一个 UDP socket，准备做设备发现：广播 hello、
+//       收来自网段内 HMI 的回应。
+//
+// 价值：演示"显式 0.0.0.0 优于 ''"的纪律，并验证创建后用 hSocket.localAddr
+//       检查实际绑定 IP/端口——避免 PDF §5.1.8 警告的"断网时回环 127.0.0.1"
+//       这种隐形陷阱。
+//
+// 验证步骤：
+//   1. 在线 bRequestCreate := TRUE
+//      → bCreateBusy 短暂为 TRUE，落回；hDiscoverySocket.handle 非 0
+//   2. 观察 sActualLocalAddr 应为 '0.0.0.0'，nActualLocalPort 应为 5005
+//   3. 若改 sLocalHost := ''（空串）+ PLC 拔网线，重启
+//      → sActualLocalAddr 可能变成 '127.0.0.1'（PDF 警告的兜底行为）
+// =============================================================================
+
+// 创建 UDP socket
+fbCreateDiscoverySocket(
+    sSrvNetId  := '',
+    sLocalHost := '0.0.0.0',
+    nLocalPort := 5005,
+    bExecute   := bRequestCreate,
+    tTimeout   := T#5S,
+    bBusy      => bCreateBusy,
+    bError     => bCreateError,
+    nErrId     => nCreateErrId,
+    hSocket    => hDiscoverySocket
+);
+
+// 创建成功后把实际绑定结果暴露到上层变量，便于在线 monitor 校验
+IF NOT bCreateBusy AND NOT bCreateError AND hDiscoverySocket.handle <> 0 THEN
+    sActualLocalAddr := hDiscoverySocket.localAddr.sAddr;
+    nActualLocalPort := hDiscoverySocket.localAddr.nPort;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

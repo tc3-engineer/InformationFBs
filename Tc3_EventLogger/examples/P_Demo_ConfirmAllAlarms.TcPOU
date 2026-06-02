@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_ConfirmAllAlarms" Id="{098b3b57-2ee1-58f1-b6a5-afd55dad504f}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_ConfirmAllAlarms
+VAR
+    fbLogger        : FB_TcEventLogger; // EventLogger 实例
+    bConfirmAll     : BOOL := FALSE; // 上升沿触发
+    bConfirmAllPrev : BOOL; // 边沿检测
+    hr              : HRESULT; // 返回值监视
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：管理员的「一键确认全部 WaitForConfirmation」操作
+// 价值：一句调用完成批量确认
+// 验证：操作前 HMI 有若干 WaitForConfirmation；写 bConfirmAll := TRUE 后全部变 Confirmed
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_EventLogger（System → References → Add library）
+//   3. 编译 → 登录 → 运行；按 verify 注释里给出的在线写值操作
+// =============================================================================
+
+IF bConfirmAll AND NOT bConfirmAllPrev THEN
+    hr := fbLogger.ConfirmAllAlarms(nTimeStamp := 0);
+END_IF;
+bConfirmAllPrev := bConfirmAll;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -13,7 +13,7 @@
 | Verified | 2026-05-21 ✅ |
 | InfoSys-checked | ✅ 2026-05-21 |
 | Status | `verified` |
-| Example | [`examples/P_Demo_FB_SocketClose.xml`](../examples/P_Demo_FB_SocketClose.xml) |
+| Example | [`examples/P_Demo_FB_SocketClose.TcPOU`](../examples/P_Demo_FB_SocketClose.TcPOU) |
 
 ---
 
@@ -113,7 +113,7 @@ ADS 类常见：
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_FB_SocketClose.xml`](../examples/P_Demo_FB_SocketClose.xml)
+> 配套可导入文件：[`examples/P_Demo_FB_SocketClose.TcPOU`](../examples/P_Demo_FB_SocketClose.TcPOU)
 
 ```iecst
 // 场景：已有一条由 FB_SocketConnect 建立的 hClientSocket，业务流程结束需要释放它。

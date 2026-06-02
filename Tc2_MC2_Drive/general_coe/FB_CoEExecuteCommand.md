@@ -13,7 +13,7 @@
 | Verified | 2026-05-21 ✅ |
 | InfoSys-checked | ✅ 2026-05-21 |
 | Status | `verified` |
-| Example | [`examples/P_Demo_FB_CoEExecuteCommand.xml`](../examples/P_Demo_FB_CoEExecuteCommand.xml) |
+| Example | [`examples/P_Demo_FB_CoEExecuteCommand.TcPOU`](../examples/P_Demo_FB_CoEExecuteCommand.TcPOU) |
 
 ---
 
@@ -120,7 +120,7 @@ END_VAR
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_FB_CoEExecuteCommand.xml`](../examples/P_Demo_FB_CoEExecuteCommand.xml)
+> 配套可导入文件：[`examples/P_Demo_FB_CoEExecuteCommand.TcPOU`](../examples/P_Demo_FB_CoEExecuteCommand.TcPOU)
 
 ```iecst
 // 场景：触发 AX8000 一个 CoE 命令对象（如校准/自整定），等其执行完

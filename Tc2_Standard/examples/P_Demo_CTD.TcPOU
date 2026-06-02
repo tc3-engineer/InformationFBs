@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_CTD" Id="{25bae484-c4c8-5b75-b45f-dfabb98d5a3d}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_CTD
+VAR
+    fbCreditCounter : CTD; // 向下计数器实例：售货机出货次数余量
+    bRechargeReq    : BOOL; // 充值/投币（LOAD 上升沿把 PV 装入 CV）
+    bDispenseDone   : BOOL; // 出货完成脉冲（CD 上升沿余量 -1）
+    nMaxDispenses   : WORD := 10; // 一次充值后可出货 10 次（50 元 / 5 元）
+    bNeedRecharge   : BOOL; // 需充值提示（CV=0 时 TRUE）
+    nDispensesLeft  : WORD; // 剩余次数（监视：从 10 数到 0）
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：自动售货机一次充值 50 元，每次出货扣 5 元 = 10 次。剩余 0 次（CV=0）
+//       时点亮"请充值"指示灯并禁止再出货，等用户投币（LOAD 上升沿）重新装载。
+//
+// 价值：1 次调用拿到"装载+减+到底停止+状态比较"完整状态机；手写约 8 行且
+//       容易忘记防下溢导致 WORD 回卷成 65535（CTD 内部已正确处理）。
+//
+// 验证步骤：
+//   1. PLC 项目 → Add Existing Item (.TcPOU) → 选本文件
+//   2. 引用 Tc2_Standard 库
+//   3. 编译、登录、运行
+//   4. 在线 monitor nDispensesLeft 与 bNeedRecharge
+//   5. 初始 CV=0、bNeedRecharge=TRUE（已到底）
+//   6. 在线 bRechargeReq 短按（TRUE → FALSE）→ nDispensesLeft 跳到 10，
+//      bNeedRecharge 回 FALSE
+//   7. 反复短按 bDispenseDone（TRUE 然后 FALSE）→ 每次 nDispensesLeft -1
+//      数到 0 时 bNeedRecharge 又 TRUE；之后再按 bDispenseDone 无效（防下溢）
+//   8. 注意：LOAD 必须是脉冲，如果一直 TRUE 计数器永远是 10 数不下来
+// =============================================================================
+
+fbCreditCounter(
+    CD   := bDispenseDone,
+    LOAD := bRechargeReq,
+    PV   := nMaxDispenses,
+    Q    => bNeedRecharge,
+    CV   => nDispensesLeft
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

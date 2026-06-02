@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_F_DATA_TO_CRC16_CCITT" Id="{da7275f8-8a09-57aa-ac63-bdf80d68536c}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_F_DATA_TO_CRC16_CCITT
+VAR
+    aFrame    : ARRAY[0..63] OF BYTE; // 工业语义：收到的 64 字节帧
+    wFrameCrc : WORD; // 算出的 CRC
+    bVerify   : BOOL; // 在线触发
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：EtherCAT / Modbus-RTU 帧 CRC 校验：收到完整帧后调用本函数计算 CRC，与帧尾 CRC 字段比较。
+// 价值：比手写 256 字节查找表 + 位移 XOR 算法更省事；O(N) 但带库级优化。
+// 验证步骤：
+//   1. 引用 Tc2_Utilities
+//   2. 编译 + 登录 + 运行
+//   3. 在线写触发位 TRUE，monitor 输出变量
+// =============================================================================
+
+IF bVerify THEN
+    aFrame[0] := 16#01; aFrame[1] := 16#03; aFrame[2] := 16#00;
+    wFrameCrc := F_DATA_TO_CRC16_CCITT(pData  := ADR(aFrame),
+                                       cbData := SIZEOF(aFrame),
+                                       crc    := 16#FFFF);
+    // 把 wFrameCrc 与协议帧尾的 CRC 比较 -> 不等则丢帧
+    bVerify := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

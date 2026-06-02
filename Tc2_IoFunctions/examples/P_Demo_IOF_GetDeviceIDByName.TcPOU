@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_IOF_GetDeviceIDByName" Id="{fea5870f-53fa-5bd3-adf0-da610ef42c6c}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_IOF_GetDeviceIDByName
+VAR
+    fbLookupDeviceId     : IOF_GetDeviceIDByName; // 设备名 → ID FB
+    sTargetNetId         : T_AmsNetId := ''; // 本机
+    sLookupDeviceName    : T_MaxString := 'DP_Master_Main'; // 设备名字（区分大小写）
+    bStartLookupDeviceId : BOOL := FALSE; // 上升沿触发
+    tLookupTimeout       : TIME := T#5S; // 超时
+    bLookupBusy          : BOOL; // 工作中
+    bLookupError         : BOOL; // 失败
+    nLastErrCode         : UDINT; // 错误号
+    nLookedUpDeviceId    : UDINT; // 查得 Device Id
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：程序需要按设备名字定位 Profibus 主站做后续操作，避免硬编码 ID。
+// 价值：与工程配置同步：改 ID 不影响 PLC 程序，只要名字不改。
+// 验证：登录后 sLookupDeviceName := "DP_Master_Main"，在线写 bStartLookupDeviceId := TRUE → 回 FALSE 后 nLookedUpDeviceId 显示 System Manager 中分配给该设备的 Device Id。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_IoFunctions（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』行的指示在线写值观察
+// =============================================================================
+
+fbLookupDeviceId(
+    NETID      := sTargetNetId,
+    DEVICENAME := sLookupDeviceName,
+    START      := bStartLookupDeviceId,
+    TMOUT      := tLookupTimeout,
+    BUSY       => bLookupBusy,
+    ERR        => bLookupError,
+    ERRID      => nLastErrCode,
+    DEVICEID   => nLookedUpDeviceId
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

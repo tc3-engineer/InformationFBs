@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_ExportLoggedEvents" Id="{47aaf20e-89fa-5c7d-b01a-b696da793583}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_ExportLoggedEvents
+VAR
+    fbLogger         : FB_TcEventLogger; // EventLogger 实例
+    fbExportSettings : FB_TcEventCsvExportSettings; // 导出过滤器实例
+    sFileName        : STRING(120) := 'C:\Temp\events_2026-05-11.csv'; // 导出文件路径
+    bDoExport        : BOOL := FALSE; // 上升沿触发
+    bExportDone      : BOOL; // 完成标志
+    bError           : BOOL; // 错误标志
+    hrErrorCode      : HRESULT; // 错误码
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：每日 23:00 触发的事件归档导出（输出文件名含当日日期）
+// 价值：非阻塞异步导出，PLC 主流程不卡顿
+// 验证：登录后写 bDoExport := TRUE 触发；持续监视 bExportDone 应在几秒内变 TRUE；C:\Temp 下出现 CSV 文件
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_EventLogger（System → References → Add library）
+//   3. 编译 → 登录 → 运行；按 verify 注释里给出的在线写值操作
+// =============================================================================
+
+// 每周期都调用以推进异步状态；返回 TRUE 表示导出结束
+IF bDoExport THEN
+    bExportDone := fbLogger.ExportLoggedEvents(
+        sFileName := sFileName,
+        ipExportSettings := fbExportSettings,
+        bError => bError,
+        hrErrorCode => hrErrorCode);
+    IF bExportDone THEN
+        bDoExport := FALSE;                    // 流程结束
+    END_IF;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

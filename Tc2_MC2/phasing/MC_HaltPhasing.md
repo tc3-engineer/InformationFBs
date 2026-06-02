@@ -13,7 +13,7 @@
 | Verified | 2026-05-21 ✅ |
 | InfoSys-checked | ✅ 2026-05-21 |
 | Status | `verified` |
-| Example | [`examples/P_Demo_MC_HaltPhasing.xml`](../examples/P_Demo_MC_HaltPhasing.xml) |
+| Example | [`examples/P_Demo_MC_HaltPhasing.TcPOU`](../examples/P_Demo_MC_HaltPhasing.TcPOU) |
 
 ---
 
@@ -117,7 +117,7 @@ END_VAR
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_MC_HaltPhasing.xml`](../examples/P_Demo_MC_HaltPhasing.xml)
+> 配套可导入文件：[`examples/P_Demo_MC_HaltPhasing.TcPOU`](../examples/P_Demo_MC_HaltPhasing.TcPOU)
 
 ```iecst
 // 场景：套色印刷相位调整发现参数错了，平滑停止相位调整不要让色版突然抖一下

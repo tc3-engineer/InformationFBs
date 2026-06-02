@@ -4,6 +4,6 @@
 - Library: Tc2_Utilities 2.18.2
 - Source PDF: https://download.beckhoff.com/download/document/automation/twincat3/TwinCAT_3_PLC_Lib_Tc2_Utilities_EN.pdf
 - Doc: `Tc2_Utilities/int64_signed/Int64Add64.md` — PASS
-- Example: `Tc2_Utilities/examples/P_Demo_Int64Add64.xml` — PASS
+- Example: `Tc2_Utilities/examples/P_Demo_Int64Add64.TcPOU` — PASS
 - Doc result: ✅ PASS
 - Example result: ✅ PASS

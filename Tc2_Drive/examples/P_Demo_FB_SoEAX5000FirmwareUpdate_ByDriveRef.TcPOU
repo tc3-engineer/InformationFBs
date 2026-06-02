@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_SoEAX5000FirmwareUpdate_ByDriveRef" Id="{48087ff2-0da3-5c94-b6ab-1e23ad472248}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_SoEAX5000FirmwareUpdate_ByDriveRef
+VAR
+    fbFwUpdate    : FB_SoEAX5000FirmwareUpdate_ByDriveRef; // AX5000 固件更新 FB 实例
+    rtrigUpdate   : R_TRIG; // 把 bUpdateReq 转成单次上升沿
+    stPlcDriveRef : ST_PlcDriveRef; // 链接到 System Manager 的驱动器过程映像
+    stDriveRef    : ST_DriveRef; // 解析出的驱动器引用（nDriveNo 选通道）
+    bInit         : BOOL := TRUE; // 等过程映像就绪再放行
+    bUpdateReq    : BOOL := FALSE; // 在线置 TRUE 触发一次固件检查/更新
+    sTargetFwVer  : STRING(20) := 'v1.05_b0009'; // 目标固件版本
+    sFwPath       : T_MaxString := 'C:\TwinCAT\Io\TcDriveManager\FirmwarePool'; // 固件池路径
+    sIpcNetId     : T_AmsNetId := ''; // 控制器 NetID（本机用空串）
+    bUpdBusy      : BOOL; // 更新流程执行中
+    bUpdError     : BOOL; // 更新出错
+    iAdsErr       : UINT; // ADS 错误码
+    iSercosErr    : UINT; // Sercos 错误码
+    iDiagNo       : UDINT; // 放大器错误码
+    eFwState      : E_FwUpdateState; // 固件更新状态
+    iProgress     : INT; // 更新进度百分比
+    sFwFile       : STRING(255); // 匹配到的固件文件名
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：批量设备出厂/现场升级时把一批 AX5000 固件统一刷到指定版本，做成 PLC 自动
+//       流程（开机检查版本，不对就自动升级），避免逐台用 Drive Manager 手动刷。
+//
+// 价值：把"读型号 + 比对版本 + 找固件文件 + 刷写 + 切 EtherCAT 状态"整套多步流程
+//       封装成一次上升沿调用，并通过 eFwState + iProgress 暴露进度，可在 HMI 做进度条。
+//
+// !!! 安全警告（PDF NOTICE）：固件更新期间绝对不能中断 —— 不能停 PLC/TwinCAT、
+//     不能断 EtherCAT、不能给 AX5000 断电，否则驱动器固件可能损坏到不可用 !!!
+//
+// 验证步骤：
+//   1. 引用 Tc2_Drive 库（及 Tc2_EtherCAT，提供 EC_DEVICE_STATE_OP）
+//   2. System Manager 里把某 AX5000 SoE 从站过程映像链接到 stPlcDriveRef
+//   3. 确认 sFwPath 指向的固件池里有匹配 sTargetFwVer 的 .efw 文件
+//   4. 编译、登录、运行；观察 bInit 在过程映像就绪后自动变 FALSE
+//   5. 在线置 bUpdateReq := TRUE
+//      → eFwState 经 eFwU_FwUpdateInProgress（iProgress 0..100 递增）到
+//        eFwU_FwUpdateDone；若本已是目标版本则直接 eFwU_NoFwUpdateRequired
+//      → sFwFile 显示匹配到的固件文件名
+//   6. 更新期间严禁断电/停 TwinCAT；若 bUpdError = TRUE 读 iDiagNo / iAdsErr 定位
+// =============================================================================
+
+// 初始化驱动器引用（nDriveNo 决定从哪个通道触发更新）
+IF bInit THEN
+    stDriveRef.sNetId     := F_CreateAmsNetId(stPlcDriveRef.aNetId);
+    stDriveRef.nSlaveAddr := stPlcDriveRef.nSlaveAddr;
+    stDriveRef.nDriveNo   := stPlcDriveRef.nDriveNo;
+    stDriveRef.nDriveType := stPlcDriveRef.nDriveType;
+    IF (stDriveRef.sNetId <> '') AND (stDriveRef.nSlaveAddr <> 0) THEN
+        bInit := FALSE;
+    END_IF;
+END_IF;
+
+rtrigUpdate(CLK := bUpdateReq);
+
+// 单次调用形式：所有 VAR_INPUT 显式赋值；tTimeout 给足 15 秒（固件更新耗时长）
+fbFwUpdate(
+    stDriveRef       := stDriveRef,
+    bExecute         := rtrigUpdate.Q AND NOT bInit,
+    tTimeout         := T#15S,
+    sFirmwareVersion := sTargetFwVer,
+    sFirmwarePath    := sFwPath,
+    sNetIdIPC        := sIpcNetId,
+    iReqEcState      := EC_DEVICE_STATE_OP,
+    bBusy                 => bUpdBusy,
+    bError                => bUpdError,
+    iAdsErrId             => iAdsErr,
+    iSercosErrId          => iSercosErr,
+    iDiagNumber           => iDiagNo,
+    eFwUpdateState        => eFwState,
+    iLoadProgress         => iProgress,
+    sSelectedFirmwareFile => sFwFile
+);
+
+IF NOT bUpdBusy AND NOT bInit THEN
+    bUpdateReq := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -13,7 +13,7 @@
 | Verified | 2026-05-21 ✅ |
 | InfoSys-checked | ✅ 2026-05-21 |
 | Status | `verified` |
-| Example | [`examples/P_Demo_MC_ReadMotionFunctionValues.xml`](../examples/P_Demo_MC_ReadMotionFunctionValues.xml) |
+| Example | [`examples/P_Demo_MC_ReadMotionFunctionValues.TcPOU`](../examples/P_Demo_MC_ReadMotionFunctionValues.TcPOU) |
 
 ---
 
@@ -135,7 +135,7 @@ END_VAR
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_MC_ReadMotionFunctionValues.xml`](../examples/P_Demo_MC_ReadMotionFunctionValues.xml)
+> 配套可导入文件：[`examples/P_Demo_MC_ReadMotionFunctionValues.TcPOU`](../examples/P_Demo_MC_ReadMotionFunctionValues.TcPOU)
 
 例程演示"HMI 凸轮可视化：把当前生效的 cam 曲线按主轴 0 → 360 度每 1 度采样一次，输出到 PLC 数组供 HMI 画曲线图"。
 

@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_LTOF" Id="{287e0c76-c40a-5c04-a227-452335c85614}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_LTOF
+VAR
+    fbServoDisableDelay : LTOF; // LTOF 实例：伺服停止指令后 μs 级关使能延时
+    bDriveCmdActive     : BOOL; // 驱动器指令活跃信号（在线模拟）
+    tCurrentDecayHold   : LTIME := LTIME#250US; // 指令结束后保持使能时长 = 250 μs（电流衰减）
+    bServoEnable        : BOOL; // 伺服使能输出
+    tDecayElapsed       : LTIME; // 衰减已经过时长（LTIME 纳秒）
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：伺服驱动器关机前需要在最后一条指令结束后保持使能 250 μs（让电流自然
+//       衰减、避免反电动势冲击）。LTOF 在 NC 任务里提供精确"延时断使能"。
+//
+// 价值：与 TOF 同样的"立即通、延时断"语义，但纳秒分辨率契合 NC/伺服时序。
+//       手写需要"指令下降沿采时间戳 + 累加纳秒 + 比较"，约 15 行容易错。
+//
+// 验证步骤：
+//   1. PLC 项目 → Add Existing Item (.TcPOU) → 选本文件
+//   2. 引用 Tc2_Standard 库
+//   3. 编译、登录、运行
+//   4. 在线 monitor bServoEnable 与 tDecayElapsed
+//   5. 在线 bDriveCmdActive := TRUE → bServoEnable 立刻 TRUE，tDecayElapsed = 0
+//   6. 在线 bDriveCmdActive := FALSE → bServoEnable 仍 TRUE，tDecayElapsed
+//      开始累加；累加到 250μs 时 bServoEnable 变 FALSE
+//   7. 中途打断：tDecayElapsed = 100μs 时把 bDriveCmdActive 再置 TRUE，
+//      tDecayElapsed 清零、bServoEnable 继续 TRUE
+// =============================================================================
+
+fbServoDisableDelay(
+    IN := bDriveCmdActive,
+    PT := tCurrentDecayHold,
+    Q  => bServoEnable,
+    ET => tDecayElapsed
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

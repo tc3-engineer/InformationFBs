@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_GetAlarm" Id="{d14e979a-19b5-534c-ae6f-5c142af49623}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_GetAlarm
+VAR
+    fbLogger       : FB_TcEventLogger; // EventLogger 实例
+    fbAlarmRef     : FB_TcAlarm; // 查询输出
+    guidEventClass : GUID; // 要查询的事件类 GUID
+    nEventId       : UDINT := 1001; // 要查询的事件 ID
+    bDoGet         : BOOL := FALSE; // 上升沿触发
+    bDoGetPrev     : BOOL; // 边沿检测
+    hr             : HRESULT; // 返回值监视
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：按 GUID + EventID 查询已注册的 alarm 引用，调用其 Raise 方法
+// 价值：无需直接持有 alarm 实例即可操控它
+// 验证：先确保有 alarm 已 Create；写 bDoGet := TRUE 触发查询；若 hr = S_OK 则 fbAlarmRef 可用，调用 Raise 应能让该 alarm 进 Raised 状态；不匹配的 GUID → hr = ADS_E_NOTFOUND
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_EventLogger（System → References → Add library）
+//   3. 编译 → 登录 → 运行；按 verify 注释里给出的在线写值操作
+// =============================================================================
+
+IF bDoGet AND NOT bDoGetPrev THEN
+    hr := fbLogger.GetAlarm(
+        eventClass := guidEventClass,
+        nEventId := nEventId,
+        ipSourceInfo := 0,                     // 用默认源信息匹配
+        fbAlarm := fbAlarmRef);
+    IF SUCCEEDED(hr) THEN
+        fbAlarmRef.Raise(nTimeStamp := 0);     // 拿到引用后即可操作
+    END_IF;
+END_IF;
+bDoGetPrev := bDoGet;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

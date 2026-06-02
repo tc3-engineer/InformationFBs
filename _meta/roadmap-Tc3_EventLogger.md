@@ -32,9 +32,9 @@
    - 非 GVL entry 自动剥离正文中嵌入的 `VAR_GLOBAL [CONSTANT]`（例：FB_SetTimeZoneInformation）
 2. **新增（本 Round）**：
    - `verify_doc.py`：当 TOC 中存在同名条目（如 `Create` 在 FB_TcAlarm / FB_TcMessage / FB_TcSourceInfo），按文档所在子目录名（`parent_dir`）与候选 `category` 做精确匹配后再回退。
-   - `verify_doc.py`：example 链接不再硬编码 `P_Demo_<name>.xml`，改为从文档自身正则提取 `examples/P_Demo_<stem>.xml`，以兼容 parent-prefix 命名。
+   - `verify_doc.py`：example 链接不再硬编码 `P_Demo_<Name>.TcPOU`，改为从文档自身正则提取 `examples/P_Demo_<Name>.TcPOU`，以兼容 parent-prefix 命名。
    - `lint_plcopen.py`：FB 名匹配兼容 parent-prefix `FB_<Parent>_<Method>` ↔ 末段 `<Method>` 两种命名。
-   - 生成器：OO method 同名时自动以 `P_Demo_<Parent>_<Method>.xml` 落盘，避免覆盖。
+   - 生成器：OO method 同名时自动以 `P_Demo_<Parent>_<Method>.TcPOU` 落盘，避免覆盖。
 
 ## 单 Round 执行清单
 

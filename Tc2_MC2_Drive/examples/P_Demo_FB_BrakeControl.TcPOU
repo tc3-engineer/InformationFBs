@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_BrakeControl" Id="{f974b96a-77f1-5923-b955-56285a68a453}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_BrakeControl
+VAR
+    fbBrakeCtrl         : FB_BrakeControl; // 手动抱闸控制 FB 实例
+    axisLiftAxis        : AXIS_REF; // 提升轴轴引用；垂直轴，松闸前务必有机械支撑
+    rtBrakeTrig         : R_TRIG; // 把电平转上升沿
+    bBrakeCmdReq        : BOOL := FALSE; // 在线写 TRUE 触发一次抱闸模式切换
+    eRequestedBrakeMode : E_BrakeMode; // 在线选模式：Automatic / Lock / Unlock；默认 Automatic
+    bBrakeBusy          : BOOL;
+    bBrakeError         : BOOL;
+    nBrakeErrorID       : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：垂直提升轴维修，需要手动松开抱闸用人力盘动电机做机械对位。盘完立即
+//       切回 eBrakeMode_Automatic，让抱闸恢复随使能自动开闭，避免脱节。
+//
+// 价值：1) 不必查驱动器 SoE/CoE 抱闸参数号，一个 FB + 三种枚举手动接管抱闸
+//       2) 硬件无关：AX5000/AX8000/EL72xx 自动选通道
+//       3) 自动模式是安全默认，用完一键还原
+//
+// !! 安全：eBrakeMode_Unlock 会让垂直轴失去机械保持、可能下坠。松闸前必须有
+//          机械支撑并完成风险评估（PDF WARNING）。
+//
+// 验证步骤：
+//   1. System Manager 配好 NC 轴并 Link 给 axisLiftAxis，引用 Tc2_MC2_Drive
+//   2. Add Existing Item (.TcPOU) 选本文件，加进 PlcTask，编译登录
+//   3. 在线把 eRequestedBrakeMode 设为 eBrakeMode_Unlock（先确认有机械支撑）
+//   4. 写 bBrakeCmdReq := TRUE → bBrakeBusy 置 TRUE，落回 FALSE 且无 Error 即成功
+//   5. 盘动电机做对位后，把 eRequestedBrakeMode 改回 eBrakeMode_Automatic
+//   6. 再写 bBrakeCmdReq 一次上升沿，把抱闸交回自动控制
+//   7. 若 bBrakeError = TRUE，看 nBrakeErrorID 对照 ADS Return Codes 表
+// =============================================================================
+
+// 用 R_TRIG 把"持续按住的 TRUE"转成真正的上升沿
+rtBrakeTrig(CLK := bBrakeCmdReq);
+
+// 单次调用：Mode 来自在线选择的模式；Axis 是 VAR_IN_OUT 必传
+// 本 FB 无 Done 输出，靠 Busy 落回 FALSE 且 Error=FALSE 判成功
+fbBrakeCtrl(
+    Execute := rtBrakeTrig.Q,
+    Mode    := eRequestedBrakeMode,
+    Axis    := axisLiftAxis,
+    Busy    => bBrakeBusy,
+    Error   => bBrakeError,
+    ErrorID => nBrakeErrorID
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

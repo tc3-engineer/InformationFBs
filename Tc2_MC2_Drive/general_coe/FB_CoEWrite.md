@@ -13,7 +13,7 @@
 | Verified | 2026-05-21 ✅ |
 | InfoSys-checked | ✅ 2026-05-21 |
 | Status | `verified` |
-| Example | [`examples/P_Demo_FB_CoEWrite.xml`](../examples/P_Demo_FB_CoEWrite.xml) |
+| Example | [`examples/P_Demo_FB_CoEWrite.TcPOU`](../examples/P_Demo_FB_CoEWrite.TcPOU) |
 
 ---
 
@@ -122,7 +122,7 @@ END_VAR
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_FB_CoEWrite.xml`](../examples/P_Demo_FB_CoEWrite.xml)
+> 配套可导入文件：[`examples/P_Demo_FB_CoEWrite.TcPOU`](../examples/P_Demo_FB_CoEWrite.TcPOU)
 
 ```iecst
 // 场景：向 AX8000 对象字典某可写对象 (Index/SubIndex) 写入一个新值

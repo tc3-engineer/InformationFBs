@@ -42,7 +42,7 @@
 
 ## 例程
 
-所有 `P_Demo_*.xml` 例程在 [`examples/`](examples/) 目录，PLCopenXML 格式，可直接右键 PLC 项目 → Import PLCopenXML 导入 TwinCAT 3 XAE。注意飞锯例程需要工程中已配置 NC 主/从轴并将相应 `AXIS_REF` 与之关联。
+所有 `P_Demo_*.TcPOU` 例程在 [`examples/`](examples/) 目录，TwinCAT 3 原生 .TcPOU 格式，可直接右键 PLC 项目下 POUs 文件夹 → Add → Existing Item 导入 TwinCAT 3 XAE。注意飞锯例程需要工程中已配置 NC 主/从轴并将相应 `AXIS_REF` 与之关联。
 
 ## 备注
 

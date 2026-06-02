@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_BE32_TO_HOST" Id="{9a6e84f8-74e8-5d6a-93ff-31560c46abc9}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_BE32_TO_HOST
+VAR
+    bResult : DWORD; // BE32_TO_HOST 的返回值
+    bRun    : BOOL; // 触发一次调用
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_Utilities.BE32_TO_HOST 演示程序（FUNCTION）
+// ============================================================
+// 验证步骤：
+//   1. 引用 Tc2_Utilities（及依赖类型所在的库）
+//   2. 编译 + 登录
+//   3. 强制 bRun := TRUE 一个周期
+//   4. 观察 bResult 应为 16#12345678
+// ============================================================
+
+IF bRun THEN
+    bResult := BE32_TO_HOST(16#78563412);
+    bRun := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_R_TRIG" Id="{4f59f281-181a-5fdc-864b-59b2eb3805d9}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_R_TRIG
+VAR
+    fbButtonEdge  : R_TRIG; // 上升沿检测器实例
+    bToggleButton : BOOL; // 按钮信号（持续按住为 TRUE）
+    bEdgePulse    : BOOL; // 按钮按下沿的单 PLC 周期脉冲
+    bLampState    : BOOL; // 灯的开关状态（toggle 后切换）
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：按按钮一次切换灯的开关状态（toggle）。按钮持续按住不应反复切换灯——
+//       一次按下只切一次；松开再按又切一次。这是嵌入式/工业最常见的"边沿
+//       触发的离散动作"模式。
+//
+// 价值：1 行 R_TRIG 把电平按钮变成单周期脉冲，配合 XOR 完成 toggle；手写需要
+//       维护"上一周期值"变量并自己写比较逻辑，每个信号 3 行散落容易遗漏。
+//
+// 验证步骤：
+//   1. PLC 项目 → Add Existing Item (.TcPOU) → 选本文件
+//   2. 引用 Tc2_Standard 库
+//   3. 编译、登录、运行
+//   4. 在线 monitor bLampState 与 bEdgePulse
+//   5. 在线 bToggleButton := TRUE → bEdgePulse 在那一拍 TRUE（PLC 监视可能
+//      看不到，因为只持续 1 个 PLC 周期），bLampState 翻转
+//   6. bToggleButton 保持 TRUE → bEdgePulse 维持 FALSE、bLampState 不变
+//      （证明电平不会反复触发）
+//   7. bToggleButton := FALSE → 状态 1：bEdgePulse 仍 FALSE（不是上升沿）
+//   8. bToggleButton 再 := TRUE → bLampState 再次翻转
+// =============================================================================
+
+// 每周期无条件调用：提取按钮上升沿
+fbButtonEdge(CLK := bToggleButton, Q => bEdgePulse);
+
+// 上升沿那一拍执行 toggle
+IF bEdgePulse THEN
+    bLampState := NOT bLampState;
+END_IF
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

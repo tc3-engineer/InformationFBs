@@ -13,7 +13,7 @@
 | Verified | 2026-05-21 ✅ |
 | InfoSys-checked | ✅ 2026-05-21 |
 | Status | `verified` |
-| Example | [`examples/P_Demo_MC_PhasingRelative.xml`](../examples/P_Demo_MC_PhasingRelative.xml) |
+| Example | [`examples/P_Demo_MC_PhasingRelative.TcPOU`](../examples/P_Demo_MC_PhasingRelative.TcPOU) |
 
 ---
 
@@ -131,7 +131,7 @@ END_VAR
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_MC_PhasingRelative.xml`](../examples/P_Demo_MC_PhasingRelative.xml)
+> 配套可导入文件：[`examples/P_Demo_MC_PhasingRelative.TcPOU`](../examples/P_Demo_MC_PhasingRelative.TcPOU)
 
 ```iecst
 // 场景：套准检测每次反馈一个小偏差（如 +0.2°）→ 用相对相位调整连续修正

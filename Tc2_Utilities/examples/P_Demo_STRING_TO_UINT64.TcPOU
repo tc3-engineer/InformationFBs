@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_STRING_TO_UINT64" Id="{a26034a7-9b09-5a41-afcf-8364d18f9007}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_STRING_TO_UINT64
+VAR
+    sCountText : STRING(21) := '18446744073709551615';; // 来自 CSV 报表的极大值
+    uliCount   : T_ULARGE_INTEGER;; // 解析后的整数
+    bParse     : BOOL;; // 触发一次解析
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_Utilities.STRING_TO_UINT64 演示程序（FUNCTION，单周期触发）
+// ============================================================
+// 场景：从 CSV 报表读到的产量计数字符串还原为 64 位整数用于累加。
+// 价值：替代手写 `WHILE i &lt;= LEN(s) DO ... END_WHILE` 累加循环；一次调用搞定，错误风险集中在校验上而不是解析上。
+// 验证步骤：
+//   1. 把本 PROGRAM 加到 PlcTask 调用列表
+//   2. 编译 + 登录
+//   3. 在线把 b... 触发位置 TRUE 一个周期
+//   4. 观察输出变量是否符合期望
+// ============================================================
+
+IF bParse THEN
+    // 上升沿触发：实际工程应先用 F_IsValidDecimalString 校验
+    uliCount := STRING_TO_UINT64(sCountText);
+    bParse := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

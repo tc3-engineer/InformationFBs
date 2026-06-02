@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_stLibVersion_Tc2_Math" Id="{458feaee-f8c7-518c-9dbf-8bf60349e770}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_stLibVersion_Tc2_Math
+VAR
+    stCurrentLibVer : ST_LibVersion; // 运行时实际加载的库版本快照（在线 monitor 用）
+    bLibVersionOk   : BOOL; // 启动门禁结果：版本是否满足业务最低要求
+    sLibCheckMsg    : STRING(80); // HMI 显示用的检查结果消息
+    bChecked        : BOOL; // 只检查一次的 latch（版本是编译期常量，避免每周期重跑）
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：工程代码依赖 Tc2_Math ≥ 1.3.0 的 MODTURNS / MODABS 行为（更早版本
+//       某些边界返回值不同）。PLC 启动时先检查所引用的库版本是否够新，不够
+//       就停机并报警，避免现场升级或备机替换时无意引入旧版库导致 NC 角度
+//       归一化行为微妙变化。
+//
+// 价值：把"版本依赖"从注释里的口头约定变成运行时强制门禁，让版本不匹配在
+//       PLC 第一个周期就暴露，而不是在 NC 跑了几天后才出现行为差异。
+//
+// 验证步骤：
+//   1. 引用 Tc2_Math + Tc2_System
+//   2. 在 PLC 项目右键 → Add Existing Item (.TcPOU) → 选本文件 → OK
+//   3. 编译、登录、运行
+//   4. 在线 monitor 看 stCurrentLibVer 应显示 iMajor=1 iMinor=3 iBuild=3
+//   5. 看 bLibVersionOk 应为 TRUE，sLibCheckMsg 显示 "version OK"
+//   6. 反例验证：在 XAE 把 Tc2_Math 降到 1.2.x → 重新下载
+//      → bLibVersionOk 应变 FALSE，sLibCheckMsg 显示 "too old, need 1.3.0+"
+// =============================================================================
+
+// 启动只跑一次（PLC 进入 Run 后第一个周期）——版本是编译期常量
+IF NOT bChecked THEN
+    bChecked := TRUE;
+
+    // 快照当前库版本号（仅诊断给 HMI 看）
+    stCurrentLibVer := stLibVersion_Tc2_Math;
+
+    // 调 Tc2_System 提供的版本比较器，要求 ≥ 1.3.0.0
+    // GreaterOrEqual 是工程上最常用的比较类型；其他类型几乎不用
+    bLibVersionOk := F_CmpLibVersion(
+        stLibVersion := stLibVersion_Tc2_Math,
+        iMajor       := 1,
+        iMinor       := 3,
+        iBuild       := 0,
+        iRevision    := 0,
+        nCmpType     := E_CmpLibVersion.GreaterOrEqual
+    );
+
+    // 决策分支：不够就把消息丢出来给 HMI / 报警系统
+    IF bLibVersionOk THEN
+        sLibCheckMsg := 'Tc2_Math version OK';
+    ELSE
+        sLibCheckMsg := 'Tc2_Math too old, need 1.3.0+';
+        // 真实工程在这里应该把 PLC 切到 SAFE_STOP，而不是继续跑业务
+    END_IF;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -13,7 +13,7 @@
 | Verified | 2026-05-21 ✅ |
 | InfoSys-checked | ✅ 2026-05-21 |
 | Status | `verified` |
-| Example | [`examples/P_Demo_FB_TlsSocketAddCrl.xml`](../examples/P_Demo_FB_TlsSocketAddCrl.xml) |
+| Example | [`examples/P_Demo_FB_TlsSocketAddCrl.TcPOU`](../examples/P_Demo_FB_TlsSocketAddCrl.TcPOU) |
 
 ---
 
@@ -93,7 +93,7 @@ END_VAR
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_FB_TlsSocketAddCrl.xml`](../examples/P_Demo_FB_TlsSocketAddCrl.xml)
+> 配套可导入文件：[`examples/P_Demo_FB_TlsSocketAddCrl.TcPOU`](../examples/P_Demo_FB_TlsSocketAddCrl.TcPOU)
 
 ```iecst
 // 场景：TLS 客户端 socket 已 Create + AddCa，现在追加 CRL 增强校验。

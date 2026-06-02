@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_Int64Sub64" Id="{9d80503f-9634-5258-9275-b89a4d89c556}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_Int64Sub64
+VAR
+    liA       : T_LARGE_INTEGER;
+    liB       : T_LARGE_INTEGER;
+    liDiff    : T_LARGE_INTEGER;
+    bSubtract : BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_Utilities.Int64Sub64 演示程序（FUNCTION，单周期触发）
+// ============================================================
+// 场景：算两个有符号扭矩积分的差值。
+// 价值：替代手写有符号双倍长减法 + 借位。
+// 验证步骤：
+//   1. 把本 PROGRAM 加到 PlcTask 调用列表
+//   2. 编译 + 登录
+//   3. 在线把 b... 触发位置 TRUE 一个周期
+//   4. 观察输出变量是否符合期望
+// ============================================================
+
+IF bSubtract THEN
+    liDiff := Int64Sub64(liA, liB);
+    bSubtract := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

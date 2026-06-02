@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_S_UPS_CB3011" Id="{979edaf2-d248-5c5a-a281-f5767380de11}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_S_UPS_CB3011
+VAR
+    fbSUPS         : FB_S_UPS_CB3011; // CB3011 平台 1-second UPS 管家
+    nBatchKgRetain : LREAL; // 本班次累计灌装重量；工程里应声明为 VAR RETAIN
+    bPowerFailNow  : BOOL; // 实时电源标志：掉电中 = TRUE
+    eUpsState      : E_S_UPS_State; // 当前 UPS 状态机阶段（在线 monitor 观察应急流程进度）
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：某 CB3011 工控机做食品灌装计量，断电时必须保存"本班次累计灌装重量"
+//       这个 retain 变量。1-second UPS 给我们 2-3 秒在掉电后存数据 + 关机。
+//
+// 价值：不用本 FB 要自己写：读 UPS 寄存器 → 解析电源位 → 启动 SPDM_2PASS →
+//       等待写完 → 调 FB_NT_QuickShutdown → 监督 timeout。本 FB 把这套
+//       封装好，业务侧只关心 eState 走到哪一步即可。约省 60-80 行 + 边界测试。
+//
+// 验证步骤：
+//   1. 引用 Tc2_SUPS（含依赖 Tc2_System）
+//   2. 在 PLC 项目中右键 → Add Existing Item (.TcPOU) → 选本文件 → OK
+//   3. 把 nBatchKgRetain 在 GVL 里改为带 RETAIN 限定的变量（演示文件这里
+//      为了便携保留普通 VAR；实际工程必须 RETAIN 才会被 SPDM_2PASS 存盘）
+//   4. 在 PLC 项目 Properties → PLC → Router Memory 调到 retain 总量的 1.5-2 倍
+//   5. 编译、登录、运行
+//   6. 拔掉外部 24V（仅在台架且无负载下做） → 观察 bPowerFailNow 立即变 TRUE，
+//      eUpsState 依次走过 eSUPS_PowerFailure → eSUPS_WritePersistentData →
+//      eSUPS_QuickShutdown → eSUPS_WaitForPowerOFF → 系统重启
+//   7. 上电后再连接 → 检查 nBatchKgRetain 是否仍为掉电前的值
+// =============================================================================
+
+// 单次调用形式：所有 VAR_INPUT 显式赋值；输出端用 => 截获
+// 全部保持 PDF 推荐默认（CB3011 平台不应改动）：
+//   - sNetID = ''     本机操作
+//   - iPLCPort = 0    自动探测 runtime 端口（多 runtime 时手动填 851/852）
+//   - eUpsMode        默认「写 retain 后立即 quick shutdown」最常用
+//   - ePersistentMode 必须 SPDM_2PASS（fast 2-pass），其它模式时间不够
+fbSUPS(
+    sNetID          := '',
+    iPLCPort        := 0,
+    tTimeout        := DEFAULT_ADS_TIMEOUT,
+    eUpsMode        := eSUPS_WrPersistData_Shutdown,
+    ePersistentMode := SPDM_2PASS,
+    tRecoverTime    := T#10S,
+    bPowerFailDetect => bPowerFailNow,
+    eState           => eUpsState
+);
+
+// 业务侧示例：每次写 retain 量都直接累加，本 FB 会负责掉电时把这个值落盘
+// （此处不放 IF 条件，是为了让在线测试时直接改 nBatchKgRetain 看效果）
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

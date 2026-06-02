@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_sLiteral_TO_UTF8" Id="{2654f1a7-0cca-5670-a0d1-90f5095e9dc2}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_sLiteral_TO_UTF8
+VAR
+    sUtf8Init : STRING(255) := sLiteral_TO_UTF8('Hühner legen Eier.'); // 工业语义：UTF-8 初值字面量（编译期编码）
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：OPC UA 服务器发布的字符串变量含德语 Umlaut（Hühner / Größe）；用 `sLiteral_TO_UTF8` 编初值，配 TcEncoding 让 UA 客户端正确显示。
+// 价值：替代手动 UTF-8 字节序列（如 `STRING := '$48$C3$BC...'`）的不可读 hex 转义；可读字面量 + 编译期编码。
+// 验证步骤：
+//   1. 引用 Tc2_Utilities
+//   2. 编译 + 登录 + 运行
+//   3. 在线写触发位 TRUE，monitor 输出变量
+// =============================================================================
+// 本函数主要用于编译期字面量初始化
+// sUtf8Init 的初值在编译时已经被编码为 UTF-8 字节序列
+// 运行时无需再调用——直接用 sUtf8Init 即可送入 UTF-8 API（如 OPC UA Publisher）
+// 配合 {attribute 'TcEncoding' := 'UTF-8'} 注解使用更稳妥
+;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

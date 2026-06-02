@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_TcMessage_Create" Id="{dcdd8591-35b3-5517-aaad-019bc3ff3562}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_TcMessage_Create
+VAR
+    fbMessage      : FB_TcMessage; // 配方切换消息实例
+    bCreated       : BOOL; // Create latch
+    hr             : HRESULT; // 返回值监视
+    guidEventClass : GUID; // 事件类 GUID
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：MES 集成：注册「配方切换」消息事件
+// 价值：一次 Create 拿到 message 槽位；后续 Send 直接复用，无需重新指定事件元数据
+// 验证：登录后单步：第一周期 hr = S_OK 且 bCreated 变 TRUE；之后周期被 latch 截住不再调
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_EventLogger（System → References → Add library）
+//   3. 编译 → 登录 → 运行；按 verify 注释里给出的在线写值操作
+// =============================================================================
+
+IF NOT bCreated THEN
+    hr := fbMessage.Create(
+        eventClass := guidEventClass,
+        nEventId := 2001,                  // 配方切换事件 ID
+        eSeverity := TcEventSeverity.Info,
+        ipSourceInfo := 0);
+    bCreated := SUCCEEDED(hr);
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

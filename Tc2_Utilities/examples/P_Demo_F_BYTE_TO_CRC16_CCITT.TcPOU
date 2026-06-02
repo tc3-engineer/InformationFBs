@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_F_BYTE_TO_CRC16_CCITT" Id="{a24224e4-249e-5570-8879-19ab7d72db8b}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_F_BYTE_TO_CRC16_CCITT
+VAR
+    nByteIn : BYTE; // 工业语义：串口刚到一个数据字节
+    wCrc    : WORD := 16#FFFF; // 运行中的 CRC 值（初值 16#FFFF）
+    bFeed   : BOOL; // 在线触发一次喂入
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：串口协议（如 RDM / HART / DLMS）实时校验：收到每个字节立即喂入 CRC 计算器，到帧尾比对收到的 CRC 字段。
+// 价值：替代手写位移 XOR 循环或维护 256 字节查找表——本函数封装好的 CRC-16 CCITT 实现。
+// 验证步骤：
+//   1. 引用 Tc2_Utilities
+//   2. 编译 + 登录 + 运行
+//   3. 在线写触发位 TRUE，monitor 输出变量
+// =============================================================================
+
+// 模拟串口字节到达：在线写 nByteIn，触发一次 CRC 更新
+IF bFeed THEN
+    wCrc := F_BYTE_TO_CRC16_CCITT(value := nByteIn, crc := wCrc);
+    // 帧尾时比较 wCrc 与协议字段；不一致 -> 报警
+    bFeed := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

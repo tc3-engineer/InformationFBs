@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FILETIME64_TO_SYSTEMTIME" Id="{c69c28ef-e360-5b26-ae26-4a9441dd664d}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FILETIME64_TO_SYSTEMTIME
+VAR
+    ftLogTime : T_FILETIME64; // 日志时间戳
+    stLogTime : TIMESTRUCT; // 按字段展开的系统时间
+    bValid    : BOOL; // 转换成功（wYear > 0）
+    bRunOnce  : BOOL; // 脉冲触发
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：Windows 日志返回 T_FILETIME64，需按字段（年/月/日/时/分/秒/毫秒）拆出供 HMI 表格显示
+//
+// 价值：1 行拿到 8 字段（含 wDayOfWeek），保留毫秒精度，替代手写 100+ 行日历计算
+//
+// 验证步骤：
+//   1. 引用 Tc2_Utilities（≥ 3.3.44.0）
+//   2. 编译 + 登录 + 运行
+//   3. 用 DT_TO_FILETIME64(DT#2026-05-11-12:34:56) 给 ftLogTime 赋值
+//   4. 强制 bRunOnce := TRUE
+//   5. 在线观察 stLogTime.wYear=2026, wMonth=5, wDay=11, wHour=12 ...
+//   6. bValid 应为 TRUE
+// =============================================================================
+stLogTime := FILETIME64_TO_SYSTEMTIME(ftLogTime);
+bValid := stLogTime.wYear > 0;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

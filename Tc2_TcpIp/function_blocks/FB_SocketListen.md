@@ -13,7 +13,7 @@
 | Verified | 2026-05-21 ✅ |
 | InfoSys-checked | ✅ 2026-05-21 |
 | Status | `verified` |
-| Example | [`examples/P_Demo_FB_SocketListen.xml`](../examples/P_Demo_FB_SocketListen.xml) |
+| Example | [`examples/P_Demo_FB_SocketListen.TcPOU`](../examples/P_Demo_FB_SocketListen.TcPOU) |
 
 ---
 
@@ -103,7 +103,7 @@ ADS 类 6 / 7 / 1861 同其他 socket FB。
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_FB_SocketListen.xml`](../examples/P_Demo_FB_SocketListen.xml)
+> 配套可导入文件：[`examples/P_Demo_FB_SocketListen.TcPOU`](../examples/P_Demo_FB_SocketListen.TcPOU)
 
 ```iecst
 // 场景：PLC 在 200 端口监听，等待远端 SCADA / HMI 连入。

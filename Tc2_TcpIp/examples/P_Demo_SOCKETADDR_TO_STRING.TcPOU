@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_SOCKETADDR_TO_STRING" Id="{c7a02a0d-88e0-5af4-af1a-1f24fc985df3}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_SOCKETADDR_TO_STRING
+VAR
+    fbStartListening    : FB_SocketListen; // 先开 listener，再拆其 localAddr 显示
+    bRequestListen      : BOOL;
+    bListenBusy         : BOOL;
+    bListenError        : BOOL;
+    nListenErrId        : UDINT;
+    hListener           : T_HSOCKET;
+    sListenerLocalAddr  : STRING(22); // listener 实际绑定的网卡 IP + 端口
+    sListenerRemoteAddr : STRING(22); // listener 的 remote 应为 "0.0.0.0:0"
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：多网卡 CX 工控机开 listener，需要验证 listener 究竟绑到了哪个网卡。
+//       通过 SOCKETADDR_TO_STRING 把 hListener.localAddr 拆出来，比靠
+//       HSOCKET_TO_STRING 更紧凑（不带 Handle: 前缀）。
+//
+// 价值：演示从 T_HSOCKET 子结构提取地址字串的标准做法；同时确认 listener
+//       的 remoteAddr 是 0.0.0.0:0（无意义）这一预期。
+//
+// 验证步骤：
+//   1. 在线 bRequestListen := TRUE
+//   2. hListener.handle 非 0 后：
+//      sListenerLocalAddr  显示 "0.0.0.0:200" 或绑定的具体 IP
+//      sListenerRemoteAddr 显示 "0.0.0.0:0"
+//   3. 改 sLocalHost 为具体网卡 IP（如 '192.168.1.10'）→ sListenerLocalAddr
+//      显示 "192.168.1.10:200" 验证绑定生效
+// =============================================================================
+
+fbStartListening(
+    sSrvNetId := '', sLocalHost := '0.0.0.0', nLocalPort := 200,
+    bExecute := bRequestListen, tTimeout := T#5S,
+    bBusy => bListenBusy, bError => bListenError, nErrId => nListenErrId,
+    hListener => hListener);
+
+// 每周期把 listener 的 local/remote 各自字串化（纯计算，无副作用）
+sListenerLocalAddr  := SOCKETADDR_TO_STRING(stSockAddr := hListener.localAddr);
+sListenerRemoteAddr := SOCKETADDR_TO_STRING(stSockAddr := hListener.remoteAddr);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

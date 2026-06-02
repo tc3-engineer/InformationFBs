@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_GetDeviceIdentification" Id="{b9eede6b-a249-5061-961f-6df21fb993b0}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_GetDeviceIdentification
+VAR
+    fbGetDeviceIdent : FB_GetDeviceIdentification; // FB 实例（已弃用；新代码用 FB_GetDeviceIdentificationEx）
+    sLocalNetId      : T_AmsNetId; // 空串 = 本机
+    tAdsTimeout      : TIME := DEFAULT_ADS_TIMEOUT; // 默认约 5s
+    bReadDeviceInfo  : BOOL; // 上升沿触发一次查询
+    bIdentBusy       : BOOL;
+    bIdentError      : BOOL;
+    nIdentErrorId    : UDINT;
+    stDeviceIdent    : ST_DeviceIdentification; // 设备身份结构体（型号 / 序列号 / TwinCAT 版本等）
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_Utilities.FB_GetDeviceIdentification 演示程序（已弃用 FB）
+// ============================================================
+// 场景：维护一个 TC2 时代的旧 HMI 工程：开机时读本机控制器的硬件型号与序列号，
+//       显示在 HMI "关于"页面上，方便操作员在现场识别设备型号 / 报修时报序列号。
+//       本 FB 是这套旧 HMI 用的标准接口。
+// 价值：在不大改工程的前提下让旧 HMI 继续工作。若发现型号字符串被截断
+//       （如新 Beckhoff 控制器型号过长），改用 FB_GetDeviceIdentificationEx。
+// 验证：
+//   1. 引用 Tc2_Utilities + Tc2_System（DEFAULT_ADS_TIMEOUT 在 Tc2_System）
+//   2. 编译 + 登录
+//   3. 在线写 bReadDeviceInfo := TRUE 一次
+//   4. 观察 bIdentBusy 翻 TRUE 然后回 FALSE（1-2 周期内）
+//   5. bIdentError 应为 FALSE；展开 stDeviceIdent 应见型号、序列号等被填入
+//   6. 完成后 bReadDeviceInfo 自动复位（见下方 IF 块）
+// ============================================================
+
+fbGetDeviceIdent(
+    bExecute   := bReadDeviceInfo,
+    tTimeout   := tAdsTimeout,
+    sNetId     := sLocalNetId,
+    bBusy      => bIdentBusy,
+    bError     => bIdentError,
+    nErrorId   => nIdentErrorId,
+    stDevIdent => stDeviceIdent
+);
+
+// 完成后自动复位 bExecute，便于下次触发
+IF NOT bIdentBusy AND bReadDeviceInfo THEN
+    bReadDeviceInfo := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

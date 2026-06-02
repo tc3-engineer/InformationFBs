@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_GetJsonAttribute" Id="{28f78060-42fe-5adb-8e3d-69a13e03c5a3}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_GetJsonAttribute
+VAR
+    fbAlarm        : FB_TcAlarm; // alarm 实例
+    sJsonAttribute : STRING(255); // JSON 输出缓冲
+    bRead          : BOOL := FALSE; // 上升沿触发读取
+    bReadPrev      : BOOL; // 边沿检测
+    hr             : HRESULT; // 返回值监视
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：读取 alarm 的 JSON 属性以提取 batch id
+// 价值：一句调用拿到 JSON 字符串供后续解析
+// 验证：先用 SetJsonAttribute 写一个 JSON，再用本方法读取，sJsonAttribute 应等于写入值
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_EventLogger（System → References → Add library）
+//   3. 编译 → 登录 → 运行；按 verify 注释里给出的在线写值操作
+// =============================================================================
+
+IF bRead AND NOT bReadPrev THEN
+    hr := fbAlarm.GetJsonAttribute(sJsonAttribute := sJsonAttribute);
+END_IF;
+bReadPrev := bRead;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_DELETE2" Id="{fb5cd327-8ec6-583d-b92d-11a8e3f21759}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_DELETE2
+VAR
+    sDevTag    : STRING(64) := 'EL-12345-PUMP-01'; // 工业语义：设备标签，前缀 'EL-' 需去掉
+    sDevTagOut : STRING(64); // 去前缀后的标签
+    bStrip     : BOOL; // 在线置 TRUE 触发一次裁剪
+    bOk        : BOOL; // 操作成功
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：数据清洗：从用户输入的 `STRING(1024)` 中去掉特定位置的固定前缀（如设备号开头的 'EL-' 前 3 字符）。
+// 价值：替代手动 `LEFT` + `RIGHT` + `CONCAT2` 的 3 调用链；本函数 1 调用即可。
+// 验证步骤：
+//   1. 引用 Tc2_Utilities
+//   2. 编译 + 登录 + 运行
+//   3. 在线写触发位 TRUE，monitor 输出变量
+// =============================================================================
+// 去掉固定 3 字符前缀 'EL-'
+IF bStrip THEN
+    bOk := DELETE2(pSrcString := ADR(sDevTag),
+                   pDstString := ADR(sDevTagOut),
+                   nDstSize   := SIZEOF(sDevTagOut),
+                   nLen       := 3,    // 删 3 字符
+                   nPos       := 1);   // 从位置 1 开始（IEC 1 起算）
+    bStrip := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

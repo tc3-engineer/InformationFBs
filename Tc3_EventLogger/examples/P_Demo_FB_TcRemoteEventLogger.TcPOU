@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_TcRemoteEventLogger" Id="{302f2a9a-e148-58a4-acb9-90089525f2b1}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_TcRemoteEventLogger
+VAR
+    fbRemoteLogger : FB_TcRemoteEventLogger; // 远程 EventLogger 视图
+    sRemoteNetId   : STRING(40) := '192.168.1.10.1.1'; // 远程 AMS Net ID
+    nRemotePort    : UINT := 851; // AMS Port（默认 PLC 任务为 851）
+    bConnected     : BOOL; // 连接状态
+    bDoConnect     : BOOL := FALSE; // 上升沿触发连接
+    bDoConnectPrev : BOOL; // 边沿检测
+    hr             : HRESULT; // 返回值监视
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：远程清除某 PLC 的所有 alarm
+// 价值：跨 PLC 维护操作
+// 验证：需要远程 AMS 路由已配置。Connect 成功后调用 ClearAllAlarms 应让远程 EventLogger 状态变化
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_EventLogger（System → References → Add library）
+//   3. 编译 → 登录 → 运行；按 verify 注释里给出的在线写值操作
+// =============================================================================
+
+// 边沿触发：建立连接
+IF bDoConnect AND NOT bDoConnectPrev THEN
+    hr := fbRemoteLogger.Connect(sNetId := sRemoteNetId, nPort := nRemotePort);
+    bConnected := SUCCEEDED(hr);
+END_IF;
+bDoConnectPrev := bDoConnect;
+
+// 远程操作（示例：批量清除远程 alarm）
+// IF bConnected THEN hr := fbRemoteLogger.ClearAlarms(...); END_IF;
+// 流程结束：fbRemoteLogger.Disconnect();
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

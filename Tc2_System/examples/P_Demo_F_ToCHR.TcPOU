@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_F_ToCHR" Id="{eb893e6d-f525-59b6-83a8-1a80f595ab9f}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_F_ToCHR
+VAR
+    byAsciiCode : BYTE := 16#31; // ASCII 码 0x31 = '1'
+    sChar       : STRING(1); // 转换得到的单字符字符串
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_System.F_ToCHR 演示程序
+// ============================================================
+// 场景：通讯报文调试，把读到的字节流逐字节转 STRING 拼显示文本。
+// 价值：替代手写 ASCII 转换表。
+// 验证：登录后看 sChar = '1'。改 byAsciiCode 为 16#41 后 sChar 应变为 'A'；改为 16#0D（CR 回车）后 HMI 上可能只看到换行而看不到字符。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_System（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』指引在线写值观察
+// ============================================================
+
+sChar := F_ToCHR(byAsciiCode);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_TlsSocketAddCa" Id="{b7bcf04b-0c1e-51d3-b02c-744c3f26fd68}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_TlsSocketAddCa
+VAR
+    fbCreateClient   : FB_TlsSocketCreate;
+    fbAddCorpCa      : FB_TlsSocketAddCa;
+    fbAddPublicCa    : FB_TlsSocketAddCa;
+    hTlsSocket       : T_HSOCKET;
+    bRequestCreate   : BOOL;
+    bCreateBusy      : BOOL;
+    bCreateError     : BOOL;
+    nCreateErrId     : UDINT;
+    sCorpCaPath      : STRING(255) := 'C:\TwinCAT\3.1\Boot\Plc\TcpIpServer\corp_ca.pem';
+    bRequestCorpCa   : BOOL;
+    bCorpCaBusy      : BOOL;
+    bCorpCaError     : BOOL;
+    nCorpCaErrId     : UDINT;
+    sPublicCaPath    : STRING(255) := 'C:\TwinCAT\3.1\Boot\Plc\TcpIpServer\letsencrypt_root.pem';
+    bRequestPublicCa : BOOL;
+    bPublicCaBusy    : BOOL;
+    bPublicCaError   : BOOL;
+    nPublicCaErrId   : UDINT;
+    bAllCasReady     : BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：PLC 既要连企业内部 HTTPS API（用企业自签 CA），又要连云端公共 SaaS
+//       （用 Let's Encrypt 公网 CA）。同一 socket 加载两条 CA 链构建混合信任。
+//
+// 价值：演示同一 socket 多次 AddCa 累积信任链；以及"必须在 Connect 之前调"
+//       的纪律——任一 AddCa 在 Connect 后调都会失败。
+//
+// 验证步骤：
+//   1. 把 corp_ca.pem 和 letsencrypt_root.pem 放到指定路径
+//   2. 在线 bRequestCreate := TRUE 创建 socket
+//   3. 在线 bRequestCorpCa := TRUE → bCorpCaBusy 闪烁后落回
+//   4. 在线 bRequestPublicCa := TRUE → bPublicCaBusy 闪烁后落回，bAllCasReady=TRUE
+//   5. 故意把 sCorpCaPath 改成不存在的文件 → bCorpCaError=TRUE,
+//      nCorpCaErrId=0x00008081 (TLS_CA_NOTFOUND)
+//   6. 故意把 sPublicCaPath 改成非 PEM 文件 → nPublicCaErrId=0x00008084 (TLS_CA_INVALID)
+// =============================================================================
+
+fbCreateClient(
+    sSrvNetId := '', bListener := FALSE,
+    bExecute := bRequestCreate, tTimeout := T#5S,
+    bBusy => bCreateBusy, bError => bCreateError, nErrId => nCreateErrId,
+    hSocket => hTlsSocket);
+
+// 加载企业 CA
+fbAddCorpCa(
+    sSrvNetId := '', hSocket := hTlsSocket,
+    sCaPath := sCorpCaPath,
+    bExecute := bRequestCorpCa, tTimeout := T#5S,
+    bBusy => bCorpCaBusy, bError => bCorpCaError, nErrId => nCorpCaErrId);
+
+// 再加载公网 CA
+fbAddPublicCa(
+    sSrvNetId := '', hSocket := hTlsSocket,
+    sCaPath := sPublicCaPath,
+    bExecute := bRequestPublicCa, tTimeout := T#5S,
+    bBusy => bPublicCaBusy, bError => bPublicCaError, nErrId => nPublicCaErrId);
+
+// 两条 CA 都加载完成才允许下一步 Connect
+IF NOT bCorpCaBusy AND NOT bCorpCaError AND bRequestCorpCa
+   AND NOT bPublicCaBusy AND NOT bPublicCaError AND bRequestPublicCa THEN
+    bAllCasReady := TRUE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

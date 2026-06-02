@@ -13,7 +13,7 @@
 | Verified | 2026-05-21 ✅ |
 | InfoSys-checked | ✅ 2026-05-21 |
 | Status | `verified` |
-| Example | [`examples/P_Demo_FB_TlsSocketAddCa.xml`](../examples/P_Demo_FB_TlsSocketAddCa.xml) |
+| Example | [`examples/P_Demo_FB_TlsSocketAddCa.TcPOU`](../examples/P_Demo_FB_TlsSocketAddCa.TcPOU) |
 
 ---
 
@@ -98,7 +98,7 @@ END_VAR
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_FB_TlsSocketAddCa.xml`](../examples/P_Demo_FB_TlsSocketAddCa.xml)
+> 配套可导入文件：[`examples/P_Demo_FB_TlsSocketAddCa.TcPOU`](../examples/P_Demo_FB_TlsSocketAddCa.TcPOU)
 
 ```iecst
 // 场景：客户端 TLS socket 已创建，加载企业内部 CA 准备 Connect。

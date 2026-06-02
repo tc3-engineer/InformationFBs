@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_ClearAlarms" Id="{dc742eb3-c0b4-5dcf-bedd-bcb5635aa248}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_ClearAlarms
+VAR
+    fbLogger           : FB_TcEventLogger; // EventLogger 实例
+    bClearAll          : BOOL := FALSE; // 上升沿触发批量清除
+    bClearAllPrev      : BOOL; // 边沿检测
+    bResetConfirmation : BOOL := FALSE; // 是否同时重置确认状态（审计场景慎用）
+    hr                 : HRESULT; // 返回值监视
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：HMI 上「批量清除当前所有活动报警」按钮的实现
+// 价值：一句调用清掉所有活动 alarm，省去自建报警表遍历
+// 验证：需要先有几条 alarm 处于 Raised 状态。写 bClearAll := TRUE 触发后 HMI EventLogger 视图所有 Raised 应变 Cleared；若 bResetConfirmation 也为 TRUE 则 WaitForConfirmation 状态同时变 Reset
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_EventLogger（System → References → Add library）
+//   3. 编译 → 登录 → 运行；按 verify 注释里给出的在线写值操作
+// =============================================================================
+
+// 边沿触发：批量清除全部活动 alarm。生产环境下应在 HMI 加二次确认。
+IF bClearAll AND NOT bClearAllPrev THEN
+    hr := fbLogger.ClearAlarms(
+        nTimeStamp := 0,                       // 用当前系统时间
+        bResetConfirmation := bResetConfirmation,
+        ipFilter := 0);                        // 0 = 不过滤，清全部
+END_IF;
+bClearAllPrev := bClearAll;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

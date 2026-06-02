@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_UDINT_TO_LREALEX" Id="{29cbae42-85a8-56f0-8717-0e58a483c313}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_UDINT_TO_LREALEX
+VAR
+    nLegacyValue : UDINT := 16#FFFFFFFF; // 待转换的 UDINT 无符号值；最高位为 1 时在 Tc2 ARM 旧平台上会被误判负
+    lrConverted  : LREAL; // 转换结果；应恒为正 LREAL
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：从 TwinCAT 2 ARM 平台（BCxx/BX9xx 总线终端控制器）的项目移植到 TwinCAT 3
+//       IPC/CX 平台时，原代码用 UDINT_TO_LREALEX 把无符号 UDINT 转为正 LREAL。
+//       保留此调用让源码无需修改即可升级。
+// 价值：TwinCAT 3 本身已正确转换；本 FB 的价值在于 Tc2->Tc3 移植兼容，避免逐行
+//       改源码。PDF 明确说 「this function can be dispensed with」（指 Tc3 上）。
+// 验证步骤：
+//   1. 引用 Tc2_Utilities
+//   2. 编译 + 登录 + 运行
+//   3. 在线 monitor lrConverted，应为 +4294967295 这一正数（不是 -1）
+//   4. 把 nLegacyValue 改 0、改 1，观察 lrConverted 跟着变 0、1
+// =============================================================================
+
+// 单行调用：兼容性保留，TwinCAT 3 上直接 lrConverted := nLegacyValue 也得到同结果
+lrConverted := UDINT_TO_LREALEX(nLegacyValue);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

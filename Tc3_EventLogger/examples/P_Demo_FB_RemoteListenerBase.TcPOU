@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_RemoteListenerBase" Id="{4535ef31-75bd-50f8-adbe-2d2c556770a4}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_RemoteListenerBase
+VAR
+    fbRemoteListener : FB_RemoteListenerBase; // 实际工程声明子类
+    bSubscribed      : BOOL; // 订阅 latch
+    hr               : HRESULT; // 返回值监视
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：订阅远程 PLC 的事件
+// 价值：跨 PLC 集中监控
+// 验证：需要先在 XAE 路由表配置远程 AMS Net ID。继承 FB_RemoteListenerBase 后 OVERRIDE OnXxx 回调；Subscribe 时传远程节点信息；触发远程 PLC 的 alarm 应能看到本端回调
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_EventLogger（System → References → Add library）
+//   3. 编译 → 登录 → 运行；按 verify 注释里给出的在线写值操作
+// =============================================================================
+
+// 远程订阅需要先调 Subscribe 传远程节点 AMS Net ID + Port（具体接口随库版本，参考 InfoSys）。
+// 之后周期 Execute 推进事件队列，与本地 listener 用法一致。
+hr := fbRemoteListener.Execute();
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

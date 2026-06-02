@@ -10,13 +10,13 @@
 
 | Category | Name | 文档 | 例程 |
 |---|---|---|---|
-| CB3011 | FB_S_UPS_CB3011 | [✅ verified](cb3011/FB_S_UPS_CB3011.md) | [P_Demo_FB_S_UPS_CB3011.xml](examples/P_Demo_FB_S_UPS_CB3011.xml) |
-| CX50x0 | FB_S_UPS | [✅ verified](cx50x0/FB_S_UPS.md) | [P_Demo_FB_S_UPS.xml](examples/P_Demo_FB_S_UPS.xml) |
-| CX51x0 | FB_S_UPS_CX51x0 | [✅ verified](cx51x0/FB_S_UPS_CX51x0.md) | [P_Demo_FB_S_UPS_CX51x0.xml](examples/P_Demo_FB_S_UPS_CX51x0.xml) |
-| CX9020-U900 | FB_S_UPS_CX9020_U900 | [✅ verified](cx9020_u900/FB_S_UPS_CX9020_U900.md) | [P_Demo_FB_S_UPS_CX9020_U900.xml](examples/P_Demo_FB_S_UPS_CX9020_U900.xml) |
-| BAPI | FB_S_UPS_BAPI | [✅ verified](bapi/FB_S_UPS_BAPI.md) | [P_Demo_FB_S_UPS_BAPI.xml](examples/P_Demo_FB_S_UPS_BAPI.xml) |
-| Function blocks | FB_NT_QuickShutdown | [✅ verified](function_blocks/FB_NT_QuickShutdown.md) | [P_Demo_FB_NT_QuickShutdown.xml](examples/P_Demo_FB_NT_QuickShutdown.xml) |
-| Library version | stLibVersion_Tc2_SUPS | [✅ verified](global_constants/stLibVersion_Tc2_SUPS.md) | [P_Demo_stLibVersion_Tc2_SUPS.xml](examples/P_Demo_stLibVersion_Tc2_SUPS.xml) |
+| CB3011 | FB_S_UPS_CB3011 | [✅ verified](cb3011/FB_S_UPS_CB3011.md) | [P_Demo_FB_S_UPS_CB3011.TcPOU](examples/P_Demo_FB_S_UPS_CB3011.TcPOU) |
+| CX50x0 | FB_S_UPS | [✅ verified](cx50x0/FB_S_UPS.md) | [P_Demo_FB_S_UPS.TcPOU](examples/P_Demo_FB_S_UPS.TcPOU) |
+| CX51x0 | FB_S_UPS_CX51x0 | [✅ verified](cx51x0/FB_S_UPS_CX51x0.md) | [P_Demo_FB_S_UPS_CX51x0.TcPOU](examples/P_Demo_FB_S_UPS_CX51x0.TcPOU) |
+| CX9020-U900 | FB_S_UPS_CX9020_U900 | [✅ verified](cx9020_u900/FB_S_UPS_CX9020_U900.md) | [P_Demo_FB_S_UPS_CX9020_U900.TcPOU](examples/P_Demo_FB_S_UPS_CX9020_U900.TcPOU) |
+| BAPI | FB_S_UPS_BAPI | [✅ verified](bapi/FB_S_UPS_BAPI.md) | [P_Demo_FB_S_UPS_BAPI.TcPOU](examples/P_Demo_FB_S_UPS_BAPI.TcPOU) |
+| Function blocks | FB_NT_QuickShutdown | [✅ verified](function_blocks/FB_NT_QuickShutdown.md) | [P_Demo_FB_NT_QuickShutdown.TcPOU](examples/P_Demo_FB_NT_QuickShutdown.TcPOU) |
+| Library version | stLibVersion_Tc2_SUPS | [✅ verified](global_constants/stLibVersion_Tc2_SUPS.md) | [P_Demo_stLibVersion_Tc2_SUPS.TcPOU](examples/P_Demo_stLibVersion_Tc2_SUPS.TcPOU) |
 
 ## 选用指南（按硬件）
 

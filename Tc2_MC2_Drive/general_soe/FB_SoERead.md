@@ -13,7 +13,7 @@
 | Verified | 2026-05-21 ✅ |
 | InfoSys-checked | ✅ 2026-05-21 |
 | Status | `verified` |
-| Example | [`examples/P_Demo_FB_SoERead.xml`](../examples/P_Demo_FB_SoERead.xml) |
+| Example | [`examples/P_Demo_FB_SoERead.TcPOU`](../examples/P_Demo_FB_SoERead.TcPOU) |
 
 ---
 
@@ -120,7 +120,7 @@ END_VAR
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_FB_SoERead.xml`](../examples/P_Demo_FB_SoERead.xml)
+> 配套可导入文件：[`examples/P_Demo_FB_SoERead.TcPOU`](../examples/P_Demo_FB_SoERead.TcPOU)
 
 ```iecst
 // 场景：读驱动器某 SoE 参数值（IDN S-0-0033, Element 16#40 = Value）

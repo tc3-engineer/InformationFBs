@@ -13,7 +13,7 @@
 | Verified | 2026-05-21 ✅ |
 | InfoSys-checked | ✅ 2026-05-21 |
 | Status | `verified` |
-| Example | [`examples/P_Demo_FB_SocketConnect.xml`](../examples/P_Demo_FB_SocketConnect.xml) |
+| Example | [`examples/P_Demo_FB_SocketConnect.TcPOU`](../examples/P_Demo_FB_SocketConnect.TcPOU) |
 
 ---
 
@@ -126,9 +126,9 @@ END_VAR
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_FB_SocketConnect.xml`](../examples/P_Demo_FB_SocketConnect.xml)（PLCopenXML，可直接导入 TwinCAT 3 XAE）
+> 配套可导入文件：[`examples/P_Demo_FB_SocketConnect.TcPOU`](../examples/P_Demo_FB_SocketConnect.TcPOU)（TwinCAT 3 原生 .TcPOU，可直接拖入 XAE 的 PLC POUs 文件夹）
 >
-> 导入步骤：右键 PLC 项目 → Import PLCopenXML → 选该文件 → OK
+> 导入步骤：右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选该文件 → OK
 
 ```iecst
 // 场景：PLC 作为 MES 客户端，连到 MES 服务器（172.16.6.180:2404），上电后建连一次，

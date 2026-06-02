@@ -13,7 +13,7 @@
 | Verified | 2026-05-11 ✅ |
 | InfoSys-checked | ✅ 2026-05-11 |
 | Status | `verified` |
-| Example | [`examples/P_Demo_STRING_TO_SYSTEMTIME.xml`](../examples/P_Demo_STRING_TO_SYSTEMTIME.xml) |
+| Example | [`examples/P_Demo_STRING_TO_SYSTEMTIME.TcPOU`](../examples/P_Demo_STRING_TO_SYSTEMTIME.TcPOU) |
 
 ---
 
@@ -65,9 +65,9 @@ PDF 未明确「非法字符串如何报错」——实测可能返回部分填�
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_STRING_TO_SYSTEMTIME.xml`](../examples/P_Demo_STRING_TO_SYSTEMTIME.xml)
+> 配套可导入文件：[`examples/P_Demo_STRING_TO_SYSTEMTIME.TcPOU`](../examples/P_Demo_STRING_TO_SYSTEMTIME.TcPOU)
 >
-> 导入步骤：右键 PLC 项目 → Import PLCopenXML → 选该文件 → OK
+> 导入步骤：右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选该文件 → OK
 > 详见 [`examples/README.md`](../examples/README.md)
 
 ```iecst

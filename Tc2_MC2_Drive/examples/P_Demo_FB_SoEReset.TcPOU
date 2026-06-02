@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_SoEReset" Id="{55a14dce-ca55-56ad-8d8a-c76009f1456e}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_SoEReset
+VAR
+    fbSoEReset      : FB_SoEReset; // 驱动器复位 FB 实例
+    axisServo       : AXIS_REF; // 伺服轴轴引用；必须先在 System Manager 配好并 Link
+    rtResetTrig     : R_TRIG; // 把电平转上升沿
+    bDriveResetReq  : BOOL := FALSE; // 在线写 TRUE 触发一次驱动器复位
+    bResetBusy      : BOOL;
+    bResetError     : BOOL;
+    nResetAdsErr    : UINT;
+    nResetSercosErr : UINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：伺服驱动器报警后的恢复流程。第一步用本 FB 清驱动器硬件故障
+//       （写 S-0-0099），第二步再用 MC_Reset 清 NC 轴故障，才能重新使能。
+//
+// 价值：1) 程序化清驱动器故障，免人工进 DriveManager 操作
+//       2) 与 MC_Reset 配合形成标准"两段式清错"恢复流程
+//       3) Timeout 默认 10s 覆盖最慢的复位场景
+//
+// !! 注意：本 FB 只清驱动器，不清 NC。完整恢复还需 MC_Reset（Tc2_MC2 库）。
+//          Timeout 保持 10s，AX5000 需勾 "Wait For WcState is OK"。
+//
+// 验证步骤：
+//   1. System Manager 配好 NC 轴并 Link 给 axisServo，引用 Tc2_MC2_Drive
+//   2. Add Existing Item (.TcPOU) 选本文件，加进 PlcTask，编译登录
+//   3. 制造一个驱动器可恢复故障（或在报警后）
+//   4. 在线写 bDriveResetReq := TRUE → bResetBusy 置 TRUE（可能持续数秒）
+//   5. 等 bResetBusy 落回 FALSE 且 bResetError = FALSE 即驱动器复位成功
+//   6. 之后再调 MC_Reset 清 NC 错，方可 MC_Power 使能
+//   7. 若 bResetError = TRUE：看 nResetAdsErr（超时/通信），nResetSercosErr
+//      （复位被拒，可能是硬件性故障需检修）
+// =============================================================================
+
+// 用 R_TRIG 把"持续按住的 TRUE"转成真正的上升沿
+rtResetTrig(CLK := bDriveResetReq);
+
+// 单次调用：Timeout 保持 10s（PDF 要求）；Axis 是 VAR_IN_OUT 必传
+// 本 FB 无 Done，靠 Busy 落回 FALSE 且 Error=FALSE 判成功
+fbSoEReset(
+    NetId       := '',
+    Execute     := rtResetTrig.Q,
+    Timeout     := T#10S,
+    Axis        := axisServo,
+    Busy        => bResetBusy,
+    Error       => bResetError,
+    AdsErrId    => nResetAdsErr,
+    SercosErrId => nResetSercosErr
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

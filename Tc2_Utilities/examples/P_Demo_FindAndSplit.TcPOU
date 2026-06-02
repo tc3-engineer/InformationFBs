@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FindAndSplit" Id="{e4d8067f-dfb6-542a-ae19-128ea2840779}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FindAndSplit
+VAR
+    sNodeId : STRING(255) := 'ns=2;s=Pump.State'; // 工业语义：OPC UA NodeId
+    sSep    : STRING(4) := ';'; // 分隔符
+    sLeft   : STRING(128); // namespace 部分
+    sRight  : STRING(128); // node id 部分
+    bOk     : BOOL; // 切分成功
+    bSplit  : BOOL; // 在线触发
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：解析 OPC UA NodeId 字符串 `'ns=2;s=Pump.State'`：用 `';'` 切左右段，再分别解析 `'ns=2'` 和 `'s=...'`。
+// 价值：替代 `FIND2` + `LEFT` + `MID` 三调用链；返回 `BOOL` 直观判断成功。
+// 验证步骤：
+//   1. 引用 Tc2_Utilities
+//   2. 编译 + 登录 + 运行
+//   3. 在线写触发位 TRUE，monitor 输出变量
+// =============================================================================
+IF bSplit THEN
+    bOk := FindAndSplit(pSeparator       := ADR(sSep),
+                        pSrcString       := ADR(sNodeId),
+                        pLeftString      := ADR(sLeft),
+                        nLeftSize        := SIZEOF(sLeft),
+                        pRightString     := ADR(sRight),
+                        nRightSize       := SIZEOF(sRight),
+                        bSearchFromRight := FALSE);
+    bSplit := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

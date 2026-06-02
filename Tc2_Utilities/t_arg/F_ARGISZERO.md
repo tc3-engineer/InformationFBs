@@ -13,7 +13,7 @@
 | Verified | 2026-05-11 ✅ |
 | InfoSys-checked | ✅ 2026-05-11 |
 | Status | `verified` |
-| Example | [`examples/P_Demo_F_ARGISZERO.xml`](../examples/P_Demo_F_ARGISZERO.xml) |
+| Example | [`examples/P_Demo_F_ARGISZERO.TcPOU`](../examples/P_Demo_F_ARGISZERO.TcPOU) |
 
 ---
 
@@ -78,7 +78,7 @@ RETURN (arg.eType = 0) OR (arg.cbLen = 0) OR (arg.pData = 0)
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_F_ARGISZERO.xml`](../examples/P_Demo_F_ARGISZERO.xml)
+> 配套可导入文件：[`examples/P_Demo_F_ARGISZERO.TcPOU`](../examples/P_Demo_F_ARGISZERO.TcPOU)
 
 ```iecst
 // 场景：解析 T_ArgList 时按索引取槽位，越界 / 未填的槽位应跳过而不是 deref 崩溃。

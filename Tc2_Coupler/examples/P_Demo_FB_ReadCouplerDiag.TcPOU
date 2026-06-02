@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_ReadCouplerDiag" Id="{46d1c463-506e-5e33-89ef-ec000c6264f3}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_ReadCouplerDiag
+VAR
+    fbReadDiag           : FB_ReadCouplerDiag; // 读耦合器诊断 FB 实例
+    rTrigKbusErr         : R_TRIG; // K-bus error 上升沿检测
+    stCouplerStatus      : PLCINTFSTRUCT; // 2-byte PLC interface status（链接耦合器）
+    stCouplerControl     : PLCINTFSTRUCT; // 2-byte PLC interface control（链接耦合器）
+    bKbusErrorDetected   : BOOL; // K-bus error 位（typ. stState.Byte0.0；位号查耦合器手册）
+    bTriggerReadDiagOnce : BOOL; // 触发一次诊断读（上升沿后保持到完成）
+    tDiagReadTimeout     : TIME := T#3S; // 诊断读超时；不要短于 2 秒（要读两段）
+    bReadingDiag         : BOOL; // 诊断读进行中
+    bReadError           : BOOL; // 读取出错
+    nReadErrId           : UDINT; // 错误号
+    stDiagResult         : ST_CouplerDiag; // 两段闪烁码结果
+    nFirstFlashType      : BYTE; // 第一序列长闪次数（错误类别），供 HMI 显示
+    nSecondFlashPos      : BYTE; // 第二序列短闪次数（错误位置/端子号）
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：BK5120（Lightbus 耦合器）+ 一串 KLxxx 端子。当 K-bus error 位置位时，
+//       自动读耦合器面板 LED 的两段闪烁码送 HMI 显示故障原因（例如"端子 7
+//       之后 K-bus 中断"），让维修人员不必到现场看 LED 数闪几下。
+//
+// 价值：把"先看 stState K-bus error 位 + 上升沿触发读 + 两段闪烁码串行获取
+//       + 超时管理"封装为一次调用；HMI 直接拿 nFirstFlashType /
+//       nSecondFlashPos 两个数显示。
+//
+// 验证步骤：
+//   1. 在 System Manager 给 BK5120 启用 2-byte PLC interface 并链接 IO
+//   2. 引用 Tc2_Coupler，编译，登录
+//   3. 人为拔掉某个端子（例如端子 7）-> 观察 bKbusErrorDetected 变 TRUE
+//   4. 上升沿触发 fbReadDiag 一次 -> bReadingDiag 短暂 TRUE，1-3 秒后回 FALSE
+//   5. 完成后查看 nFirstFlashType / nSecondFlashPos，对照 BK5120 手册
+//      LED diagnosis 表翻译成故障描述（例如 4/7 = 端子 7 之后中断）
+//   6. 注意：先读本 FB 再触发 CouplerReset，反过来会丢失诊断信息
+// =============================================================================
+
+// 监视 K-bus error 位（位号以具体耦合器手册为准；这里假设是 Byte0.0）
+bKbusErrorDetected := stCouplerStatus.Byte0.0;
+
+// 上升沿触发一次诊断读取，避免周期性反复读浪费总线
+rTrigKbusErr(CLK := bKbusErrorDetected);
+IF rTrigKbusErr.Q THEN
+    bTriggerReadDiagOnce := TRUE;
+END_IF;
+
+// 单次调用形式：bExecute 在完成后由下面 IF 块手动复位
+fbReadDiag(
+    stState  := stCouplerStatus,
+    bExecute := bTriggerReadDiagOnce,
+    tTimeout := tDiagReadTimeout,
+    stCtrl   => stCouplerControl,
+    bBusy    => bReadingDiag,
+    bError   => bReadError,
+    nErrId   => nReadErrId,
+    stDiag   => stDiagResult
+);
+
+// 完成后取出两段闪烁码并清触发；字段名以 ST_CouplerDiag 实际定义为准
+IF NOT bReadingDiag AND bTriggerReadDiagOnce THEN
+    bTriggerReadDiagOnce := FALSE;
+    nFirstFlashType  := stDiagResult.stFirstFlashCode.nErrorType;
+    nSecondFlashPos  := stDiagResult.stSecondFlashCode.nErrorPosition;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

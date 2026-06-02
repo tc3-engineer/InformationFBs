@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_F_ARGCPY" Id="{cad10d09-f866-5895-b573-353104415bdb}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_F_ARGCPY
+VAR
+    fAlarmTempLive     : LREAL := 0.0; // 实时温度（持续变化）
+    fAlarmTempSnapshot : LREAL := 0.0; // 快照缓冲（独立内存）
+    argLive            : T_Arg; // 指向实时温度的 T_Arg
+    argSnapshot        : T_Arg; // 指向快照缓冲的 T_Arg
+    nBytesCopied       : UDINT; // 拷贝字节数（应等于 SIZEOF(LREAL) = 8）
+    bUseTypeSafeCopy   : BOOL := TRUE; // 是否类型安全拷贝
+    bSnapshot          : BOOL; // 在线置 TRUE 触发一次快照拷贝
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_Utilities.F_ARGCPY 演示程序
+// ============================================================
+// 场景：报警温度快照——原变量在下一周期会被新值覆盖，但日志要保留首次瞬时值。
+// 价值：dest := src 是浅拷（pData 仍指原变量），F_ARGCPY 才是深拷（独立内存）。
+// 验证：在线 fAlarmTempLive := 95.0、bSnapshot := TRUE；再改 fAlarmTempLive := 25.0；
+//       fAlarmTempSnapshot 应仍为 95.0；nBytesCopied 应为 8。
+// ============================================================
+
+// 先把 src/dest 都绑定到各自的本地稳定内存
+argLive     := F_LREAL(fAlarmTempLive);
+argSnapshot := F_LREAL(fAlarmTempSnapshot);
+
+IF bSnapshot THEN
+    // 深拷：把 argLive.pData^ 的 8 字节复制到 argSnapshot.pData^（即 fAlarmTempSnapshot）
+    nBytesCopied := F_ARGCPY(typeSafe := bUseTypeSafeCopy,
+                             dest := argSnapshot,
+                             src  := argLive);
+    bSnapshot := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

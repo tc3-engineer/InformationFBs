@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_MC_ReadFlyingSawCharacteristics" Id="{2e3f101c-9f50-53e3-a6b3-111cba2153e0}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_MC_ReadFlyingSawCharacteristics
+VAR
+    fbReadCharac  : MC_ReadFlyingSawCharacteristics;
+    axisCrossSaw  : AXIS_REF; // 从轴（须已建立飞锯同步）
+    charValues    : MC_FlyingSawCharacValues; // 输出：同步轮廓特征值结构
+    bReadReq      : BOOL; // 在线置 TRUE 读一次特征值
+    rtRead        : R_TRIG;
+    bDone         : BOOL;
+    bBusy         : BOOL;
+    bErr          : BOOL;
+    nErrID        : UDINT;
+    fSlaveVeloMax : LREAL; // 监视：同步段从轴最大速度
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_MC2_FlyingSaw.MC_ReadFlyingSawCharacteristics 演示程序
+// ============================================================
+// 场景：飞锯调试。建立飞锯同步后，读出本次同步轮廓的从轴速度/加速度等
+//       极值，确认没有超出从轴机械极限。
+// 价值：不用本 FB 时无法从 PLC 侧拿到 NC 计算的同步轮廓内部特征，只能盲调；
+//       本 FB 把 30+ 字段的特征值一次性读出，可定量判断同步是否健康。
+// 验证：先用 MC_GearInVelo / MC_GearInPos 建立飞锯同步（同步启动后特征值
+//       才可用），再置 bReadReq := TRUE，观察 bBusy 短暂为 TRUE 后 bDone
+//       变 TRUE，charValues 各字段被填充，fSlaveVeloMax 显示同步段从轴
+//       最大速度。若飞锯未启动就读会 bErr 置位（数据未计算）。
+// ============================================================
+
+// 上升沿：一次按钮只读一次
+rtRead(CLK := bReadReq);
+
+// CamTableCharac 作为 VAR_IN_OUT 传入，读取成功后由 FB 填写
+fbReadCharac(
+    Execute        := rtRead.Q,
+    Slave          := axisCrossSaw,
+    CamTableCharac := charValues,
+    Done           => bDone,
+    Busy           => bBusy,
+    Error          => bErr,
+    ErrorID        => nErrID
+);
+
+// 读成功后取出一个极值字段供后续比对机械限值
+IF bDone THEN
+    fSlaveVeloMax := charValues.fSlaveVeloMax;
+END_IF;
+
+// 完成后复位触发信号，准备下一次
+IF NOT bBusy THEN
+    bReadReq := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

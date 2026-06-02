@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_TcEventLogger" Id="{c1e0e4db-2cad-534a-a7fd-4807fe804b75}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_TcEventLogger
+VAR
+    fbLogger           : FB_TcEventLogger; // EventLogger 实例（实际工程用全局单例）
+    bRunArchiveNow     : BOOL := FALSE; // 在线置 TRUE 触发归档流程
+    bRunArchiveNowPrev : BOOL; // 边沿检测
+    sExportPath        : STRING(120) := 'C:\Temp\events_2026-05-11.csv'; // 导出文件路径
+    bExportDone        : BOOL; // ExportLoggedEvents 完成标志
+    hr                 : HRESULT; // 返回值监视
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：MES 集成的每日归档触发流程（导出 + 清除日志 + 确认所有报警）
+// 价值：一段代码完成多个 EventLogger 维护动作的串联
+// 验证：登录后写 bRunArchiveNow := TRUE，应先看到 ExportLoggedEvents 异步返回 TRUE（导出完成），再 ClearLoggedEvents、再 ConfirmAllAlarms 各调一次；HMI EventLogger 视图历史事件应被清空但导出文件保留
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_EventLogger（System → References → Add library）
+//   3. 编译 → 登录 → 运行；按 verify 注释里给出的在线写值操作
+// =============================================================================
+
+// 边沿触发：先异步导出 → 等完成 → 清日志 → 确认所有报警
+IF bRunArchiveNow AND NOT bRunArchiveNowPrev THEN
+    // 启动异步导出。实际工程要分多个状态机周期等 bExportDone = TRUE 后再继续。
+    bExportDone := fbLogger.ExportLoggedEvents(sFileName := sExportPath, ipExportSettings := 0);
+    IF bExportDone THEN
+        hr := fbLogger.ClearLoggedEvents(ipClearSettings := 0);    // 0 = 清全部
+        hr := fbLogger.ConfirmAllAlarms(nTimeStamp := 0);           // 一并确认
+    END_IF;
+END_IF;
+bRunArchiveNowPrev := bRunArchiveNow;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

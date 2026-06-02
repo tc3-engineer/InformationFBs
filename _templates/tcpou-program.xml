@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+TwinCAT 3 原生 .TcPOU PROGRAM 模板
+================================================================
+用途：为某 FB/FC 生成最小可拖拽进 XAE 的 .TcPOU 演示程序
+
+落盘文件名：<library>/examples/P_Demo_{{NAME}}.TcPOU
+
+替换占位符：
+  {{NAME}}        FB/FC 名（如 RS、TON、ADSREAD）
+  {{LIBRARY}}     库名（如 Tc2_Standard）
+  {{GUID}}        POU GUID（{8-4-4-4-12} 形式），用稳定 UUID5：
+                  uuid5(DNS_NS, "tc3-libraries-kb/P_Demo_{{NAME}}")
+  {{DECL_BODY}}   Declaration CDATA 内的 IEC 文本（VAR ... END_VAR 等，不含
+                  顶部 `PROGRAM P_Demo_{{NAME}}` 行 — 模板已生成）
+  {{ST_BODY}}     Implementation CDATA 内的 ST 代码（含顶部场景/价值/验证
+                  注释三件套）
+
+硬规则：
+1. 根元素固定 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+2. PROGRAM 名以 P_Demo_ 前缀，后接 FB 名
+3. POU 节点必带 Name / Id / SpecialFunc="None" 三个属性
+4. Declaration 与 Implementation/ST 必在 <![CDATA[...]]> 里；CDATA 内 `<` `>` `&`
+   **不需要转义**，IEC 文本原样写
+5. 局部变量必须包含被演示 FB 的实例 `fb{{NAME}} : {{NAME}};`，所有 VAR_INPUT 显式赋值
+6. ST 顶部三件套注释：场景 / 价值 / 验证步骤（中文）
+7. 不加 TwinCAT 私有 attribute pragma；POU SpecialFunc="None"
+8. 用 lint_tcpou.py 验证；退出 0 才算通过
+
+跨 IDE：.TcPOU 是 Beckhoff 私有 schema，不能导入 CODESYS / TIA / B&R 等。
+本仓库定位是 TwinCAT 3 文档与例程，原生格式优先。
+-->
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_{{NAME}}" Id="{{GUID}}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_{{NAME}}
+{{DECL_BODY}}
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// {{LIBRARY}}.{{NAME}} 演示程序
+// ============================================================
+// 场景：（这个 FB 在真实工程里解决什么问题？）
+// 价值：（用 vs 不用的区别？）
+// 验证：（如何在线观察这个例程"真的在做事"？）
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 {{LIBRARY}}（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』指引在线写值观察
+// ============================================================
+
+{{ST_BODY}}
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

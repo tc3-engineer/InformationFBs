@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_Raise" Id="{f45466fe-20e3-55c5-9ca3-bf18a447dce2}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_Raise
+VAR
+    fbAlarm               : FB_TcAlarm; // 电机过载报警实例
+    bCreated              : BOOL; // Create() latch
+    rCurrent              : REAL := 0.0; // 电机电流 (A)，在线写值模拟
+    rOverLimit            : REAL := 8.0; // 过载阈值
+    bMotorOverCurrent     : BOOL; // 故障信号（rCurrent &gt; rOverLimit）
+    bMotorOverCurrentPrev : BOOL; // 上一周期值（边沿检测）
+    hr                    : HRESULT; // Raise 返回值监视
+    guidEventClass        : GUID; // 事件类 GUID
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：电机过载故障的上升沿触发（电流瞬时超过 8A 报警）
+// 价值：边沿触发一次 Raise() 即把报警写入 EventLogger 并自动分发到 HMI
+// 验证：登录后写 rCurrent := 9.0，bMotorOverCurrent 在下一周期变 TRUE 并上升沿调用 Raise；HMI EventLogger 视图出现一条 Raised 记录；再次写 9.0 不会重复触发（边沿已过）
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_EventLogger（System → References → Add library）
+//   3. 编译 → 登录 → 运行；按 verify 注释里给出的在线写值操作
+// =============================================================================
+
+// 一次性注册
+IF NOT bCreated THEN
+    hr := fbAlarm.Create(eventClass := guidEventClass, nEventId := 2001,
+        eSeverity := TcEventSeverity.Error, bWithConfirmation := FALSE,
+        ipSourceInfo := 0);
+    bCreated := SUCCEEDED(hr);
+END_IF;
+
+// 故障信号 = 电流超阈值
+bMotorOverCurrent := rCurrent &gt; rOverLimit;
+
+// 上升沿调用 Raise，0 = 用当前系统时间
+IF bMotorOverCurrent AND NOT bMotorOverCurrentPrev THEN
+    hr := fbAlarm.Raise(nTimeStamp := 0);
+END_IF;
+bMotorOverCurrentPrev := bMotorOverCurrent;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

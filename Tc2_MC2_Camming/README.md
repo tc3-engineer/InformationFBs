@@ -43,7 +43,7 @@
 
 ## 例程
 
-每个 FB 都配套一份可导入 TwinCAT XAE 的 PLCopenXML 例程：见 [examples/](examples/) 目录。
+每个 FB 都配套一份可导入 TwinCAT XAE 的 TcPOU 例程：见 [examples/](examples/) 目录。
 
 例程涵盖的典型工业场景：
 - 包装机料厚 / 瓶宽自适应（运行时 cam 整表换型）

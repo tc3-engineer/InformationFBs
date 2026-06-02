@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_MC_ReadMotionFunctionValues" Id="{6ea6b2f1-608d-5187-a423-94072da225e3}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_MC_ReadMotionFunctionValues
+VAR
+    fbSampleCamForHmi  : MC_ReadMotionFunctionValues;
+    stHmiCamRef        : MC_CAM_REF;
+    arrHmiCurveSamples : ARRAY[0..360] OF ARRAY[0..1] OF LREAL;
+    nValueSelectMask   : UINT := 1;
+    lrCurveStartMaster : LREAL := 0.0;
+    lrCurveEndMaster   : LREAL := 360.0;
+    lrSampleStep       : LREAL := 1.0;
+    nActiveCamId       : MC_CAM_ID;
+    bRefreshHmiCurve   : BOOL := FALSE;
+    rtRefreshTrig      : R_TRIG;
+    bSampleDone        : BOOL;
+    bSampleBusy        : BOOL;
+    bSampleError       : BOOL;
+    nSampleErrorID     : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：HMI 上有一个"凸轮曲线监视"页面，要把当前生效的运行时 cam 形状
+//       按主轴 0 到 360 度（一个完整周期）每 1 度采样一次，得到 361 个
+//       从轴位置点，画成 X-Y 折线图给操作员看。
+// 价值：相比读 cam 表原始节点（MC_ReadMotionFunction）再 PLC 内自己做
+//       polynomial / sine 插值，本 FB 让 NC 内核做插值并保证与运行时
+//       实际跟随的曲线完全一致；HMI 看到的曲线就是从轴真实走的曲线。
+//       也是看到"被 MC_WriteMotionFunction 在线改过"后实际形状的唯一办法。
+// 验证步骤：
+//   1) 编译登录；确认 nActiveCamId 已由上游 MC_CamTableSelect 准备好。
+//   2) 本例 nValueSelectMask = 1 仅选 Position（MC_ValueSelectType 中
+//      Position 位）— 列数 = 2（主轴位置 + 从轴位置），arrHmiCurveSamples
+//      声明为 [0..360, 0..1] OF LREAL，正好一行一对 (master,slave) 数据。
+//   3) 在线 bRefreshHmiCurve := TRUE → R_TRIG 上升沿触发 Execute；
+//      bSampleBusy 立 TRUE，1-N 周期后 bSampleDone := TRUE。
+//   4) Watch arrHmiCurveSamples — 应能看到 361 行数据：每行 [0] = 主轴
+//      角度（0, 1, 2, ..., 360），[1] = 对应从轴位置。把这数组直接传
+//      给 HMI 的曲线控件即可画出 cam 形状。
+//   5) 调步长实验：把 lrSampleStep 改成 0.5 → 重新触发，应得到 721 个
+//      采样点（曲线更平滑，但要确保 arrHmiCurveSamples 容量够）。
+//   6) 故障路径：lrCurveEndMaster 改成超出 cam 定义域的值（如 999），
+//      触发，应观察 bSampleError := TRUE。
+// =============================================================================
+// 初始化：把 MC_CAM_REF 指到本地 HMI 缓冲数组。
+
+IF stHmiCamRef.pArray = 0 THEN
+    stHmiCamRef.pArray     := ADR(arrHmiCurveSamples);
+    stHmiCamRef.nArraySize := SIZEOF(arrHmiCurveSamples);
+END_IF;
+
+rtRefreshTrig(CLK := bRefreshHmiCurve);
+
+// 单次完整调用：选 Position（mask=1）按 1.0 度步长采样整周期。
+// 注意：nValueSelectMask 选位数必须与 arrHmiCurveSamples 列数对应
+// （选 1 个 → 2 列；本例选 Position 一项，故 2 列即第二维 [0..1]）。
+fbSampleCamForHmi(
+    Execute         := rtRefreshTrig.Q,
+    CamTableID      := nActiveCamId,
+    ValueSelectMask := nValueSelectMask,
+    StartPosMaster  := lrCurveStartMaster,
+    EndPosMaster    := lrCurveEndMaster,
+    Increment       := lrSampleStep,
+    CamTable        := stHmiCamRef,
+    Done            => bSampleDone,
+    Busy            => bSampleBusy,
+    Error           => bSampleError,
+    ErrorID         => nSampleErrorID
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

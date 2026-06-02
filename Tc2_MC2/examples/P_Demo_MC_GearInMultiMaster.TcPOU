@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_MC_GearInMultiMaster" Id="{b08a518c-28e7-55ac-8d2c-8acf78ff5c39}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_MC_GearInMultiMaster
+VAR
+    fbMultiGear    : MC_GearInMultiMaster;
+    axisXLeft      : AXIS_REF;
+    axisXRight     : AXIS_REF;
+    axisXUnused3   : AXIS_REF;
+    axisXUnused4   : AXIS_REF;
+    axisWorkpieceX : AXIS_REF;
+    bEnableSync    : BOOL := FALSE;
+    bIsCoupled     : BOOL;
+    nErrorID       : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：龙门双驱机床 — 左右两根 X 伺服共同驱动横梁，要严格同步。把它们各
+//       0.5 齿比叠加到一根"工件 X 虚轴"上，业务只读虚轴位置即可。Master3/4
+//       未用，传空 AXIS_REF（ID = 0），齿比也置 0。
+// 价值：用单 FB 完成多主合成，业务不需要每周期 slave_target = sum(mi*ki)。
+// 验证：bEnableSync := TRUE → bIsCoupled 立 TRUE；
+//       让 axisXLeft 和 axisXRight 同速跑（外部 MoveVelocity 都设 100 mm/s），
+//       axisWorkpieceX.NcToPlc.ActVelo 应 = 100*0.5 + 100*0.5 = 100；
+//       让两根速度差 50 → 虚轴速度 = 50*0.5 + 100*0.5 = 75。
+// =============================================================================
+
+fbMultiGear(
+    Master1      := ADR(axisXLeft),
+    Master2      := ADR(axisXRight),
+    Master3      := ADR(axisXUnused3),
+    Master4      := ADR(axisXUnused4),
+    Enable       := bEnableSync,
+    GearRatio1   := 0.5,
+    GearRatio2   := 0.5,
+    GearRatio3   := 0.0,
+    GearRatio4   := 0.0,
+    Acceleration := 1000.0,
+    Deceleration := 0.0,
+    Jerk         := 0.0,
+    Slave        := axisWorkpieceX,
+    InGear       => bIsCoupled,
+    ErrorID      => nErrorID
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

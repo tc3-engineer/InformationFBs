@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_MC_Halt" Id="{6280a5ad-f874-574a-8b49-b288fbfda51d}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_MC_Halt
+VAR
+    fbCycleHalt : MC_Halt;
+    axisProcess : AXIS_REF;
+    rtCycleEnd  : R_TRIG;
+    bEndOfCycle : BOOL := FALSE;
+    bHaltDone   : BOOL;
+    bHaltBusy   : BOOL;
+    bAborted    : BOOL;
+    nErrorID    : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：包装线传送带每完成一袋产品就发"节拍结束"信号让传送带平稳停下，下一
+//       节拍信号到了再启动。这是"正常工艺停"——用 MC_Halt 不用 MC_Stop。
+// 价值：停后不锁轴，下一节拍 MC_MoveVelocity 可直接启动，不需先 Reset。
+// 验证：先 MC_MoveVelocity 让传送带跑起来（demo 假设已跑）；bEndOfCycle := TRUE →
+//       看 ActVelo 在 ~ 0.75 s 内减到 0，bHaltDone 短暂置 TRUE。然后立刻
+//       MC_MoveVelocity 应能再启动（如果先发 MC_Stop 就启动不了，需 Reset）。
+// =============================================================================
+
+rtCycleEnd(CLK := bEndOfCycle);
+
+fbCycleHalt(
+    Execute        := rtCycleEnd.Q,
+    Deceleration   := 2000.0,
+    Jerk           := 20000.0,
+    BufferMode     := MC_Aborting,
+    Axis           := axisProcess,
+    Done           => bHaltDone,
+    Busy           => bHaltBusy,
+    CommandAborted => bAborted,
+    ErrorID        => nErrorID
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

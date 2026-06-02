@@ -10,9 +10,9 @@
 
 | Category | Name | 文档 | 例程 |
 |---|---|---|---|
-| Watchdog function blocks | FB_CheckWatchdog | [✅ verified](watchdog/FB_CheckWatchdog.md) | [P_Demo_FB_CheckWatchdog.xml](examples/P_Demo_FB_CheckWatchdog.xml) |
-| Watchdog function blocks | FB_WriteWatchdog | [✅ verified](watchdog/FB_WriteWatchdog.md) | [P_Demo_FB_WriteWatchdog.xml](examples/P_Demo_FB_WriteWatchdog.xml) |
-| Library version | stLibVersion_Tc2_DataExchange | [✅ verified](global_constants/stLibVersion_Tc2_DataExchange.md) | [P_Demo_stLibVersion_Tc2_DataExchange.xml](examples/P_Demo_stLibVersion_Tc2_DataExchange.xml) |
+| Watchdog function blocks | FB_CheckWatchdog | [✅ verified](watchdog/FB_CheckWatchdog.md) | [P_Demo_FB_CheckWatchdog.TcPOU](examples/P_Demo_FB_CheckWatchdog.TcPOU) |
+| Watchdog function blocks | FB_WriteWatchdog | [✅ verified](watchdog/FB_WriteWatchdog.md) | [P_Demo_FB_WriteWatchdog.TcPOU](examples/P_Demo_FB_WriteWatchdog.TcPOU) |
+| Library version | stLibVersion_Tc2_DataExchange | [✅ verified](global_constants/stLibVersion_Tc2_DataExchange.md) | [P_Demo_stLibVersion_Tc2_DataExchange.TcPOU](examples/P_Demo_stLibVersion_Tc2_DataExchange.TcPOU) |
 
 ## 用法套路
 

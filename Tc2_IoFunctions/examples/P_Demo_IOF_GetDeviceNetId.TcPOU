@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_IOF_GetDeviceNetId" Id="{bdc7a909-b064-5d4d-bb30-b8d269f8067d}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_IOF_GetDeviceNetId
+VAR
+    fbGetDeviceNetId  : IOF_GetDeviceNetId; // DeviceId → AMS Net ID
+    sTargetNetId      : T_AmsNetId := ''; // 本机
+    nLookupDeviceId   : UDINT := 1; // 目标 Device Id
+    bStartLookupNetId : BOOL := FALSE; // 上升沿触发
+    tLookupTimeout    : TIME := T#5S; // 超时
+    bLookupBusy       : BOOL; // 工作中
+    bLookupError      : BOOL; // 失败
+    nLastErrCode      : UDINT; // 错误号
+    sDeviceNetIdOut   : T_AmsNetId; // 查得的 AMS Net ID
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：FC310x Profibus 主卡的 ADS 诊断接口需要它的 AMS Net ID。
+// 价值：程序与工程配置同步。
+// 验证：登录后 nLookupDeviceId := 1（FC310x 的 Device Id），在线写 bStartLookupNetId := TRUE → 回 FALSE 后 sDeviceNetIdOut 显示该卡的 AMS Net ID。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_IoFunctions（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』行的指示在线写值观察
+// =============================================================================
+
+fbGetDeviceNetId(
+    NETID       := sTargetNetId,
+    DEVICEID    := nLookupDeviceId,
+    START       := bStartLookupNetId,
+    TMOUT       := tLookupTimeout,
+    BUSY        => bLookupBusy,
+    ERR         => bLookupError,
+    ERRID       => nLastErrCode,
+    DeviceNetId => sDeviceNetIdOut
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

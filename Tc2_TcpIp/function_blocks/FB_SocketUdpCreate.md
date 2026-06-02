@@ -13,7 +13,7 @@
 | Verified | 2026-05-21 ✅ |
 | InfoSys-checked | ✅ 2026-05-21 |
 | Status | `verified` |
-| Example | [`examples/P_Demo_FB_SocketUdpCreate.xml`](../examples/P_Demo_FB_SocketUdpCreate.xml) |
+| Example | [`examples/P_Demo_FB_SocketUdpCreate.TcPOU`](../examples/P_Demo_FB_SocketUdpCreate.TcPOU) |
 
 ---
 
@@ -105,7 +105,7 @@ END_VAR
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_FB_SocketUdpCreate.xml`](../examples/P_Demo_FB_SocketUdpCreate.xml)
+> 配套可导入文件：[`examples/P_Demo_FB_SocketUdpCreate.TcPOU`](../examples/P_Demo_FB_SocketUdpCreate.TcPOU)
 
 ```iecst
 // 场景：在 0.0.0.0:5005 绑一个 UDP socket 用作设备发现的接收端。

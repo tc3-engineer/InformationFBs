@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FIX16Align" Id="{fd7936cd-12a3-5d6e-8442-b0dcfbaa5dcd}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FIX16Align
+VAR
+    fp8Source  : T_FIX16;; // Q8 来源
+    fp4Aligned : T_FIX16;; // Q4 输出
+    lrCheck    : LREAL;
+    bAlign     : BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_Utilities.FIX16Align 演示程序（FUNCTION，单周期触发）
+// ============================================================
+// 场景：不同子模块要求不同分辨率，需要把上游 Q8 信号转 Q4 喂给下游。
+// 价值：替代手写 SHR/SHL；语义清晰、符合 PDF 命名。
+// 验证步骤：
+//   1. 把本 PROGRAM 加到 PlcTask 调用列表
+//   2. 编译 + 登录
+//   3. 在线把 b... 触发位置 TRUE 一个周期
+//   4. 观察输出变量是否符合期望
+// ============================================================
+
+fp8Source := LREAL_TO_FIX16(0.6, 8);   // Q8: ~0.6015625
+IF bAlign THEN
+    fp4Aligned := FIX16Align(fp8Source, 4);          // Q4: 0.5625
+    lrCheck    := FIX16_TO_LREAL(fp4Aligned);
+    bAlign := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

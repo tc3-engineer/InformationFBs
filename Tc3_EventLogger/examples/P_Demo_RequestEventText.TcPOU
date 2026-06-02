@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_RequestEventText" Id="{a57c32f6-cacb-59a7-8623-00fd85b7f733}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_RequestEventText
+VAR
+    fbAlarm      : FB_TcAlarm; // alarm 实例（已 Create + 已 AddArgs）
+    fbAsync      : FB_AsyncStrResult; // 异步结果句柄
+    nLangId      : UDINT := 2052; // 简体中文 LCID
+    bReqText     : BOOL := FALSE; // 上升沿触发请求
+    bReqTextPrev : BOOL; // 边沿检测
+    sEventText   : STRING(255); // 拿到的事件文本
+    bDone        : BOOL; // 完成状态
+    hr           : HRESULT; // 返回值监视
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：异步取报警事件的本地化文本（中文）
+// 价值：一句调用完成多语言文本 + 参数填充
+// 验证：登录后写 bReqText := TRUE，几个周期后 fbAsync.IsCompleted() = TRUE，sEventText 拿到带参数的中文报警文本
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_EventLogger（System → References → Add library）
+//   3. 编译 → 登录 → 运行；按 verify 注释里给出的在线写值操作
+// =============================================================================
+
+IF bReqText AND NOT bReqTextPrev THEN
+    hr := fbAlarm.RequestEventText(
+        nLangId := nLangId,
+        fbAsyncResult := fbAsync);
+END_IF;
+bReqTextPrev := bReqText;
+
+bDone := fbAsync.IsCompleted();
+IF bDone THEN
+    fbAsync.GetResult(sValue := sEventText);
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

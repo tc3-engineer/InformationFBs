@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_F_ToASC" Id="{72741113-bf7b-5048-80ec-89e5d32fe8cc}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_F_ToASC
+VAR
+    sCommand        : STRING := 'R'; // 操作员命令字符串
+    byFirstCharCode : BYTE; // 首字符 ASCII（'R'=0x52, ''=0）
+    eCommand        : INT; // 解析后的命令枚举（用 CASE 派发）
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_System.F_ToASC 演示程序
+// ============================================================
+// 场景：HMI 输入命令字，PLC 取首字符 ASCII 做 CASE 派发。
+// 价值：替代多次字符串比较；BYTE 比较更快。
+// 验证：登录后 byFirstCharCode = 16#52 ('R')；改 sCommand 为 'Start' 后 byFirstCharCode = 16#53 ('S')；空串后为 0。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_System（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』指引在线写值观察
+// ============================================================
+
+// 取首字符 ASCII 码：F_ToASC 返回 str 的第 1 个字符；空串返回 0
+byFirstCharCode := F_ToASC(sCommand);
+
+// 命令派发示例
+CASE byFirstCharCode OF
+    16#52: eCommand := 1; // 'R' reset
+    16#53: eCommand := 2; // 'S' start
+    16#50: eCommand := 3; // 'P' pause
+ELSE
+    eCommand := 0;
+END_CASE;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

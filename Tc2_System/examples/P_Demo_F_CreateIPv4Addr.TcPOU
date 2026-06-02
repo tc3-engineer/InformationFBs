@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_F_CreateIPv4Addr" Id="{7d8499d3-d6e1-5221-8949-6775ef236414}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_F_CreateIPv4Addr
+VAR
+    aIpBytes   : T_IPv4AddrArr := [172, 16, 7, 199]; // IPv4 4 字节数组（网络字节序）
+    sIpDisplay : T_IPv4Addr := ''; // 格式化后的 HMI 显示字符串
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：HMI 显示远端 PLC IP：从配置数组拿到 4 字节 IPv4 转成 '172.16.7.199' 写到本地字符串变量供 HMI 读。
+// 价值：一行替代 4 段 CONCAT。
+// 验证：在线改 aIpBytes 任一字节 → sIpDisplay 跟着变；aIpBytes := [192,168,1,1] → sIpDisplay = '192.168.1.1'。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_System（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』行的指示在线写值观察
+// =============================================================================
+
+// 每周期格式化一次；4 字节 IP 转 'D.D.D.D' 字符串
+sIpDisplay := F_CreateIPv4Addr(nIds := aIpBytes);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -215,14 +215,14 @@ PC 主板硬件看门狗，超时强制重启整机。
 
 ## 例程使用
 
-每篇文档配套一个 `examples/P_Demo_<Name>.xml` PLCopenXML 文件。导入方式：
+每篇文档配套一个 `examples/P_Demo_<Name>.TcPOU` TcPOU 文件。导入方式：
 
-1. 在 TwinCAT XAE 中右键 PLC 项目 → **Import PLCopenXML** → 选择对应 xml 文件 → OK；
+1. 在 TwinCAT XAE 中右键 PLC 项目下 POUs 文件夹 → **Add → Existing Item** → 选对应 .TcPOU 文件 → OK；
 2. 引用 Tc2_System（References → Add library）；
 3. 编译 → 登录 → 运行；按例程头部『验证步骤』在线观察。
 
 ## 验证基线
 
 - 所有 80 篇文档通过 `_meta/tools/verify_doc.py`（PDF + InfoSys 双源对照、占位短语扫描、§3 中文长度 ≥ 80）；
-- 所有 80 个例程通过 `_meta/tools/lint_plcopen.py`（PLCopenXML 结构校验）；
+- 所有 80 个例程通过 `_meta/tools/lint_tcpou.py`（TcPlcObject 结构校验）；
 - 元信息表 `InfoSys-checked: ✅ 2026-05-20` 已对每个条目逐条交叉验证。

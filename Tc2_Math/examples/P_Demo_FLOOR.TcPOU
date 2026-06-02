@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FLOOR" Id="{19ca6bb9-c2f8-588d-b895-d354bd433e1a}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FLOOR
+VAR
+    lrAccumulatedPieces : LREAL := 35.7; // 本班次累计件数；在线写值模拟流量计读数
+    lrBoxesAsReal       : LREAL; // FLOOR(累计/12) 中间结果，保留 LREAL
+    nCompleteBoxes      : DINT; // 最终送给 MES 的整箱数
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：包装线对计件流量计做"整箱包装"判定——每 12 个为一箱。已知本班次
+//       累计件数 lrAccumulatedPieces，要算出已完成的整箱数触发下一箱包装单。
+//
+// 价值：FLOOR 一行替代正负分支取整逻辑；返回 LREAL 在大数（一年累计件数）
+//       也能正确给出整数化结果而不溢出 DINT。
+//
+// 验证步骤：
+//   1. 引用 Tc2_Math
+//   2. 在 PLC 项目右键 → Add Existing Item (.TcPOU) → 选本文件 → OK
+//   3. 编译、登录、运行
+//   4. 在线 monitor 看：
+//      - lrAccumulatedPieces = 35.7 → nCompleteBoxes = 2 （35.7/12 = 2.975 → 2）
+//      - 在线改 36.0 → 3
+//      - 改 47.99 → 3
+//      - 改 -13.5 → -2 （验证负数侧朝 -∞，与 LTRUNC 不同）
+// =============================================================================
+
+// 单行调用：FLOOR 朝 -∞ 取整；35.7/12 = 2.975 → FLOOR = 2.0
+lrBoxesAsReal := FLOOR(lrAccumulatedPieces / 12.0);
+
+// 显式 LREAL → DINT，避免编译器隐式转换警告
+nCompleteBoxes := LREAL_TO_DINT(lrBoxesAsReal);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

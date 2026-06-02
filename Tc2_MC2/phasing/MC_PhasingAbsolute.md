@@ -13,7 +13,7 @@
 | Verified | 2026-05-21 ✅ |
 | InfoSys-checked | ✅ 2026-05-21 |
 | Status | `verified` |
-| Example | [`examples/P_Demo_MC_PhasingAbsolute.xml`](../examples/P_Demo_MC_PhasingAbsolute.xml) |
+| Example | [`examples/P_Demo_MC_PhasingAbsolute.TcPOU`](../examples/P_Demo_MC_PhasingAbsolute.TcPOU) |
 
 ---
 
@@ -133,7 +133,7 @@ END_VAR
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_MC_PhasingAbsolute.xml`](../examples/P_Demo_MC_PhasingAbsolute.xml)
+> 配套可导入文件：[`examples/P_Demo_MC_PhasingAbsolute.TcPOU`](../examples/P_Demo_MC_PhasingAbsolute.TcPOU)
 
 ```iecst
 // 场景：印刷机色版相对主辊设置 5° 绝对相位差用于套色对齐

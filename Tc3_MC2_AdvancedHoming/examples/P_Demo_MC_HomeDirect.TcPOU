@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_MC_HomeDirect" Id="{17c49e27-3961-58bf-aa92-1ef98e819822}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_MC_HomeDirect
+VAR
+    fbHomeDirect   : MC_HomeDirect;
+    axisHoming     : AXIS_REF; // 归零目标轴；运行前需先 MC_Power 使能
+    rtExec         : R_TRIG; // 把保持型请求位整成单次上升沿
+    bSetZeroReq    : BOOL := FALSE; // 在线置 TRUE 触发一次执行
+    homingParam    : MC_HomingParameter; // 贯穿整条归零序列、各 FB 间逐级传递的参数结构
+    homingOptions  : ST_Home_Options2; // 选项结构，Beckhoff 伺服保持默认（DisableDriveAccess := FALSE）
+    bSetZeroDone   : BOOL;
+    bBusy          : BOOL;
+    bSetZeroActive : BOOL;
+    bAborted       : BOOL;
+    bError         : BOOL;
+    nErrorID       : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// 场景：自定义归零序列里，前级 step 函数搜到编码器零脉冲并 Done 后，用本 FB 把该点
+//       直接定义为机床坐标 0，同时还原被改的参数并把轴切回 Standstill。
+// 价值：相比手写 NC 置位命令，本 FB 一并完成置位+还参数+切状态，避免漏还原导致后续定位异常。
+// 验证：先让前级 step Done；在线写 bSetZeroReq := TRUE，观察 bSetZeroDone 短暂 TRUE，
+//       axisHoming.NcToPlc 位置读数被改写为 0，轴状态从 Homing 进入 Standstill。
+
+// 把保持型在线请求位整成单次上升沿，避免持续触发（charter: Execute 用 R_TRIG）
+rtExec(CLK := bSetZeroReq);
+
+// 单次完整调用：所有 VAR_INPUT 显式赋值，Axis（及 Parameter）按 VAR_IN_OUT 必须传引用
+fbHomeDirect(
+    Execute        := rtExec.Q,
+    SetPosition    := 0.0,
+    BufferMode     := MC_Aborting,
+    Options        := homingOptions,
+    Done           => bSetZeroDone,
+    Busy           => bBusy,
+    Active         => bSetZeroActive,
+    CommandAborted => bAborted,
+    Error          => bError,
+    ErrorID        => nErrorID,
+    Axis           := axisHoming,
+    Parameter      := homingParam);
+
+// stateful 输出复位：请求复位后清掉本地观察位，便于下次干净触发
+IF NOT bSetZeroReq AND NOT bBusy THEN
+    bSetZeroDone := FALSE;
+    bAborted := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

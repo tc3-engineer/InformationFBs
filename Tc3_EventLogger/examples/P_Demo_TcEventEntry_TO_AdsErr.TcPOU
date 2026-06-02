@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_TcEventEntry_TO_AdsErr" Id="{9a463275-22bf-5291-beae-57b4b23dbe5e}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_TcEventEntry_TO_AdsErr
+VAR
+    stEventEntry : TcEventEntry; // 在线写入要转换的事件定义
+    eErrorId     : E_AdsErr; // 反向输出 ADS 错误码
+    bOk          : BOOL; // 成功标志
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：TcEventEntry → E_AdsErr 反向转换
+// 价值：向后兼容老代码
+// 验证：登录后给输入赋已知合法值；调用本 FC 后 bOk 应为 TRUE 且输出已填
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_EventLogger（System → References → Add library）
+//   3. 编译 → 登录 → 运行；按 verify 注释里给出的在线写值操作
+// =============================================================================
+
+bOk := TcEventEntry_TO_AdsErr(
+    stEventEntry := stEventEntry,
+    eErrorId := eErrorId);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

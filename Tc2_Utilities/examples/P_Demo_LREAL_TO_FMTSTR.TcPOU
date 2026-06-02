@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_LREAL_TO_FMTSTR" Id="{adeef80f-1561-54eb-86f2-56e9bf4940e5}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_LREAL_TO_FMTSTR
+VAR
+    fPressureBar : LREAL := 1.0132456; // 工业语义：压力测量值（Bar）
+    sFormatted   : STRING(32); // 格式化输出
+    bRender      : BOOL; // 在线触发
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：HMI 显示温度 / 压力等模拟量——按工程量精度（如 2 位小数）格式化为字符串。
+// 价值：替代手写整数取整 + 余数 + 拼接的繁琐代码；本函数 1 调用 + 自带 NaN/INF 处理。
+// 验证步骤：
+//   1. 引用 Tc2_Utilities
+//   2. 编译 + 登录 + 运行
+//   3. 在线写触发位 TRUE，monitor 输出变量
+// =============================================================================
+
+IF bRender THEN
+    // 2 位小数 + 四舍五入
+    sFormatted := LREAL_TO_FMTSTR(in := fPressureBar, iPrecision := 2, bRound := TRUE);
+    // sFormatted = '1.01'
+    bRender := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_IOF_GetBoxNameByAddr" Id="{9f4bd3a4-3e25-55a9-b28a-02e4d5236e90}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_IOF_GetBoxNameByAddr
+VAR
+    fbResolveBoxName    : IOF_GetBoxNameByAddr; // 站号 → 名字 FB 实例
+    sTargetNetId        : T_AmsNetId := ''; // 本机
+    nProfibusDeviceId   : UDINT := 1; // Profibus 主站 Device Id
+    nFailedStationAddr  : UINT := 17; // 诊断 FB 报的离线站号
+    bStartResolve       : BOOL := FALSE; // 上升沿触发查询
+    tResolveTimeout     : TIME := T#5S; // ADS 超时
+    bResolveBusy        : BOOL; // 工作中
+    bResolveError       : BOOL; // 失败
+    nLastErrCode        : UDINT; // 错误号
+    sResolvedDeviceName : T_MaxString; // 查得的工程命名字符串
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：Profibus 出错诊断 FB 报"站 17 出错"，本程序把站号翻译成名字写进报警字符串 → HMI 显示"Drive_PaintPump_Left 离线"而不是"slave 17 fail"。
+// 价值：让报警日志直接可读，减少现场抢修时翻图纸的时间。
+// 验证：登录后 nFailedStationAddr := 17，在线写 bStartResolve := TRUE → bResolveBusy 短暂 TRUE → 回 FALSE 后 sResolvedDeviceName 显示该站号对应的工程命名（如 "Drive_PaintPump_Left"）。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_IoFunctions（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』行的指示在线写值观察
+// =============================================================================
+
+fbResolveBoxName(
+    NETID    := sTargetNetId,
+    DEVICEID := nProfibusDeviceId,
+    BOXADDR  := nFailedStationAddr,
+    START    := bStartResolve,
+    TMOUT    := tResolveTimeout,
+    BUSY     => bResolveBusy,
+    ERR      => bResolveError,
+    ERRID    => nLastErrCode,
+    BOXNAME  => sResolvedDeviceName
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

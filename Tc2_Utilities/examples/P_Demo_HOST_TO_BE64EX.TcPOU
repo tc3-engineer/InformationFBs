@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_HOST_TO_BE64EX" Id="{3881d0cb-d462-5ac9-b42b-8e9098478e06}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_HOST_TO_BE64EX
+VAR
+    inProtocolField : LWORD; // 协议帧里抓到的待转换字段
+    outHostValue    : LWORD; // 主机字节序下的解读结果
+    bRunOnce        : BOOL; // 脉冲触发：上升沿调一次
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：PLC 作为以太网协议客户端 / 服务端处理大端字节序的协议字段。
+//       Modbus TCP / EtherNet/IP / Profinet 等协议都规定大端打包，
+//       TwinCAT 在 x86/x64/ARM 上都是小端运行，直接拷贝会读到字节
+//       反转的"乱码"，需要本 FC 做字节序还原 / 打包。
+//
+// 价值：一次调用完成字节序处理，比手写位运算（移位 + 掩码 + 或）更短
+//       更可读，code review 时立刻看出"这里在处理协议字节序"。
+//
+// 验证步骤：
+//   1. 引用 Tc2_Utilities（如使用 legacy 类型还需引用 Tc2_System / 全局类型库）
+//   2. 编译 + 登录 + 运行
+//   3. 在线写 inProtocolField 为一个已知的大端字节序值
+//   4. 强制 bRunOnce := TRUE 一个周期
+//   5. 观察 outHostValue 是否为字节序反转后的预期值
+//   6. bRunOnce 自动回到 FALSE
+// =============================================================================
+
+IF bRunOnce THEN
+    outHostValue := HOST_TO_BE64EX(inProtocolField);
+    bRunOnce := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

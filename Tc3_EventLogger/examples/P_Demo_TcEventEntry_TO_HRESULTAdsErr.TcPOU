@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_TcEventEntry_TO_HRESULTAdsErr" Id="{fd3d4847-65ca-59a6-8503-d7d4156ef9dc}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_TcEventEntry_TO_HRESULTAdsErr
+VAR
+    stEventEntry : TcEventEntry; // 要转换的事件定义
+    hr           : E_HRESULTAdsErr; // 反向输出 HRESULT
+    bOk          : BOOL; // 成功标志
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：TcEventEntry → HRESULT ADS 错误反向转换
+// 价值：HRESULT 体系兼容
+// 验证：登录后给输入赋已知合法值；调用本 FC 后 bOk 应为 TRUE 且输出已填
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_EventLogger（System → References → Add library）
+//   3. 编译 → 登录 → 运行；按 verify 注释里给出的在线写值操作
+// =============================================================================
+
+bOk := TcEventEntry_TO_HRESULTAdsErr(
+    stEventEntry := stEventEntry,
+    hr := hr);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

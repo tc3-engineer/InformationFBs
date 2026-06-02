@@ -13,7 +13,7 @@
 | Verified | 2026-05-21 ✅ |
 | InfoSys-checked | ⚠️ not-on-infosys |
 | Status | `verified` |
-| Example | [`examples/P_Demo_FB_SoEAX5000DeletePositionOffset.xml`](../examples/P_Demo_FB_SoEAX5000DeletePositionOffset.xml) |
+| Example | [`examples/P_Demo_FB_SoEAX5000DeletePositionOffset.TcPOU`](../examples/P_Demo_FB_SoEAX5000DeletePositionOffset.TcPOU) |
 
 ---
 
@@ -104,7 +104,7 @@ END_VAR
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_FB_SoEAX5000DeletePositionOffset.xml`](../examples/P_Demo_FB_SoEAX5000DeletePositionOffset.xml)
+> 配套可导入文件：[`examples/P_Demo_FB_SoEAX5000DeletePositionOffset.TcPOU`](../examples/P_Demo_FB_SoEAX5000DeletePositionOffset.TcPOU)
 
 ```iecst
 // 场景：AX5000 轴重新找正前，先删掉上次写进驱动器内存的位置偏置

@@ -13,7 +13,7 @@
 | Verified | 2026-05-21 ✅ |
 | InfoSys-checked | ✅ 2026-05-21 |
 | Status | `verified` |
-| Example | [`examples/P_Demo_stLibVersion_Tc2_MC2.xml`](../examples/P_Demo_stLibVersion_Tc2_MC2.xml) |
+| Example | [`examples/P_Demo_stLibVersion_Tc2_MC2.TcPOU`](../examples/P_Demo_stLibVersion_Tc2_MC2.TcPOU) |
 
 ---
 
@@ -80,9 +80,9 @@ GVL 无错误码。`F_CmpLibVersion` 比较失败仅返回 `FALSE`，不抛错�
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_stLibVersion_Tc2_MC2.xml`](../examples/P_Demo_stLibVersion_Tc2_MC2.xml)
+> 配套可导入文件：[`examples/P_Demo_stLibVersion_Tc2_MC2.TcPOU`](../examples/P_Demo_stLibVersion_Tc2_MC2.TcPOU)
 >
-> 导入步骤：右键 PLC 项目 → Import PLCopenXML → 选该文件 → OK
+> 导入步骤：右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选该文件 → OK
 
 ```iecst
 PROGRAM P_Demo_stLibVersion_Tc2_MC2

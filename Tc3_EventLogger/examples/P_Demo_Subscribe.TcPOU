@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_Subscribe" Id="{ca9bfbfc-1629-5386-af5b-ac3929222e76}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_Subscribe
+VAR
+    fbListener  : FB_ListenerBase2; // listener 实例
+    bSubscribed : BOOL; // 订阅 latch
+    hr          : HRESULT; // 返回值监视
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：订阅所有 alarm + message 事件
+// 价值：一次调用完成订阅，后续周期 Execute 即可收事件
+// 验证：登录后 monitor bSubscribed 第一周期变 TRUE
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_EventLogger（System → References → Add library）
+//   3. 编译 → 登录 → 运行；按 verify 注释里给出的在线写值操作
+// =============================================================================
+
+IF NOT bSubscribed THEN
+    hr := fbListener.Subscribe(
+        ipMessageFilterConfig := 0,            // 接收全部 message
+        ipAlarmFilterConfig := 0);             // 接收全部 alarm
+    bSubscribed := SUCCEEDED(hr);
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

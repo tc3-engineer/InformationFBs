@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_LEFT" Id="{e42e9193-e4f4-5f09-bd70-50786f78c831}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_LEFT
+VAR
+    sLogLine    : STRING(255) := 'ERROR Motor overcurrent'; // 日志行：固定 5 字符等级前缀 + 空格 + 消息体
+    sLevel      : STRING(255); // 提取出的等级前缀（用于分流）
+    nLevelWidth : INT := 5; // 等级字段固定宽度 = 5（INFO_ / WARN_ / ERROR / DEBUG 都补到 5 字符）
+    bExtract    : BOOL; // 触发一次 LEFT
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：日志分流模块按等级（ERROR/WARN/INFO）走不同分支。原始日志行 'ERROR
+//       Motor overcurrent' 头部固定 5 字符是等级标识，后面是空格+消息体。
+//       LEFT(s, 5) 一行拿到等级用于 CASE 分支判断。
+//
+// 价值：LEFT 接受字符数直接截前段，超长源串只取前 5 不报错。不用本 FC
+//       要自己写 MEMCPY + SIZEOF + 0x00 补结束符 3 行代码。
+//
+// 验证步骤：
+//   1. 导入本文件、引用 Tc2_Standard、编译、登录、运行
+//   2. 在线 monitor sLevel
+//   3. 在线写 bExtract := TRUE
+//   4. 下一周期 sLevel = 'ERROR'（前 5 字符），bExtract 复位
+//   5. 把 sLogLine 改成 'OK'（只有 2 字符）+ 再触发 →
+//      sLevel = 'OK'（LEFT 在 SIZE>LEN 时返回整个源串，不补空格不报错）
+// =============================================================================
+
+// LEFT(s, 5) 表示"从左数 5 个字符"，1-based 角度看是 [1..5]
+IF bExtract THEN
+    sLevel := LEFT(sLogLine, nLevelWidth);
+    bExtract := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

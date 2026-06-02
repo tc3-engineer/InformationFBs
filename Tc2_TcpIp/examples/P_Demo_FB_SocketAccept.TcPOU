@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_SocketAccept" Id="{830ad4ea-f806-58f5-8539-90d310322cde}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_SocketAccept
+VAR
+    fbListenPlcServer     : FB_SocketListen; // 为本 demo 提供 listener
+    fbAcceptIncoming      : FB_SocketAccept;
+    fbTrigAccept          : TON; // 每 1 秒触发一次 Accept polling
+    bRequestListen        : BOOL;
+    bListenBusy           : BOOL;
+    bListenError          : BOOL;
+    nListenErrId          : UDINT;
+    hPlcListener          : T_HSOCKET;
+    bPollPulse            : BOOL; // TON 输出生成的 1Hz 脉冲
+    bAcceptBusy           : BOOL;
+    bClientAccepted       : BOOL;
+    bAcceptError          : BOOL;
+    nAcceptErrId          : UDINT;
+    hRemoteClient         : T_HSOCKET;
+    nClientsAcceptedTotal : UDINT; // 累计接受成功的客户端数，在线计数
+    aAcceptedClients      : ARRAY[1..8] OF T_HSOCKET; // 简易客户端槽位数组（最多 8 路）
+    nNextSlot             : INT := 1;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：PLC 端在 9100 端口监听条码扫描枪上送数据。多枪并发时每枪连一次。
+//
+// 价值：演示如何用 TON 自动节拍触发 Accept polling，并把接受成功的句柄
+//       存入数组槽位——这是多客户端 TCP 服务器最基本的模板。
+//
+// 验证步骤：
+//   1. 在线 bRequestListen := TRUE → hPlcListener.handle 非 0
+//   2. 在 PC 上 telnet PLC_IP 9100 / ncat PLC_IP 9100 三次（开 3 个窗口）
+//   3. 观察 nClientsAcceptedTotal 每秒最多 +1（每次 polling 取一个）
+//   4. aAcceptedClients[1..3] 都会逐步填入新句柄
+//   5. 第 9 个连接：accept 仍成功但 nNextSlot 超出，此例程没做拒绝，
+//      产线代码必须自加 slot 满判断
+// =============================================================================
+
+// listener 一次性创建
+fbListenPlcServer(
+    sSrvNetId := '',
+    sLocalHost := '0.0.0.0',
+    nLocalPort := 9100,
+    bExecute := bRequestListen,
+    tTimeout := T#5S,
+    bBusy => bListenBusy,
+    bError => bListenError,
+    nErrId => nListenErrId,
+    hListener => hPlcListener
+);
+
+// 1Hz 节拍：每秒生成一个 bPollPulse 上升沿驱动 Accept
+fbTrigAccept(IN := NOT fbTrigAccept.Q, PT := T#1S, Q => bPollPulse);
+
+// Accept polling
+fbAcceptIncoming(
+    sSrvNetId := '',
+    hListener := hPlcListener,
+    bExecute  := bPollPulse,
+    tTimeout  := T#5S,
+    bAccepted => bClientAccepted,
+    bBusy     => bAcceptBusy,
+    bError    => bAcceptError,
+    nErrId    => nAcceptErrId,
+    hSocket   => hRemoteClient
+);
+
+// 仅在 bClientAccepted=TRUE 那个周期里把 hRemoteClient 入槽
+IF bClientAccepted AND nNextSlot <= 8 THEN
+    aAcceptedClients[nNextSlot] := hRemoteClient;
+    nNextSlot := nNextSlot + 1;
+    nClientsAcceptedTotal := nClientsAcceptedTotal + 1;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_CSVFIELD_TO_STRING" Id="{cba057ca-e459-5905-9d77-10450c25669e}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_CSVFIELD_TO_STRING
+VAR
+    sRawField   : STRING(255) := "PumpAlpha"; // 工业语义：CSV 原始字段
+    sCleanField : STRING(255); // 去引号后的纯字段
+    bParse      : BOOL; // 在线触发
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：读 CSV 文本配置：纯字符串字段（设备名、操作员名）的逐字段提取。
+// 价值：替代手写 `STRTOK` + 引号处理；本函数 1 行带 CSV 规范遵守。
+// 验证步骤：
+//   1. 引用 Tc2_Utilities
+//   2. 编译 + 登录 + 运行
+//   3. 在线写触发位 TRUE，monitor 输出变量
+// =============================================================================
+
+IF bParse THEN
+    sCleanField := CSVFIELD_TO_STRING(in := sRawField, bQM := TRUE);
+    bParse := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

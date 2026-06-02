@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_ADSREADEX" Id="{4b46f195-3d8e-52ff-ab4e-fc942126d908}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_ADSREADEX
+VAR
+    fbADSREADEX    : ADSREADEX; // ADSREADEX 实例
+    bReadStatusReq : BOOL; // 在线触发一次读
+    sStatusText    : STRING(255); // 对端 PLC 状态字符串
+    bAdsReading    : BOOL; // 正在读
+    bAdsReadErr    : BOOL; // ADS 错误
+    nLastAdsError  : UDINT; // ADS 错误码
+    nActualBytes   : UDINT; // 本次实际读到字节数
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_System.ADSREADEX 演示程序
+// ============================================================
+// 场景：读对端 PLC 全局可变长字符串 sStatusText 给诊断界面。
+// 价值：替代 ADSREAD + 手工 STRLEN；本 FB 直接告诉你装了多少有效字节。
+// 验证：触发后 sStatusText 装入对端文本，nActualBytes = 真实字节数（不是 256 上限）。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_System（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』指引在线写值观察
+// ============================================================
+
+fbADSREADEX(
+    NETID := '', PORT := 851, IDXGRP := 16#0000F005, IDXOFFS := 0, LEN := 256, DESTADDR := ADR(sStatusText), READ := bReadStatusReq, TMOUT := DEFAULT_ADS_TIMEOUT,
+    BUSY => bAdsReading, ERR => bAdsReadErr, ERRID => nLastAdsError, COUNT_R => nActualBytes
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

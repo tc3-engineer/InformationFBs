@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FLOATIsFinite" Id="{241aab5a-c3ba-5d05-a22e-f77fc58939e9}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FLOATIsFinite
+VAR
+    rTempSensorRawVolt : LREAL := 2.5; // 传感器原始电压
+    rTempSensorGain    : LREAL := 0.25; // 线性化增益。在线改 0.0 模拟传感器掉线
+    rTempSensorValueC  : LREAL; // 线性化后温度（°C）
+    bSensorValueOk     : BOOL; // 值有限且可用
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_Utilities.FLOATIsFinite 演示程序（FUNCTION，已弃用）
+// ============================================================
+// 场景：温度变送器线性化算式里有除法 rTempC := rRawVolt / rGain；现场遇到
+//       传感器掉线或 rGain 配置为 0 时会算出 NaN 或 Inf，污染 PID 输出。先
+//       用 FLOATIsFinite 拦截再喂 PID，故障定位也更明确。
+// 价值：不做有限数判定时 NaN 一旦进入 PID，比例 / 积分 / 微分都被搞坏，控
+//       制器输出可能瞬间跳到饱和。一行 FLOATIsFinite 判定就把异常值拦在
+//       PID 之外，进入 fail-safe 分支。
+// 验证：
+//   1. 引用 Tc2_Utilities，编译 + 登录
+//   2. 在线写 rTempSensorGain := 0.0 模拟掉线
+//      → 监视 rTempSensorValueC 变 Inf；bSensorValueOk 翻 FALSE
+//   3. 改回 rTempSensorGain := 0.25 → bSensorValueOk 翻 TRUE
+// 注：新代码请改用 LrealIsFinite，本例仅为兼容旧工程演示用。
+// ============================================================
+
+// 业务计算可能产 NaN / Inf
+rTempSensorValueC := rTempSensorRawVolt / rTempSensorGain;
+
+// 拦截异常值（已弃用函数；新代码用 LrealIsFinite）
+bSensorValueOk := FLOATIsFinite(rTempSensorValueC);
+// 真实工程：IF NOT bSensorValueOk THEN 进 fail-safe 分支 END_IF
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

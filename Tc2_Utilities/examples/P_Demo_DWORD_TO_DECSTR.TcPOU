@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_DWORD_TO_DECSTR" Id="{76ea4774-a334-59a5-92ef-a4be7da0cf4f}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_DWORD_TO_DECSTR
+VAR
+    nValue     : DWORD := 43981; // 待转换的 DWORD 值；在线写值替换测试不同输入
+    sFormatted : STRING(255); // 主输出，在线 monitor 这一行看转换结果
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：把 DWORD 数值 转为十进制 (base 10)定长字符串后用于 HMI 显示、日志或协议帧。
+//       例：订单号、错误码、IO 状态位等场景需要"前补 0 到固定 6 位"。
+// 价值：替代手写循环或 IEC 标准 STRING 转换 + 补零拼接，一行解决补零、保留全长、
+//       空值（in=0 且 iPrecision=0 -> ''）三件事。
+// 验证步骤：
+//   1. 引用 Tc2_Utilities
+//   2. 把本 PROGRAM 加进 PlcTask 任务调用列表
+//   3. 编译 + 登录 + 运行
+//   4. 在线 monitor sFormatted；改输入看输出变化
+//      - 默认值, iPrecision = 6 -> 应是补零后的字符串
+//      - 在线把 iPrecision 类参数换大（如改成 10）-> 字符串变长但前置 0 增多
+//      - 把数值改 0、iPrecision 改 0 -> 返回 ''（验证空字符串特例）
+// =============================================================================
+
+
+// 单行调用：得到十进制 (base 10)字符串
+sFormatted := DWORD_TO_DECSTR(nValue, 6);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_CONCAT" Id="{34ff2db8-9b7b-5b86-8d44-83178ed6837a}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_CONCAT
+VAR
+    sAlarmPrefix : STRING(255) := 'ALARM: '; // 固定报警前缀，等级+冒号空格
+    sAlarmReason : STRING(255) := 'Motor 1 overcurrent'; // 报警原因（来自上游检测模块）
+    sAlarmText   : STRING(255); // 拼接后的完整报警文本，发往 HMI
+    bGenerate    : BOOL; // 在线置 TRUE 触发一次 CONCAT
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：HMI 报警栏需要展示"ALARM: Motor 1 overcurrent"这种"前缀+原因"组合
+//       文本。前缀由报警等级决定（ALARM / WARN / INFO），原因来自上游检测
+//       模块。两段必须在 PLC 侧拼好再传给 HMI，避免 HMI 端做字符串运算。
+//
+// 价值：CONCAT 一次调用完成拼接，无需手动遍历字节、无需关心 STRING 结束符。
+//       不用本 FC 就要写约 10 行 MEMCPY+SIZEOF+结束符填充。
+//
+// 验证步骤：
+//   1. 在 PLC 项目中右键 → Add Existing Item (.TcPOU) → 选本文件
+//   2. 引用 Tc2_Standard 库（System → References）
+//   3. 编译、登录、运行
+//   4. 在线 monitor sAlarmText
+//   5. 在线写 bGenerate := TRUE
+//   6. 下一周期观察 sAlarmText = 'ALARM: Motor 1 overcurrent'
+//      bGenerate 自动复位回 FALSE
+//   7. 修改 sAlarmReason 在线写一个超长字符串（>250 字节）+ 重新触发，
+//      验证 sAlarmText 在第 255 字节处被截断且无报错（CONCAT 静默截断）
+// =============================================================================
+
+// 单次触发模式：bGenerate 边沿信号 → 调用 CONCAT → 自动清零
+// （这样适合按钮触发；周期性刷新场景把 IF 块改成无条件即可）
+IF bGenerate THEN
+    sAlarmText := CONCAT(sAlarmPrefix, sAlarmReason);
+    bGenerate := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

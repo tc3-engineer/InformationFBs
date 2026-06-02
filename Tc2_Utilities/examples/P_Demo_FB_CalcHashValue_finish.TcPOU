@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_CalcHashValue_finish" Id="{c4edd3b0-d0e2-527d-95e3-7bd91fb257c3}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_CalcHashValue_finish
+VAR
+    fbHashCalculator : FB_CalcHashValue;
+    eHashMode        : E_HashMode := E_HashMode.HashMode_Sha256;
+    sInputPayload    : STRING(80) := 'hash-this-payload';
+    aHashOutBytes    : ARRAY[0..31] OF BYTE; // SHA-256 输出 32 字节
+    bDoFullHashCycle : BOOL; // 上升沿触发完整 start/update/finish 循环
+    bStartOk         : BOOL;
+    bUpdateOk        : BOOL;
+    bFinishOk        : BOOL; // finish 返回值（PDF 未明确类型，推测 BOOL）
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_Utilities.FB_CalcHashValue.finish() 演示程序
+// ============================================================
+// 场景：演示三段式 hash 计算的收尾步骤 finish()——把内部累积状态打包成最终
+//       hash 字节序列并写入调用方缓冲区。这一步之后内部状态被消耗，再算需
+//       重新 start。
+// 价值：让读者明确"finish 必须在 start + update* 之后调；缓冲区大小必须匹配
+//       算法输出长度"——这是 PVOID 接口最容易踩的内存事故。
+// 验证：
+//   1. 编译 + 登录
+//   2. 在线写 bDoFullHashCycle := TRUE 触发一次完整循环
+//   3. 监视 aHashOutBytes：应有 32 字节非全 0 内容（成功）
+//   4. 离线计算 sha256('hash-this-payload') 与之对比，按字节十六进制相同
+// ============================================================
+
+IF bDoFullHashCycle THEN
+    bDoFullHashCycle := FALSE;
+    bStartOk  := fbHashCalculator.start(hashMode := eHashMode);
+    bUpdateOk := fbHashCalculator.update(pData := ADR(sInputPayload),
+                                          nData := LEN(sInputPayload));
+    // finish 把 32 字节 SHA-256 hash 写入 aHashOutBytes
+    bFinishOk := fbHashCalculator.finish(pHash := ADR(aHashOutBytes),
+                                          nHash := SIZEOF(aHashOutBytes));
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

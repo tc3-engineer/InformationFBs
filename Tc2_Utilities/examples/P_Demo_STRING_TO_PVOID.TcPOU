@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_STRING_TO_PVOID" Id="{1f42d2cc-44f8-54a5-a93d-a02f86956e6a}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_STRING_TO_PVOID
+VAR
+    sAddrLit : STRING(32) := '16#80001000'; // 工业语义：硬编码内存地址（hex）
+    pTarget  : POINTER TO BYTE; // 解析后的指针
+    bParse   : BOOL; // 在线触发
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：从配置文件读出 `'16#80000000'` 格式的内存基址字符串 → 转 PVOID 作为某硬件寄存器映射地址。
+// 价值：替代手写多进制解析；本函数自动按前缀适应。
+// 验证步骤：
+//   1. 引用 Tc2_Utilities
+//   2. 编译 + 登录 + 运行
+//   3. 在线写触发位 TRUE，monitor 输出变量
+// =============================================================================
+
+IF bParse THEN
+    pTarget := STRING_TO_PVOID(in := sAddrLit);
+    bParse := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

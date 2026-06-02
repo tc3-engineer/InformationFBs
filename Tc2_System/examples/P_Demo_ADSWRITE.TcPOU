@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_ADSWRITE" Id="{36c9d4a0-7ce8-59fa-a039-d2aa228f75a6}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_ADSWRITE
+VAR
+    fbADSWRITE    : ADSWRITE; // ADSWRITE 实例
+    bResetAxisReq : BOOL; // 上升沿触发 NC 轴 1 复位
+    bAdsWriting   : BOOL; // 正在写
+    bAdsWriteErr  : BOOL; // ADS 写错误
+    nLastAdsError : UDINT; // ADS 错误码
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_System.ADSWRITE 演示程序
+// ============================================================
+// 场景：HMI 按 '复位轴 1' 按钮，PLC 通过 ADSWRITE 命令 NC 重新激活轴 1。
+// 价值：替代 PDO 链接传递控制位，无需改硬件配置就能发命令。
+// 验证：登录后 bResetAxisReq := TRUE，bAdsWriting 闪一下后；NC Manager 里看到轴 1 重新进入 ready 态。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_System（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』指引在线写值观察
+// ============================================================
+
+fbADSWRITE(
+    NETID := '', PORT := 501, IDXGRP := 16#00004201, IDXOFFS := 16#00000051, LEN := 0, SRCADDR := 0, WRITE := bResetAxisReq, TMOUT := DEFAULT_ADS_TIMEOUT,
+    BUSY => bAdsWriting, ERR => bAdsWriteErr, ERRID => nLastAdsError
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

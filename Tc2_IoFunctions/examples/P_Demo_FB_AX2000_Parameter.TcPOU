@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_AX2000_Parameter" Id="{f53ec7e1-123b-5ddc-b8d0-5344222f07f2}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_AX2000_Parameter
+VAR
+    fbAx2000Param        : FB_AX2000_Parameter; // AX2000 PKW 参数访问 FB
+    iAx2000SlaveStation  : BYTE := 5; // AX2000 Profibus 站号
+    iParamPnu            : WORD := 16#03A2; // 参数号 PNU
+    iAxisNumber          : BYTE := 1; // 轴号
+    iParamByteLen        : BYTE := 4; // 参数字节长度 (2 或 4)
+    iParamSubIdx         : BYTE := 0; // 子索引
+    iParamWriteVal       : DWORD := 30; // 要写入的值
+    iProfibusMasterDevId : WORD := 1; // FC310x Device Id
+    bReadPkwReq          : BOOL := FALSE; // 上升沿读 PKW
+    bWritePkwReq         : BOOL := FALSE; // 上升沿写 PKW
+    tPkwTimeout          : TIME := T#2S; // ADS 超时
+    bPkwBusy             : BOOL; // 工作中
+    iLastDriveError      : DWORD; // 驱动器错误号
+    iLastReadbackValue   : DINT; // 读 PKW 返回值
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：AX2000 老线伺服维护：上电时把位置环积分时间 (PNU 0x03A2) 写为工程定制值 30，避免每次重启都要拨调试软件。
+// 价值：把驱动器关键参数纳入 PLC 程序版本控制；工程师不需要带笔记本到现场。
+// 验证：登录后 iAx2000SlaveStation := 5、iParamPnu := 16#03A2、iParamWriteVal := 30、bWritePkwReq := TRUE → 触发上升沿 → fbAx2000Param.bBusy 短暂 TRUE → 回 FALSE 后 iLastDriveError = 0 表示成功；再 bReadPkwReq 上升沿读回参数验证 iLastReadbackValue = 30。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_IoFunctions（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』行的指示在线写值观察
+// =============================================================================
+
+fbAx2000Param(
+    iSlaveAddress   := iAx2000SlaveStation,
+    iPnu            := iParamPnu,
+    nAxis           := iAxisNumber,
+    iLength         := iParamByteLen,
+    iSubIndex       := iParamSubIdx,
+    iParameterValue := iParamWriteVal,
+    iFC310xDeviceId := iProfibusMasterDevId,
+    bStartRead      := bReadPkwReq,
+    bStartWrite     := bWritePkwReq,
+    tTimeOut        := tPkwTimeout,
+    bBusy           => bPkwBusy,
+    iErrorId        => iLastDriveError,
+    iReadValue      => iLastReadbackValue
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

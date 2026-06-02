@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_MODABS" Id="{0bac05c5-dbed-56e1-94cc-48f969f67aaa}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_MODABS
+VAR
+    lrAxisAbsPositionDeg   : LREAL := 400.56; // 伺服轴累计绝对位置（度）；在线写值模拟编码器读数
+    lrTurnSizeDeg          : LREAL := 360.0; // 一圈大小（NC 模值范围）
+    lrPositionInOneTurnDeg : LREAL; // MODABS 输出：[0, 360) 的无符号物理位置
+    nCurrentStationIndex   : DINT; // 当前工位号（0..3，每 90 度一工位）
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：转盘式装配工位（4 工位每 90°），驱动是单方向累计的伺服轴。
+//       本程序读累计绝对位置 lrAxisAbsPositionDeg（可跑多圈），用 MODABS
+//       归一到 [0, 360) 然后算出当前工位号，给 HMI 与工艺逻辑使用。
+//
+// 价值：MODABS 一行处理"多圈累计 + 反向 + 零点"；选错用 LMOD 反向跑出
+//       负角度会让 HMI 显示 -90° 而不是 270°——典型陷阱。
+//
+// 验证步骤：
+//   1. 引用 Tc2_Math
+//   2. 在 PLC 项目右键 → Add Existing Item (.TcPOU) → 选本文件 → OK
+//   3. 编译、登录、运行
+//   4. 在线 monitor 看：
+//      - lrAxisAbsPositionDeg = 400.56 → lrPositionInOneTurnDeg = 40.56,
+//        nCurrentStationIndex = 0
+//      - 在线改 -400.56 → 319.44, station 3 （验证负数翻正）
+//      - 改 90 → 90, station 1
+//      - 改 -1 → 359, station 3 （边界翻正）
+//      - 改 720 → 0, station 0 （整模值归零）
+// =============================================================================
+
+// 单行调用：MODABS 把累计角度归一为 [0, 360) 物理位置
+// 与 LMOD 关键区别：负被除数也给正余数
+lrPositionInOneTurnDeg := MODABS(lrAxisAbsPositionDeg, lrTurnSizeDeg);
+
+// 工位号 = FLOOR(归一角度 / 90)；保证 89.999° 落到第 0 工位、90° 落到第 1
+nCurrentStationIndex := LREAL_TO_DINT(FLOOR(lrPositionInOneTurnDeg / 90.0));
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

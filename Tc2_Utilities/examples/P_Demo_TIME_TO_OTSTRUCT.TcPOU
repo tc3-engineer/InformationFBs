@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_TIME_TO_OTSTRUCT" Id="{ad2633b3-8b24-5859-8941-40dafff5b687}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_TIME_TO_OTSTRUCT
+VAR
+    tRuntime  : TIME := T#3d12h5m30s; // 设备累计运行时长（从 RTC 时基取）
+    otRuntime : OTSTRUCT; // 按字段拆开的运行时长（HMI 字段绑定）
+    bRunOnce  : BOOL; // 脉冲触发
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：HMI 显示设备已连续运行时长「X 周 Y 天 Z 小时 W 分」便于操作员一眼看出
+//
+// 价值：1 行调用拆分 5 次整除取余，避免手写 6 行除法 + 余数赋值
+//
+// 验证步骤：
+//   1. 引用 Tc2_Utilities
+//   2. 编译 + 登录 + 运行
+//   3. 强制 bRunOnce := TRUE
+//   4. 在线观察 otRuntime: byWeeks=0, byDays=3, byHours=12, byMinutes=5, bySeconds=30, wMilliseconds=0
+//   5. TIME 上限 ~49.7 天，byWeeks 最大约 7
+// =============================================================================
+otRuntime := TIME_TO_OTSTRUCT(tRuntime);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

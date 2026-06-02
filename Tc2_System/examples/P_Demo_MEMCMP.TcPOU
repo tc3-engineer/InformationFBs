@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_MEMCMP" Id="{0182cd87-b22d-532c-aab9-9dc5fb72b6a7}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_MEMCMP
+VAR
+    stCurrent       : ARRAY[0..199] OF BYTE; // 本次工艺参数缓冲（200 字节）
+    stLastSaved     : ARRAY[0..199] OF BYTE; // 上次落盘版本
+    bCompareRequest : BOOL; // 在线写 TRUE 触发一次比较
+    nCmpResult      : DINT; // 比较结果：-1 / 0 / 1
+    bParamsChanged  : BOOL; // TRUE = 与上次不同，需要落盘
+    rtCmp           : R_TRIG; // 上升沿检测
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：检查工艺参数结构体（200 字节）是否与上次落盘的版本一致，一致则跳过持久化写盘。
+// 价值：一行调用替代 200 次手写逐字节比对。
+// 验证：同步两份缓冲区 → 在线触发 bCompareRequest → nCmpResult = 0；故意改 stCurrent 中一个字节 → nCmpResult = 1 或 -1。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_System（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』行的指示在线写值观察
+// =============================================================================
+
+rtCmp(CLK := bCompareRequest);
+IF rtCmp.Q THEN
+    nCmpResult := MEMCMP(
+        pBuf1 := ADR(stCurrent),
+        pBuf2 := ADR(stLastSaved),
+        n     := SIZEOF(stCurrent)
+    );
+    // 业务侧：非 0 即视为有变化
+    bParamsChanged := (nCmpResult <> 0);
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

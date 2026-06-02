@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_SendMessageEx" Id="{c47e824b-d258-5005-98da-86513032ff97}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_SendMessageEx
+VAR
+    fbLogger     : FB_TcEventLogger; // EventLogger 实例
+    stEventEntry : TcEventEntry; // 在线写入事件定义
+    bDoSend      : BOOL := FALSE; // 上升沿触发
+    bDoSendPrev  : BOOL; // 边沿检测
+    hr           : HRESULT; // 返回值监视
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：按结构体发送一条 message
+// 价值：结构体接口便于事件清单批量处理
+// 验证：登录后写 bDoSend := TRUE，HMI EventLogger 出现一条对应 message
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_EventLogger（System → References → Add library）
+//   3. 编译 → 登录 → 运行；按 verify 注释里给出的在线写值操作
+// =============================================================================
+
+IF bDoSend AND NOT bDoSendPrev THEN
+    hr := fbLogger.SendMessageEx(
+        stEventEntry := stEventEntry,
+        ipSourceInfo := 0,
+        nTimeStamp := 0,
+        ipArguments := 0);
+END_IF;
+bDoSendPrev := bDoSend;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_KL27x1Config" Id="{03639b67-4369-5df6-8e34-c2f0a827012f}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_KL27x1Config
+VAR
+    fbKl27x1                 : FB_KL27x1Config; // KL2751/2761 配置 FB
+    stKl27x1InProcessImg     : ST_KL27x1InData; // 输入过程映像
+    stKl27x1OutProcessImg    : ST_KL27x1OutData; // 输出过程映像
+    bDoConfigure             : BOOL := FALSE; // 上升沿写配置
+    bDoReadConfig            : BOOL := FALSE; // 上升沿只读
+    bUseAbsoluteRamp         : BOOL := TRUE; // TRUE = 每步固定时间
+    iRampTimeSetting         : INT := 100; // 斜坡时间
+    bDisableWatchdog         : BOOL := FALSE; // 关闭看门狗
+    iWatchdogTimeoutMs10     : UINT := 20; // 看门狗超时 × 10 ms (= 200 ms)
+    iFailSafeOnValue         : UINT := 0; // fail-safe 时数据>0 的亮度
+    iFailSafeOffValue        : UINT := 0; // fail-safe 时数据=0 的亮度
+    iDimMode                 : INT := 0; // 调光模式（具体表见 PDF）
+    bAutoOnAfterShortCircuit : BOOL := TRUE; // 短路恢复后自动亮
+    bUse60HzMains            : BOOL := FALSE; // 60Hz 还是 50Hz
+    tKl27x1ConfigTimeout     : TIME := T#5S; // 超时
+    bKl27x1Busy              : BOOL; // 工作中
+    bKl27x1Error             : BOOL; // 出错
+    iLastError               : UDINT; // 错误号
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：剧院调光系统：上电时把 KL2751 配为绝对斜坡 100、50 Hz、短路恢复后亮、fail-safe = 0。
+// 价值：端子配置纳入 PLC 程序版本控制；现场更换端子无需重新拨码。
+// 验证：登录确认 stKl27x1InProcessImg / OutProcessImg 已链；写 bDoConfigure := TRUE → fbKl27x1.bBusy 短暂 TRUE → 回 FALSE 后 iLastError = 0 表示成功。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_IoFunctions（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』行的指示在线写值观察
+// =============================================================================
+
+fbKl27x1(
+    bConfigurate            := bDoConfigure,
+    bReadConfig             := bDoReadConfig,
+    bSetDimRampAbsolute     := bUseAbsoluteRamp,
+    iSetRampTime            := iRampTimeSetting,
+    bSetWatchdogDisable     := bDisableWatchdog,
+    iSetWatchdogTimeout     := iWatchdogTimeoutMs10,
+    iSetTimeoutOnValue      := iFailSafeOnValue,
+    iSetTimeoutOffValue     := iFailSafeOffValue,
+    iSetDimmerMode          := iDimMode,
+    bSetOnAfterShortCircuit := bAutoOnAfterShortCircuit,
+    bSetLineFrequency60Hz   := bUse60HzMains,
+    tTimeout                := tKl27x1ConfigTimeout,
+    bBusy                   => bKl27x1Busy,
+    bError                  => bKl27x1Error,
+    iErrorId                => iLastError
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

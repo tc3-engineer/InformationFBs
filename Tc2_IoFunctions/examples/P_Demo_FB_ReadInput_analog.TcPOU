@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_ReadInput_analog" Id="{fd5c2226-b371-5e64-9c26-9deb3bccaaa7}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_ReadInput_analog
+VAR
+    fbAsiAnalogRead     : FB_ReadInput_analog; // ASI 模拟输入 FB
+    fbAsiParamControl   : FB_ASI_ParameterControl; // 后台调度
+    stAsiParamBuffer    : ST_ParameterBuffer; // 共享缓冲
+    stAsiInProcessImg   : ST_Parameter_IN; // 链到 %I*
+    stAsiOutProcessImg  : ST_Parameter_OUT; // 链到 %Q*
+    iAsiAnalogSlaveAddr : BYTE := 14; // 目标 slave 地址
+    iAnalogChannelNo    : BYTE := 0; // 通道号
+    bEnableCyclicRead   : BOOL := TRUE; // 0=单次 1=循环
+    bStartAnalogRead    : BOOL := FALSE; // 上升沿触发
+    bAnalogValueValid   : BOOL; // 读得值是否有效
+    bOverRangeFlag      : BOOL; // 超量程标志
+    iAnalogReadValue    : WORD; // 模拟读值
+    nAsiCmdError        : DWORD; // 错误号
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：ASI slave 14 是温度变送器，通道 0 是温度，HMI 显示需要循环读。
+// 价值：把 ASI 模拟值做成可读的 PLC 变量。
+// 验证：登录后 iAsiAnalogSlaveAddr := 14、iAnalogChannelNo := 0、bEnableCyclicRead := TRUE、bStartAnalogRead := TRUE → bAnalogValueValid 在 slave 在线时应为 TRUE，iAnalogReadValue 实时显示传感器值；断开 slave 模拟 → bAnalogValueValid 落到 FALSE。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_IoFunctions（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』行的指示在线写值观察
+// =============================================================================
+
+fbAsiParamControl(
+    stParameterBuffer := stAsiParamBuffer,
+    stParameter_IN    := stAsiInProcessImg,
+    stParameter_OUT   := stAsiOutProcessImg
+);
+
+fbAsiAnalogRead(
+    iSlaveaddress     := iAsiAnalogSlaveAddr,
+    iChannel          := iAnalogChannelNo,
+    bCycleMode        := bEnableCyclicRead,
+    bStart            := bStartAnalogRead,
+    stParameterBuffer := stAsiParamBuffer,
+    bValid            => bAnalogValueValid,
+    bOverflow         => bOverRangeFlag,
+    iReadValue        => iAnalogReadValue,
+    iErrornumber      => nAsiCmdError
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

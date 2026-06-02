@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_F_IOPortWrite" Id="{6f22ca44-f9bc-54d6-a900-246ded7067c9}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_F_IOPortWrite
+VAR
+    nPcSpeakerPort : UDINT := 16#61; // PC 蜂鉣器控制端口
+    nValueToWrite  : DWORD := 16#03; // 蜂鉣器使能位（PDF 示例中的开启值）
+    bBeepRequest   : BOOL; // 在线写 TRUE 触发一次写入
+    bWriteOk       : BOOL; // TRUE = API 接受写入
+    rtBeep         : R_TRIG; // 上升沿检测
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：实现简易 PC 蜂鉣器报警：通过写主板端口 0x61 控制扬声器产生短促提示音（PDF FB_Speaker 示例）。
+// 价值：不用外置蜂鉣硬件，软件直接驱动 PC 主板内置蜂鉣器。
+// 验证：bBeepRequest := TRUE → PC 主板蜂鉣器发出短促提示音；bWriteOk 应为 TRUE。注意：用错端口可能损坏硬件！
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_System（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』行的指示在线写值观察
+// =============================================================================
+
+// 上升沿触发：避免连续写端口（连续写蜂鉣器会持续响）
+// 警告：端口地址 0x61 是 PC 蜂鉣器控制；其它地址可能损坏硬件
+rtBeep(CLK := bBeepRequest);
+IF rtBeep.Q THEN
+    bWriteOk := F_IOPortWrite(
+        nAddr  := nPcSpeakerPort,
+        eSize  := IOAS_BYTE,
+        nValue := nValueToWrite
+    );
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

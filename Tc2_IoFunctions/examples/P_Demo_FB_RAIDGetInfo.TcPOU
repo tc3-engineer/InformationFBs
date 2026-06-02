@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_RAIDGetInfo" Id="{8a328ab4-79c9-5aec-95cb-5175d9126357}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_RAIDGetInfo
+VAR
+    fbGetRaidInfo     : FB_RAIDGetInfo; // RAID 控制器元信息 FB（仅一次）
+    sLocalNetId       : T_AmsNetId := ''; // 本机
+    nTargetRaidCtlrId : UDINT := 0; // 要查的 RAID 控制器 ID
+    bDoGetRaidInfo    : BOOL := FALSE; // 上升沿触发（仅一次）
+    tRaidQueryTimeout : TIME := T#5S; // 超时
+    stRaidInfoOut     : ST_RAIDInfo; // RAID 元信息
+    nRaidBytesRead    : UDINT; // 返回字节数
+    bRaidInfoBusy     : BOOL; // 工作中
+    bRaidInfoError    : BOOL; // 出错
+    nRaidInfoErrId    : UDINT; // 错误号
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：已知 RAID 控制器 ID = 0，查它管几组 RAID 阵列。
+// 价值：RAID 拓扑可程序化监控。
+// 验证：登录后 nTargetRaidCtlrId := 0，bDoGetRaidInfo := TRUE → bRaidInfoBusy 短暂 TRUE → 回 FALSE 后 stRaidInfoOut 含集数与盘数信息。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_IoFunctions（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』行的指示在线写值观察
+// =============================================================================
+
+// 警告：不能循环调用！
+fbGetRaidInfo(
+    sNETID       := sLocalNetId,
+    bWrtRd       := bDoGetRaidInfo,
+    nRAIDCntlrID := nTargetRaidCtlrId,
+    tTimeOut     := tRaidQueryTimeout,
+    stRAIDInfo   => stRaidInfoOut,
+    nBytesRead   => nRaidBytesRead,
+    bBusy        => bRaidInfoBusy,
+    bError       => bRaidInfoError,
+    nErrorID     => nRaidInfoErrId
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_WSTRING_TO_UTF8" Id="{cd5f9e6c-5958-5d53-89c1-ef7c87ffa605}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_WSTRING_TO_UTF8
+VAR
+    wsSrc    : WSTRING(128) := "主泵状态"; // 工业语义：HMI WSTRING 含 Unicode
+    aUtf8    : ARRAY[0..255] OF BYTE; // UTF-8 输出（上云）
+    bOk      : BOOL; // 成功
+    bConvert : BOOL; // 在线触发
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：HMI WSTRING 数据上 OPC UA 云（UA 强制 UTF-8）。
+// 价值：比 `WSTRING_TO_STRING2` + `STRING_TO_UTF8` 中转少一次转换。
+// 验证步骤：
+//   1. 引用 Tc2_Utilities
+//   2. 编译 + 登录 + 运行
+//   3. 在线写触发位 TRUE，monitor 输出变量
+// =============================================================================
+IF bConvert THEN
+    bOk := WSTRING_TO_UTF8(pDstUTF8    := ADR(aUtf8),
+                           pSrcWSTRING := ADR(wsSrc),
+                           nDstSize    := SIZEOF(aUtf8));
+    bConvert := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

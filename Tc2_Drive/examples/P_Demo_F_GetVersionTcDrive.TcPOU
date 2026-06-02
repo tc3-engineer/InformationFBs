@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_F_GetVersionTcDrive" Id="{abc387e8-64fa-5787-8656-69861d8d6bad}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_F_GetVersionTcDrive
+VAR
+    iMajor     : UINT; // 主版本号(应为 1)
+    iMinor     : UINT; // 次版本号(应为 4)
+    iRevision  : UINT; // 修订号(应为 8)
+    bVersionOk : BOOL; // 版本满足最低要求的断言结果
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：程序依赖 Tc2_Drive 某版本起才有的行为，需在运行期确认实际加载的库版本
+//       满足要求；或在 HMI 诊断页显示当前库版本。
+//
+// 价值：把库版本以 UINT 暴露给 PLC 逻辑，可做版本断言/显示，无需人工查工程引用。
+//
+// 验证步骤：
+//   1. 引用 Tc2_Drive 库
+//   2. 编译、登录、运行
+//   3. 在线 monitor iMajor / iMinor / iRevision
+//      → 对当前 1.4.8 库应分别显示 1 / 4 / 8
+//   4. 观察 bVersionOk：要求库 >= 1.4.0，当前 1.4.8 满足，应为 TRUE
+//   5. （可选）把断言阈值改成 >= 2.0.0 验证逻辑会把 bVersionOk 置 FALSE
+// =============================================================================
+
+// 函数直接表达式调用，无需实例化、无需 bExecute
+iMajor    := F_GetVersionTcDrive(1);   // 1 = major
+iMinor    := F_GetVersionTcDrive(2);   // 2 = minor
+iRevision := F_GetVersionTcDrive(3);   // 3 = revision
+
+// 初始化期断言：要求 Tc2_Drive 库不低于 1.4.0
+// 用 TO_INT 把 UINT 显式转为 INT 再比较，避免无符号比较歧义
+bVersionOk := (TO_INT(iMajor) > 1)
+           OR ((TO_INT(iMajor) = 1) AND (TO_INT(iMinor) >= 4));
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

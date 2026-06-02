@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_REPLACE2" Id="{51891600-abe6-5d1e-9f28-cb9fc4ed6366}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_REPLACE2
+VAR
+    sTpl  : STRING(64) := '2026-05-12T08:00:?? UTC'; // 工业语义：模板含占位 '?'
+    sFill : STRING(8) := '42'; // 实际秒数字符串
+    sOut  : STRING(64); // 替换结果
+    bOk   : BOOL; // 成功
+    bFill : BOOL; // 在线触发
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：时间字符串规范化：把固定位置的 `'?'` 替换为实际秒数（如 RFID 信号触发前秒数未知）。
+// 价值：替代 `LEFT` + `CONCAT2` + `MID` + `CONCAT2`；本函数 1 调用。
+// 验证步骤：
+//   1. 引用 Tc2_Utilities
+//   2. 编译 + 登录 + 运行
+//   3. 在线写触发位 TRUE，monitor 输出变量
+// =============================================================================
+// 把第 18 位起 2 字符 '??' 替换为实际秒数
+IF bFill THEN
+    bOk := REPLACE2(pSrcString    := ADR(sTpl),
+                    pInsertString := ADR(sFill),
+                    pDstString    := ADR(sOut),
+                    nDstSize      := SIZEOF(sOut),
+                    nLen          := 2,    // 替换 2 字符
+                    nPos          := 18);  // 从第 18 位开始
+    bFill := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

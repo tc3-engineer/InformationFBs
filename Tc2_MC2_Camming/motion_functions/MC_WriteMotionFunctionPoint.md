@@ -13,7 +13,7 @@
 | Verified | 2026-05-21 ✅ |
 | InfoSys-checked | ✅ 2026-05-21 |
 | Status | `verified` |
-| Example | [`examples/P_Demo_MC_WriteMotionFunctionPoint.xml`](../examples/P_Demo_MC_WriteMotionFunctionPoint.xml) |
+| Example | [`examples/P_Demo_MC_WriteMotionFunctionPoint.TcPOU`](../examples/P_Demo_MC_WriteMotionFunctionPoint.TcPOU) |
 
 ---
 
@@ -121,7 +121,7 @@ END_VAR
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_MC_WriteMotionFunctionPoint.xml`](../examples/P_Demo_MC_WriteMotionFunctionPoint.xml)
+> 配套可导入文件：[`examples/P_Demo_MC_WriteMotionFunctionPoint.TcPOU`](../examples/P_Demo_MC_WriteMotionFunctionPoint.TcPOU)
 
 例程演示"印刷机色版滚筒相位补偿：根据色差检测结果，把第 5 号节点的从轴位置微调 +0.2mm，配合延迟激活模式在下一个套印周期边界切换"。
 

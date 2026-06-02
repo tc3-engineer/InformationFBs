@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_SocketListen" Id="{54f7553f-e824-508b-a63c-3b41979850b0}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_SocketListen
+VAR
+    fbStartListening : FB_SocketListen;
+    fbAcceptIncoming : FB_SocketAccept; // 配套 Accept，把例程做成可观察的"等连接"
+    bRequestListen   : BOOL; // 上升沿开监听
+    bListenBusy      : BOOL;
+    bListenError     : BOOL;
+    nListenErrId     : UDINT;
+    hPlcListener     : T_HSOCKET; // 监听句柄，给 FB_SocketAccept 用
+    bPollAccept      : BOOL := FALSE; // 在线置 TRUE 后周期 Accept
+    bAcceptBusy      : BOOL;
+    bClientAccepted  : BOOL;
+    bAcceptError     : BOOL;
+    nAcceptErrId     : UDINT;
+    hRemoteClient    : T_HSOCKET;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：PLC 当 TCP 服务器，监听 0.0.0.0:200，等 SCADA / HMI 连入。
+//
+// 价值：本例程展示"FB_SocketListen 开 listener → FB_SocketAccept 周期接受
+//       客户端连接"的标准服务器套路。listener 只需开一次；Accept 每周期 poll。
+//
+// 验证步骤：
+//   1. 在线 bRequestListen := TRUE
+//      → bListenBusy 闪烁后落回，hPlcListener.handle 非 0，listener 已开
+//   2. 在 PC 上用 telnet PLC_IP 200 或 ncat PLC_IP 200
+//   3. 在线 bPollAccept := TRUE
+//      → bClientAccepted 短暂为 TRUE，hRemoteClient.handle 非 0
+//      → 远端 telnet 显示已连接
+//   4. 若端口被占用 → bListenError=TRUE, nListenErrId=0x80072740 (WSAEADDRINUSE)
+// =============================================================================
+
+// listener 创建（只在 bRequestListen 上升沿那一刻动一次）
+fbStartListening(
+    sSrvNetId   := '',
+    sLocalHost  := '0.0.0.0',
+    nLocalPort  := 200,
+    bExecute    := bRequestListen,
+    tTimeout    := T#5S,
+    bBusy       => bListenBusy,
+    bError      => bListenError,
+    nErrId      => nListenErrId,
+    hListener   => hPlcListener
+);
+
+// listener 创建好后周期 poll 接受 incoming（每周期都 trigger Accept，是设计要求）
+fbAcceptIncoming(
+    sSrvNetId := '',
+    hListener := hPlcListener,
+    bExecute  := bPollAccept,
+    tTimeout  := T#5S,
+    bAccepted => bClientAccepted,
+    bBusy     => bAcceptBusy,
+    bError    => bAcceptError,
+    nErrId    => nAcceptErrId,
+    hSocket   => hRemoteClient
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

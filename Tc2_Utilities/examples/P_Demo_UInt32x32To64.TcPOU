@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_UInt32x32To64" Id="{4579e283-23d6-5285-9f1a-88569b12ddc8}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_UInt32x32To64
+VAR
+    dwCycleCount : DWORD := 16#FFFFFFFF;; // 接近 32 位上限的周期数
+    dwPerCycle   : DWORD := 100;; // 每周期事件数
+    uliTotal     : T_ULARGE_INTEGER;; // 64 位乘积
+    bCompute     : BOOL;; // 触发计算
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_Utilities.UInt32x32To64 演示程序（FUNCTION，单周期触发）
+// ============================================================
+// 场景：计算两个 32 位计数器（如周期计数 × 单周期事件数）相乘后的总事件数，可能超过 32 位上限。
+// 价值：替代手写 32×32 → 64 位的双倍长乘法；一行调用，性能等同于硬件单指令。
+// 验证步骤：
+//   1. 把本 PROGRAM 加到 PlcTask 调用列表
+//   2. 编译 + 登录
+//   3. 在线把 b... 触发位置 TRUE 一个周期
+//   4. 观察输出变量是否符合期望
+// ============================================================
+
+IF bCompute THEN
+    // 上升沿触发：避免反复算（PLC 周期内只调用一次）
+    uliTotal := UInt32x32To64(dwCycleCount, dwPerCycle);
+    bCompute := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

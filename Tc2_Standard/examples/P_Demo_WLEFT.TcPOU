@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_WLEFT" Id="{2d369477-8a02-5533-8424-ccc09a609c23}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_WLEFT
+VAR
+    sOrderID  : WSTRING(255) := "客户A订单20260511_00123"; // 中文订单号：前 4 字符是部门编码
+    sDeptCode : WSTRING(255); // 提取出的部门编码（前 4 字符）
+    nCodeLen  : INT := 4; // 部门编码字符数 = 4（按 UCS-2 字符算）
+    bExtract  : BOOL; // 触发一次 WLEFT
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：MES 系统下发中文订单号 "客户X订单yyyymmdd_NNNNN"。前 4 字符是部门
+//       编码用于路由分流（"客户A订" / "客户B订" ...）。WLEFT 一行取前 4
+//       字符，结果可直接 CASE 比较；STRING + LEFT 在此场景会按字节取，4
+//       字节只够 1.x 个汉字，必然乱码。
+//
+// 价值：UCS-2 安全。取前 4 个字符就是 4 个完整汉字，不会拆出半个。HMI、
+//       MES、PLC 三方都用 WSTRING 时编码完全统一，无需运行时转码。
+//
+// 验证步骤：
+//   1. 导入本文件、引用 Tc2_Standard、编译、登录、运行
+//   2. 在线 monitor sDeptCode（监视面板选 Unicode）
+//   3. 在线写 bExtract := TRUE
+//   4. 下一周期 sDeptCode = "客户A订"（4 字符部门编码）
+//   5. 把 sOrderID 改成 "XX"（只 2 字符）+ 再触发 → sDeptCode = "XX"
+//      （SIZE>WLEN 时返回整个源串，不补空格）
+// =============================================================================
+
+// WLEFT(s, 4) 按 UCS-2 字符算，4 个汉字 = 4 字符
+IF bExtract THEN
+    sDeptCode := WLEFT(sOrderID, nCodeLen);
+    bExtract := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

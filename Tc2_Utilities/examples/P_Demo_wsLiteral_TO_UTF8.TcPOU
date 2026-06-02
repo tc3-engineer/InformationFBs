@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_wsLiteral_TO_UTF8" Id="{b50f9fe8-5dd0-5b47-822f-2a165724b987}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_wsLiteral_TO_UTF8
+VAR
+    sUtf8Init : STRING(255) := wsLiteral_TO_UTF8("主泵状态"); // 工业语义：含中文的 UTF-8 字面量
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：OPC UA 服务器发布的中文字符串变量初值 `"主泵状态"`；用 `wsLiteral_TO_UTF8` 编码 + TcEncoding 注解。
+// 价值：比手写 UTF-8 字节序列可读 1000 倍。
+// 验证步骤：
+//   1. 引用 Tc2_Utilities
+//   2. 编译 + 登录 + 运行
+//   3. 在线写触发位 TRUE，monitor 输出变量
+// =============================================================================
+// 本函数用于把 WSTRING 字面量编译期转码为 UTF-8
+// 运行时无需调用——sUtf8Init 已经是正确的 UTF-8 字节序列
+// 配合 {attribute 'TcEncoding' := 'UTF-8'} 让上游 API 正确处理
+;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

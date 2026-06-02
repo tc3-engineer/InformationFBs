@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_TzSpecificLocalTimeToFileTime" Id="{7a89a342-5814-54bb-bfa8-f39c0edd4ab0}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_TzSpecificLocalTimeToFileTime
+VAR
+    fbConvertLocalToUtc : FB_TzSpecificLocalTimeToFileTime; // FB 实例（已弃用；新代码用 FB_TzSpecificLocalTimeToFileTime64）
+    ftLocalInput        : T_FILETIME; // 本地时间输入（FILETIME 32 位）
+    ftUtcOutput         : T_FILETIME; // 转换后 UTC 时间
+    eDstStatus          : E_TimeZoneID;
+    bInBTime            : BOOL; // DST 回退重复区第二次 = TRUE
+    bDoResetCache       : BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_Utilities.FB_TzSpecificLocalTimeToFileTime 演示程序（已弃用 FB）
+// ============================================================
+// 场景：TC2 时代的旧 HMI 维护工程：操作员在 HMI 输入"启动时间"按本地时间录入，
+//       但内部存储要 UTC（避免 DST 引起的日历问题）。本 FB 在 HMI 提交时把
+//       本地时间转换为 UTC 后入库。
+// 价值：保留旧 HMI 输入流程；新工程一律推荐 HMI 也用 UTC，根本不必反向转换。
+// 验证：
+//   1. 引用 Tc2_Utilities，编译 + 登录
+//   2. 构造 CEST 夏令时本地时间（如 2026-07-01 14:00 CEST）写入 ftLocalInput
+//      → ftUtcOutput 应比输入早 2 小时（UTC 12:00）
+//   3. 构造冬季 CET 本地时间（如 2026-01-01 14:00 CET）
+//      → ftUtcOutput 应比输入早 1 小时（UTC 13:00）
+//   4. 时间源跳变后写 bDoResetCache := TRUE 清缓存
+// ============================================================
+
+fbConvertLocalToUtc(
+    in     := ftLocalInput,
+    tzInfo := WEST_EUROPE_TZI,
+    out    => ftUtcOutput,
+    eTzID  => eDstStatus,
+    bB     => bInBTime
+);
+
+IF bDoResetCache THEN
+    bDoResetCache := FALSE;
+    fbConvertLocalToUtc.A_Reset();
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

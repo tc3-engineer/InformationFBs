@@ -11,7 +11,7 @@ Checks (deterministic):
   2. Source PDF URL present
   3. Each VAR_INPUT / VAR_OUTPUT name+type from PDF appears verbatim in doc
   4. The ``<Name>`` matches the file basename
-  5. Example link points to existing P_Demo_<Name>.xml
+  5. Example link points to existing P_Demo_<Name>.TcPOU
 
 Exit codes:
   0 = PASS
@@ -433,13 +433,13 @@ def verify(doc_path: str) -> tuple[int, list[str]]:
             diags.append(f"default value missing in doc: {var_name} := {default}")
 
     # example link — read the actual link from the doc so parent-prefixed
-    # stems for OO method collisions (e.g. P_Demo_FB_TcAlarm_Create.xml) are
+    # stems for OO method collisions (e.g. P_Demo_FB_TcAlarm_Create.TcPOU) are
     # honoured.
     examples_dir = p.parent.parent / "examples"
-    m_ex = re.search(r"examples/P_Demo_([A-Za-z0-9_]+)\.xml", doc)
+    m_ex = re.search(r"examples/P_Demo_([A-Za-z0-9_]+)\.TcPOU", doc)
     example_stem = m_ex.group(1) if m_ex else name
-    if not (examples_dir / f"P_Demo_{example_stem}.xml").exists():
-        diags.append(f"example missing: examples/P_Demo_{example_stem}.xml")
+    if not (examples_dir / f"P_Demo_{example_stem}.TcPOU").exists():
+        diags.append(f"example missing: examples/P_Demo_{example_stem}.TcPOU")
 
     # Empty VAR on both sides is legitimate for pure-OO parent FBs that only
     # expose methods (e.g. FB_CalcHashValue: start()/update()/finish()) and

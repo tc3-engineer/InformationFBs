@@ -13,7 +13,7 @@
 | Verified | 2026-05-21 ✅ |
 | InfoSys-checked | ⚠️ not-on-infosys |
 | Status | `verified` |
-| Example | [`examples/P_Demo_FB_DeletePositionOffset.xml`](../examples/P_Demo_FB_DeletePositionOffset.xml) |
+| Example | [`examples/P_Demo_FB_DeletePositionOffset.TcPOU`](../examples/P_Demo_FB_DeletePositionOffset.TcPOU) |
 
 ---
 
@@ -110,7 +110,7 @@ END_VAR
 
 ## 6. 最小例程
 
-> 配套可导入文件：[`examples/P_Demo_FB_DeletePositionOffset.xml`](../examples/P_Demo_FB_DeletePositionOffset.xml)
+> 配套可导入文件：[`examples/P_Demo_FB_DeletePositionOffset.TcPOU`](../examples/P_Demo_FB_DeletePositionOffset.TcPOU)
 
 ```iecst
 // 场景：重新做机械找正前，先清掉上一次写进编码器铭牌的位置偏置

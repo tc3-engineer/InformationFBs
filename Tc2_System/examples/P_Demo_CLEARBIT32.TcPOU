@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_CLEARBIT32" Id="{e17b1285-6af3-5682-bbf1-773cff051927}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_CLEARBIT32
+VAR
+    dwStatusWord    : DWORD := 16#FFFFFFFF; // 初始状态字
+    bResetErrorBits : BOOL; // 在线写 TRUE 触发一次错误位清零
+    i               : INT; // 循环变量
+    rtReset         : R_TRIG; // 上升沿检测
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：错误恢复：清掉状态字中所有错误位（bit16-23），保留运行状态位 0-15。
+// 价值：可读性比 AND NOT 强。
+// 验证：dwStatus := 16#FFFFFFFF; bResetRequest := TRUE → 观察 dwStatus 高 8 位被逐一清零。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_System（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』行的指示在线写值观察
+// =============================================================================
+
+// 上升沿触发一次清错：把状态字 bit16-23 全部清零
+rtReset(CLK := bResetErrorBits);
+IF rtReset.Q THEN
+    FOR i := 16 TO 23 DO
+        dwStatusWord := CLEARBIT32(
+            inVal32 := dwStatusWord,
+            bitNo   := TO_SINT(i)
+        );
+    END_FOR;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

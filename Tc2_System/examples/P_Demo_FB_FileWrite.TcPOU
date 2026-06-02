@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_FileWrite" Id="{e3a8b8cc-4366-58f9-ab20-eebac3a89849}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_FileWrite
+VAR
+    fbFileWrite     : FB_FileWrite; // FB_FileWrite 实例
+    hOpenedFile     : UINT; // 前置 FB_FileOpen 拿到的句柄
+    stProcessRecord : ARRAY[0..63] OF BYTE; // 要写入的 64 字节工艺数据
+    bWriteRequest   : BOOL; // 在线写 TRUE 触发一次写入
+    cbBytesWritten  : UDINT; // 实际写入字节数
+    bWriteError     : BOOL; // TRUE = 写失败
+    nErrIdLast      : UDINT; // ADS 错误号
+    bBusyMon        : BOOL; // ADS 通讯中
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：把一个 64 字节的工艺参数结构追加写到已打开的 D:/log/process.csv 文件末尾。
+// 价值：封装 ADS 写命令的状态机，省 30 行手写。
+// 验证：在线置 bWriteRequest := TRUE → 观察 cbBytesWritten = SIZEOF(stProcessRecord)；故意改 hOpenedFile := 0 → bWriteError = TRUE 且 nErrIdLast = 0x70C。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_System（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』行的指示在线写值观察
+// =============================================================================
+
+fbFileWrite(
+    sNetId     := '',
+    hFile      := hOpenedFile,
+    pWriteBuff := ADR(stProcessRecord),
+    cbWriteLen := SIZEOF(stProcessRecord),
+    bExecute   := bWriteRequest,
+    tTimeout   := T#10S,
+    bBusy      => bBusyMon,
+    bError     => bWriteError,
+    nErrId     => nErrIdLast,
+    cbWrite    => cbBytesWritten
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

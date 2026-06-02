@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_ADSLOGDINT" Id="{54f4fd18-a33c-53fa-87e3-258015c902e0}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_ADSLOGDINT
+VAR
+    bFeedTooHigh     : BOOL; // feed 越限信号（业务侧上升沿）
+    rtFeedAlarm      : R_TRIG; // 边沿触发器
+    nCurrentFeedRate : DINT := 4711; // 当前 feed 速率（单位：件/分钟）
+    udiAdsLogRes     : DINT; // 函数返回 0 = 成功
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_System.ADSLOGDINT 演示程序
+// ============================================================
+// 场景：feed 速率越限告警；每次上升沿弹一次消息框 + 写一条系统日志。
+// 价值：替代手写日志 + 外部弹框程序，一行调用即可。
+// 验证：登录后写 bFeedTooHigh := TRUE，应在 Windows 屏幕弹出一次 'PLC Msg: Feed too high! Current feed: 4711'；写 FALSE 再 TRUE 才会再弹。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_System（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』指引在线写值观察
+// ============================================================
+
+rtFeedAlarm(CLK := bFeedTooHigh);
+IF rtFeedAlarm.Q THEN
+    udiAdsLogRes := ADSLOGDINT(
+        msgCtrlMask := ADSLOG_MSGTYPE_HINT OR ADSLOG_MSGTYPE_MSGBOX,
+        msgFmtStr := 'PLC Msg: Feed too high! Current feed: %d',
+        dintArg := nCurrentFeedRate);
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

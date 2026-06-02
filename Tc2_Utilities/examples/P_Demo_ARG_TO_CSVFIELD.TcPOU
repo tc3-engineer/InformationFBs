@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_ARG_TO_CSVFIELD" Id="{29ff0ea8-0b38-55a4-b590-2f684439ce46}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_ARG_TO_CSVFIELD
+VAR
+    lrTemperatureC : LREAL := 23.7; // 模拟温度采集值；在线写值改测试
+    abFieldBuf     : ARRAY[0..63] OF BYTE; // CSV 字段输出缓冲（64 字节足够 LREAL）
+    nBytesWritten  : UDINT; // 实际写入字节数；=0 时表示转换失败
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：PLC 产线每 5 秒采集温度并写 CSV 上报 MES。
+//       本演示展示如何把一个 LREAL 值用 ARG_TO_CSVFIELD 转为带引号的字段。
+// 价值：替代手写引号转义和长度判断；T_Arg 包装允许任意类型（含二进制）。
+// 验证步骤：
+//   1. 引用 Tc2_Utilities
+//   2. 编译 + 登录 + 运行
+//   3. 在线 monitor nBytesWritten 应 > 0；展开 abFieldBuf 看到 ASCII '"23.7"'
+//   4. 改 lrTemperatureC = -1.5e10 -> 验证负数和科学计数法字段
+// =============================================================================
+
+nBytesWritten := ARG_TO_CSVFIELD(
+    in       := F_LREAL(lrTemperatureC),
+    bQM      := TRUE,
+    pOutput  := ADR(abFieldBuf),
+    cbOutput := SIZEOF(abFieldBuf)
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

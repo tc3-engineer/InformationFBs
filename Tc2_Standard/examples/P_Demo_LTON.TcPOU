@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_LTON" Id="{13739594-83e8-51af-b502-e6350e9b0653}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_LTON
+VAR
+    fbServoReadyDelay : LTON; // LTON 实例：伺服上电后 μs 级就绪延时
+    bDrivePowerOn     : BOOL; // 驱动器上电信号（在线置 TRUE 模拟）
+    tServoBootupTime  : LTIME := LTIME#500US; // 上电后到可接收指令的延时 = 500 μs
+    bServoReady       : BOOL; // 伺服就绪输出
+    tBootupElapsed    : LTIME; // 已经过启动时长（监视 LTIME 纳秒级）
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：伺服驱动器上电后必须等 500 微秒才能开始发指令（厂商规格）。用 LTON
+//       在 NC 任务（如 50 μs 周期）里精确计时；普通 1 ms 任务的 TON 无能为力。
+//
+// 价值：与 TON 同样简洁的接口，但精度从毫秒提升到纳秒；上限从 49.7 天到 584 年。
+//       手写"读纳秒系统时钟 + 累加 + 比较"约 15 行且边界条件易错。
+//
+// 验证步骤：
+//   1. PLC 项目 → Add Existing Item (.TcPOU) → 选本文件
+//   2. 引用 Tc2_Standard 库
+//   3. 编译、登录、运行
+//   4. 在线 monitor bServoReady 与 tBootupElapsed
+//   5. 在线 bDrivePowerOn := TRUE → 观察 tBootupElapsed 从 0 累加
+//      到 500us（=500000ns）时 bServoReady 变 TRUE
+//   6. bDrivePowerOn := FALSE → bServoReady 立刻回 FALSE，tBootupElapsed 清零
+//   7. 注意：在 ms 级任务（默认 PlcTask = 10ms）下 tBootupElapsed 每周期跳 10ms，
+//      要看 μs 精度请把任务周期调到 100μs 或更短
+// =============================================================================
+
+fbServoReadyDelay(
+    IN := bDrivePowerOn,
+    PT := tServoBootupTime,
+    Q  => bServoReady,
+    ET => tBootupElapsed
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

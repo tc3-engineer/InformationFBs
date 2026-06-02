@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_ASI_Addressing" Id="{f0408708-eb1e-5909-9865-1b24968f8a51}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_ASI_Addressing
+VAR
+    fbAsiAddressing    : FB_ASI_Addressing; // ASI 编址 FB
+    fbAsiParamControl  : FB_ASI_ParameterControl; // ASI 后台调度 FB（必须循环调用）
+    stAsiParamBuffer   : ST_ParameterBuffer; // 所有 ASI FB 共享的后台缓冲
+    stAsiInProcessImg  : ST_Parameter_IN; // ASI 主端子输入过程数据（链到 %I*）
+    stAsiOutProcessImg : ST_Parameter_OUT; // ASI 主端子输出过程数据（链到 %Q*）
+    iCurrentAddr       : BYTE := 0; // 当前地址（新出厂默认 0）
+    iAddressToAssign   : BYTE := 5; // 要分配的新地址
+    bStartAddressing   : BOOL := FALSE; // 上升沿触发一次编址
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：线上替换故障 ASI 流量计：新设备出厂地址 0，需要在线把它编址为故障 slave 原来的地址 5。
+// 价值：完全在 PLC 程序里完成现场设备替换，不用 ASI 手持工具。
+// 验证：登录前确认 stAsiInProcessImg / stAsiOutProcessImg 已链到 ASI 主端子；fbAsiParamControl 已加入 PlcTask 循环；在线写 iCurrentAddr := 0、iAddressToAssign := 5、bStartAddressing := TRUE → fbAsiAddressing.bBusy 短暂 TRUE → 回 FALSE 后看 fbAsiAddressing.bErr：FALSE 表示编址成功；用 FB_ASI_SlaveDiag 在地址 5 上读应能查到该 slave。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_IoFunctions（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』行的指示在线写值观察
+// =============================================================================
+
+// 后台调度 FB 必须每周期调用 — 这是所有 ASI FB 工作的前提
+fbAsiParamControl(
+    stParameterBuffer := stAsiParamBuffer,
+    stParameter_IN    := stAsiInProcessImg,
+    stParameter_OUT   := stAsiOutProcessImg
+);
+
+// 单次调用形式：bStartAddressing 上升沿触发
+fbAsiAddressing(
+    iOldAddress       := iCurrentAddr,
+    iNewAddress       := iAddressToAssign,
+    bStart            := bStartAddressing,
+    stParameterBuffer := stAsiParamBuffer
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

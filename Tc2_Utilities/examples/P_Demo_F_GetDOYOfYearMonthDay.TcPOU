@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_F_GetDOYOfYearMonthDay" Id="{4aecfc55-7160-538b-a259-ad3841ab76fa}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_F_GetDOYOfYearMonthDay
+VAR
+    wYear    : WORD := 2026; // 年份
+    wMonth   : WORD := 5; // 月
+    wDay     : WORD := 11; // 日
+    wDOY     : WORD; // 年内第几天（1~366）
+    bRunOnce : BOOL; // 脉冲触发
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：太阳能 / 气象模型按「年内第几天」(DOY) 做日辐射强度查表
+//
+// 价值：1 行调用避免手写「累加各月天数 + 闰年判定」，特别是 2 月闰年规则
+//
+// 验证步骤：
+//   1. 引用 Tc2_Utilities
+//   2. 编译 + 登录 + 运行
+//   3. 强制 bRunOnce := TRUE
+//   4. 在线观察 wDOY 应为 131（2026 年 5 月 11 日是第 131 天）
+//   5. wMonth:=2, wDay:=29; wYear:=2024 → wDOY = 60（闰年 2 月 29 是第 60 天）
+//   6. wYear:=2023 同条件 → wDOY = 0（平年没有 2 月 29 日）
+// =============================================================================
+wDOY := F_GetDOYOfYearMonthDay(wYear, wMonth, wDay);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

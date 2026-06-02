@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_UInt64Cmp64" Id="{13361c96-311c-5c6b-a029-1f30af7981f7}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_UInt64Cmp64
+VAR
+    uliBatchA : T_ULARGE_INTEGER;; // A 线产量
+    uliBatchB : T_ULARGE_INTEGER;; // B 线产量
+    diResult  : DINT;; // 比较结果
+    bCompare  : BOOL;; // 触发比较
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_Utilities.UInt64Cmp64 演示程序（FUNCTION，单周期触发）
+// ============================================================
+// 场景：把两个生产批次的产量计数器排序，决定哪条线产量更高。
+// 价值：替代手写两次 DWORD 比较 + 嵌套 IF；一次调用 + DINT 比较一目了然。
+// 验证步骤：
+//   1. 把本 PROGRAM 加到 PlcTask 调用列表
+//   2. 编译 + 登录
+//   3. 在线把 b... 触发位置 TRUE 一个周期
+//   4. 观察输出变量是否符合期望
+// ============================================================
+
+IF bCompare THEN
+    // -1: A 少 / 0: 持平 / 1: A 多
+    diResult := UInt64Cmp64(uliBatchA, uliBatchB);
+    bCompare := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_IOF_GetBoxAddrByNameEx" Id="{c4f254a3-fd4f-5dfa-8aa0-eb5c3f664b54}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_IOF_GetBoxAddrByNameEx
+VAR
+    fbResolveBoxAddrByDevName : IOF_GetBoxAddrByNameEx; // 用设备名+box 名查站号
+    sTargetNetId              : T_AmsNetId := ''; // 本机空串
+    sActiveBusName            : T_MaxString := 'DP_Master_Right'; // 当前选用的 Profibus 主站名
+    sQueryBoxName             : T_MaxString := 'Pump5'; // 要查的 box 名
+    bStartLookup              : BOOL := FALSE; // 上升沿触发
+    tLookupTimeout            : TIME := T#5S; // ADS 超时
+    bLookupBusy               : BOOL; // 工作中
+    bLookupError              : BOOL; // 失败
+    nLastErrCode              : UDINT; // 错误号
+    nResolvedBoxAddr          : UINT; // 查得站号
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：生产线有 2 路 Profibus（命名 DP_Master_Left / DP_Master_Right），需要根据线路 ID 动态选总线再查 box；用设备名字调用避免硬编码 DeviceId。
+// 价值：用名字代替 ID，工程改动不需要重编程序。
+// 验证：登录后 sActiveBusName := "DP_Master_Right"、sQueryBoxName := "Pump5"，在线写 bStartLookup := TRUE → bLookupBusy 短暂 TRUE → 回 FALSE 后 nResolvedBoxAddr 显示 Pump5 在右侧 Profibus 上的站号。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_IoFunctions（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』行的指示在线写值观察
+// =============================================================================
+
+fbResolveBoxAddrByDevName(
+    NETID      := sTargetNetId,
+    DEVICENAME := sActiveBusName,
+    BOXNAME    := sQueryBoxName,
+    START      := bStartLookup,
+    TMOUT      := tLookupTimeout,
+    BUSY       => bLookupBusy,
+    ERR        => bLookupError,
+    ERRID      => nLastErrCode,
+    BOXADDR    => nResolvedBoxAddr
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

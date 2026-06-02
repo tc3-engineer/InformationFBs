@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_SoEExecuteCommand_ByDriveRef" Id="{5eb95e1f-fbcb-5496-88b1-f4fdd362db44}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_SoEExecuteCommand_ByDriveRef
+VAR
+    fbExecuteCommand : FB_SoEExecuteCommand_ByDriveRef; // SoE 命令执行 FB 实例
+    rtrigExec        : R_TRIG; // 把 bExecReq 转成单次上升沿
+    stPlcDriveRef    : ST_PlcDriveRef; // 链接到 System Manager 的驱动器过程映像
+    stDriveRef       : ST_DriveRef; // 解析出的驱动器引用
+    bInit            : BOOL := TRUE; // 等过程映像就绪再放行
+    nCmdIdn          : WORD; // 目标命令 IDN（P_0_IDN + 160 = P-0-0160）
+    bExecReq         : BOOL := FALSE; // 在线置 TRUE 触发一次命令
+    bExecBusy        : BOOL; // 命令执行中
+    bExecError       : BOOL; // 命令传输出错
+    iAdsErr          : UINT; // ADS 错误码
+    iSercosErr       : UINT; // Sercos 错误码
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：运行期间需触发 AX5000 的某个过程命令（如重新换相检测、参数固化到 EEPROM、
+//       归零等），由 PLC 程序按流程自动下发，而非在调试器里手动点。
+//
+// 价值：把"按 IDN 下发 Sercos 过程命令 + 异步状态机 + 超时"封装成一次上升沿调用，
+//       业务侧只提供命令 IDN（用 P_0_IDN/S_0_IDN 基址拼）和触发信号。
+//
+// 验证步骤：
+//   1. 引用 Tc2_Drive 库
+//   2. System Manager 里把某 AX5000 SoE 从站过程映像链接到 stPlcDriveRef
+//   3. 查驱动器手册确认 nCmdIdn 指向的是一个"可执行命令"且当前状态允许执行
+//   4. 编译、登录、运行；观察 bInit 在过程映像就绪后自动变 FALSE
+//   5. 在线把 bExecReq := TRUE
+//      → bExecBusy 短暂为 TRUE，落下后 bExecError 应为 FALSE 表示命令被接受
+//   6. 若 bExecError = TRUE，读 iSercosErr：常见为"当前状态不允许执行此命令"
+//      或"该 IDN 非命令型"，据此调整前置状态或换 IDN
+// =============================================================================
+
+// 初始化驱动器引用
+IF bInit THEN
+    stDriveRef.sNetId     := F_CreateAmsNetId(stPlcDriveRef.aNetId);
+    stDriveRef.nSlaveAddr := stPlcDriveRef.nSlaveAddr;
+    stDriveRef.nDriveNo   := stPlcDriveRef.nDriveNo;
+    stDriveRef.nDriveType := stPlcDriveRef.nDriveType;
+    IF (stDriveRef.sNetId <> '') AND (stDriveRef.nSlaveAddr <> 0) THEN
+        bInit := FALSE;
+    END_IF;
+END_IF;
+
+// 目标命令 IDN：P-0-0160（厂商参数基址 P_0_IDN + 160）
+nCmdIdn := P_0_IDN + 160;
+
+rtrigExec(CLK := bExecReq);
+
+// 单次调用形式：所有 VAR_INPUT 显式赋值
+fbExecuteCommand(
+    stDriveRef := stDriveRef,
+    nIdn       := nCmdIdn,
+    bExecute   := rtrigExec.Q AND NOT bInit,
+    tTimeout   := DEFAULT_ADS_TIMEOUT,
+    bBusy        => bExecBusy,
+    bError       => bExecError,
+    iAdsErrId    => iAdsErr,
+    iSercosErrId => iSercosErr
+);
+
+IF NOT bExecBusy AND NOT bInit THEN
+    bExecReq := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

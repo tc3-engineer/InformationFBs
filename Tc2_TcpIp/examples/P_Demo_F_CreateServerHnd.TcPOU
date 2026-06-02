@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_F_CreateServerHnd" Id="{a66aa542-e780-514f-811c-5aaa482153b9}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_F_CreateServerHnd
+VAR
+    hServer    : T_HSERVER; // 被本函数初始化的服务器句柄
+    bInit      : BOOL := TRUE; // 初始化标志：必须 TRUE 初值，PLC 启动那一刻 IF 分支跑一次
+    bInitOk    : BOOL; // 函数返回值，FALSE 表示参数非法
+    sLocalAddr : STRING(15) := '0.0.0.0';
+    nLocalPort : UDINT := 200;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：PLC 当 TCP 服务器在 0.0.0.0:200 接 HMI/SCADA，准备用
+//       FB_ServerClientConnection helper FB 自动管理 listen/accept/close。
+//       本例程仅演示初始化 hServer，并验证函数返回 TRUE。
+//
+// 价值：演示 F_CreateServerHnd 的标准用法：bInit 守卫只跑一次，
+//       LISTEN_MODE_CLOSEALL 启动期清理遗留 socket，bInitOk 验输入合法。
+//
+// 验证步骤：
+//   1. 在线观察 bInit 一上电是 TRUE，第一周期跑完 IF 后变 FALSE 永久保持
+//   2. bInitOk 应为 TRUE；改 sLocalAddr := 'not_an_ip' 重启 → bInitOk=FALSE
+//   3. hServer 字段被填入（虽然 PDF 不让动手改，但可只读 monitor）
+//   4. 之后 FB_ServerClientConnection 引用此 hServer 即可工作
+// =============================================================================
+
+// 仅启动一次初始化
+IF bInit THEN
+    bInit := FALSE;
+    bInitOk := F_CreateServerHnd(
+        hServer    := hServer,
+        sSrvNetID  := '',
+        sLocalHost := sLocalAddr,
+        nLocalPort := nLocalPort,
+        nMode      := LISTEN_MODE_CLOSEALL,
+        bEnable    := TRUE
+    );
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

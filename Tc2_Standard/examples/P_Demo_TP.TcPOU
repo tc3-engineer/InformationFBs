@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_TP" Id="{3e56b968-6fa6-5830-8cfb-a921fc882b33}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_TP
+VAR
+    fbValvePulse       : TP; // 脉冲发生器实例：电磁阀定时开
+    bOpenValveReq      : BOOL; // 操作员按钮（在线置 TRUE 触发一次脉冲）
+    tValveOpenWidth    : TIME := T#200MS; // 脉冲宽度 = 200 ms（电磁阀机械寿命约束）
+    bValveCoilEnergize : BOOL; // 电磁阀线圈驱动输出（脉冲）
+    tPulseElapsed      : TIME; // 脉冲已经过时长（监视）
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：脉冲式电磁阀控制。短按"开阀"按钮，发出一次固定 200 ms 的线圈驱动脉冲；
+//       不管按钮按多久，阀都只开 200 ms（电磁阀机械寿命和散热约束）。
+//
+// 价值：1 行 TP 完成"边沿触发、固定宽度、不可重入"完整语义；手写需要约 10 行
+//       上升沿检测+状态保存+输入屏蔽+ET 累加+到点 Q 落+等 IN 回落清零。
+//
+// 验证步骤：
+//   1. PLC 项目 → Add Existing Item (.TcPOU) → 选本文件
+//   2. 引用 Tc2_Standard 库
+//   3. 编译、登录、运行
+//   4. 在线 monitor bValveCoilEnergize 与 tPulseElapsed
+//   5. 在线把 bOpenValveReq 短按（TRUE 然后 FALSE）→ 观察 bValveCoilEnergize
+//      变 TRUE 200ms 后自动回 FALSE，tPulseElapsed 从 0 累加到 200ms
+//   6. 测试不可重触发：在 bValveCoilEnergize 还是 TRUE 的时候再点一次按钮，
+//      pulse 不会重启或延长，依然按原计划在 200ms 结束
+//   7. 测试长按：bOpenValveReq 持续 TRUE 5 秒，bValveCoilEnergize 仍只 TRUE 200ms
+// =============================================================================
+
+fbValvePulse(
+    IN := bOpenValveReq,
+    PT := tValveOpenWidth,
+    Q  => bValveCoilEnergize,
+    ET => tPulseElapsed
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

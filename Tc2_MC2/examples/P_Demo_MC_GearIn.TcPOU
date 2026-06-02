@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_MC_GearIn" Id="{b75844fc-1fe6-5cf3-ace6-7f03bcb056b5}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_MC_GearIn
+VAR
+    fbCouplePusher : MC_GearIn;
+    axisMainRoller : AXIS_REF;
+    axisPusher     : AXIS_REF;
+    rtCoupleTrig   : R_TRIG;
+    bRequestCouple : BOOL := FALSE;
+    bIsCoupled     : BOOL;
+    bCoupleBusy    : BOOL;
+    nErrorID       : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：包装机主滚筒带动料袋前行，推送轴必须以主滚筒 2 倍速度同步把袋子推
+//       出 — 用电子齿轮 RatioNumerator/Denominator = 2/1 严格绑定，保证袋
+//       长一致不受主速度变化影响。
+// 价值：建立耦合后 PLC 不用周期性发推送命令，主滚筒动从轴自动跟。
+// 验证：先用 MC_Halt 把 axisPusher 停住（耦合要求从轴静止）；
+//       bRequestCouple := TRUE → bIsCoupled 立 TRUE；
+//       此时改 axisMainRoller 的速度（外部 MC_MoveVelocity），axisPusher.NcToPlc.ActVelo
+//       应自动 = 主轴速度 × 2。
+//       注意：解耦时（用 MC_GearOut）从轴不会自动停，需另用 MC_Halt(axisPusher) 接着停。
+// =============================================================================
+
+rtCoupleTrig(CLK := bRequestCouple);
+
+fbCouplePusher(
+    Execute          := rtCoupleTrig.Q,
+    RatioNumerator   := 2.0,
+    RatioDenominator := 1,
+    Acceleration     := 0.0,
+    Deceleration     := 0.0,
+    Jerk             := 0.0,
+    Master           := axisMainRoller,
+    Slave            := axisPusher,
+    InGear           => bIsCoupled,
+    Busy             => bCoupleBusy,
+    ErrorID          => nErrorID
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

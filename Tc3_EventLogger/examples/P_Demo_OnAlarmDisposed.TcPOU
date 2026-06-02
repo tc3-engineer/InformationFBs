@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_OnAlarmDisposed" Id="{fdf61d64-8d5f-5e2d-b4d3-57ba47a3fee5}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_OnAlarmDisposed
+VAR
+    fbListener : FB_ListenerBase2; // listener 实例（实际工程使用子类）
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：覆盖（OVERRIDE）OnAlarmDisposed 回调记录事件元数据到内部计数器
+// 价值：事件驱动接收的最小实现
+// 验证：本回调由 EventLogger 在事件发生时自动调用——不能在主程序里手动调用做演示。实际工程：继承 FB_ListenerBase2 后 OVERRIDE 本方法，再让事件触发
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_EventLogger（System → References → Add library）
+//   3. 编译 → 登录 → 运行；按 verify 注释里给出的在线写值操作
+// =============================================================================
+
+// 本方法是 EventLogger 的事件回调，应该在 FB_ListenerBase2 的子类里 OVERRIDE。
+// 这里仅展示在主程序里启动 listener 的代码骨架；具体 OnAlarmDisposed 重写见同名 METHOD。
+// 示例（仅说明）：在子类 FB 里写——
+//   METHOD OnAlarmDisposed : HRESULT
+//   VAR_INPUT
+//       fbEvent : REFERENCE TO FB_TcEvent;
+//   END_VAR
+//   nEventCount := nEventCount + 1;
+//   OnAlarmDisposed := S_OK;
+//
+// 主程序示意：
+fbListener.Execute();
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_Int64Cmp64" Id="{acca402e-ae15-5e17-9396-a70ee4f8455a}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_Int64Cmp64
+VAR
+    liA      : T_LARGE_INTEGER;
+    liB      : T_LARGE_INTEGER;
+    diResult : DINT;
+    bCompare : BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_Utilities.Int64Cmp64 演示程序（FUNCTION，单周期触发）
+// ============================================================
+// 场景：对一组有符号扭矩误差排序。
+// 价值：替代手写有符号比较；一行 DINT 比较一目了然。
+// 验证步骤：
+//   1. 把本 PROGRAM 加到 PlcTask 调用列表
+//   2. 编译 + 登录
+//   3. 在线把 b... 触发位置 TRUE 一个周期
+//   4. 观察输出变量是否符合期望
+// ============================================================
+
+IF bCompare THEN
+    diResult := Int64Cmp64(liA, liB);
+    bCompare := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>
