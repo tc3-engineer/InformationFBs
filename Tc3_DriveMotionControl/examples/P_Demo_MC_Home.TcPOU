@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_MC_Home" Id="{f3ead42a-13a6-5a57-be3c-3c86ed1d86b6}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_MC_Home
+VAR
+    fbHome          : MC_Home;      // 回零(参考运行) FB 实例
+    axisGantry      : AXIS_REF;     // 龙门进给轴轴引用；先在 System Manager 配好
+    rtStartHoming   : R_TRIG;       // 回零请求转上升沿
+    bStartHoming    : BOOL := FALSE; // 在线写 TRUE 启动一次回零
+    eHomingMode     : MC_HomingMode := MC_DefaultHoming; // 标准回零(找参考凸轮)
+    bHomeDone       : BOOL;         // Done：已标定且运动完成
+    bHomeBusy       : BOOL;
+    bHomeAborted    : BOOL;         // CommandAborted：回零被打断
+    bHomeError      : BOOL;
+    nHomeErrorID    : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：龙门/直线进给轴每次开机要做标准回零(MC_DefaultHoming)：轴按设定方向去找
+//       参考凸轮，找到后同步到凸轮边沿，最后把参考点标定为参考位置(本例用默认的
+//       DEFAULT_HOME_POSITION，即 System Manager 里配的回零参考位置)。回零让逻辑
+//       坐标与机械对齐，是后续所有绝对定位(MC_MoveAbsolute)的前提。
+//
+// 价值：1) 不必自己写"找凸轮→同步边沿→标定"的多阶段回零状态机
+//       2) 不必处理"运动中标定+制动距离"的细节，标定精确
+//       3) HomingMode 一个枚举覆盖默认/直接设位置/撞挡块/强制/复位标定五种
+//
+// 验证步骤：
+//   1. System Manager 配好 NC 轴、回零参数及参考凸轮数字输入，Link 给 axisGantry
+//   2. 引用 Tc3_DriveMotionControl 库；先用 MC_Power 给轴使能
+//   3. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   4. 编译登录运行
+//   5. 在线把 bStartHoming 写 TRUE → bHomeBusy 置 TRUE，轴开始找凸轮运动；
+//      回零完成后 bHomeDone 置 TRUE，axisGantry.NcToPlc.ActPos 接近参考位置
+//   6. 注意：轴不会精确停在 0(差一个制动距离)，但标定是精确的，属正常现象
+//   7. 若 bHomeError = TRUE，看 nHomeErrorID，检查参考凸轮接线/驱动参数/是否已使能
+//   8. 不要用 Active 判完成(PDF 标注当前未实现)，用 Done
+// =============================================================================
+
+// 回零请求转上升沿：MC_Home 是 Execute 边沿触发
+rtStartHoming(CLK := bStartHoming);
+
+// 单次调用：Position 用默认 DEFAULT_HOME_POSITION；Axis 是 VAR_IN_OUT 用 :=
+fbHome(
+    Execute        := rtStartHoming.Q,
+    Position       := DEFAULT_HOME_POSITION,
+    HomingMode     := eHomingMode,
+    Axis           := axisGantry,
+    Done           => bHomeDone,
+    Busy           => bHomeBusy,
+    CommandAborted => bHomeAborted,
+    Error          => bHomeError,
+    ErrorID        => nHomeErrorID
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

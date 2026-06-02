@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_MC_MoveAbsolute" Id="{2b4443b2-a8c5-55fe-8e6d-4a9f79f0a174}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_MC_MoveAbsolute
+VAR
+    fbMoveAbs       : MC_MoveAbsolute; // 绝对定位 FB 实例
+    axisFeed        : AXIS_REF;        // 进给轴轴引用；先在 System Manager 配好
+    rtStartMove     : R_TRIG;          // 启动信号转上升沿，避免 Execute 一直高的误用
+    bStartMove      : BOOL := FALSE;   // 在线写 TRUE 触发一次绝对定位
+    lrTargetPos     : LREAL := 250.0;  // 加工绝对坐标 (mm)
+    lrMoveVelo      : LREAL := 300.0;  // 行进速度 (mm/s)，本库要求 >0
+    bMoveDone       : BOOL;            // Done：到达目标位置
+    bMoveBusy       : BOOL;
+    bMoveAborted    : BOOL;            // CommandAborted：被抢占/被停止
+    bMoveError      : BOOL;
+    nMoveErrorID    : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：进给轴把工件从取料位移动到加工绝对坐标 250.0 mm。这是简单机械里最高频的
+//       运动原语——"开到一个已知坐标"。绝对定位多次到同一坐标不累积误差。
+//
+// 价值：1) 不必拼 NC 通道命令(NCTOPLC/PLCTONC 字段)、不必自己监视整段行程到位
+//       2) Done/Busy/Error 三态符合 PLCopen 标准，便于上层状态机消费
+//       3) 绝对坐标语义，多次定位不漂移(优于相对定位累加)
+//
+// 验证步骤：
+//   1. System Manager 配好 NC 轴并 Link 给 axisFeed，引用 Tc3_DriveMotionControl
+//   2. 先用 MC_Power 给轴使能(本 demo 假设已使能)
+//   3. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   4. 编译登录运行
+//   5. 在线把 bStartMove 写 TRUE → bMoveBusy 立刻 TRUE，axisFeed.NcToPlc.ActPos
+//      从当前位一路移动到 ≈250.0，bMoveDone 置 TRUE
+//   6. 把 bStartMove 拉回 FALSE 再 TRUE → 再触发一次(验证边沿语义)
+//   7. 若 bMoveError = TRUE，检查 Velocity/Acceleration/Deceleration 均 >0、
+//      轴是否已使能、目标是否在软限位内；看 nMoveErrorID
+// 注意：本库 MC_MoveAbsolute 无 BufferMode，可选参数走 Options : ST_MoveOptions
+// =============================================================================
+
+// 启动信号转上升沿：MC_MoveAbsolute 是 Execute 边沿触发
+rtStartMove(CLK := bStartMove);
+
+// 单次调用：本库要求 Acceleration/Deceleration >0；Axis 是 VAR_IN_OUT 用 :=
+fbMoveAbs(
+    Execute        := rtStartMove.Q,
+    Position       := lrTargetPos,
+    Velocity       := lrMoveVelo,
+    Acceleration   := 3000.0,
+    Deceleration   := 3000.0,
+    Axis           := axisFeed,
+    Done           => bMoveDone,
+    Busy           => bMoveBusy,
+    CommandAborted => bMoveAborted,
+    Error          => bMoveError,
+    ErrorID        => nMoveErrorID
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

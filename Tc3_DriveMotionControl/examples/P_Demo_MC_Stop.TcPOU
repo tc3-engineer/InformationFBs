@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_MC_Stop" Id="{82a9d051-23d9-54ee-881f-aabccc53a6b0}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_MC_Stop
+VAR
+    fbStop          : MC_Stop;      // 硬停车+锁轴 FB 实例
+    fbResetAxis     : MC_Reset;     // 解锁用的复位 FB 实例
+    axisLoader      : AXIS_REF;     // 上料轴轴引用；先在 System Manager 配好
+    rtOperatorReset : R_TRIG;       // 复位按钮转上升沿
+    bFaultDetected  : BOOL := FALSE; // 在线写 TRUE 模拟检测到卡死(故障期间电平保持)
+    bOperatorAck    : BOOL := FALSE; // 在线写 TRUE 模拟操作员按复位按钮
+    bStopDone       : BOOL;         // Done：已停下静止(但仍锁定)
+    bStopBusy       : BOOL;         // Busy：只要轴仍锁就保持 TRUE
+    bStopAborted    : BOOL;
+    bStopError      : BOOL;
+    nStopErrorID    : UDINT;
+    bResetDone      : BOOL;         // 复位完成=解锁
+    nResetErrorID   : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：上料机构检测到工件卡死,必须立刻停轴并"锁住",防止操作员或上位机在故障未
+//       确认时误重启。MC_Stop 减速停车的同时锁定轴,锁定期间拒绝任何运动命令;只有
+//       操作员排障后撤销故障信号、等 Busy 落 FALSE、再 MC_Reset 才能解锁重开。
+//
+// 价值：1) 停车+上锁一体完成,不必自己维护"锁状态"全局变量并在每条 Move 前判断
+//       2) 受控减速(优于落使能的自由滑行),且锁定防误启动
+//       3) 与 MC_Reset 配套形成标准的"紧急停→排障→复位→重开"流程
+//
+// 验证步骤：
+//   1. System Manager 配好 NC 轴并 Link 给 axisLoader,引用 Tc3_DriveMotionControl
+//   2. 先用 MC_Power 使能并让轴运动起来(如 MC_MoveVelocity)
+//   3. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   4. 编译登录运行
+//   5. 在线把 bFaultDetected 写 TRUE → 轴减速停下,bStopDone 置 TRUE,但 bStopBusy
+//      仍 TRUE(轴被锁);此时对轴发别的 Move 会报错(被锁)
+//   6. 排障后把 bFaultDetected 拉回 FALSE → 几个周期后 bStopBusy 变 FALSE(轴释放)
+//   7. 写 bOperatorAck := TRUE 触发 MC_Reset → bResetDone 置 TRUE,轴解锁可重开
+//   8. 注意:bStopDone=TRUE 不代表解锁;FB 必须周期调用直到 bStopBusy=FALSE
+// 安全提示：本 FB 是软件级业务紧急停,不能替代硬件 E-Stop/STO(功能安全走 Safety PLC)
+// =============================================================================
+
+// MC_Stop：Execute 高电平期间锁轴。故障期间持续给 Execute(电平),停稳后撤销才进入解锁
+// Axis 是 VAR_IN_OUT 用 :=;本 FB 必须周期调用直到 Busy=FALSE,否则 NC 状态会卡住
+fbStop(
+    Execute        := bFaultDetected,
+    Deceleration   := 5000.0,
+    Axis           := axisLoader,
+    Done           => bStopDone,
+    Busy           => bStopBusy,
+    CommandAborted => bStopAborted,
+    Error          => bStopError,
+    ErrorID        => nStopErrorID
+);
+
+// 复位按钮转上升沿：MC_Reset 解除 MC_Stop 造成的锁定(应在 bStopBusy 落 FALSE 后再按)
+rtOperatorReset(CLK := bOperatorAck);
+fbResetAxis(
+    Execute := rtOperatorReset.Q,
+    Axis    := axisLoader,
+    Done    => bResetDone,
+    ErrorID => nResetErrorID
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

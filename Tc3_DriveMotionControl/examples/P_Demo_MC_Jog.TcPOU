@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_MC_Jog" Id="{a641041b-7117-5509-9c1c-8be673fda003}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_MC_Jog
+VAR
+    fbJog           : MC_Jog;       // 手动寸动 FB 实例
+    axisFeed        : AXIS_REF;     // 进给轴轴引用；先在 System Manager 配好
+    bJogFwdButton   : BOOL := FALSE; // 在线写 TRUE 模拟按"正向点动"键(上升沿触发)
+    bJogBwdButton   : BOOL := FALSE; // 在线写 TRUE 模拟按"反向点动"键(上升沿触发)
+    lrJogVelocity   : LREAL := 20.0; // 慢速调试速度 (mm/s)，必须 >0
+    bJogDone        : BOOL;         // Done：一次寸动完成
+    bJogBusy        : BOOL;         // Busy=TRUE 期间锁新边沿(含反向键)
+    bJogAborted     : BOOL;         // CommandAborted：被 MC_Stop 等打断
+    bJogError       : BOOL;
+    nJogErrorID     : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：设备调试/维护时，操作员用 HMI 或面板上的"正向/反向"点动按钮手动挪轴(对刀、
+//       找正、清障)。MC_Jog 让两个按键信号直接驱动轴正/反向移动，方向互锁、运动中
+//       锁信号沿，是产线调试最常用的手动运动原语。
+//
+// 价值：1) 不必用 MC_MoveRelative 自己算移动距离、自己做方向互锁
+//       2) 方向互锁与"运动中忽略新边沿"内建，快速乱按不会让轴抖
+//       3) 两个方向输入可直接接按钮信号，接线/逻辑都简单
+//
+// 验证步骤：
+//   1. System Manager 配好 NC 轴并 Link 给 axisFeed，引用 Tc3_DriveMotionControl
+//   2. 先用 MC_Power 给轴使能
+//   3. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   4. 编译登录运行
+//   5. 在线把 bJogFwdButton 写 TRUE → bJogBusy 置 TRUE，axisFeed.NcToPlc.ActPos
+//      沿正方向增大；运动期间再写 bJogBwdButton 会被忽略(运动中锁沿)
+//   6. 运动结束 bJogBusy 回 FALSE 后，写 bJogBwdButton := TRUE 可反向寸动
+//   7. 注意 JogForward/JogBackwards 是上升沿触发，不是"按住走松开停"的纯电平
+//   8. 若 bJogError = TRUE，检查 Velocity>0、轴是否已使能、是否超软限位
+// =============================================================================
+
+// 单次调用：JogForward/JogBackwards 走上升沿(电平直连即可,FB 内部按沿处理)
+// Axis 是 VAR_IN_OUT 用 := 传引用
+fbJog(
+    JogForward     := bJogFwdButton,
+    JogBackwards   := bJogBwdButton,
+    Velocity       := lrJogVelocity,
+    Acceleration   := 200.0,
+    Deceleration   := 200.0,
+    Axis           := axisFeed,
+    Done           => bJogDone,
+    Busy           => bJogBusy,
+    CommandAborted => bJogAborted,
+    Error          => bJogError,
+    ErrorID        => nJogErrorID
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_MC_Reset" Id="{7459a686-267c-50f7-8ede-6057d67bc903}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_MC_Reset
+VAR
+    fbResetAxis     : MC_Reset;     // 轴复位 FB 实例
+    axisFeed        : AXIS_REF;     // 进给轴轴引用；必须先在 System Manager 配好
+    rtOperatorReset : R_TRIG;       // 把复位按钮电平转上升沿，避免一直拉高反复复位
+    bOperatorAck    : BOOL := FALSE; // 在线写 TRUE 模拟操作员按复位按钮
+    bResetDone      : BOOL;         // Done：复位成功
+    bResetBusy      : BOOL;
+    bResetError     : BOOL;
+    nResetErrorID   : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：进给轴运行中跟随误差超限触发故障(Errorstop)。操作员到现场排除机械卡阻
+//       后按"复位"按钮，PLC 调用 MC_Reset 把轴从故障拉回 Standstill，随后才能
+//       重新 MC_Power 使能继续生产。这是产线故障恢复的标准第一步。
+//
+// 价值：1) 不必手动拼 NC 轴控制字里的复位位、不必自己做复位状态握手
+//       2) Done 输出明确告知复位完成，便于串接"复位→使能"恢复链
+//       3) 多数情况下连带复位所连驱动器，少一个手动清告警步骤
+//
+// 验证步骤：
+//   1. System Manager 配好 NC 轴并 Link 给 axisFeed，引用 Tc3_DriveMotionControl
+//   2. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   3. 编译登录运行；先人为制造一个轴故障（如断使能后强制运动）让轴进 Errorstop
+//   4. 在线把 bOperatorAck 写 TRUE → R_TRIG 产生一个上升沿 → 应看到 bResetBusy
+//      短暂 TRUE 然后 bResetDone 置 TRUE，轴回到 Standstill
+//   5. 把 bOperatorAck 拉回 FALSE 再 TRUE 可再复位一次（验证边沿语义）
+//   6. 若 bResetError = TRUE，说明故障根因未排除或驱动需单独清告警，看 nResetErrorID
+// =============================================================================
+
+// 复位按钮信号转上升沿：MC_Reset 是 Execute 边沿触发，拉高不会反复复位
+rtOperatorReset(CLK := bOperatorAck);
+
+// 单次调用：Execute 走上升沿；Axis 是 VAR_IN_OUT 用 := 传引用
+fbResetAxis(
+    Execute := rtOperatorReset.Q,
+    Axis    := axisFeed,
+    Done    => bResetDone,
+    Busy    => bResetBusy,
+    Error   => bResetError,
+    ErrorID => nResetErrorID
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

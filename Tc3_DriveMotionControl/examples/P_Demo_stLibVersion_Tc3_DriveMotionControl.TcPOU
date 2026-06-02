@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_stLibVersion_Tc3_DriveMotionControl" Id="{8d435aee-b835-5530-8480-58c74a2a7877}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_stLibVersion_Tc3_DriveMotionControl
+VAR
+    bDmcVersionOK   : BOOL;        // 比对结果：≥1.5.5 即 TRUE
+    sCurrentVersion : STRING(20);  // 当前链接的库版本字符串
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：开机自检 — 验证当前链接的 Tc3_DriveMotionControl 库 ≥ 1.5.5 才允许后续运动使能。
+//       防止现场库版本错乱(测试机/量产机不一致、调试改版本忘更新)导致隐式行为差异。
+// 价值：一行代码避免"现场库版本错乱"问题;编译期注入常量,运行时近乎零开销。
+// 验证：登录后看 bDmcVersionOK 是否 TRUE;sCurrentVersion 是否显示 "1.5.5"。
+//       导入:右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件。
+// =============================================================================
+
+// F_CmpLibVersion 在 Tc2_System 库;第 2~4 个数参为 major/minor/build,第 5 个为比较符
+// 编译期注入版本常量,运行时 O(1)
+bDmcVersionOK   := F_CmpLibVersion(stLibVersion_Tc3_DriveMotionControl, 1, 5, 5, '>=');
+sCurrentVersion := stLibVersion_Tc3_DriveMotionControl.sVersion;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

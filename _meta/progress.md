@@ -765,3 +765,17 @@
 2026-06-02T00:00:00Z | Tc2_Filter     | function_blocks                         | FB_FTR_PT3                               | verified | PDF + InfoSys cross-verified
 2026-06-02T00:00:00Z | Tc2_Filter     | function_blocks                         | FB_FTR_PTn                               | verified | PDF + InfoSys cross-verified
 2026-06-02T00:00:00Z | Tc2_Filter     | function_blocks                         | FB_FTR_PTt                               | verified | PDF + InfoSys cross-verified
+2026-06-02T00:00:00Z | Tc3_DriveMotionControl | axis_functions                  | MC_Power                                 | verified | PDF + InfoSys cross-verified
+2026-06-02T00:00:00Z | Tc3_DriveMotionControl | axis_functions                  | MC_Reset                                 | verified | PDF + InfoSys cross-verified
+2026-06-02T00:00:00Z | Tc3_DriveMotionControl | axis_functions                  | MC_SetPosition                           | verified | PDF + InfoSys cross-verified
+2026-06-02T00:00:00Z | Tc3_DriveMotionControl | homing                          | MC_Home                                  | verified | PDF + InfoSys cross-verified
+2026-06-02T00:00:00Z | Tc3_DriveMotionControl | library_version                 | stLibVersion_Tc3_DriveMotionControl      | verified | PDF + InfoSys cross-verified
+2026-06-02T00:00:00Z | Tc3_DriveMotionControl | manual_motion                   | MC_Jog                                   | verified | PDF + InfoSys cross-verified
+2026-06-02T00:00:00Z | Tc3_DriveMotionControl | point_to_point_motion           | MC_Halt                                  | verified | PDF + InfoSys cross-verified
+2026-06-02T00:00:00Z | Tc3_DriveMotionControl | point_to_point_motion           | MC_MoveAbsolute                          | verified | PDF + InfoSys cross-verified
+2026-06-02T00:00:00Z | Tc3_DriveMotionControl | point_to_point_motion           | MC_MoveModulo                            | verified | PDF + InfoSys cross-verified
+2026-06-02T00:00:00Z | Tc3_DriveMotionControl | point_to_point_motion           | MC_MoveRelative                          | verified | PDF + InfoSys cross-verified
+2026-06-02T00:00:00Z | Tc3_DriveMotionControl | point_to_point_motion           | MC_MoveVelocity                          | verified | PDF + InfoSys cross-verified
+2026-06-02T00:00:00Z | Tc3_DriveMotionControl | point_to_point_motion           | MC_Stop                                  | verified | PDF + InfoSys cross-verified
+2026-06-02T00:00:00Z | Tc3_DriveMotionControl | touch_probe                     | MC_AbortTrigger                          | verified | PDF + InfoSys cross-verified
+2026-06-02T00:00:00Z | Tc3_DriveMotionControl | touch_probe                     | MC_TouchProbe                            | verified | PDF + InfoSys cross-verified
