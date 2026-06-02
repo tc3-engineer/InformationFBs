@@ -628,3 +628,19 @@
 2026-05-25T00:00:00Z | Tc2_MC2_Drive  | el72xx_coe                               | FB_CoEEL72xxSetPositionOffset            | verified | PDF + InfoSys cross-verified
 2026-05-25T00:00:00Z | Tc2_MC2_Drive  | el72xx_coe                               | FB_CoEEL72xxDeletePositionOffset         | verified | PDF + InfoSys cross-verified
 2026-05-25T00:00:00Z | Tc2_MC2_Drive  | soe_parameter_access                     | S_0_IDNs                                 | verified | PDF single-source (not-on-infosys)
+2026-05-25T00:00:00Z | Tc3_MC2_AdvancedHoming | finalizing_functions             | MC_FinishHoming                          | verified | PDF + InfoSys cross-verified
+2026-05-25T00:00:00Z | Tc3_MC2_AdvancedHoming | finalizing_functions             | MC_HomeDirect                            | verified | PDF + InfoSys cross-verified
+2026-05-25T00:00:00Z | Tc3_MC2_AdvancedHoming | finalizing_functions             | MC_AbortHoming                           | verified | PDF + InfoSys cross-verified
+2026-05-25T00:00:00Z | Tc3_MC2_AdvancedHoming | referencing_functions_passive    | MC_AbortPassiveHoming                    | verified | PDF + InfoSys cross-verified
+2026-05-25T00:00:00Z | Tc3_MC2_AdvancedHoming | referencing_functions_passive    | MC_StepReferenceFlyingRefPulse           | verified | PDF + InfoSys cross-verified
+2026-05-25T00:00:00Z | Tc3_MC2_AdvancedHoming | referencing_functions_passive    | MC_StepReferenceFlyingSwitch             | verified | PDF + InfoSys cross-verified
+2026-05-25T00:00:00Z | Tc3_MC2_AdvancedHoming | step_functions                   | MC_StepAbsoluteSwitch                    | verified | PDF + InfoSys cross-verified
+2026-05-25T00:00:00Z | Tc3_MC2_AdvancedHoming | step_functions                   | MC_StepAbsoluteSwitchDetection           | verified | PDF + InfoSys cross-verified
+2026-05-25T00:00:00Z | Tc3_MC2_AdvancedHoming | step_functions                   | MC_StepBlock                             | verified | PDF + InfoSys cross-verified
+2026-05-25T00:00:00Z | Tc3_MC2_AdvancedHoming | step_functions                   | MC_StepBlockDetection                    | verified | PDF + InfoSys cross-verified
+2026-05-25T00:00:00Z | Tc3_MC2_AdvancedHoming | step_functions                   | MC_StepBlockLagBased                     | verified | PDF + InfoSys cross-verified
+2026-05-25T00:00:00Z | Tc3_MC2_AdvancedHoming | step_functions                   | MC_StepBlockLagBasedDetection            | verified | PDF + InfoSys cross-verified
+2026-05-25T00:00:00Z | Tc3_MC2_AdvancedHoming | step_functions                   | MC_StepLimitSwitch                       | verified | PDF + InfoSys cross-verified
+2026-05-25T00:00:00Z | Tc3_MC2_AdvancedHoming | step_functions                   | MC_StepLimitSwitchDetection              | verified | PDF + InfoSys cross-verified
+2026-05-25T00:00:00Z | Tc3_MC2_AdvancedHoming | step_functions                   | MC_StepReferencePulse                    | verified | PDF + InfoSys cross-verified
+2026-05-25T00:00:00Z | Tc3_MC2_AdvancedHoming | step_functions                   | MC_StepReferencePulseDetection           | verified | PDF + InfoSys cross-verified
