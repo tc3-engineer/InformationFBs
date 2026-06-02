@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project xmlns="http://www.plcopen.org/xml/tc6_0200">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-25T08:00:00"/>
+  <contentHeader name="Tc2_Drive.FB_SoEReset_ByDriveRef Demo" modificationDateTime="2026-05-25T08:00:00">
+    <coordinateInfo>
+      <fbd><scaling x="1" y="1"/></fbd>
+      <ld><scaling x="1" y="1"/></ld>
+      <sfc><scaling x="1" y="1"/></sfc>
+    </coordinateInfo>
+  </contentHeader>
+  <types>
+    <dataTypes/>
+    <pous>
+      <pou name="P_Demo_FB_SoEReset_ByDriveRef" pouType="program">
+        <interface>
+          <localVars>
+            <variable name="fbSoEReset">
+              <type><derived name="FB_SoEReset_ByDriveRef"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">SoE 驱动器复位 FB 实例</xhtml></documentation>
+            </variable>
+            <variable name="rtrigReset">
+              <type><derived name="R_TRIG"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">把 bResetReq 转成单次上升沿</xhtml></documentation>
+            </variable>
+            <variable name="stPlcDriveRef" address="%I*">
+              <type><derived name="ST_PlcDriveRef"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">链接到 System Manager 的驱动器过程映像</xhtml></documentation>
+            </variable>
+            <variable name="stDriveRef">
+              <type><derived name="ST_DriveRef"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">解析出的驱动器引用</xhtml></documentation>
+            </variable>
+            <variable name="bInit">
+              <initialValue><simpleValue value="TRUE"/></initialValue>
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">等过程映像刷上来再放行</xhtml></documentation>
+            </variable>
+            <variable name="bResetReq">
+              <initialValue><simpleValue value="FALSE"/></initialValue>
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">在线置 TRUE 触发一次复位</xhtml></documentation>
+            </variable>
+            <variable name="bResetBusy">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">复位命令执行中</xhtml></documentation>
+            </variable>
+            <variable name="bResetError">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">复位传输出错</xhtml></documentation>
+            </variable>
+            <variable name="iAdsErr">
+              <type><UINT/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">ADS 错误码</xhtml></documentation>
+            </variable>
+            <variable name="iSercosErr">
+              <type><UINT/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">Sercos 错误码</xhtml></documentation>
+            </variable>
+          </localVars>
+        </interface>
+        <body>
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：AX5000 伺服在过流/过温恢复后停在 C1D 故障态。操作员按 HMI "复位"按钮，
+//       PLC 给本 FB 一个 bExecute 上升沿，向 S-0-0099 下发复位命令，把驱动器
+//       从故障态清回待命态，之后才能重新走 enable 流程。
+//
+// 价值：把"向 S-0-0099 写复位 + ADS 异步状态机 + 10 秒超时管理"封装成一次
+//       上升沿触发调用，业务侧只要提供驱动器引用和一个按钮信号。
+//
+// 验证步骤：
+//   1. 引用 Tc2_Drive 库
+//   2. System Manager 里把某 AX5000 SoE 从站的过程映像链接到 stPlcDriveRef
+//   3. 编译、登录、运行；观察 bInit 在过程映像就绪后自动变 FALSE
+//   4. 让驱动器进入故障态（如触发安全门停机后再复位条件满足）
+//   5. 在线把 bResetReq := TRUE
+//      → bResetBusy 短暂为 TRUE，落下后 bResetError 应为 FALSE 表示复位成功
+//      → 驱动器 C1D 故障应被清除
+//   6. 若 bResetError = TRUE，读 iAdsErr / iSercosErr 定位通讯或驱动侧错误
+// =============================================================================
+
+// 初始化：把过程映像里的 NetID 字节数组转字符串，逐字段填入 stDriveRef
+IF bInit THEN
+    stDriveRef.sNetId     := F_CreateAmsNetId(stPlcDriveRef.aNetId);
+    stDriveRef.nSlaveAddr := stPlcDriveRef.nSlaveAddr;
+    stDriveRef.nDriveNo   := stPlcDriveRef.nDriveNo;
+    stDriveRef.nDriveType := stPlcDriveRef.nDriveType;
+    IF (stDriveRef.sNetId &lt;&gt; '') AND (stDriveRef.nSlaveAddr &lt;&gt; 0) THEN
+        bInit := FALSE;
+    END_IF;
+END_IF;
+
+rtrigReset(CLK := bResetReq);
+
+// 单次调用形式：所有 VAR_INPUT 显式赋值；tTimeout 必须给足 10 秒
+fbSoEReset(
+    stDriveRef := stDriveRef,
+    bExecute   := rtrigReset.Q AND NOT bInit,
+    tTimeout   := T#10S,
+    bBusy        =&gt; bResetBusy,
+    bError       =&gt; bResetError,
+    iAdsErrId    =&gt; iAdsErr,
+    iSercosErrId =&gt; iSercosErr
+);
+
+// 命令完成后收尾：bBusy 落下且请求标志还在，则清请求让 FB 复位
+IF NOT bResetBusy AND NOT bInit THEN
+    bResetReq := FALSE;
+END_IF;
+</xhtml></ST>
+        </body>
+      </pou>
+    </pous>
+  </types>
+  <instances><configurations/></instances>
+</project>

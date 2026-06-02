@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project xmlns="http://www.plcopen.org/xml/tc6_0200">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-25T08:00:00"/>
+  <contentHeader name="Tc2_Drive.FB_CoEDriveEnable Demo" modificationDateTime="2026-05-25T08:00:00">
+    <coordinateInfo>
+      <fbd><scaling x="1" y="1"/></fbd>
+      <ld><scaling x="1" y="1"/></ld>
+      <sfc><scaling x="1" y="1"/></sfc>
+    </coordinateInfo>
+  </contentHeader>
+  <types>
+    <dataTypes/>
+    <pous>
+      <pou name="P_Demo_FB_CoEDriveEnable" pouType="program">
+        <interface>
+          <localVars>
+            <variable name="fbDriveEnable">
+              <type><derived name="FB_CoEDriveEnable"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">CoE 驱动器使能 FB 实例</xhtml></documentation>
+            </variable>
+            <variable name="stCoEDriveIo">
+              <type><derived name="ST_CoeDriveIoInterface"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">在 System Manager 链接 CoE 驱动器 PDO</xhtml></documentation>
+            </variable>
+            <variable name="rtrigReset">
+              <type><derived name="R_TRIG"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">把 bResetReq 转成复位脉冲</xhtml></documentation>
+            </variable>
+            <variable name="bEnableDrive">
+              <initialValue><simpleValue value="FALSE"/></initialValue>
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">在线置 TRUE 推动使能状态机（电平型）</xhtml></documentation>
+            </variable>
+            <variable name="bResetReq">
+              <initialValue><simpleValue value="FALSE"/></initialValue>
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">故障时在线置 TRUE 复位一次</xhtml></documentation>
+            </variable>
+            <variable name="bDriveReady">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">到达运行使能为 TRUE</xhtml></documentation>
+            </variable>
+            <variable name="bDriveFault">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">驱动器 Fault 态</xhtml></documentation>
+            </variable>
+          </localVars>
+        </interface>
+        <body>
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：用 CoE 伺服做简单速度控制，不引入完整 NC 配置，直接由 PLC 使能并喂速度
+//       （输送带/风机/卷绕等单纯调速场合）。本例程先把驱动器使能到运行态。
+//
+// 价值：把 CiA 402 状态机（Switch on disabled → Ready → Switched on →
+//       Operation enabled）的逐步控制字操作封装成一个 bEnable 布尔，业务侧不必
+//       手写状态字解析和控制字时序。
+//
+// 验证步骤：
+//   1. 引用 Tc2_Drive 库
+//   2. System Manager 里把 CoE 驱动器的 PDO（控制字/状态字/设定值/实际值）链接
+//      到 stCoEDriveIo 各字段（VAR_IN_OUT 必须正确链接，否则 bDriveReady 上不来）
+//   3. 编译、登录、运行
+//   4. 在线置 bEnableDrive := TRUE（电平型，要保持）
+//      → 状态机逐步推进，几个周期后 bDriveReady 变 TRUE（运行使能）
+//   5. 若 bDriveFault = TRUE，在线置 bResetReq := TRUE 复位一次（控制字 Bit 7）
+//      → 故障清除后重新使能，bDriveReady 再次变 TRUE
+//   6. 置 bEnableDrive := FALSE 验证去使能：bDriveReady 应回 FALSE
+//   7. 之后可配合 FB_CoEDriveMoveVelocity 在 bDriveReady=TRUE 时喂速度
+// =============================================================================
+
+// bReset 取上升沿，避免长期置位
+rtrigReset(CLK := bResetReq);
+
+// 单次调用形式：VAR_IN_OUT stCoeDriveIoInterface 必传；每周期调用推进状态机
+fbDriveEnable(
+    bEnable := bEnableDrive,
+    bReset  := rtrigReset.Q,
+    stCoeDriveIoInterface := stCoEDriveIo,
+    bStatus     =&gt; bDriveReady,
+    bDriveError =&gt; bDriveFault
+);
+
+// 复位脉冲用完即清
+IF NOT bDriveFault THEN
+    bResetReq := FALSE;
+END_IF;
+</xhtml></ST>
+        </body>
+      </pou>
+    </pous>
+  </types>
+  <instances><configurations/></instances>
+</project>

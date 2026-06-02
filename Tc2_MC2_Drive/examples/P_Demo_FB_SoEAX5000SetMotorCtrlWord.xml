@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project xmlns="http://www.plcopen.org/xml/tc6_0200">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-21T00:00:00"/>
+  <contentHeader name="Tc2_MC2_Drive.FB_SoEAX5000SetMotorCtrlWord Demo" modificationDateTime="2026-05-21T00:00:00">
+    <coordinateInfo>
+      <fbd><scaling x="1" y="1"/></fbd>
+      <ld><scaling x="1" y="1"/></ld>
+      <sfc><scaling x="1" y="1"/></sfc>
+    </coordinateInfo>
+  </contentHeader>
+  <types>
+    <dataTypes/>
+    <pous>
+      <pou name="P_Demo_FB_SoEAX5000SetMotorCtrlWord" pouType="program">
+        <interface>
+          <localVars>
+            <variable name="fbSetMotorCtrlWord">
+              <type><derived name="FB_SoEAX5000SetMotorCtrlWord"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">设 AX5000 电机控制字 FB 实例</xhtml></documentation>
+            </variable>
+            <variable name="axisServo">
+              <type><derived name="AXIS_REF"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">AX5000 伺服轴轴引用；垂直轴松闸前务必有机械支撑</xhtml></documentation>
+            </variable>
+            <variable name="rtCtrlTrig">
+              <type><derived name="R_TRIG"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">把电平转上升沿</xhtml></documentation>
+            </variable>
+            <variable name="bSetCtrlWordReq">
+              <initialValue><simpleValue value="FALSE"/></initialValue>
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">在线写 TRUE 触发一次设置</xhtml></documentation>
+            </variable>
+            <variable name="bForceLock">
+              <initialValue><simpleValue value="FALSE"/></initialValue>
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">抱死抱闸（与 ForceUnlock 同置时本位优先）</xhtml></documentation>
+            </variable>
+            <variable name="bForceUnlock">
+              <initialValue><simpleValue value="FALSE"/></initialValue>
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">松开抱闸（垂直轴高危）；两位都 FALSE 恢复自动联动</xhtml></documentation>
+            </variable>
+            <variable name="bCtrlBusy"><type><BOOL/></type></variable>
+            <variable name="bCtrlError"><type><BOOL/></type></variable>
+            <variable name="nCtrlAdsErr"><type><UINT/></type></variable>
+            <variable name="nCtrlSercosErr"><type><UINT/></type></variable>
+          </localVars>
+        </interface>
+        <body>
+          <ST><xhtml xmlns="http://www.w3.org/1999/xhtml">// =============================================================================
+// 场景：AX5000 驱动的轴维修，手动松开抱闸（ForceUnlock）用人力盘动电机做
+//       机械对位。对位完成后把 ForceLock 和 ForceUnlock 都清掉，恢复抱闸随
+//       使能自动联动。
+//
+// 价值：1) 用两个独立 Bit 精确控制 AX5000 抱闸，使能与抱闸解耦
+//       2) 比直接写 P-0-0096 省去自己拼 Bit
+//       3) ForceLock 优先级规则明确，行为可预期
+//
+// !! 安全：ForceUnlock 会让垂直轴失去机械保持、可能下坠。松闸前必须有机械
+//          支撑并完成风险评估。用完务必把两个 Force 位都清掉恢复自动。
+//
+// 验证步骤：
+//   1. System Manager 配好 AX5000 NC 轴并 Link 给 axisServo，引用 Tc2_MC2_Drive
+//   2. Import PLCopenXML 选本文件，加进 PlcTask，编译登录
+//   3. 确认有机械支撑后，在线置 bForceUnlock := TRUE
+//   4. 写 bSetCtrlWordReq := TRUE → bCtrlBusy 置 TRUE，落回 FALSE 且无 Error 即成功
+//   5. 盘动电机对位后，把 bForceLock 和 bForceUnlock 都清 FALSE
+//   6. 再写 bSetCtrlWordReq 一次上升沿，把抱闸交回自动联动
+//   7. 若 bCtrlError = TRUE：看 nCtrlAdsErr（通信），nCtrlSercosErr（设备/参数）
+// =============================================================================
+
+// 用 R_TRIG 把"持续按住的 TRUE"转成真正的上升沿
+rtCtrlTrig(CLK := bSetCtrlWordReq);
+
+// 单次调用：两个 Force 位来自在线设置；Axis 是 VAR_IN_OUT 必传
+// 本 FB 无 Done，靠 Busy 落回 FALSE 且 Error=FALSE 判成功
+fbSetMotorCtrlWord(
+    NetId       := '',
+    Execute     := rtCtrlTrig.Q,
+    Timeout     := DEFAULT_ADS_TIMEOUT,
+    ForceLock   := bForceLock,
+    ForceUnlock := bForceUnlock,
+    Axis        := axisServo,
+    Busy        =&gt; bCtrlBusy,
+    Error       =&gt; bCtrlError,
+    AdsErrId    =&gt; nCtrlAdsErr,
+    SercosErrId =&gt; nCtrlSercosErr
+);
+</xhtml></ST>
+        </body>
+      </pou>
+    </pous>
+  </types>
+  <instances><configurations/></instances>
+</project>

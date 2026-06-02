@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project xmlns="http://www.plcopen.org/xml/tc6_0200">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-25T00:00:00"/>
+  <contentHeader name="Tc2_NcDrive.F_GetVersionTcNcDrive Demo" modificationDateTime="2026-05-25T00:00:00">
+    <coordinateInfo>
+      <fbd><scaling x="1" y="1"/></fbd>
+      <ld><scaling x="1" y="1"/></ld>
+      <sfc><scaling x="1" y="1"/></sfc>
+    </coordinateInfo>
+  </contentHeader>
+  <types>
+    <dataTypes/>
+    <pous>
+      <pou name="P_Demo_F_GetVersionTcNcDrive" pouType="program">
+        <interface>
+          <localVars>
+            <variable name="iMajor">
+              <type><UINT/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">监视：主版本号</xhtml></documentation>
+            </variable>
+            <variable name="iMinor">
+              <type><UINT/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">监视：次版本号</xhtml></documentation>
+            </variable>
+            <variable name="iRevision">
+              <type><UINT/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">监视：修订号</xhtml></documentation>
+            </variable>
+            <variable name="bReadOnce">
+              <type><BOOL/></type>
+              <initialValue><simpleValue value="TRUE"/></initialValue>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">只在首周期读一次</xhtml></documentation>
+            </variable>
+          </localVars>
+        </interface>
+        <body>
+          <ST>
+            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
+// Tc2_NcDrive.F_GetVersionTcNcDrive 演示程序
+// ============================================================
+// 场景：上电初始化时把实际链接进工程的 Tc2_NcDrive 库版本读出来，
+//       拼成 "major.minor.revision" 写进诊断日志 / HMI。
+// 价值：运行期即可拿到真实库版本，避免靠人工记忆；可做"低于某版本告警"
+//       的兼容性门槛检查。
+// 验证：登录后观察 iMajor / iMinor / iRevision 在首周期被赋值（应为
+//       1 / 2 / 9，对应库版本 1.2.9），之后 bReadOnce 落为 FALSE。
+// ============================================================
+
+// F_GetVersionTcNcDrive 是纯函数，无副作用，不需要边沿 / Busy。
+// 一次只返回一个分量，故分三次调用拼出完整版本。
+IF bReadOnce THEN
+    iMajor    := F_GetVersionTcNcDrive(nVersionElement := 1);
+    iMinor    := F_GetVersionTcNcDrive(nVersionElement := 2);
+    iRevision := F_GetVersionTcNcDrive(nVersionElement := 3);
+    bReadOnce := FALSE;
+END_IF;
+</xhtml>
+          </ST>
+        </body>
+      </pou>
+    </pous>
+  </types>
+  <instances>
+    <configurations/>
+  </instances>
+</project>

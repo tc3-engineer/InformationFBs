@@ -161,6 +161,35 @@ def parse(lib: str) -> list[dict]:
     #   1. "FUNCTION_BLOCK <Name>"      (explicit declaration; with or without EXTENDS)
     #   2. " Methods\n" + a methods table (parent FB with method children)
     # Plain category sections like "3.1 Bistable" in Tc2_Standard match neither.
+    # TF product manuals (e.g. TF5055 Tc2_MC2_FlyingSaw) put the API under
+    # plain depth-1 chapters ("Flying saw", "Data types") that classify_group
+    # can't recognize, so current_group_kind stays None and every depth-2 leaf
+    # is dropped. Recover those by inspecting the section body: an FB declares
+    # "FUNCTION_BLOCK <Name>", a DUT declares "TYPE <Name> :", a function
+    # declares "FUNCTION <Name>". Deterministic and body-gated, so plain
+    # category sections (Tc2_Standard "3.1 Bistable") never match.
+    def section_pou_kind(section: str, title: str) -> str | None:
+        sys.path.insert(0, str(Path(__file__).resolve().parent))
+        try:
+            from extract_section import extract as _extract
+        except Exception:
+            return None
+        body = _extract(lib, section)
+        if not body:
+            return None
+        if re.search(rf"\bFUNCTION_BLOCK\s+{re.escape(title)}\b", body):
+            return "FB"
+        if re.search(rf"\bTYPE\s+{re.escape(title)}\s*:", body):
+            return "DUT"
+        if re.search(rf"\bFUNCTION\s+{re.escape(title)}\b", body):
+            return "FC"
+        # TF NC manuals (e.g. TF5055) print MC_* FBs without an explicit
+        # FUNCTION_BLOCK declaration — the body opens with the prose
+        # "The function block <Name> ...". Use that as an FB signal.
+        if re.search(rf"\bfunction block\s+{re.escape(title)}\b", body, re.IGNORECASE):
+            return "FB"
+        return None
+
     def section_is_oo_parent(section: str, title: str) -> bool:
         sys.path.insert(0, str(Path(__file__).resolve().parent))
         try:
@@ -353,6 +382,35 @@ def parse(lib: str) -> list[dict]:
                     }
                 )
         entries.extend(synthetic)
+
+    # TF-manual fallback: some TwinCAT function-product manuals (e.g. TF5055
+    # Tc2_MC2_FlyingSaw) organize the API under plain depth-1 chapters
+    # ("Flying saw", "Data types") that classify_group can't recognize, so the
+    # normal pass yields nothing. Only when that happens, re-scan every depth-2
+    # leaf and keep the ones whose section body declares a real FB / DUT / FC.
+    # Gated on "entries empty" so libraries that classify groups normally are
+    # never affected.
+    if not entries:
+        chapter_title = ""
+        for sec, title, page in matches:
+            depth = sec.count(".") + 1
+            if depth == 1:
+                chapter_title = title
+                continue
+            if depth != 2 or sec in has_children or not looks_like_leaf_name(title):
+                continue
+            kind = section_pou_kind(sec, title)
+            if kind is not None:
+                entries.append(
+                    {
+                        "section": sec,
+                        "name": title,
+                        "type": kind,
+                        "category": chapter_title,
+                        "page": page,
+                        "depth": depth,
+                    }
+                )
 
     return entries
 

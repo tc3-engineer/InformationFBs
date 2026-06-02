@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project xmlns="http://www.plcopen.org/xml/tc6_0200">
+  <fileHeader companyName="tc3-libraries-kb" productName="TwinCAT" productVersion="3.1" creationDateTime="2026-05-25T00:00:00"/>
+  <contentHeader name="Tc2_NcDrive.FB_SoEAX5000FirmwareUpdate Demo" modificationDateTime="2026-05-25T00:00:00">
+    <coordinateInfo>
+      <fbd><scaling x="1" y="1"/></fbd>
+      <ld><scaling x="1" y="1"/></ld>
+      <sfc><scaling x="1" y="1"/></sfc>
+    </coordinateInfo>
+  </contentHeader>
+  <types>
+    <dataTypes/>
+    <pous>
+      <pou name="P_Demo_FB_SoEAX5000FirmwareUpdate" pouType="program">
+        <interface>
+          <localVars>
+            <variable name="fbFwUpdate">
+              <type><derived name="FB_SoEAX5000FirmwareUpdate"/></type>
+            </variable>
+            <variable name="NcToPlcAxis">
+              <type><derived name="NCTOPLC_AXIS_REF"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">NC 轴过程映像（实际工程映射到 %I*）</xhtml></documentation>
+            </variable>
+            <variable name="bStartUpdate">
+              <type><BOOL/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">在线置 TRUE 触发一次固件检查/更新</xhtml></documentation>
+            </variable>
+            <variable name="rtStart">
+              <type><derived name="R_TRIG"/></type>
+            </variable>
+            <variable name="sTargetVersion">
+              <type><string><length>20</length></string></type>
+              <initialValue><simpleValue value="v1.05_b0009"/></initialValue>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">目标固件版本字符串</xhtml></documentation>
+            </variable>
+            <variable name="sFwPool">
+              <type><derived name="T_MaxString"/></type>
+              <initialValue><simpleValue value="C:\TwinCAT\Io\TcDriveManager\FirmwarePool"/></initialValue>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">固件池路径</xhtml></documentation>
+            </variable>
+            <variable name="eState">
+              <type><derived name="E_FwUpdateState"/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">监视：更新状态机</xhtml></documentation>
+            </variable>
+            <variable name="iProgress">
+              <type><INT/></type>
+              <documentation><xhtml xmlns="http://www.w3.org/1999/xhtml">监视：更新进度百分比</xhtml></documentation>
+            </variable>
+            <variable name="sSelectedFile">
+              <type><string><length>255</length></string></type>
+            </variable>
+            <variable name="bBusy">
+              <type><BOOL/></type>
+            </variable>
+            <variable name="bError">
+              <type><BOOL/></type>
+            </variable>
+            <variable name="iAdsErr">
+              <type><UINT/></type>
+            </variable>
+            <variable name="iSercosErr">
+              <type><UINT/></type>
+            </variable>
+            <variable name="iDiag">
+              <type><UDINT/></type>
+            </variable>
+          </localVars>
+        </interface>
+        <body>
+          <ST>
+            <xhtml xmlns="http://www.w3.org/1999/xhtml">// ============================================================
+// Tc2_NcDrive.FB_SoEAX5000FirmwareUpdate 演示程序
+// ============================================================
+// 场景：产线批量上线前统一把 AX5000 固件刷到指定版本，避免各站固件不一致
+//       引发偶发问题。用 PLC 程序自动完成"识别→比对→更新→切状态"。
+// 价值：不用本 FB 时需手动用 TcDriveManager 逐台点更新，无法批量自动化；
+//       本 FB 封装成一个 bExecute 边沿并带进度/状态反馈，可无人值守升级。
+// 验证：登录后置 bStartUpdate := TRUE，观察 bBusy 变 TRUE；监视 eState 经
+//       eFwU_FwUpdateInProgress（此时 iProgress 0→100）到 eFwU_FwUpdateDone；
+//       若本就不需更新则直接 eFwU_NoFwUpdateRequired。更新期间严禁断电/断网/停 TwinCAT。
+// ============================================================
+
+// 上升沿：一次触发只启动一次更新流程
+rtStart(CLK := bStartUpdate);
+
+// 单次完整调用：tTimeout 是单个内部 ADS 实例的超时，给宽一点
+fbFwUpdate(
+    Axis             := NcToPlcAxis,
+    sNetId           := '',
+    bExecute         := rtStart.Q,
+    sFirmwareVersion := sTargetVersion,
+    sFirmwarePath    := sFwPool,
+    iReqEcState      := EC_DEVICE_STATE_OP,
+    tTimeout         := T#15S,
+    bBusy                 =&gt; bBusy,
+    bError                =&gt; bError,
+    iAdsErrId             =&gt; iAdsErr,
+    iSercosErrId          =&gt; iSercosErr,
+    iDiagNumber           =&gt; iDiag,
+    eFwUpdateState        =&gt; eState,
+    iLoadProgress         =&gt; iProgress,
+    sSelectedFirmwareFile =&gt; sSelectedFile
+);
+
+// 完成后复位触发信号，准备下一次
+IF NOT bBusy THEN
+    bStartUpdate := FALSE;
+END_IF;
+</xhtml>
+          </ST>
+        </body>
+      </pou>
+    </pous>
+  </types>
+  <instances>
+    <configurations/>
+  </instances>
+</project>
