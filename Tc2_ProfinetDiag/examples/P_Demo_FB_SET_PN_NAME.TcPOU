@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_SET_PN_NAME" Id="{670727ff-b4d4-58dd-891b-aae13decd3bd}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_SET_PN_NAME
+VAR
+    fbSetName     : FB_SET_PN_NAME;
+    bSetNameReq   : BOOL := FALSE;            // 在线上升沿触发命名
+    sNewName      : STRING(51) := 'line3-io-04';      // 合规名称：小写/数字/.-
+    aTargetMac    : ARRAY [0..5] OF BYTE := [16#00,16#01,16#05,16#0A,16#1B,16#2C];  // 目标设备 MAC
+    bBusy         : BOOL;
+    bErr          : BOOL;
+    nErrId        : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_ProfinetDiag.FB_SET_PN_NAME 演示程序
+// ============================================================
+// 场景：按 MAC 给 PROFINET 设备分配名称。
+// 价值：投运流程自动命名，免手工设名。
+// 验证：登录后备好 sNewName/aTargetMac，bSetNameReq 上升沿写名。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_ProfinetDiag（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』指引在线写值观察
+// ============================================================
+
+// 上升沿触发；按 MAC 给设备写入 PROFINET 名称
+fbSetName(
+    bExecute := bSetNameReq,
+    NETID    := '',
+    PROFINET_NAME := sNewName,
+    MAC_ID   := aTargetMac,
+    bBusy    => bBusy,
+    bError   => bErr,
+    iErrorID => nErrId
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_PN_IM1_WRITE" Id="{a17b5452-7b4b-5b6c-8f41-77359c448c1f}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_PN_IM1_WRITE
+VAR
+    fbIM1Write    : FB_PN_IM1_WRITE;
+    bWriteTag     : BOOL := FALSE;            // 在线上升沿触发写入
+    sFunction     : STRING(32) := 'Conveyor-Motor';   // 待写功能标签
+    sLocation     : STRING(22) := 'HallA-Line3';      // 待写位置标签
+    bBusy         : BOOL;
+    bErr          : BOOL;
+    nErrId        : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_ProfinetDiag.FB_PN_IM1_WRITE 演示程序
+// ============================================================
+// 场景：投运时给设备写 I&M1 功能/位置标签。
+// 价值：批量自动写电子铭牌。
+// 验证：登录后备好 sFunction/sLocation，bWriteTag 上升沿写入。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_ProfinetDiag（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』指引在线写值观察
+// ============================================================
+
+// 触发前已备好两段标签字符串；上升沿写入设备
+fbIM1Write(
+    bStart := bWriteTag,
+    NETID  := '',
+    PORT   := 16#1001,
+    st_IM_TagFunction := sFunction,
+    st_IM_TagLocation := sLocation,
+    bBusy  => bBusy,
+    bError => bErr,
+    iErrorID => nErrId
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

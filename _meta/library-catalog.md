@@ -50,7 +50,7 @@
 | Tc2_ModbusRTU | 现行 | ~20 | ⏳ pending | Modbus RTU 主站（走 TF6255 别名） |
 | Tc2_EthernetIP | 现行 | ~30 | ⏳ pending | EtherNet/IP（走 TF6280 别名） |
 | Tc2_IoFunctions | 现行 | 68 | ✅ done (68/68) | KL/EL 端子配置（含 ASI、AX2000、Lightbus、UPS、CANopen、DPV1、SERCOS 等） |
-| Tc2_ProfinetDiag | 现行 | ~20 | ⏳ pending | PROFINET 诊断 |
+| Tc2_ProfinetDiag | 1.0.2 | 27 | ✅ done (27/27) | PROFINET 控制器/设备诊断 + I&M + 端口诊断 FB（1 个 FB_PN_SCAN_UpTo255 较新未上 InfoSys） |
 
 ## Tier 4 · 数据与诊断
 

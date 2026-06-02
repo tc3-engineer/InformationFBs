@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_PN_IM4_WRITE" Id="{b2440d08-9901-5321-bf38-9571b5b39a4a}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_PN_IM4_WRITE
+VAR
+    fbIM4Write    : FB_PN_IM4_WRITE;
+    bWriteSig     : BOOL := FALSE;            // 在线上升沿触发写入
+    sSignature    : STRING(54) := 'SIG-A1B2C3D4';     // 待写签名
+    bBusy         : BOOL;
+    bErr          : BOOL;
+    nErrId        : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_ProfinetDiag.FB_PN_IM4_WRITE 演示程序
+// ============================================================
+// 场景：给设备写 I&M4 参数签名。
+// 价值：标准签名字段，配合 READ 校验。
+// 验证：登录后 bWriteSig 上升沿写入 sSignature。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_ProfinetDiag（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』指引在线写值观察
+// ============================================================
+
+// 把厂商签名写入设备 I&M4
+fbIM4Write(
+    bStart := bWriteSig,
+    NETID  := '',
+    PORT   := 16#1001,
+    st_IM_Signatur := sSignature,
+    bBusy  => bBusy,
+    bError => bErr,
+    iErrorID => nErrId
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

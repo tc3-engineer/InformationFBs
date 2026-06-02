@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_PROFINET_WRITE_IM" Id="{7565233d-a7d0-5d75-b82b-a28d8c9e954d}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_PROFINET_WRITE_IM
+VAR
+    fbReadIM      : FB_PROFINET_READ_IM;       // 先读出原 I&M 结构
+    fbWriteIM     : FB_PROFINET_WRITE_IM;      // 改完字段写回
+    bReadReq      : BOOL := FALSE;
+    bWriteReq     : BOOL := FALSE;             // 在线上升沿触发写入
+    stIuM         : str_IuM_Data;              // I&M 结构（读后改、改后写）
+    bRdBusy, bWrBusy, bRdErr, bWrErr : BOOL;
+    nRdErr, nWrErr : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_ProfinetDiag.FB_PROFINET_WRITE_IM 演示程序
+// ============================================================
+// 场景：CCAT/TF6270 设备写自身 I&M 结构。
+// 价值：先读后改再写，避免清空。
+// 验证：登录后 bReadReq 读出 stIuM，改字段后 bWriteReq 写回。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_ProfinetDiag（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』指引在线写值观察
+// ============================================================
+
+// 先读出原结构（避免写回时清空未改字段）
+fbReadIM(bStart := bReadReq, NETID := '', PORT := 16#1001,
+    str_IuM_Data => stIuM, bBusy => bRdBusy, bError => bRdErr, nErrorID => nRdErr);
+
+// 改字段后写回（此处示例直接写）
+stIuM.st_IM_TagFunction := 'PN-Device-B930';
+fbWriteIM(
+    bStart := bWriteReq,
+    NETID  := '',
+    PORT   := 16#1001,
+    str_IuM_Data := stIuM,
+    bBusy  => bWrBusy,
+    bError => bWrErr,
+    nErrorID => nWrErr
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

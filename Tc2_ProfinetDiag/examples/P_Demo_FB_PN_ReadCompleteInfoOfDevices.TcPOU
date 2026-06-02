@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_PN_ReadCompleteInfoOfDevices" Id="{7e42526a-97bf-5c67-8db9-bc5802d0ef75}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_PN_ReadCompleteInfoOfDevices
+VAR
+    fbReadAll     : FB_PN_ReadCompleteInfoOfDevices;
+    bReadAllReq   : BOOL := FALSE;            // 在线上升沿触发
+    sCtrlName     : T_MaxString := 'Device 1 (PROFINET RT Controller)';  // 控制器在树里的名字
+    bBusy         : BOOL;
+    bErr          : BOOL;
+    nErrId        : UDINT;
+    nDevCount     : UINT;                     // 设备总数
+    aDevInfo      : ARRAY [1..255] OF ST_PN_DeviceInfo;  // 逐台明细
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_ProfinetDiag.FB_PN_ReadCompleteInfoOfDevices 演示程序
+// ============================================================
+// 场景：读全网逐台设备明细（名/IP/循环时间）。
+// 价值：一次返回数组，免多次读取。
+// 验证：登录后 bReadAllReq 上升沿，nDevCount/aDevInfo 填入。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_ProfinetDiag（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』指引在线写值观察
+// ============================================================
+
+// 上升沿触发；读全网逐台明细，超时给 10 秒
+fbReadAll(
+    bExecute := bReadAllReq,
+    sControllerName := sCtrlName,
+    tTimeout := T#10S,
+    bBusy    => bBusy,
+    bError   => bErr,
+    nErrorID => nErrId,
+    nDevices => nDevCount,
+    aInfoOfDevices => aDevInfo
+);
+
+// 遍历 1..nDevCount 取每台 aDevInfo[i].sBoxName / sIP_Addr / nCycleTime
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_PN_SEND_ALARM" Id="{6950d112-9531-5ea7-8828-0554234c3a3b}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_PN_SEND_ALARM
+VAR
+    fbSendAlarm   : FB_PN_SEND_ALARM;
+    bSendReq      : BOOL := FALSE;            // 在线上升沿触发发送报警
+    eAlarmType    : E_PN_ALARM_TYP := PN_ALARM_PROCESS;  // 过程报警
+    wSlot         : WORD := 1;                // 报警所在槽号
+    wSubSlot      : WORD := 1;                // 报警所在子槽号
+    bBusy         : BOOL;
+    bErr          : BOOL;
+    nErrId        : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_ProfinetDiag.FB_PN_SEND_ALARM 演示程序
+// ============================================================
+// 场景：设备端向控制器主动发 PROFINET 报警。
+// 价值：枚举+槽号一次发出，免拼帧。
+// 验证：登录后选 eAlarmType/槽号，bSendReq 上升沿发送。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_ProfinetDiag（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』指引在线写值观察
+// ============================================================
+
+// 上升沿触发；设备端向控制器发一条过程报警（槽1/子槽1）
+fbSendAlarm(
+    bStart := bSendReq,
+    NETID  := '',
+    PORT   := 16#1001,
+    PN_ALARM_Typ := eAlarmType,
+    PN_slotNumber := wSlot,
+    PN_SubSlotNumber := wSubSlot,
+    bBusy  => bBusy,
+    bError => bErr,
+    iErrorID => nErrId
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

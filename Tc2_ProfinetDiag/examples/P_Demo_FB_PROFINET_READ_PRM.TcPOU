@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_PROFINET_READ_PRM" Id="{4bc70710-1953-50c5-8a1a-1dc11c4b7a9e}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_PROFINET_READ_PRM
+VAR
+    fbReadPrm     : FB_PROFINET_READ_PRM;
+    bReadReq      : BOOL := FALSE;            // 在线上升沿触发
+    stPnSettings  : str_Diag_PN_Settings;     // IP/掩码/网关/名
+    bBusy         : BOOL;
+    bErr          : BOOL;
+    nErrId        : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_ProfinetDiag.FB_PROFINET_READ_PRM 演示程序
+// ============================================================
+// 场景：CCAT/TF6270 读设备 IP 参数设置。
+// 价值：一次读回 IP/掩码/网关/名。
+// 验证：登录后 bReadReq 上升沿，stPnSettings 填入。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_ProfinetDiag（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』指引在线写值观察
+// ============================================================
+
+// 上升沿触发；读设备 PROFINET/IP 参数设置
+fbReadPrm(
+    NETID  := '',
+    PORT   := 16#1001,
+    bStart := bReadReq,
+    str_Diag_PN_Settings => stPnSettings,
+    bBusy  => bBusy,
+    bError => bErr,
+    nErrorID => nErrId
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

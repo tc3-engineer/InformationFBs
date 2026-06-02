@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_PN_IM2_READ" Id="{63b7022b-f14e-5c4d-9429-093e53a06946}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_PN_IM2_READ
+VAR
+    fbFB_PN_IM2_READ : FB_PN_IM2_READ;        // FB_PN_IM2_READ 实例
+    bReadIM       : BOOL := FALSE;            // 在线上升沿触发一次读取
+    bBusy         : BOOL;
+    bErr          : BOOL;
+    nErrId        : UDINT;
+    stInstallDate : TIMESTRUCT;              // 设备安装日期 YYYY-MM-DD HH:MM
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_ProfinetDiag.FB_PN_IM2_READ 演示程序
+// ============================================================
+// 场景：读设备 I&M2 安装日期。
+// 价值：以 TIMESTRUCT 直接读出。
+// 验证：登录后 bReadIM 上升沿，stInstallDate 填入。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_ProfinetDiag（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』指引在线写值观察
+// ============================================================
+
+// 上升沿触发一次 I&M 读取；读到的数据在 bBusy 落沿后有效
+fbFB_PN_IM2_READ(
+    bStart := bReadIM,
+    NETID  := '',
+    PORT   := 16#1001,
+    bBusy  => bBusy,
+    str_Date => stInstallDate,
+    bError => bErr,
+    iErrorID => nErrId
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

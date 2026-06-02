@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_Read_IuM_EL6631_0010" Id="{972ba577-c971-5e97-a184-2cda2644a256}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_Read_IuM_EL6631_0010
+VAR
+    fbReadIuM     : FB_Read_IuM_EL6631_0010;
+    bReadReq      : BOOL := FALSE;            // 在线上升沿触发
+    bBusy         : BOOL;
+    bErr          : BOOL;
+    nErrId        : UDINT;
+    sFunc         : STRING;                   // I&M1 功能
+    sLoc          : STRING;                   // I&M1 位置
+    sDate         : STRING;                   // I&M2 日期
+    sDesc         : STRING;                   // I&M3 描述
+    sSig          : STRING;                   // I&M4 签名
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_ProfinetDiag.FB_Read_IuM_EL6631_0010 演示程序
+// ============================================================
+// 场景：EL6631 设备端一次读齐 I&M1~I&M4。
+// 价值：一次读齐五段文本。
+// 验证：登录后 bReadReq 上升沿，sFunc~sSig 填入。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_ProfinetDiag（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』指引在线写值观察
+// ============================================================
+
+// 上升沿触发；一次读齐 I&M1~I&M4（iNumber=0 选第一台）
+fbReadIuM(
+    bRead  := bReadReq,
+    NETID  := '',
+    PORT   := 16#1001,
+    iNumber := 0,
+    bBusy  => bBusy,
+    bError => bErr,
+    iErrorID => nErrId,
+    st_IM_TagFunction => sFunc,
+    st_IM_TagLocation => sLoc,
+    st_IM_Date => sDate,
+    st_IM_Descriptor => sDesc,
+    st_IM_Signature => sSig
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>
