@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_GetDBXMLConfig" Id="{38153ec2-aef4-53be-bf17-e115bbaac998}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_GetDBXMLConfig
+VAR
+    fbGetDbXml         : FB_GetDBXMLConfig;
+    arrDbCfg           : ARRAY[0..MAX_XML_DECLARATIONS] OF ST_DBXMLCfg;  // 接收缓冲
+    bUserQuery         : BOOL;                            // HMI 上"刷新 DB 列表"按钮
+    rEdgeQuery         : R_TRIG;
+    bQueryBusy         : BOOL;
+    bQueryError        : BOOL;
+    nQueryErr          : UDINT;
+    // === 业务侧：根据数据库名找到 hDBID ===
+    sLookupDbName      : T_MaxString := 'mes_prod';       // 想要的数据库名
+    hMesDbId           : UDINT;                            // 查到的 hDBID
+    bMesDbFound        : BOOL;
+    i                  : INT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：PLC 启动后需要拿到名为 'mes_prod' 的数据库连接的 hDBID 用于后续日志写入。
+//       不硬编码 hDBID := 1（XML 配置改动会导致 ID 漂移），而是动态查询。
+// 价值：相比硬编码——本方案对 XML 重排免疫；HMI 上也能直接列出当前配的所有
+//       数据库供运维查看；新加 DB 后不用改 PLC 代码。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_Database；确保 XML 中已配名为 'mes_prod' 的数据库
+//   3. 编译 → 登录 → 运行
+//   4. 在线写 bUserQuery := TRUE → bQueryBusy 短暂 TRUE → 观察 arrDbCfg[0..N-1]
+//      被填上当前所有数据库条目；hMesDbId 被设为 'mes_prod' 对应的 nDBID
+//   5. 改 sLookupDbName 为不存在的名字 → 触发后 bMesDbFound 应为 FALSE
+// =============================================================================
+
+rEdgeQuery(CLK := bUserQuery);
+
+// 调用前先清空缓冲（避免上次残留干扰判断）
+IF rEdgeQuery.Q THEN
+    MEMSET(destAddr := ADR(arrDbCfg), fillByte := 0, n := SIZEOF(arrDbCfg));
+END_IF
+
+// 单次完整调用
+fbGetDbXml(
+    sNetID   := '',
+    cbDBCfg  := SIZEOF(arrDbCfg),           // 用 SIZEOF 取实际字节数
+    pDBCfg   := ADR(arrDbCfg),
+    bExecute := rEdgeQuery.Q,
+    tTimeout := T#15S,
+    bBusy    => bQueryBusy,
+    bError   => bQueryError,
+    nErrID   => nQueryErr
+);
+
+// 查询完成后扫描数组找到 'mes_prod' 对应的 nDBID
+IF (NOT bQueryBusy) AND (NOT bQueryError) THEN
+    bMesDbFound := FALSE;
+    hMesDbId    := 0;
+    FOR i := 0 TO MAX_XML_DECLARATIONS DO
+        IF arrDbCfg[i].nDBID > 0 AND arrDbCfg[i].sDBName = sLookupDbName THEN
+            hMesDbId    := UDINT_TO_UINT(DINT_TO_UDINT(arrDbCfg[i].nDBID));
+            (* hMesDbId 这种 cast 链是因为 nDBID 是 DINT，hDBID 一般是 UDINT *)
+            hMesDbId    := DINT_TO_UDINT(arrDbCfg[i].nDBID);
+            bMesDbFound := TRUE;
+            EXIT;
+        END_IF
+    END_FOR
+END_IF
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

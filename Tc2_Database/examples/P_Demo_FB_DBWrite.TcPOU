@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_DBWrite" Id="{d6ff2c55-10e6-5f72-a275-3eb8cf50dbf9}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_DBWrite
+VAR
+    fbWrite           : FB_DBWrite;
+    bShiftEndReq      : BOOL;                        // HMI / 业务发出"班次结束保存"信号
+    rEdgeShiftEnd     : R_TRIG;
+    hLocalDbId        : UDINT := 1;                  // 本地 SQL Compact 库连接 ID
+    hLocalPlcAdsId    : UDINT := 1;                  // 本机 PLC（作为 ADS Device）注册 ID
+    sPlcVarName       : T_MaxString := 'MAIN.fShiftTotalCount';  // PLC 端变量名
+    sDbVarLabel       : T_MaxString := 'shift_total';            // 数据库中存的 Name 标签
+    bWriteBusy        : BOOL;
+    bWriteErr         : BOOL;
+    nWriteErr         : UDINT;
+    sWriteSqlState    : ST_DBSQLError;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：每个生产班次结束时（操作员按 HMI"交班"按钮），把 MAIN.fShiftTotalCount
+//       中的累计产量值写入本地 SQL Compact 数据库，Name 列标签为 'shift_total'，
+//       Update 模式（一个变量名只对应一条记录，保存最新值）。下次班次开始时
+//       由 P_Demo_FB_DBRead 例程读回作为新班次的起点。
+// 价值：相比 PLC retain 变量——DB 数据持久（SD 卡坏 / 换 PLC 都不丢）；可被
+//       外部 BI 工具查询；HMI 历史报表可直接查。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_Database
+//   3. 先把本机 PLC 注册为 ADS Device（用 FB_AdsDeviceConnectionAdd 例程，
+//      sADSDevNetID 填本机 NetID，nADSDevPort = 851），拿到 hAdsID = 1
+//   4. 建库 + 建表（用 FB_DBCreate + FB_DBConnectionAdd + FB_DBTableCreate 例程）
+//   5. 编译 → 登录 → 运行；启动 TwinCAT Database Server
+//   6. 在线把 MAIN.fShiftTotalCount 写为 1234.0；写 bShiftEndReq := TRUE → 观察
+//      bWriteBusy 短暂 TRUE → sWriteSqlState.sSQLState = '00000'
+//   7. 用 SQL 工具查 tProcessLog 表，应有一条 Name='shift_total' Value=1234.0
+//      的记录
+// =============================================================================
+
+rEdgeShiftEnd(CLK := bShiftEndReq);
+
+// 单次完整调用：Update 模式（覆盖最新）
+fbWrite(
+    sNetID           := '',
+    hDBID            := hLocalDbId,
+    hAdsID           := hLocalPlcAdsId,
+    sVarName         := sPlcVarName,             // PLC 端变量名
+    nIGroup          := 0,                       // 普通 PLC 全填 0
+    nIOffset         := 0,
+    nVarSize         := 0,
+    sVarType         := '',                      // 普通 PLC 不填
+    sDBVarName       := sDbVarLabel,             // DB 中 Name 列的标签
+    eDBWriteMode     := eDBWriteMode_Update,     // 覆盖最新值
+    tRingBufferTime  := T#0S,                    // Update 模式不用
+    nRingBufferCount := 0,                       // Update 模式不用
+    bExecute         := rEdgeShiftEnd.Q,
+    tTimeout         := T#15S,
+    bBusy            => bWriteBusy,
+    bError           => bWriteErr,
+    nErrID           => nWriteErr,
+    sSQLState        => sWriteSqlState
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

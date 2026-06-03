@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_DBRead" Id="{f2d8a34d-4623-5d13-9ecf-0e5fb5ea92e6}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_DBRead
+VAR
+    fbRead            : FB_DBRead;
+    bUserReadReq      : BOOL;
+    rEdgeRead         : R_TRIG;
+    hLocalDbId        : UDINT := 1;
+    sLookupVar        : STRING(80) := 'shift_total';   // 上次班次累计产量的变量名
+    lrShiftTotal      : LREAL := 0;                    // 读出来的累计值
+    bReadBusy         : BOOL;
+    bReadErr          : BOOL;
+    nReadErr          : UDINT;
+    sReadSqlState     : ST_DBSQLError;
+    bShiftLoaded      : BOOL;                          // 业务侧：上次班次数据已加载
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：PLC 启动时需要从本地 SQL Compact 库（hDBID = 1）的 Name/Value 表里
+//       读出 'shift_total'（上次班次结束时 FB_DBWrite 写进去的累计产量）作为
+//       当前班次的起点。本 FB 一次调用按变量名读到 LREAL 变量。
+// 价值：比 PLC 内 retain 变量更可靠——retain 在 SD 卡损坏 / PLC 换装时丢，
+//       DB 是持久化的；同时所有班次历史在 DB 里可查可视化。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_Database；先用 FB_DBWrite 例程往 hDBID=1 的库写一条
+//      Name='shift_total', Value=1234.0
+//   3. 编译 → 登录 → 运行；启动 TwinCAT Database Server
+//   4. 在线写 bUserReadReq := TRUE → bReadBusy 短暂 TRUE → 观察 lrShiftTotal
+//      被设为 1234.0；sReadSqlState.sSQLState = '00000'
+//   5. 改 sLookupVar 为不存在的变量名 → 触发 → sReadSqlState.sSQLState 应为
+//      '42S22' 类（找不到）
+// =============================================================================
+
+rEdgeRead(CLK := bUserReadReq);
+
+// 单次完整调用
+fbRead(
+    sNetID     := '',
+    hDBID      := UDINT_TO_DINT(hLocalDbId),
+    sDBVarName := sLookupVar,
+    cbReadLen  := SIZEOF(lrShiftTotal),               // 用 SIZEOF 取准确字节数
+    pDestAddr  := ADR(lrShiftTotal),                  // 缓冲地址
+    bExecute   := rEdgeRead.Q,
+    tTimeout   := T#15S,
+    bBusy      => bReadBusy,
+    bError     => bReadErr,
+    nErrID     => nReadErr,
+    sSQLState  => sReadSqlState
+);
+
+// 读取成功 = ADS 没错 + SQL 状态为 '00000'
+bShiftLoaded := (NOT bReadBusy)
+                AND (NOT bReadErr)
+                AND (nReadErr = 0)
+                AND (LEFT(sReadSqlState.sSQLState, 5) = '00000');
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

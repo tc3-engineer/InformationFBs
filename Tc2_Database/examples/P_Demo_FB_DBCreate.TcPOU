@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_DBCreate" Id="{3678c13f-c5fc-51cf-93f4-54f84dc1fd5e}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_DBCreate
+VAR
+    fbCreate          : FB_DBCreate;
+    bUserCreateReq    : BOOL;
+    rEdgeCreate       : R_TRIG;
+    // === 新建 SQL Compact 数据库参数 ===
+    sStoragePath      : T_MaxString := 'C:\TwinCAT\TcDatabaseSrv\Samples\';
+    sNewDbFileName    : T_MaxString := 'SiteLogs.sdf';
+    sNoSysDb          : T_MaxString := '';      // SQL Compact 不需要 MDW
+    sNoUser           : T_MaxString := '';      // SQL Compact 无认证
+    sNoPwd            : T_MaxString := '';
+    bCreateBusy       : BOOL;
+    bCreateErr        : BOOL;
+    nCreateErrCode    : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：OEM 设备出厂——客户安装好 CX 控制器、装好 TwinCAT 镜像、第一次上电
+//       PLC 自检本地数据库不存在，本 FB 自动创建一个 SQL Compact 文件
+//       (SiteLogs.sdf) 作为本地工艺日志库；后续再调 FB_DBConnectionAdd
+//       注册、FB_DBTableCreate 建表，整套环境对终端用户透明。
+// 价值：让 OEM 设备真正"开箱即用"，不需要 DBA 现场建库；同一份 PLC 程序到
+//       不同客户都能自洽。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_Database；启动 TwinCAT Database Server 服务
+//   3. 确保 C:\TwinCAT\TcDatabaseSrv\Samples\ 目录存在（PDF 标准位置）
+//   4. 编译 → 登录 → 运行；删除（或确保不存在）C:\TwinCAT\TcDatabaseSrv\Samples\SiteLogs.sdf
+//   5. 在线写 bUserCreateReq := TRUE → bCreateBusy 短暂 TRUE → 检查目录里
+//      SiteLogs.sdf 已生成；nCreateErrCode = 0
+//   6. 再次触发 → 应得 nCreateErrCode = 16#70F（文件已存在）
+// =============================================================================
+
+rEdgeCreate(CLK := bUserCreateReq);
+
+// 单次完整调用：用 SQL Compact 类型
+fbCreate(
+    sNetID    := '',
+    sPathName := sStoragePath,                // 存放目录（末尾要 \）
+    sDBName   := sNewDbFileName,              // 含 .sdf 扩展名
+    eDBType   := eDBType_Mobile_Server,       // SQL Compact = Mobile Server
+    sSystemDB := sNoSysDb,                    // 仅 Access 需要
+    sUserId   := sNoUser,
+    sPassword := sNoPwd,
+    bExecute  := rEdgeCreate.Q,
+    tTimeout  := T#15S,                       // 本地文件创建很快
+    bBusy     => bCreateBusy,
+    bError    => bCreateErr,
+    nErrID    => nCreateErrCode
+);
+
+// 创建完成后业务侧应紧接着调 FB_DBConnectionAdd 把新文件注册到 XML，
+// 否则该 DB 还不在 Database Server 配置里，无法用 FB_DBWrite 等
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

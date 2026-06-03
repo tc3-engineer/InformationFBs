@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_DBOdbcConnectionAdd" Id="{79d35c5e-1dd3-5ad1-be2f-45fb5295a2d3}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_DBOdbcConnectionAdd
+VAR
+    fbAddOdbc          : FB_DBOdbcConnectionAdd;
+    bUserAddReq        : BOOL;                  // HMI 上"添加 MySQL 连接"按钮
+    rEdgeAdd           : R_TRIG;
+    // === MES 服务器参数（生产环境从配置文件读，这里写死方便演示）===
+    sMesServer         : T_MaxString := '192.168.10.20';
+    sMesDatabase       : T_MaxString := 'mes_prod';
+    sOdbcDriverName    : T_MaxString := 'MySQL ODBC 5.3 Unicode Driver';  // 必须与 ODBC Administrator 中显示一致
+    sMesUser           : T_MaxString := 'plc_writer';
+    sMesPwd            : T_MaxString := 'P@ssw0rd';
+    sMesDefaultTable   : T_MaxString := 'tbl_process_log';
+    // === 输出 ===
+    bAddBusy           : BOOL;
+    bAddError          : BOOL;
+    nAddErr            : UDINT;
+    hMesDbId           : UDINT;
+    hPersistedMesDbId  : UDINT;                 // 生产环境用 PERSISTENT 保存
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：MES 集成项目——产线 CX 工控机通过车间 MySQL（192.168.10.20:3306）记录
+//       每件产品工艺参数。CX 已预装 MySQL ODBC Unicode Driver。PLC 上电后调本
+//       FB 在线建立 ODBC 连接，得到 hDBID 供后续 FB_DBRecordInsert_EX 写日志。
+// 价值：相比 OLE DB（Windows 没有官方 MySQL OLE DB Provider 要装第三方），ODBC
+//       是 MySQL 官方原生支持，跨 Windows 版本稳定。OEM PLC 可以根据客户 MES
+//       类型在 HMI 选 MySQL / PostgreSQL / Oracle，本 FB 都能处理。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_Database
+//   3. 在 CX 上安装 MySQL ODBC 5.3 Unicode Driver（Windows 64 位用 64 位安装包）
+//   4. 启动 TwinCAT Database Server 服务；编译 → 登录 → 运行
+//   5. 在线写 bUserAddReq := TRUE → bAddBusy 短暂 TRUE → 看 hMesDbId 取到非零
+//      值，nAddErr = 0；HMI 端释放按钮
+//   6. 故意把 sOdbcDriverName 改成不存在的驱动名 → 重新触发 → 应得 ADS 错误码
+// =============================================================================
+
+rEdgeAdd(CLK := bUserAddReq);
+
+// 单次完整调用：MySQL ODBC + Bytes 模式（支持中文产品名 / 结构体字段）
+fbAddOdbc(
+    sNetID       := '',
+    eDBType      := eDBType_ODBC_MySQL,
+    eDBValueType := eDBValue_Bytes,
+    sDBDriver    := sOdbcDriverName,             // 名字必须精确匹配 ODBC Administrator
+    sDBServer    := sMesServer,
+    sDBDatabase  := sMesDatabase,
+    nDBPort      := 3306,                        // MySQL 默认端口
+    sDBProtocol  := 'TCPIP',
+    sDBUserId    := sMesUser,
+    sDBPassword  := sMesPwd,
+    sDBScheme    := '',                          // MySQL 通常不用 schema
+    sDBSequence  := '',                          // 仅 Oracle 用
+    sDBClientDll := '',                          // 仅 Firebird/InterBase 用
+    sDBTable     := sMesDefaultTable,
+    bExecute     := rEdgeAdd.Q,
+    tTimeout     := T#15S,
+    bBusy        => bAddBusy,
+    bError       => bAddError,
+    bErrID       => nAddErr,                     // PDF 印为 bErrID（B 前缀，typo）
+    hDBID        => hMesDbId
+);
+
+// 成功后持久化 hDBID（生产环境用 PERSISTENT）
+IF (NOT bAddBusy) AND (NOT bAddError) AND (hMesDbId <> 0) AND (rEdgeAdd.Q) THEN
+    hPersistedMesDbId := hMesDbId;
+END_IF
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

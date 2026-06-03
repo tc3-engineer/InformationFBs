@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_DBConnectionAdd" Id="{459a81ac-87ff-5b0b-9ba5-b0372cc0735d}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_DBConnectionAdd
+VAR
+    fbAddConn          : FB_DBConnectionAdd;       // 添加连接到 XML 配置
+    bUserAddReq        : BOOL;                     // HMI 上"添加连接"按钮（电平）
+    rEdgeAdd           : R_TRIG;                   // 转为单脉冲
+    // === 用户在 HMI 上填入的连接参数 ===
+    sServerAddress     : T_MaxString := '';                                            // 本地 SQL Compact 不需要服务器名
+    sLocalDbFile       : T_MaxString := 'C:\TwinCAT\TcDatabaseSrv\Samples\LogDB.sdf';  // 本地 SDF 文件路径
+    sLoginUser         : T_MaxString := '';
+    sLoginPwd          : T_MaxString := '';
+    sDefaultTable      : T_MaxString := 'tProcessLog';
+    // === FB 输出 ===
+    bAddBusy           : BOOL;
+    bAddError          : BOOL;
+    nAddErr            : UDINT;
+    hNewDbId           : UDINT;                    // 新连接的 hDBID，业务保留供后续 FB_DBWrite 用
+    hPersistedDbId     : UDINT;                    // (PERSISTENT 在真实工程里) 应保存到 retain 变量
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：OEM 设备出货时不预设数据库；终端客户上电后在 HMI 选择"用 SQL Compact
+//       做本地日志"并点"添加连接"。PLC 调本 FB 把连接写入 XML 配置文件，得到
+//       hDBID 保存起来，后续所有 FB_DBWrite / FB_DBRead 都用这个 ID。
+// 价值：相比"出货前用 XML Editor 配死"——本 FB 让 PLC 在运行时根据用户输入
+//       动态建连接，OEM 同一份固件可适配多种 DB 后端，部署灵活。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_Database（References → Add library）
+//   3. 编译 → 登录 → 运行；确保 TwinCAT Database Server 服务在跑
+//   4. 在线写 bUserAddReq := TRUE → 观察 bAddBusy 短暂为 TRUE → hNewDbId 取
+//      到一个非零值（通常 1 或 2），nAddErr = 0；释放 bUserAddReq
+//   5. 二次触发同样的参数 → 应得 nAddErr = 16#70F（已存在）
+//   6. 用 XML Configuration File Editor 打开 TcDbSrv.xml，验证新条目已写入
+// =============================================================================
+
+// HMI 电平按钮转单脉冲
+rEdgeAdd(CLK := bUserAddReq);
+
+// 单次完整调用形式：用 SQL Compact（Mobile_Server）+ Bytes 模式
+// SQL Compact 是 .sdf 单文件数据库，适合 CX 本地日志且对硬件性能要求低
+fbAddConn(
+    sNetID       := '',
+    eDBType      := eDBType_Mobile_Server,           // SQL Compact (.sdf)
+    eDBValueType := eDBValue_Bytes,                  // 字节模式支持结构体
+    sDBServer    := sServerAddress,                  // 本地文件不需要
+    sDBProvider  := '',                              // 默认 provider
+    sDBUrl       := sLocalDbFile,                    // SDF 文件绝对路径
+    sDBSystemDB  := '',                              // 仅 Access 用
+    sDBUserId    := sLoginUser,
+    sDBPassword  := sLoginPwd,
+    sDBTable     := sDefaultTable,                   // 默认表
+    bExecute     := rEdgeAdd.Q,
+    tTimeout     := T#15S,
+    bBusy        => bAddBusy,
+    bError       => bAddError,
+    bErrID       => nAddErr,                         // 注意 PDF 印为 bErrID（B 前缀）
+    hDBID        => hNewDbId
+);
+
+// 业务侧：成功后把 hDBID 持久化（真实工程里 hPersistedDbId 应该是 PERSISTENT 变量）
+IF (NOT bAddBusy) AND (NOT bAddError) AND (hNewDbId <> 0) AND (rEdgeAdd.Q) THEN
+    hPersistedDbId := hNewDbId;
+END_IF
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_DBConnectionOpen" Id="{7989d4c3-f12c-56e6-bb3d-8ba2a3826b52}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_DBConnectionOpen
+VAR
+    fbOpenConn        : FB_DBConnectionOpen;
+    bConnectReq       : BOOL := FALSE;              // 在线置 TRUE 触发常驻连接开启
+    hMesDbIdUDINT     : UDINT := 1;                 // 从 FB_GetDBXMLConfig 取到的连接 ID（演示用 1）
+    bConnOpenBusy     : BOOL;
+    bConnOpenErr      : BOOL;
+    nLastAdsErr       : UDINT;
+    sLastSqlState     : ST_DBSQLError;
+    bConnReady        : BOOL;                       // 业务侧：常驻连接已就绪可写库
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：CX 控制器每秒向 MS SQL 写 100 条工艺参数；不用常驻连接每次自动连开
+//       的 ~200 ms 延迟把吞吐压到 5 条/秒。本 FB 在 PLC 启动后建一次常驻
+//       连接，后续 FB_DBWrite 几乎无连接开销。
+// 价值：高吞吐场景下 10~50 倍性能提升；同时降低 DB 服务器侧的连接建立成本。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_Database；确保 XML 中已配置 hDBID = 1 的连接，并且 DB 可达
+//   3. 编译 → 登录 → 运行；启动 TwinCAT Database Server
+//   4. 在线写 bConnectReq := TRUE → 观察 bConnOpenBusy 短暂 TRUE → bConnReady
+//      翻为 TRUE，sLastSqlState.sSQLState = '00000'
+//   5. 故意把 hMesDbIdUDINT 改成不存在的 ID（如 99）→ 触发 → 应得错误，
+//      bConnReady 仍为 FALSE
+// =============================================================================
+
+// 业务侧：一次性 Open，bConnectReq 上升沿触发；不需要每周期触发
+// hDBID 类型是 DINT，从 UDINT 转过来（值不会丢失）
+fbOpenConn(
+    sNetID    := '',
+    hDBID     := UDINT_TO_DINT(hMesDbIdUDINT),
+    bExecute  := bConnectReq,
+    tTimeout  := T#30S,                       // 远端 SQL Server 留足 TCP 建连时间
+    bBusy     => bConnOpenBusy,
+    bError    => bConnOpenErr,
+    nErrID    => nLastAdsErr,
+    sSQLState => sLastSqlState
+);
+
+// 常驻连接就绪 = ADS 没错 + SQL 状态为 '00000'
+bConnReady := (NOT bConnOpenBusy)
+              AND (NOT bConnOpenErr)
+              AND (nLastAdsErr = 0)
+              AND (LEFT(sLastSqlState.sSQLState, 5) = '00000');
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_DBStoredProceduresRecordReturn" Id="{f69d67c0-c606-518d-bbde-b32453c15687}" SpecialFunc="None">
+    <Declaration><![CDATA[TYPE ST_AggregateRecord :
+STRUCT
+    BatchID   : STRING(40);
+    TotalCnt  : DINT;
+    MeanValue : LREAL;
+END_STRUCT
+END_TYPE
+
+PROGRAM P_Demo_FB_DBStoredProceduresRecordReturn
+VAR
+    fbSpReturn        : FB_DBStoredProceduresRecordReturn;
+    paramList         : ARRAY[0..MAX_STORED_PROCEDURES_PARAMETERS] OF ST_DBParameter;
+    record            : ST_AggregateRecord;
+    bParamsInited     : BOOL;
+    // === 参数变量 ===
+    sBatchId          : STRING(40) := 'B20260603-001';
+    // === 触发 ===
+    bUserReq          : BOOL;
+    rEdgeSp           : R_TRIG;
+    hMesDbId          : UDINT := 1;
+    bSpBusy           : BOOL;
+    bSpErr            : BOOL;
+    nSpErr            : UDINT;
+    sSpSqlState       : ST_DBSQLError;
+    nReturnedCount    : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：维护中期老代码——某业务流程用本 FB 调 sp_GetBatchAggregate 存储过程
+//       获取"当前班次的聚合指标"（BatchID / TotalCnt / MeanValue 单条返回）。
+//       新代码应改用 FB_DBStoredProceduresRecordArray + TOP 1 限制（PDF
+//       §7.1.20.5 已废弃）。
+// 价值（历史）：参数化单条返回的 TC2 中期工具。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_Database；DBA 创建 sp_GetBatchAggregate(@batchId NVARCHAR(40)) 返回
+//      SELECT BatchID, TotalCnt, MeanValue
+//   3. 编译 → 登录 → 运行；启动 TwinCAT Database Server
+//   4. 在线写 bUserReq := TRUE → 观察 record 字段被填上数据
+//   5. 注意：调用代码用 pRecordAddr（按 PDF 声明），不是 pDestAddr（PDF 描述
+//      文本中的错别字，VAR 声明里写的是 pRecordAddr）
+// =============================================================================
+
+IF NOT bParamsInited THEN
+    paramList[0].sParameterName     := 'batchId';
+    paramList[0].eParameterDataType := eDBColumn_NVarChar;
+    paramList[0].eParameterType     := eDBParameter_Input;
+    paramList[0].cbParameterValue   := SIZEOF(sBatchId);
+    paramList[0].pParameterValue    := ADR(sBatchId);
+    bParamsInited := TRUE;
+END_IF
+
+rEdgeSp(CLK := bUserReq);
+
+IF rEdgeSp.Q THEN
+    MEMSET(destAddr := ADR(record), fillByte := 0, n := SIZEOF(record));
+END_IF
+
+// 注意 pRecordAddr 拼写（按 PDF VAR 声明，不是描述文本中的 pDestAddr）
+fbSpReturn(
+    sNetID          := '',
+    hDBID           := hMesDbId,
+    sProcedureName  := 'sp_GetBatchAggregate',
+    cbParameterList := SIZEOF(paramList),
+    pParameterList  := ADR(paramList),
+    nRecordIndex    := 0,                       // 取结果集第 0 条
+    cbRecordSize    := SIZEOF(record),
+    pRecordAddr     := ADR(record),             // PDF 声明字段名
+    bExecute        := rEdgeSp.Q,
+    tTimeout        := T#30S,
+    bBusy           => bSpBusy,
+    bError          => bSpErr,
+    nErrID          => nSpErr,
+    sSQLState       => sSpSqlState,
+    nRecords        => nReturnedCount
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

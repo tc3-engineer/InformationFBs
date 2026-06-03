@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_DBRecordSelect" Id="{da472371-eed3-5514-b12d-4808c044054e}" SpecialFunc="None">
+    <Declaration><![CDATA[TYPE ST_LegacyRecord :
+STRUCT
+    ID        : ULINT;
+    Timestamp : DT;
+    Name      : STRING(80);
+    Value     : LREAL;
+END_STRUCT
+END_TYPE
+
+PROGRAM P_Demo_FB_DBRecordSelect
+VAR
+    fbSel            : FB_DBRecordSelect;
+    record           : ST_LegacyRecord;
+    sShortSelectSql  : T_MaxString := 'SELECT TOP 1 ID, Timestamp, Name, Value FROM tLog ORDER BY ID DESC';
+    nIdx             : UDINT := 0;
+    bUserReq         : BOOL;
+    rEdgeSel         : R_TRIG;
+    hDbId            : UDINT := 1;
+    bSelBusy         : BOOL;
+    bSelErr          : BOOL;
+    nSelErr          : UDINT;
+    sSelSqlState     : ST_DBSQLError;
+    nReturnedCount   : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：维护老代码——某 OEM 用本 FB 读最近的 1 条日志（结果集第 0 条）。
+//       新代码请用 FB_DBRecordArraySelect（PDF §7.1.20.3 已废弃）。
+// 价值（历史）：早期 TC2 时代唯一的 SELECT 入口。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_Database；tLog 表有至少 1 条记录
+//   3. 编译 → 登录 → 运行；启动 TwinCAT Database Server
+//   4. 在线写 bUserReq := TRUE → 观察 record 字段被填上数据；nReturnedCount = 1
+//   5. ARM CX 上跑要按 PDF §7.1.20.3 调整结构体字段顺序（Value 在 Name 前 +
+//      Dummy:BYTE），否则数据读到错位
+// =============================================================================
+
+rEdgeSel(CLK := bUserReq);
+
+IF rEdgeSel.Q THEN
+    MEMSET(destAddr := ADR(record), fillByte := 0, n := SIZEOF(record));
+END_IF
+
+fbSel(
+    sNetID       := '',
+    hDBID        := hDbId,
+    sSelectCmd   := sShortSelectSql,
+    nRecordIndex := nIdx,
+    cbRecordSize := SIZEOF(record),
+    pDestAddr    := ADR(record),
+    bExecute     := rEdgeSel.Q,
+    tTimeout     := T#15S,
+    bBusy        => bSelBusy,
+    bError       => bSelErr,
+    nErrID       => nSelErr,
+    sSQLState    => sSelSqlState,
+    nRecords     => nReturnedCount
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

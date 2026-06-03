@@ -98,7 +98,7 @@ _orig_extract = extract
 #   "TE<digits>"  — Tc2_* / Tc3_* libraries (most TwinCAT 3 standard libs)
 #   "TF<digits>"  — TF product manuals (e.g. Tc2_TcpIp = TF6310; the
 #                   number+page often concatenates as "TF6310 3" or "TF631032")
-_VERSION_LINE = r"T[EF]\d+\s*(?:\d+\s*)?Version:\s*[\d.]+\n"
+_VERSION_LINE = r"T[EFS]\d+\s*(?:\d+\s*)?Version:\s*[\d.]+\n"
 # Form A: "=== PAGE N ===" marker + optional chapter title + Version line.
 _PAGE_HEADER_WITH_MARKER_RE = re.compile(
     r"\n?=== PAGE \d+ ===\n"

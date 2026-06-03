@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_DBAuthentificationAdd" Id="{ffe02431-6c7f-5604-9208-9f47f47f7986}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_DBAuthentificationAdd
+VAR
+    fbAuth           : FB_DBAuthentificationAdd;
+    bUpdateAuthReq   : BOOL;
+    rEdgeAuth        : R_TRIG;
+    hDbIdLegacy      : UDINT := 1;                         // 旧工程里建好的连接
+    sMdwPath         : T_MaxString := '';                   // 非 Access 库填空
+    sNewUser         : T_MaxString := 'plc_writer';
+    sNewPwd          : T_MaxString := 'NewP@ss2026';
+    bAuthBusy        : BOOL;
+    bAuthErr         : BOOL;
+    nAuthErr         : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：维护 2015 年部署的老 OEM 设备——该批 PLC 用了"先 ConnectionAdd 不带
+//       密码、运维上电后用本 FB 在线补密码"的两步部署模式。改造时为不破坏
+//       既有部署流程，本 FB 仍可用；新工程应直接用 FB_DBConnectionAdd 一步
+//       完成（已废弃，PDF §7.1.20.1）。
+// 价值（历史）：兼容老工程，降低升级成本。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_Database；确保 hDbIdLegacy 指向 XML 中已存在的连接
+//   3. 编译 → 登录 → 运行；启动 TwinCAT Database Server
+//   4. 在线写 bUpdateAuthReq := TRUE → bAuthBusy 短暂 TRUE → nAuthErr = 0 表示
+//      认证信息已写入 XML；下次 FB_DBConnectionOpen 用新密码登录
+//   5. 故意把 hDbIdLegacy 改成不存在的 ID → 应得 nAuthErr ≈ 16#711
+// =============================================================================
+
+rEdgeAuth(CLK := bUpdateAuthReq);
+
+// 单次完整调用；新代码不要用此 FB，用 FB_DBConnectionAdd 替代
+fbAuth(
+    sNetID      := '',
+    hDBID       := UDINT_TO_DINT(hDbIdLegacy),
+    sDBSystemDB := sMdwPath,                  // 仅 Access 用，其它填空
+    sDBUserId   := sNewUser,
+    sDBPassword := sNewPwd,
+    bExecute    := rEdgeAuth.Q,
+    tTimeout    := T#15S,
+    bBusy       => bAuthBusy,
+    bError      => bAuthErr,
+    nErrID      => nAuthErr
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

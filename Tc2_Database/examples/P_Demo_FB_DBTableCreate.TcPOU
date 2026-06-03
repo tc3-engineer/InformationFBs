@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_DBTableCreate" Id="{11c89119-66b7-5ed5-a210-d30e686966a6}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_DBTableCreate
+VAR
+    fbCreateTbl       : FB_DBTableCreate;
+    arrColumns        : ARRAY[0..MAX_DB_TABLE_COLUMNS] OF ST_DBColumnCfg;
+    bColInited        : BOOL;
+    bUserCreateReq    : BOOL;
+    rEdgeCreate       : R_TRIG;
+    hDbIdSite         : UDINT := 1;                  // 之前 Add 拿到的连接 ID
+    sNewTableName     : T_MaxString := 'tProcessLog';
+    bTblBusy          : BOOL;
+    bTblErr           : BOOL;
+    nTblErr           : UDINT;
+    sTblSqlState      : ST_DBSQLError;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：OEM 设备启动，本地 SQL Compact 库 SiteLogs.sdf 已建好且注册到 XML，
+//       hDBID 拿到了；现在需要建一张 tProcessLog 表，4 列结构与 FB_DBWrite
+//       的最简模式匹配（ID 自增主键 / Timestamp / Name / Value），后续就能
+//       周期日志工艺参数。
+// 价值：让"建库 → 建表 → 写入"整套初始化由 PLC 代码闭环，不需要 DBA 介入；
+//       OEM 设备可全自动初始化。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_Database；确保 hDbIdSite 指向一个已存在的有效连接
+//   3. 编译 → 登录 → 运行
+//   4. 在线写 bUserCreateReq := TRUE → bTblBusy 短暂 TRUE → 表创建成功后
+//      sTblSqlState.sSQLState = '00000'，nTblErr = 0
+//   5. 第二次触发应得 sTblSqlState.sSQLState = '42S01'（表已存在）
+//   6. 用 SQL Server Management Studio 或 SQL Compact Tool 验证表结构
+// =============================================================================
+
+// 初始化列描述数组（每次 PLC 启动只做一次）
+IF NOT bColInited THEN
+    arrColumns[0].sColumnName     := 'ID';
+    arrColumns[0].sColumnProperty := 'PRIMARY KEY';      // SQL Compact 不支持 IDENTITY，仅主键
+    arrColumns[0].eColumnType     := eDBColumn_BigInt;
+
+    arrColumns[1].sColumnName     := 'Timestamp';
+    arrColumns[1].sColumnProperty := 'NOT NULL';
+    arrColumns[1].eColumnType     := eDBColumn_DateTime;
+
+    arrColumns[2].sColumnName     := 'Name';
+    arrColumns[2].sColumnProperty := '';
+    arrColumns[2].eColumnType     := eDBColumn_NVarChar;  // 中文变量名也能存
+
+    arrColumns[3].sColumnName     := 'Value';
+    arrColumns[3].sColumnProperty := '';
+    arrColumns[3].eColumnType     := eDBColumn_Float;     // 64 位浮点
+
+    bColInited := TRUE;
+END_IF
+
+rEdgeCreate(CLK := bUserCreateReq);
+
+// 单次完整调用
+fbCreateTbl(
+    sNetID     := '',
+    hDBID      := hDbIdSite,
+    sTableName := sNewTableName,
+    cbTableCfg := SIZEOF(arrColumns),
+    pTableCfg  := ADR(arrColumns),
+    bExecute   := rEdgeCreate.Q,
+    tTimeout   := T#15S,
+    bBusy      => bTblBusy,
+    bError     => bTblErr,
+    nErrID     => nTblErr,
+    sSQLState  => sTblSqlState
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

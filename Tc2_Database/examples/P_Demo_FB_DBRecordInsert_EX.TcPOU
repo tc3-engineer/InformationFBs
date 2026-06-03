@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_DBRecordInsert_EX" Id="{d2552735-d496-5bef-9712-57612e796096}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_DBRecordInsert_EX
+VAR
+    fbInsertEx        : FB_DBRecordInsert_EX;
+    bBatchStartReq    : BOOL;                                // HMI"批次开始"按钮
+    rEdgeBatch        : R_TRIG;
+    hMesDbId          : UDINT := 1;
+    sCurrentBatchId   : STRING(40) := 'B20260603-001';        // 业务侧给出
+    sProductModel     : STRING(40) := 'M250 Module';
+    sOperatorName     : STRING(40) := 'Zhang San';
+    sInsertSql        : STRING(10000);                        // 拼出的 SQL
+    bInsertBusy       : BOOL;
+    bInsertErr        : BOOL;
+    nInsertErr        : UDINT;
+    sInsertSqlState   : ST_DBSQLError;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：批次生产流程——每批开始时往 tBatchHeader 表插入一条头记录（BatchID /
+//       产品型号 / 操作员 / 开始时间），后续批次工艺点用同样 BatchID 插入到
+//       tProductionLog 实现批次关联查询，最终在 MES 端可查完整生产路径。
+// 价值：相比 FB_DBWrite 的标准 3 列表——本 FB 让 PLC 直接写入业务设计好的多
+//       列表，列结构对接 MES / ERP；表结构由 DBA 控制，PLC 只写值。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_Database；DBA 事先在 hDBID = 1 数据库里建好 tBatchHeader 表，
+//      列: BatchID NVARCHAR(40), ProductName NVARCHAR(40), StartTime DATETIME,
+//      Operator NVARCHAR(40)
+//   3. 编译 → 登录 → 运行；启动 TwinCAT Database Server
+//   4. 在线写 bBatchStartReq := TRUE → 观察 sInsertSqlState.sSQLState = '00000'
+//   5. 用 SQL 工具查 tBatchHeader 表，应有新记录
+//   6. 故意把 sCurrentBatchId 改成已存在的 ID 重试 → 应得 sSQLState = '23000'
+//      （主键冲突）
+// =============================================================================
+
+rEdgeBatch(CLK := bBatchStartReq);
+
+// 触发时拼 SQL（生产代码应做单引号转义；演示数据简单未做）
+IF rEdgeBatch.Q THEN
+    sInsertSql := CONCAT(
+        CONCAT('INSERT INTO tBatchHeader (BatchID, ProductName, StartTime, Operator) VALUES (''',
+               sCurrentBatchId),
+        CONCAT(''', ''',
+               CONCAT(sProductModel,
+                      CONCAT(''', GETDATE(), ''',
+                             CONCAT(sOperatorName, ''')')))));
+END_IF
+
+// 单次完整调用
+fbInsertEx(
+    sNetID    := '',
+    hDBID     := hMesDbId,
+    cbCmdSize := SIZEOF(sInsertSql),
+    pCmdAddr  := ADR(sInsertSql),
+    bExecute  := rEdgeBatch.Q,
+    tTimeout  := T#15S,
+    bBusy     => bInsertBusy,
+    bError    => bInsertErr,
+    nErrID    => nInsertErr,
+    sSQLState => sInsertSqlState
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

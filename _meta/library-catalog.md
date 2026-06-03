@@ -59,7 +59,7 @@
 | Tc3_JsonXml | 1.14.2 | ~50 | ⏳ pending | JSON/XML SAX+DOM |
 | Tc2_DataExchange | 1.2.2 | 3 | ✅ done (3/3) | 跨 PLC watchdog 数据交换 |
 | Tc3_Database | 现行 | ~30 | ⏳ pending | 数据库访问（走 TF6420 别名） |
-| Tc2_Database | 现行 | ~30 | ⏳ pending | 旧版数据库（走 TS6420 TwinCAT 2 路径别名） |
+| Tc2_Database | 26 ✅ done (v1.2) | ✅ done | 旧版数据库 TS6420（19 FB + 5 obsolete + 1 FC + 1 GVL）。InfoSys 走 TF6420 TC3 兼容路径。 |
 | Tc2_Filter | 1.8.0 | 15 | ✅ done (15/15) | 数字滤波 FB（PT1/PT2/Notch/LeadLag/Median/Gaussian 等；TF3680；无 GVL/FC，用 EventLogger 报错） |
 | Tc2_SUPS | 1.5.2 | 7 | ✅ done (7/7) | 1-second UPS 控制（多硬件平台） |
 
