@@ -28,7 +28,7 @@ END_VAR
 //      （fSamplingRate 取 1000，故任务周期应为 1ms，使采样率与调用频率一致）
 //   3. 编译 → 登录 → 运行
 //   4. 在线 monitor 同时看 fNoisyIn（带噪输入）与 fFilteredOut（滤波输出）：
-//      - bConfigured 上电后应为 TRUE（声明时已配置）
+//      - bConfigured 在首次循环后应为 TRUE（上升沿调用 Configure 完成配置）
 //      - fFilteredOut 应是 fNoisyIn 的平滑/相位校正版本（尖峰被削弱、毛刺变平）
 //   5. 在线把 bInjectSpike 写 TRUE，给 fNoisyIn 叠加阶跃式尖峰扰动，
 //      观察 fFilteredOut 不会立刻跟随尖峰、而是被滤波器抑制后缓慢响应
@@ -47,6 +47,12 @@ ELSE
 END_IF
 
 // ---- 2) 把带噪输入送入滤波器，取出平滑输出 ----
+// 首次循环触发一次 Configure：把 stParams 灌进 fbFilter.stConfig，使 bConfigured = TRUE。
+// 若 bConfigured 中途被清（如重配失败），下个周期会自动再试一次。
+IF NOT fbFilter.bConfigured THEN
+    fbFilter.Configure(stConfig := stParams);
+END_IF
+
 aIn[1][1]    := fNoisyIn;
 bCallOk      := fbFilter.Call(ADR(aIn), SIZEOF(aIn), ADR(aOut), SIZEOF(aOut));
 fFilteredOut := aOut[1][1];
