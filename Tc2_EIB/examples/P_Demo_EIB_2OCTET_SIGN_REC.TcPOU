@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_EIB_2OCTET_SIGN_REC" Id="{da9a4cdd-7210-5346-9cba-577297a036cb}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_EIB_2OCTET_SIGN_REC
+VAR
+    fbReceiveAngle   : EIB_2OCTET_SIGN_REC;
+    stEibRec         : EIB_REC;
+    stGroupWindDir   : EIB_GROUP_ADDR := (MAIN := 1, SUB_MAIN := 4, NUMBER := 5);
+    iAngleOffset     : INT;                  // 风向偏置（度）
+    bGotNewSample    : BOOL;
+    rTrigSample      : R_TRIG;
+    bDataOutOfRange  : BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_EIB.EIB_2OCTET_SIGN_REC 演示程序
+// ============================================================
+// 场景：DPT 8.010 风向偏移：风向标设备每秒把「相对正北的角度偏置」以有符号 16-bit 形式发到组地址 1/4/5。本 demo 接收偏置值，超出 ±180° 时报警（数据异常）。
+// 价值：把「接收 2-byte signed + 解码」压成一行调用；不用关心 EIB 字节序与符号位扩展
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_EIB（References → Add library）
+//   3. 编译 → 登录 → 运行；按下方在线写值步骤操作
+// 验证：现场把 -45 推到 1/4/5 → `iAngleOffset` 应为 -45，`bGotNewSample` 单周期高；把 +200 推 → `bDataOutOfRange` 为 TRUE。
+// ============================================================
+
+fbReceiveAngle(
+    Group_Address := stGroupWindDir,
+    strData_Rec   := stEibRec,
+    bDataReceive  => bGotNewSample,
+    iData         => iAngleOffset
+);
+
+rTrigSample(CLK := bGotNewSample);
+IF rTrigSample.Q THEN
+    bDataOutOfRange := (iAngleOffset &lt; -180) OR (iAngleOffset &gt; 180);
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

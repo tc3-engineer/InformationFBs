@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_EIB_8BIT_SIGN_REC" Id="{dff16dc8-231e-5d22-a9f6-0a20edfae96f}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_EIB_8BIT_SIGN_REC
+VAR
+    fbReceiveDimPct  : EIB_8BIT_SIGN_REC;
+    stEibRec         : EIB_REC;
+    stGroupDimPct    : EIB_GROUP_ADDR := (MAIN := 1, SUB_MAIN := 2, NUMBER := 4);
+    iDimPercent      : INT;          // 解码后的 0..100
+    bGotNewSample    : BOOL;
+    rTrigSample      : R_TRIG;
+    bScalingError    : BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_EIB.EIB_8BIT_SIGN_REC 演示程序
+// ============================================================
+// 场景：DPT 5.001 调光面板把当前调光百分比 (0..100%) 经 1 byte 推送到 1/2/4。本 demo 用 `Scaling_Mode = 0` 接收百分比，复制给本地 HMI 显示。
+// 价值：把「8-bit 解码 + 单位换算」做成一个调用；不用关心 raw byte 到 % 的缩放
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_EIB（References → Add library）
+//   3. 编译 → 登录 → 运行；按下方在线写值步骤操作
+// 验证：推 0x80 (128) 到 1/2/4 → `iDimPercent` 应约 50（128*100/255 ≈ 50.2 取整）。
+// ============================================================
+
+fbReceiveDimPct(
+    Group_Address := stGroupDimPct,
+    Scaling_Mode  := 0,             // 0..100% (DPT 5.001)
+    strData_Rec   := stEibRec,
+    bDataReceive  => bGotNewSample,
+    iData         => iDimPercent
+);
+
+rTrigSample(CLK := bGotNewSample);
+IF rTrigSample.Q THEN
+    bScalingError := (iDimPercent &lt; 0);   // -1 → mode 非法
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

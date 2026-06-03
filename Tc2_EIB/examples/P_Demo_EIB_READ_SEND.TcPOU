@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_EIB_READ_SEND" Id="{f3af3073-35ea-5e90-bd24-d0c13509544b}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_EIB_READ_SEND
+VAR
+    fbReadReq        : EIB_READ_SEND;
+    fbReceiveBri     : EIB_8BIT_SIGN_REC;   // 接收对应响应
+    stEibRec         : EIB_REC;
+    stGroupDimmer    : EIB_GROUP_ADDR := (MAIN := 1, SUB_MAIN := 2, NUMBER := 3);
+    bTriggerRead     : BOOL;
+    bReadBusy        : BOOL;
+    bReadError       : BOOL;
+    iLastErrID       : EIB_ERROR_CODE;
+    bGotResponse     : BOOL;
+    iDimLevel        : INT;
+    rTrigResponse    : R_TRIG;
+    nResponseCount   : DINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_EIB.EIB_READ_SEND 演示程序
+// ============================================================
+// 场景：PLC 启动时主动查询调光器 1/2/3 当前亮度——发 read_req → 调光器回应 → EIB_8BIT_SIGN_REC 接收响应值。
+// 价值：主动查询比等设备自报快得多；常用于 BMS 启动同步
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_EIB（References → Add library）
+//   3. 编译 → 登录 → 运行；按下方在线写值步骤操作
+// 验证：置 `bTriggerRead := TRUE` 一个周期 → BMS 应能在 group monitor 看到 1/2/3 出 read_req；调光器回应后 `EIB_8BIT_SIGN_REC.bDataReceive` 单周期高，`iDimLevel` = 当前调光器亮度。
+// ============================================================
+
+// 1) 发 read_req 到调光器组地址
+fbReadReq(
+    Group_Address := stGroupDimmer,
+    bRead         := bTriggerRead,
+    str_Rec       := stEibRec,
+    bError        => bReadError,
+    iErrorID      => iLastErrID,
+    bBusy         => bReadBusy
+);
+
+// 2) 并行接收同地址的响应（调光器会回 8-bit 当前亮度）
+fbReceiveBri(
+    Group_Address := stGroupDimmer,
+    Scaling_Mode  := 0,             // 0..100%
+    strData_Rec   := stEibRec,
+    bDataReceive  => bGotResponse,
+    iData         => iDimLevel
+);
+
+// 3) 数响应次数
+rTrigResponse(CLK := bGotResponse);
+IF rTrigResponse.Q THEN
+    nResponseCount := nResponseCount + 1;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

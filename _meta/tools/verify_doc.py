@@ -211,16 +211,28 @@ def _find_section_in_body(lib: str, name: str) -> str | None:
     if not txt.exists():
         return None
     body = txt.read_text()
-    # Body heading: "<sec> <name>" at line start, where <sec> is 1–5 levels.
-    # The title may carry a suffix after the POU name (Tc2_ModbusSrv prints
-    # "6.2.1 FB_MBReadCoils (Modbus function 1)"), so allow trailing text — but
-    # gate the name with a non-identifier lookahead so searching "FB_MBRead"
-    # can't match "FB_MBReadCoils". TOC echoes (same line + dot-leader + page)
-    # share the section number, so grabbing either is fine; we de-dup by depth.
-    pat = re.compile(
-        rf"(?m)^\s*(\d+(?:\.\d+){{0,4}})\s+{re.escape(name)}(?![A-Za-z0-9_]).*$"
-    )
-    secs = pat.findall(body)
+    # Body heading match has two tiers; we try the strict form first so that an
+    # exact-title section wins over an "FB_X with foo" describing/sample section
+    # that happens to share the same POU token.
+    #
+    # Tier 1 — strict: "<sec> <name>" with nothing after the name except whitespace.
+    # Matches "4.2.2 KL6301" but NOT "4.4.1 KL6301 with CX5120" — fixes Tc2_EIB
+    # where a "KL6301 with CX5120" sample chapter sits at the same depth as the
+    # real "KL6301" FB and previously won the secs[-1] tie-break.
+    #
+    # Tier 2 — loose (fallback when strict has no hit): "<sec> <name>" followed
+    # by anything that does NOT continue the identifier. Recovers TF manuals
+    # like Tc2_ModbusSrv where titles legitimately carry suffixes
+    # ("6.2.1 FB_MBReadCoils (Modbus function 1)"). The negative-lookahead
+    # `(?![A-Za-z0-9_])` still guards against prefix matches like
+    # "FB_MBRead" hitting "FB_MBReadCoils".
+    strict = re.compile(rf"(?m)^\s*(\d+(?:\.\d+){{0,4}})\s+{re.escape(name)}\s*$")
+    secs = strict.findall(body)
+    if not secs:
+        loose = re.compile(
+            rf"(?m)^\s*(\d+(?:\.\d+){{0,4}})\s+{re.escape(name)}(?![A-Za-z0-9_]).*$"
+        )
+        secs = loose.findall(body)
     if not secs:
         return None
     # Prefer the most specific (deepest) section; ties → last occurrence

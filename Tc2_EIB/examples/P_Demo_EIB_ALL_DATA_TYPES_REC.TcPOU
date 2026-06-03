@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_EIB_ALL_DATA_TYPES_REC" Id="{e768d62f-4650-57ce-b049-e7dddfd290b2}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_EIB_ALL_DATA_TYPES_REC
+VAR
+    fbReceiveAny       : EIB_ALL_DATA_TYPES_REC;
+    stEibRec           : EIB_REC;
+    stGroupCustomDpt   : EIB_GROUP_ADDR := (MAIN := 1, SUB_MAIN := 1, NUMBER := 20);
+    arrPayload         : ARRAY[1..14] OF BYTE;
+    usPayloadLen       : USINT;
+    bIsReadCmd         : BOOL;
+    bGotNewSample      : BOOL;
+    rTrigSample        : R_TRIG;
+    bAsBool            : BOOL;        // 当 len = 1
+    wAsWord            : WORD;        // 当 len = 3（2 byte payload）
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_EIB.EIB_ALL_DATA_TYPES_REC 演示程序
+// ============================================================
+// 场景：实验性 KNX 设备，DPT 私有，且会同时发 1 bit / 2 byte 两种长度。本 demo 用一个 FB 接两种长度，按 `EIB_Data_Len` 分支处理。
+// 价值：单 FB 处理变长 telegram + 可识别 read 命令；专用 FB 做不到
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_EIB（References → Add library）
+//   3. 编译 → 登录 → 运行；按下方在线写值步骤操作
+// 验证：推 1 bit (`bData = TRUE`) → `EIB_Data_Len` = 1、`EIB_Data_Receive[1].0` = 1；推 2 byte (0x12 0x34) → `EIB_Data_Len` = 3、`EIB_Data_Receive[1]` = 0x12、`[2]` = 0x34。
+// ============================================================
+
+fbReceiveAny(
+    Group_Address    := stGroupCustomDpt,
+    strData_Rec      := stEibRec,
+    bDataReceive     => bGotNewSample,
+    EIB_Data_Receive => arrPayload,
+    EIB_Data_Len     => usPayloadLen,
+    bEIB_READ        => bIsReadCmd
+);
+
+rTrigSample(CLK := bGotNewSample);
+IF rTrigSample.Q AND NOT bIsReadCmd THEN
+    CASE usPayloadLen OF
+        1:  // < 8 bit 负载
+            bAsBool := (arrPayload[1].0 = TRUE);
+        3:  // 2 byte 负载，high/low 拼装
+            wAsWord := SHL(WORD#(arrPayload[1]), 8) + WORD#(arrPayload[2]);
+    END_CASE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

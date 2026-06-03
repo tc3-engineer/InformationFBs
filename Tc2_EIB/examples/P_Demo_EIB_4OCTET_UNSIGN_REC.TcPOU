@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_EIB_4OCTET_UNSIGN_REC" Id="{cb395a34-bb2b-5a14-919c-5ccd541e4167}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_EIB_4OCTET_UNSIGN_REC
+VAR
+    fbReceiveRuntime : EIB_4OCTET_UNSIGN_REC;
+    stEibRec         : EIB_REC;
+    stGroupRuntime   : EIB_GROUP_ADDR := (MAIN := 1, SUB_MAIN := 4, NUMBER := 10);
+    uiTotalSec       : UDINT;
+    nDays            : UDINT;
+    nHours           : UDINT;
+    nMinutes         : UDINT;
+    bGotNewSample    : BOOL;
+    rTrigSample      : R_TRIG;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_EIB.EIB_4OCTET_UNSIGN_REC 演示程序
+// ============================================================
+// 场景：DPT 12.001 设备绝对运行秒数推送到 1/4/10。本 demo 接收并换算为日 / 时 / 分。
+// 价值：DPT 12.xxx 标准接收；不损失精度
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_EIB（References → Add library）
+//   3. 编译 → 登录 → 运行；按下方在线写值步骤操作
+// 验证：推 86400 到 1/4/10 → `uiTotalSec` = 86400 → `nDays = 1, nHours = 0, nMinutes = 0`。
+// ============================================================
+
+fbReceiveRuntime(
+    Group_Address := stGroupRuntime,
+    strData_Rec   := stEibRec,
+    bDataReceive  => bGotNewSample,
+    uiData        => uiTotalSec
+);
+
+rTrigSample(CLK := bGotNewSample);
+IF rTrigSample.Q THEN
+    nDays    := uiTotalSec / 86400;
+    nHours   := (uiTotalSec / 3600) MOD 24;
+    nMinutes := (uiTotalSec / 60) MOD 60;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

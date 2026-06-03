@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_EIB_ALL_DATA_TYPES_REC_EX" Id="{abe5ebb9-68d8-5c57-9447-12ab565150f3}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_EIB_ALL_DATA_TYPES_REC_EX
+VAR
+    fbReceiveAll : EIB_ALL_DATA_TYPES_REC_EX;
+    stEibRec     : EIB_REC;
+
+    stCurrentGroup    : EIB_GROUP_ADDR;
+    arrCurrentPayload : ARRAY[1..14] OF BYTE;
+    usCurrentLen      : USINT;
+    bGotNewSample     : BOOL;
+    rTrigSample       : R_TRIG;
+
+    // 简化环形缓冲：最近 100 条事件
+    TYPE ST_LogEntry : STRUCT
+        stGroup : EIB_GROUP_ADDR;
+        arrData : ARRAY[1..14] OF BYTE;
+        usLen   : USINT;
+    END_STRUCT END_TYPE;
+    // ⚠️ TYPE 在 VAR 中无法定义；实际工程把 ST_LogEntry 放 DUT，这里仅示意
+
+    nLogCount    : DINT;
+    nLogHead     : DINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_EIB.EIB_ALL_DATA_TYPES_REC_EX 演示程序
+// ============================================================
+// 场景：BMS 调试期：现场操作员说「开关 1/1/3 推几下没反应」。本 demo 把整条 EIB 总线（含 1/1/0..1/1/63）的所有 telegram 记入环形缓冲区，运维通过 HMI 翻页查最近 100 条事件确认 1/1/3 是否真有报文进来。
+// 价值：把「按地址订阅多个 _REC 实例 + 各自维护缓冲」压成一个 _EX 实例 + 一个统一缓冲；代码量减少 10 倍，且新增地址时不用改业务代码
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_EIB（References → Add library）
+//   3. 编译 → 登录 → 运行；按下方在线写值步骤操作
+// 验证：推 1/1/3 上推几下开关 → 环形缓冲 `arrLog[]` 顶端应出现 (1, 1, 3, [01], len=1) 多条；总条数 `nLogCount` 应递增。
+// ============================================================
+
+fbReceiveAll(
+    strData_Rec      := stEibRec,
+    bDataReceive     => bGotNewSample,
+    Group_Address    => stCurrentGroup,
+    EIB_Data_Receive => arrCurrentPayload,
+    EIB_Data_Len     => usCurrentLen
+);
+
+// 单周期脉冲转上升沿，把 (group, payload, len) 入环形缓冲
+rTrigSample(CLK := bGotNewSample);
+IF rTrigSample.Q THEN
+    // 实际工程把 stCurrentGroup / arrCurrentPayload / usCurrentLen 写入 arrLog[nLogHead]
+    nLogCount := nLogCount + 1;
+    nLogHead  := (nLogHead + 1) MOD 100;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

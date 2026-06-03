@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_KL6301" Id="{b3772790-c72e-5dc5-a782-4f47f62987f8}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_KL6301
+VAR
+    fbKL6301           : KL6301;
+    arrKL6301_IN       : ARRAY[1..24] OF BYTE;  // 实链 System Manager 时改 AT %I*
+    arrKL6301_OUT      : ARRAY[1..24] OF BYTE;  // 实链 System Manager 时改 AT %Q*
+    stEibRec           : EIB_REC;
+    bStartConfig       : BOOL;
+    iStep              : INT;
+    bConfigReady       : BOOL;
+    bConfigError       : BOOL;
+    iLastErrorId       : EIB_ERROR_CODE;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_EIB.KL6301 演示程序
+// ============================================================
+// 场景：CX5120 + KL6301 + 多个 EIB 楼宇设备（开关、调光器、温控）。需要在 PLC 启动时一次性把 KL6301 配置好——写物理地址 2/3/4，配 4 个过滤器覆盖 1/1/0..1/1/63 / 1/2/0..1/2/63 / 1/4/0..1/4/63 / 3/1/0..3/1/63 共 256 组地址。
+// 价值：把「24 字节过程数据 + KL6301 EEPROM 写入握手 + 错误重试」封装为一行 `fbKL6301(...)` 调用。手写实现要 100+ 行字节级协议。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_EIB（References → Add library）
+//   3. 编译 → 登录 → 运行；按下方在线写值步骤操作
+// 验证：登录后置 `bStartConfig := TRUE` → 1-2 秒后 `iStep` 从 0 跳到 1，`bConfigReady = TRUE`、`bConfigError = FALSE`；若 KL6301 没接好则报错 `iLastErrorId = KL6301_NO_RESPONSE_FROM_TERMINAL (32)`。
+// ============================================================
+
+// 第一次进入：参数化 KL6301。物理地址 2/3/4，4 个 64 容量过滤器。
+CASE iStep OF
+0:
+    // —— 物理地址：本 KL6301 在 EIB 网络中的身份证 ——
+    fbKL6301.EIB_PHYS_ADDR.Area   := 2;
+    fbKL6301.EIB_PHYS_ADDR.Line   := 3;
+    fbKL6301.EIB_PHYS_ADDR.Device := 4;
+
+    // —— 过滤器 1：1/1/0..1/1/63（开关组）——
+    fbKL6301.EIB_GROUP_FILTER[1].GROUP_ADDR.MAIN     := 1;
+    fbKL6301.EIB_GROUP_FILTER[1].GROUP_ADDR.SUB_MAIN := 1;
+    fbKL6301.EIB_GROUP_FILTER[1].GROUP_ADDR.NUMBER   := 0;
+    fbKL6301.EIB_GROUP_FILTER[1].GROUP_LEN           := 63;  // 64 地址 = 长度 63
+
+    // —— 过滤器 2：1/2/0..1/2/63（调光组）——
+    fbKL6301.EIB_GROUP_FILTER[2].GROUP_ADDR.MAIN     := 1;
+    fbKL6301.EIB_GROUP_FILTER[2].GROUP_ADDR.SUB_MAIN := 2;
+    fbKL6301.EIB_GROUP_FILTER[2].GROUP_ADDR.NUMBER   := 0;
+    fbKL6301.EIB_GROUP_FILTER[2].GROUP_LEN           := 63;
+
+    // —— 过滤器 3：1/4/0..1/4/63（传感器组）——
+    fbKL6301.EIB_GROUP_FILTER[3].GROUP_ADDR.MAIN     := 1;
+    fbKL6301.EIB_GROUP_FILTER[3].GROUP_ADDR.SUB_MAIN := 4;
+    fbKL6301.EIB_GROUP_FILTER[3].GROUP_ADDR.NUMBER   := 0;
+    fbKL6301.EIB_GROUP_FILTER[3].GROUP_LEN           := 63;
+
+    // —— 过滤器 4：3/1/0..3/1/63（场景控制组）——
+    fbKL6301.EIB_GROUP_FILTER[4].GROUP_ADDR.MAIN     := 3;
+    fbKL6301.EIB_GROUP_FILTER[4].GROUP_ADDR.SUB_MAIN := 1;
+    fbKL6301.EIB_GROUP_FILTER[4].GROUP_ADDR.NUMBER   := 0;
+    fbKL6301.EIB_GROUP_FILTER[4].GROUP_LEN           := 63;
+
+    IF bStartConfig THEN
+        fbKL6301.bActivate := TRUE;  // 触发参数化阶段
+        IF fbKL6301.bReady THEN
+            IF NOT fbKL6301.bError THEN
+                iStep := 1;          // 进入正常数据交换
+            ELSE
+                iStep := 100;        // 出错分支
+                iLastErrorId := fbKL6301.iErrorId;
+            END_IF
+        END_IF
+    END_IF
+1:
+    ;  // 数据交换中：所有 EIB_*_REC / EIB_*_SEND FB 已可工作
+    bConfigReady := TRUE;
+100:
+    bConfigError := TRUE;
+END_CASE
+
+// 每周期调用一次：iMode=0 = 4 过滤器 × 64 条目兼容模式
+fbKL6301(
+    bActivate    := fbKL6301.bActivate,
+    idx          := 1,
+    iMode        := 0,
+    tTimeout     := T#5S,
+    KL6301_IN    := arrKL6301_IN,
+    KL6301_OUT   := arrKL6301_OUT,
+    bActive      => ,
+    bReady       => ,
+    bError       => ,
+    iErrorId     => ,
+    str_Data_Rec => stEibRec
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

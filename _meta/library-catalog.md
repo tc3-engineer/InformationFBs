@@ -81,7 +81,7 @@
 | Tc2_DALI | ~30 | ⏳ pending | 照明总线 |
 | Tc2_DMX | 34 ✅ done (34 FB, v1.8.1) | ✅ done | 舞台灯光 DMX512/RDM（主站/发现/RDM 参数/状态/EL6851；含 1 outdated FB） |
 | Tc2_KNXLib | ~30 | ❌ unavailable | KNX/EIB（PDF 404） |
-| Tc2_EIB | ~20 | ⏳ pending | EIB（旧 KNX） |
+| Tc2_EIB | 48 ✅ done (v1.16.1) | ✅ done | EIB（旧 KNX）— KL6301 耦合器接入 + 15 个 receive FB + 29 个 send FB + 2 个地址转换 FC |
 | Tc2_EnOcean | ~20 | ⏳ pending | 无线传感 |
 | Tc3_BA2 | ~200 | ⏳ pending | Building Automation 2.0（走 Tc3_BA2_Common 别名） |
 | Tc2_HVAC | ~50 | ⏳ pending | 暖通（走 TF8000 别名） |

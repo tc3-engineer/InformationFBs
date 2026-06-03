@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_EIB_3BIT_CONTROL_REC" Id="{f9d9f653-6f62-52d5-b435-190adec5cbbd}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_EIB_3BIT_CONTROL_REC
+VAR
+    fbReceiveDim       : EIB_3BIT_CONTROL_REC;
+    stEibRec           : EIB_REC;
+    stGroupDimCtrl     : EIB_GROUP_ADDR := (MAIN := 1, SUB_MAIN := 2, NUMBER := 3);
+    bDirectionUp       : BOOL;        // bControl = TRUE 表示向上
+    byStep             : BYTE;        // 0..7 步幅
+    bGotNewSample      : BOOL;
+    rTrigSample        : R_TRIG;
+    iDimmerLevel       : INT;         // 0..100 当前亮度
+    bRampActive        : BOOL;        // byStep != 0 期间为 TRUE
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_EIB.EIB_3BIT_CONTROL_REC 演示程序
+// ============================================================
+// 场景：DPT 3.007 调光控制：按住调光面板按钮发 4-bit 控制 telegram 到 1/2/3。本 demo 把控制信号转成调光增量：每收到一帧加/减
+// 价值：替代手写 4-bit 解码 + 位分组；与按住调光按钮的语义直接对应
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_EIB（References → Add library）
+//   3. 编译 → 登录 → 运行；按下方在线写值步骤操作
+// 验证：把 (bControl=TRUE, byRange=4) 推到 1/2/3 → `iDimmerLevel` 应在 0..100 间累加；推 byRange=0 → `bRampActive` 变 FALSE。
+// ============================================================
+
+fbReceiveDim(
+    Group_Address := stGroupDimCtrl,
+    strData_Rec   := stEibRec,
+    bDataReceive  => bGotNewSample,
+    bControl      => bDirectionUp,
+    byRange       => byStep
+);
+
+rTrigSample(CLK := bGotNewSample);
+IF rTrigSample.Q THEN
+    IF byStep = 0 THEN
+        bRampActive := FALSE;  // 操作员松开按钮
+    ELSE
+        bRampActive := TRUE;
+        IF bDirectionUp THEN
+            iDimmerLevel := iDimmerLevel + TO_INT(byStep);
+        ELSE
+            iDimmerLevel := iDimmerLevel - TO_INT(byStep);
+        END_IF;
+        IF iDimmerLevel &gt; 100 THEN
+            iDimmerLevel := 100;
+        ELSIF iDimmerLevel &lt; 0 THEN
+            iDimmerLevel := 0;
+        END_IF;
+    END_IF;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

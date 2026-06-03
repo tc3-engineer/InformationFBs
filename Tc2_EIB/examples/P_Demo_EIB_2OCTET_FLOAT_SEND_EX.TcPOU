@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_EIB_2OCTET_FLOAT_SEND_EX" Id="{ef9319d8-f399-5db8-bd77-dcdf774ccb7a}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_EIB_2OCTET_FLOAT_SEND_EX
+VAR
+    fbSendTempEx       : EIB_2OCTET_FLOAT_SEND_EX;
+    stEibRec           : EIB_REC;
+    stGroupTemp        : EIB_GROUP_ADDR := (MAIN := 1, SUB_MAIN := 2, NUMBER := 10);
+    bSendStart         : BOOL;
+    iWorkMode          : INT := 3;             // OnChangePolling
+    tCyclePeriod       : TIME := T#5S;
+    tMinIntervalChange : TIME := T#500MS;
+    rRoomTempC         : REAL := 22.5;
+    bResponseToRead    : BOOL := TRUE;
+    bSendBusy          : BOOL;
+    bSendError         : BOOL;
+    iLastErrID         : EIB_ERROR_CODE;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_EIB.EIB_2OCTET_FLOAT_SEND_EX 演示程序
+// ============================================================
+// 场景：PLC 实测温度发送到组地址 1/2/10，周期 5 秒重发（心跳）；同时数据变化时立即推送；并响应 BMS 监控页面发起的 Read_Group_Req。
+// 价值：周期心跳 + 即时变化 + 主动答查；BMS 数据可靠性大幅提升
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_EIB（References → Add library）
+//   3. 编译 → 登录 → 运行；按下方在线写值步骤操作
+// 验证：登录后 `bSendStart := TRUE` + `iWorkMode := 3` (OnChangePolling) → BMS 应每 5 秒看到一次 1/2/10 新帧；任意改 `rRoomTempC` 也立即出帧；BMS Read_Group_Req 1/2/10 应得到当前值。
+// ============================================================
+
+// iMode = 3：周期 5 秒 + 变化时立即发，间隔最小 500 ms 防抖
+fbSendTempEx(
+    bStart         := bSendStart,
+    iMode          := iWorkMode,
+    CyclePolling   := tCyclePeriod,
+    MinSendTime    := tMinIntervalChange,
+    Group_Address  := stGroupTemp,
+    rData          := rRoomTempC,
+    str_Rec        := stEibRec,
+    bEnableReadReq := bResponseToRead,
+    bBusy          => bSendBusy,
+    bError         => bSendError,
+    iErrorID       => iLastErrID
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

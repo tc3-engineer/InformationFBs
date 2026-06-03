@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_EIB_TIME_SEND_EX" Id="{0dfb3bfc-8d3e-5f50-8444-2820d1d21da8}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_EIB_TIME_SEND_EX
+VAR
+    fbSendTimeEx       : EIB_TIME_SEND_EX;
+    stEibRec           : EIB_REC;
+    stGroup            : EIB_GROUP_ADDR := (MAIN := 1, SUB_MAIN := 0, NUMBER := 2);
+    bSendStart         : BOOL;
+    iWorkMode          : INT := 1;
+    tCycle             : TIME := T#1M;
+    tMinSend           : TIME := T#500MS;
+    // ⚠️ PDF 排版错——VAR_INPUT 引脚是 wDay/wMonth/wYear，FB 名是 TIME_SEND_EX
+    wDay               : WORD := 14;       // 也许实际是 wHoure
+    wMonth             : WORD := 30;       // 也许实际是 wMinute
+    wYear              : WORD := 0;        // 也许实际是 wSecond
+    bResponseRead      : BOOL := TRUE;
+    bSendBusy          : BOOL;
+    bSendError         : BOOL;
+    iLastErrID         : EIB_ERROR_CODE;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_EIB.EIB_TIME_SEND_EX 演示程序
+// ============================================================
+// 场景：BMS 主时钟时间灵活间隔广播。⚠️ 由于 PDF 排版错，本 demo 按 PDF 逐字使用 wDay/wMonth/wYear 引脚名；实际语义需用 XAE 实查确认。
+// 价值：灵活间隔的时间广播；但因 PDF 排版错优先建议 EIB_TIME_SEND
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_EIB（References → Add library）
+//   3. 编译 → 登录 → 运行；按下方在线写值步骤操作
+// 验证：登录 `bStart := TRUE`、`iMode := 1`、`CyclePolling := T#1M` → 每分钟看到 1/0/2 出 3 byte 帧。⚠️ 验证后请用 group monitor 解析帧负载，确认是日期还是时间。
+// ============================================================
+
+// ⚠️ 按 PDF 引脚名调用；实际验证后需校对 group monitor 解出的字段含义
+fbSendTimeEx(
+    bStart         := bSendStart,
+    iMode          := iWorkMode,
+    CyclePolling   := tCycle,
+    MinSendTime    := tMinSend,
+    Group_Address  := stGroup,
+    wDay           := wDay,
+    wMonth         := wMonth,
+    wYear          := wYear,
+    str_Rec        := stEibRec,
+    bEnableReadReq := bResponseRead,
+    bBusy          => bSendBusy,
+    bError         => bSendError,
+    iErrorID       => iLastErrID
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

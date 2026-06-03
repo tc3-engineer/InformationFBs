@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_EIB_DATE_REC" Id="{9bc14a81-4672-569d-9a5c-0c79511ca18b}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_EIB_DATE_REC
+VAR
+    fbReceiveDate : EIB_DATE_REC;
+    stEibRec      : EIB_REC;
+    stGroupDate   : EIB_GROUP_ADDR := (MAIN := 1, SUB_MAIN := 0, NUMBER := 1);
+    wDay          : WORD;
+    wMonth        : WORD;
+    wYear         : WORD;
+    nFullYear     : DINT;
+    bGotNewSample : BOOL;
+    rTrigSample   : R_TRIG;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_EIB.EIB_DATE_REC 演示程序
+// ============================================================
+// 场景：BMS 主时钟设备每分钟在组地址 1/0/1 广播当前日期。本 demo 接收日期，更新本地 HMI 时钟显示。
+// 价值：DPT 11 date 标准接收；不用关心 3-byte 拆字段
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_EIB（References → Add library）
+//   3. 编译 → 登录 → 运行；按下方在线写值步骤操作
+// 验证：BMS 主时钟在 2026-06-03 推送 → `wDay = 3, wMonth = 6, wYear = 26`，`nFullYear = 2026`。
+// ============================================================
+
+fbReceiveDate(
+    Group_Address := stGroupDate,
+    strData_Rec   := stEibRec,
+    bDataReceive  => bGotNewSample,
+    wDay          => wDay,
+    wMonth        => wMonth,
+    wYear         => wYear
+);
+
+rTrigSample(CLK := bGotNewSample);
+IF rTrigSample.Q THEN
+    // 还原全 4 位年：< 90 → 20xx，>= 90 → 19xx
+    IF wYear &lt; 90 THEN
+        nFullYear := DINT#2000 + TO_DINT(wYear);
+    ELSE
+        nFullYear := DINT#1900 + TO_DINT(wYear);
+    END_IF;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

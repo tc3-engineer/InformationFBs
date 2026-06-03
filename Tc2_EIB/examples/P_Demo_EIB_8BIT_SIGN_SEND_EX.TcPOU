@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_EIB_8BIT_SIGN_SEND_EX" Id="{180f1486-1fd8-5d0d-be94-9b9f2638b626}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_EIB_8BIT_SIGN_SEND_EX
+VAR
+    fbSendBriEx   : EIB_8BIT_SIGN_SEND_EX;
+    stEibRec      : EIB_REC;
+    stGroup       : EIB_GROUP_ADDR := (MAIN := 1, SUB_MAIN := 2, NUMBER := 20);
+    bSendStart    : BOOL;
+    iWorkMode     : INT := 3;
+    tCycle        : TIME := T#5S;
+    tMinSend      : TIME := T#500MS;
+    iBriPct       : INT := 50;
+    iScaleMode    : INT := 0;
+    bResponseRead : BOOL := TRUE;
+    bSendBusy     : BOOL;
+    bSendError    : BOOL;
+    iLastErrID    : EIB_ERROR_CODE;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_EIB.EIB_8BIT_SIGN_SEND_EX 演示程序
+// ============================================================
+// 场景：调光百分比按 OnChangePolling 模式发，周期 5 秒心跳 + 即时变化。
+// 价值：DPT 5 + 周期心跳 + 即时变化；BMS 工程首选
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_EIB（References → Add library）
+//   3. 编译 → 登录 → 运行；按下方在线写值步骤操作
+// 验证：登录 `bStart := TRUE`、`iMode := 3` → 每 5 秒看到组 1/2/20 出帧。
+// ============================================================
+
+fbSendBriEx(
+    bStart         := bSendStart,
+    iMode          := iWorkMode,
+    CyclePolling   := tCycle,
+    iData          := iBriPct,
+    Scaling_Mode   := iScaleMode,
+    MinSendTime    := tMinSend,
+    Group_Address  := stGroup,
+    str_Rec        := stEibRec,
+    bEnableReadReq := bResponseRead,
+    bBusy          => bSendBusy,
+    bError         => bSendError,
+    iErrorID       => iLastErrID
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

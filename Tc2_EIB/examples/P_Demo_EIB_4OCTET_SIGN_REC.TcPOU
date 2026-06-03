@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_EIB_4OCTET_SIGN_REC" Id="{90fac509-03be-5136-87a2-a093b13532a2}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_EIB_4OCTET_SIGN_REC
+VAR
+    fbReceiveEnergy : EIB_4OCTET_SIGN_REC;
+    stEibRec        : EIB_REC;
+    stGroupEnergy   : EIB_GROUP_ADDR := (MAIN := 1, SUB_MAIN := 4, NUMBER := 9);
+    iAccumWh        : DINT;          // 累计电能 Wh
+    iLastAccumWh    : DINT;
+    iPeriodWh       : DINT;          // 上次到本次差值
+    bGotNewSample   : BOOL;
+    rTrigSample     : R_TRIG;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_EIB.EIB_4OCTET_SIGN_REC 演示程序
+// ============================================================
+// 场景：DPT 13.010 电能表累计有功电能 (Wh，可正可负)。本 demo 接收累计值，与上次记录差值做周期消耗。
+// 价值：替代手写字节拼装 + 符号位扩展；DPT 13 标准接收方式
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_EIB（References → Add library）
+//   3. 编译 → 登录 → 运行；按下方在线写值步骤操作
+// 验证：把 123456 推到 1/4/9 → `iAccumWh` 应等于 123456；过 1 分钟再推 124000 → `iPeriodWh` 应约等于 544。
+// ============================================================
+
+fbReceiveEnergy(
+    Group_Address := stGroupEnergy,
+    strData_Rec   := stEibRec,
+    bDataReceive  => bGotNewSample,
+    uiData        => iAccumWh   // PDF 写法保留
+);
+
+rTrigSample(CLK := bGotNewSample);
+IF rTrigSample.Q THEN
+    iPeriodWh    := iAccumWh - iLastAccumWh;
+    iLastAccumWh := iAccumWh;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

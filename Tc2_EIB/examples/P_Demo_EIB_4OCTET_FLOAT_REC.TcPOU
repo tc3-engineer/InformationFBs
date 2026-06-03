@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_EIB_4OCTET_FLOAT_REC" Id="{2382c4d2-2d6b-541d-beb1-1d7cb02fe19f}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_EIB_4OCTET_FLOAT_REC
+VAR
+    fbReceivePower : EIB_4OCTET_FLOAT_REC;
+    stEibRec       : EIB_REC;
+    stGroupPower   : EIB_GROUP_ADDR := (MAIN := 1, SUB_MAIN := 4, NUMBER := 8);
+    rPowerW        : REAL;
+    bGotNewSample  : BOOL;
+    rTrigSample    : R_TRIG;
+    bOverload      : BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_EIB.EIB_4OCTET_FLOAT_REC 演示程序
+// ============================================================
+// 场景：DPT 14.056 电能表把瞬时功率 (W) 通过 4-byte float 推送到组地址 1/4/8。本 demo 接收功率值，超 10 kW 触发负荷管理。
+// 价值：不损失精度直接拿到 IEEE 754 浮点；替代手写字节序还原
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_EIB（References → Add library）
+//   3. 编译 → 登录 → 运行；按下方在线写值步骤操作
+// 验证：把 8523.7 (W) 推到 1/4/8 → `rPowerW` 应等于 8523.7（±1e-3），`bGotNewSample` 单周期高。
+// ============================================================
+
+fbReceivePower(
+    Group_Address := stGroupPower,
+    strData_Rec   := stEibRec,
+    bDataReceive  => bGotNewSample,
+    rData         => rPowerW
+);
+
+rTrigSample(CLK := bGotNewSample);
+IF rTrigSample.Q THEN
+    bOverload := rPowerW &gt; 10000.0;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

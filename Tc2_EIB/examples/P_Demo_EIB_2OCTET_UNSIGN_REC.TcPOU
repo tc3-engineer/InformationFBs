@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_EIB_2OCTET_UNSIGN_REC" Id="{16a1b829-b3ed-5f2a-aa37-1eaa3a49ea54}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_EIB_2OCTET_UNSIGN_REC
+VAR
+    fbReceiveLux       : EIB_2OCTET_UNSIGN_REC;
+    stEibRec           : EIB_REC;
+    stGroupBrightness  : EIB_GROUP_ADDR := (MAIN := 1, SUB_MAIN := 4, NUMBER := 2);
+    uiBrightnessLux    : UINT;
+    bGotNewSample      : BOOL;
+    rTrigSample        : R_TRIG;
+    bShadeShouldClose  : BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_EIB.EIB_2OCTET_UNSIGN_REC 演示程序
+// ============================================================
+// 场景：DPT 7.013 室外亮度传感器把当前 lux 值（0..65535 范围）每秒推送到组地址 1/4/2。本 demo 接收 lux 值，超 50000 触发遮阳卷帘关闭。
+// 价值：把「接收 2-byte unsigned + 解码」压成一行调用；不用关心字节序
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_EIB（References → Add library）
+//   3. 编译 → 登录 → 运行；按下方在线写值步骤操作
+// 验证：现场把 12000 推到 1/4/2 → `uiBrightnessLux` 应为 12000，`bGotNewSample` 单周期高；把 55000 推 → `bShadeShouldClose` 为 TRUE。
+// ============================================================
+
+fbReceiveLux(
+    Group_Address := stGroupBrightness,
+    strData_Rec   := stEibRec,
+    bDataReceive  => bGotNewSample,
+    uiData        => uiBrightnessLux
+);
+
+rTrigSample(CLK := bGotNewSample);
+IF rTrigSample.Q THEN
+    bShadeShouldClose := (uiBrightnessLux &gt; 50000);
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

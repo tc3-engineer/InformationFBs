@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_KL6301_EX" Id="{8619458f-0b1a-5612-8fd5-e1eb76b53c16}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_KL6301_EX
+VAR
+    fbKL6301Ex     : KL6301_EX;
+    arrKL6301_IN   : ARRAY[1..24] OF BYTE;
+    arrKL6301_OUT  : ARRAY[1..24] OF BYTE;
+    stEibRec       : EIB_REC;
+    bStartConfig   : BOOL;
+    iStep          : INT;
+    bConfigReady   : BOOL;
+    bConfigError   : BOOL;
+    iLastErrorId   : EIB_ERROR_CODE;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_EIB.KL6301_EX 演示程序
+// ============================================================
+// 场景：BMS 项目：CX5120 + KL6301_EX 在系统调试期需要让现场调试员用 ETS 工具搜到 KL6301 并按 "LED Blink" 定位机柜里具体是哪块端子。
+// 价值：与 `KL6301` 比，多出 ETS 软件集成；不用为了 ETS 兼容而把整个 PLC 程序从 IEC 改成 ETS 项目
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_EIB（References → Add library）
+//   3. 编译 → 登录 → 运行；按下方在线写值步骤操作
+// 验证：登录后 `bStartConfig := TRUE` → 几秒后 `bConfigReady := TRUE`；现场用 ETS5 → Bus → Group monitor 应能搜到物理地址 2/3/4；在 ETS 里对该节点点 "LED Blink"，KL6301 物理 LED 应开始闪烁。
+// ============================================================
+
+// 与 KL6301 相同的配置流程；区别是没有 tTimeout 输入。
+CASE iStep OF
+0:
+    fbKL6301Ex.EIB_PHYS_ADDR.Area   := 2;
+    fbKL6301Ex.EIB_PHYS_ADDR.Line   := 3;
+    fbKL6301Ex.EIB_PHYS_ADDR.Device := 4;
+    fbKL6301Ex.EIB_GROUP_FILTER[1].GROUP_ADDR.MAIN     := 1;
+    fbKL6301Ex.EIB_GROUP_FILTER[1].GROUP_ADDR.SUB_MAIN := 1;
+    fbKL6301Ex.EIB_GROUP_FILTER[1].GROUP_ADDR.NUMBER   := 0;
+    fbKL6301Ex.EIB_GROUP_FILTER[1].GROUP_LEN           := 31;  // iMode=1 用 8×32
+    IF bStartConfig THEN
+        fbKL6301Ex.bActivate := TRUE;
+        IF fbKL6301Ex.bReady THEN
+            IF NOT fbKL6301Ex.bError THEN
+                iStep := 1;
+            ELSE
+                iStep := 100;
+                iLastErrorId := fbKL6301Ex.iErrorId;
+            END_IF
+        END_IF
+    END_IF
+1:
+    bConfigReady := TRUE;
+100:
+    bConfigError := TRUE;
+END_CASE
+
+// 注意：_EX 没有 tTimeout 参数，比 KL6301 少一个引脚
+fbKL6301Ex(
+    bActivate    := fbKL6301Ex.bActivate,
+    idx          := 1,
+    iMode        := 1,        // 8 过滤器 × 32 条目，要求固件 B1+
+    KL6301_IN    := arrKL6301_IN,
+    KL6301_OUT   := arrKL6301_OUT,
+    bActive      => ,
+    bReady       => ,
+    bError       => ,
+    iErrorId     => ,
+    str_Data_Rec => stEibRec
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

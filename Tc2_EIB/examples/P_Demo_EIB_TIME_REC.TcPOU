@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_EIB_TIME_REC" Id="{7f3db126-2bae-5021-802a-2d2e9645381a}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_EIB_TIME_REC
+VAR
+    fbReceiveTime : EIB_TIME_REC;
+    stEibRec      : EIB_REC;
+    stGroupTime   : EIB_GROUP_ADDR := (MAIN := 1, SUB_MAIN := 0, NUMBER := 2);
+    wHoure        : WORD;       // 注意拼写——保持与 PDF 一致
+    wMinute       : WORD;
+    wSecond       : WORD;
+    bGotNewSample : BOOL;
+    nTotalSec     : UDINT;       // 一天内的秒数累加
+    rTrigSample   : R_TRIG;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_EIB.EIB_TIME_REC 演示程序
+// ============================================================
+// 场景：BMS 主时钟在组地址 1/0/2 每分钟广播当前时间。本 demo 接收时间，与本地 PLC RTC 对齐。
+// 价值：DPT 10 time 标准接收；不用关心字节拆分
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_EIB（References → Add library）
+//   3. 编译 → 登录 → 运行；按下方在线写值步骤操作
+// 验证：推 (14:30:00) 到 1/0/2 → `wHoure = 14, wMinute = 30, wSecond = 0`，`bGotNewSample` 单周期高。
+// ============================================================
+
+fbReceiveTime(
+    Group_Address := stGroupTime,
+    strData_Rec   := stEibRec,
+    bDataReceive  => bGotNewSample,
+    wHoure        => wHoure,
+    wMinute       => wMinute,
+    wSecond       => wSecond
+);
+
+rTrigSample(CLK := bGotNewSample);
+IF rTrigSample.Q THEN
+    nTotalSec := TO_UDINT(wHoure) * 3600 + TO_UDINT(wMinute) * 60 + TO_UDINT(wSecond);
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>
