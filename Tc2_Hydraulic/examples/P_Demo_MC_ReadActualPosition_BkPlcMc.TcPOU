@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_MC_ReadActualPosition_BkPlcMc" Id="{00cf76da-7589-5b3d-ae9c-b2ba83f44d7b}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_MC_ReadActualPosition_BkPlcMc
+VAR
+    fbReadPosClamp     : MC_ReadActualPosition_BkPlcMc;
+    axHydClampingHead  : AXIS_REF_BkPlcMc;             // 注塑机锁模液压轴
+    bMonitorPosition   : BOOL := TRUE;                 // HMI / 业务持续读
+    lrActualClampPos   : LREAL;                        // 输出: 当前位置 mm
+    bPosValid          : BOOL;                         // 位置已有效
+    bReadError         : BOOL;
+    nReadErrorID       : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：注塑机 HMI 实时显示锁模位置。Enable 持续高，业务代码周期性读
+//       lrActualClampPos 用于显示 / 与 350 mm 目标比对判定"合模到位"。
+// 价值：相比直接读 axHydClampingHead.pStAxRtData^.fActPosition 结构体，
+//       本 FB 在编码器故障时清掉 Valid，避免显示"上次的值"误导操作员。
+//       不读到 Valid = TRUE 之前，业务侧 lrActualClampPos 保持上一次有效
+//       值并 alarm。
+// 验证：登录后把 bMonitorPosition := TRUE；lrActualClampPos 应每周期跟随
+//       轴实际位置变化；如把编码器线物理拔掉（or 设置 axHydClampingHead 错误状
+//       态），bPosValid 应变 FALSE，bReadError 变 TRUE，nReadErrorID 给
+//       编码器错误码（dwTcHydErrCdEnc* 系列）。
+// =============================================================================
+
+// 每周期调用 — Enable 持续高，FB 周期性刷新 Position
+fbReadPosClamp(
+    Enable   := bMonitorPosition,
+    Axis     := axHydClampingHead,
+    Busy     => ,                                       // 始终 FALSE
+    Valid    => bPosValid,
+    Error    => bReadError,
+    ErrorID  => nReadErrorID,
+    Position => lrActualClampPos
+);
+
+// 业务侧 gate：bPosValid 才能用 lrActualClampPos
+// IF bPosValid AND lrActualClampPos >= 349.5 AND lrActualClampPos <= 350.5 THEN
+//     bClampDone := TRUE; -- 合模到位
+// END_IF
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

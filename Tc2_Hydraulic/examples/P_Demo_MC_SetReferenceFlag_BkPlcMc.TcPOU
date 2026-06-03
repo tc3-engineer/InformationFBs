@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_MC_SetReferenceFlag_BkPlcMc" Id="{f5d253b3-9018-50e5-a2ee-807a83b5a1c8}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_MC_SetReferenceFlag_BkPlcMc
+VAR
+    fbMarkClampReferenced : MC_SetReferenceFlag_BkPlcMc;
+    axHydClampingHead     : AXIS_REF_BkPlcMc;
+    rtMarkTrig            : R_TRIG;
+    bAfterStartupOnce     : BOOL := FALSE;               // 开机后只触发一次
+    bMarkAsReferenced     : BOOL := TRUE;                // 标"已参考"
+    bMarkDone             : BOOL;
+    bMarkBusy             : BOOL;
+    bMarkError            : BOOL;
+    nMarkErrorID          : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：液压锁模轴使用绝对编码器（SSI / EnDat），开机后位置读数已是绝
+//       对值，无需物理归零。但 PLC 默认"未参考"，所有 MC_MoveAbsolute
+//       命令会被拒绝。开机后调本 FB 一次（ReferenceFlag := TRUE）跳
+//       过归零，业务代码直接发绝对定位命令。
+// 价值：手写需要找 dwTcHydNsDwReferenced mask 直接操作 nStateDWord 的
+//       bit；本 FB 封装 bit 操作，避免代码出现"魔数"，且与其它 MC_*
+//       FB 接口风格一致。
+// 验证：① 开机后未调本 FB 时，发 MC_MoveAbsolute_BkPlcMc 应被拒绝（参
+//       考标志未置 → 报错）；② bAfterStartupOnce := TRUE 触发本 FB；
+//       ③ bMarkDone = TRUE 后 MC_ReadStatus_BkPlcMc 看不到 Referenced
+//       专门字段（在 nStateDWord 的 dwTcHydNsDwReferenced bit 里），但
+//       此后 MC_MoveAbsolute 应被接受执行。
+// 注意：本 FB 不验证当前位置是否真的对应参考点；操作员/逻辑必须保证
+//       "现在轴所在位置 = 编码器读数 = 真实坐标"。否则后续绝对定位会
+//       按错坐标系跑可能撞模具。
+// 注意：本 FB 是 Beckhoff 非 PLCopen 扩展，移植代码到其它平台要做兼
+//       容封装。
+// =============================================================================
+
+rtMarkTrig(CLK := bAfterStartupOnce);
+
+fbMarkClampReferenced(
+    Execute       := rtMarkTrig.Q,
+    ReferenceFlag := bMarkAsReferenced,
+    Axis          := axHydClampingHead,
+    Done          => bMarkDone,
+    Busy          => bMarkBusy,
+    Error         => bMarkError,
+    ErrorID       => nMarkErrorID
+);
+
+// 标"已参考"成功后，业务侧再开放绝对定位入口
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

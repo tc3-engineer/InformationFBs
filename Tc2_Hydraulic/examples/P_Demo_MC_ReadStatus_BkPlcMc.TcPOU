@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_MC_ReadStatus_BkPlcMc" Id="{d5a5e558-e659-5923-9097-9457be3aace2}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_MC_ReadStatus_BkPlcMc
+VAR
+    fbReadStatusClamp  : MC_ReadStatus_BkPlcMc;
+    axHydClampingHead  : AXIS_REF_BkPlcMc;
+    bMonitorStatus     : BOOL := TRUE;
+    // 11 个状态输出 — 一次拿全 PLCopen 状态机
+    bAxisErrorstop          : BOOL;
+    bAxisDisabled           : BOOL;
+    bAxisStopping           : BOOL;
+    bAxisStandStill         : BOOL;
+    bAxisDiscreteMotion     : BOOL;
+    bAxisContinousMotion    : BOOL;   // PDF 拼写：缺 'u'
+    bAxisSynchronizedMotion : BOOL;
+    bAxisHoming             : BOOL;
+    bAxisConstantVelocity   : BOOL;
+    bAxisAccelerating       : BOOL;
+    bAxisDecelerating       : BOOL;
+    // 业务派生信号
+    bAxisInMotion           : BOOL;   // 任何运动状态
+    bCanAcceptNewCommand    : BOOL;   // StandStill 且非错误
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：注塑机液压轴 HMI 主控面板。需要同时显示轴状态指示灯（待命 / 运
+//       动中 / 急停 / 归零）、速度趋势（加 / 匀 / 减）、错误状态。本 FB
+//       一次调用拿到 PLCopen 标准定义的 11 个状态 BOOL，对应 HMI 上的
+//       11 个独立指示灯。
+// 价值：手写需要解析 axHydClampingHead.pStAxRtData.nStateDWord 的各个
+//       bit (用 dwTcHydNsDw* 系列 mask) 并处理状态互斥关系；本 FB 一站
+//       式完成，与 PLCopen 标准状态机对齐，方便从其它 PLCopen 兼容平台
+//       移植代码。
+// 验证：① bMonitorStatus := TRUE，上电未使能时 bAxisDisabled 应为 TRUE；
+//       ② 调 MC_Power_BkPlcMc(Enable := TRUE) 后 bAxisStandStill 应为 TRUE；
+//       ③ 发 MC_MoveAbsolute 命令后 bAxisDiscreteMotion 期间观察
+//       bAxisAccelerating → bAxisConstantVelocity → bAxisDecelerating
+//       依次为 TRUE；
+//       ④ 触发软限位错 → bAxisErrorstop 应变 TRUE。
+// 注意：bAxisContinousMotion 拼写漏 'u' 是 PDF 原拼写，编译会过，不要
+//       自行改成 Continuous 否则编译错。
+// =============================================================================
+
+fbReadStatusClamp(
+    Enable             := bMonitorStatus,
+    Axis               := axHydClampingHead,
+    Busy               => ,                                // 始终 FALSE
+    Valid              => ,
+    Error              => ,
+    ErrorID            => ,
+    Errorstop          => bAxisErrorstop,
+    Disabled           => bAxisDisabled,
+    Stopping           => bAxisStopping,
+    StandStill         => bAxisStandStill,
+    DiscreteMotion     => bAxisDiscreteMotion,
+    ContinousMotion    => bAxisContinousMotion,            // PDF 拼写
+    SynchronizedMotion => bAxisSynchronizedMotion,
+    Homing             => bAxisHoming,
+    ConstantVelocity   => bAxisConstantVelocity,
+    Accelerating       => bAxisAccelerating,
+    Decelerating       => bAxisDecelerating
+);
+
+// 业务派生：任意运动状态都算"运动中"
+bAxisInMotion := bAxisDiscreteMotion OR bAxisContinousMotion
+              OR bAxisSynchronizedMotion OR bAxisHoming;
+
+// 是否可以发新运动命令：StandStill 且非错误
+bCanAcceptNewCommand := bAxisStandStill AND NOT bAxisErrorstop;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

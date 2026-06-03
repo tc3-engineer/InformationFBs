@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_MC_SetPosition_BkPlcMc" Id="{f5c6f9ba-72a5-553d-83b5-8e2a4d88862c}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_MC_SetPosition_BkPlcMc
+VAR
+    fbSetClampZero    : MC_SetPosition_BkPlcMc;
+    axHydClampingHead : AXIS_REF_BkPlcMc;
+    rtSetZeroTrig     : R_TRIG;
+    bSetZeroReq       : BOOL := FALSE;                   // HMI "设零"按钮
+    lrNewZeroValue    : LREAL := 0.0;                    // 通常设 0 把当前位置定义为新零点
+    bSetMode          : BOOL := FALSE;                   // FALSE = 置位 / TRUE = 叠加
+    bSetDone          : BOOL;
+    bSetBusy          : BOOL;
+    bSetError         : BOOL;
+    nSetErrorID       : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：注塑机维护后机械结构有微调，零点偏差。技师手动 jog 锁模轴到模
+//       具上的"机械参考点"，按 HMI "设零"按钮触发本 FB，把当前位置定
+//       义为新零点 (Position := 0.0, Mode := FALSE)。
+// 价值：手写需要根据 nEnc_Type 分支改 fEnc_RefShift 或 fEnc_ZeroShift，
+//       并同步更新 fActPosition / fSetPosition / fTargetPosition 等 5+
+//       字段；本 FB 一次调用搞定，避免漏改字段造成"PLC 内位置变了但
+//       目标位置没变"的不一致。
+// 验证：① jog 轴到目标参考点（HMI 显示位置例如 123.45 mm）；
+//       ② bSetZeroReq := TRUE 触发；
+//       ③ bSetDone = TRUE 后 MC_ReadActualPosition_BkPlcMc.Position 应
+//       立即变为 0.0（不是物理移动，是坐标系重定义）；
+//       ④ axHydClampingHead.pStAxRtData^.bParamsUnsave 应为 TRUE，提示
+//       业务侧调 MC_AxParamSave_BkPlcMc 持久化（否则重启会丢）。
+// 注意：本 FB 是"软归零"瞬时完成，不会让轴物理移动。要让轴去到某绝对
+//       位置用 MC_MoveAbsolute_BkPlcMc。修改坐标后软限位检查的是新坐
+//       标系下的边界，原物理位置可能超新边界，业务侧应同时重设软限位。
+// =============================================================================
+
+rtSetZeroTrig(CLK := bSetZeroReq);
+
+fbSetClampZero(
+    Execute  := rtSetZeroTrig.Q,
+    Position := lrNewZeroValue,
+    Mode     := bSetMode,                                  // FALSE = 置位
+    Axis     := axHydClampingHead,
+    Done     => bSetDone,
+    Busy     => bSetBusy,
+    Error    => bSetError,
+    ErrorID  => nSetErrorID
+);
+
+// 业务侧：bSetDone 后建议调 MC_AxParamSave_BkPlcMc 持久化 fEnc_ZeroShift
+// 否则下次开机重启 PLC 会丢失零点重新定义。
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

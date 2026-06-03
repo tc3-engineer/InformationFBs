@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_MC_AxRtReadForceSingle_BkPlcMc" Id="{67f3abb8-d087-57d2-9711-f65d00b8a7a6}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_MC_AxRtReadForceSingle_BkPlcMc
+VAR
+    fbReadStampForce    : MC_AxRtReadForceSingle_BkPlcMc;
+    axHydPressHead      : AXIS_REF_BkPlcMc;
+    nForceSensorRaw     : INT := 0;                      // 力传感器 ADC（来自 EL3024）
+    lrScaleFactorN      : LREAL := 1.526;                // 50 kN / 32767 ≈ 1.526 N/ADC
+    lrScaleOffsetN      : LREAL := 0.0;                  // 校准后零点
+    lrFrictionN         : LREAL := 200.0;                // 液压缸静摩擦力 ≈ 200 N
+    bReadError          : BOOL;
+    nReadErrorID        : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：冲压机液压压头力反馈链。压头底部装一只力传感器（不是压力传
+//       感器）直接测施加在工件上的力。本 FB 把传感器 ADC 值换算为
+//       N 单位并扣除液压缸自身的静摩擦力（≈ 200 N），得到"工件实
+//       际受力"用于过载保护和力闭环。
+// 价值：手写需要 ADC → N 换算 + 静摩擦扣除两步；本 FB 一行调用搞定，
+//       且与液压库的标准压力闭环接口对接 — fActPressure 字段虽然
+//       叫 pressure 但本 FB 写入的是 force（N），液压库的命名继承遗
+//       留问题。
+// 验证：① 前置：力传感器接 EL3024，IO 映射到 nForceSensorRaw；
+//       ② 标定：用已知重物（例如 100 kg = 980 N）压在传感器上记录
+//       ADC 值反算 lrScaleFactorN；
+//       ③ 用 MC_ReadActualTorque_BkPlcMc(axHydPressHead) 读 Torque
+//       字段，数值即为 N 单位的力（注意单位是 N 不是 bar，要 HMI 上
+//       显示时切勿误标 bar）；
+//       ④ 验证 SlippingOffset 效果：让液压缸空载推（无工件），读出
+//       的力应接近 0（不是液压压力对应的力，因为减去了 200 N 摩擦）；
+//       ⑤ 上工件后读出的力应接近真实工件受力。
+// 注意：PDF VAR_INPUT 文档错误 — 列了 Diff 版的 B 路字段（AdcValueB
+//       等），实际 Single 版可能只用 A 路。本例严格按 PDF 字面把
+//       所有字段都传，B 路给 0 不影响。
+// =============================================================================
+
+fbReadStampForce(
+    AdcValueA      := nForceSensorRaw,                     // 实际用的力传感器 ADC
+    AdcValueB      := 0,                                   // PDF 错列字段，给 0
+    ScaleFactorA   := lrScaleFactorN,
+    ScaleOffsetA   := lrScaleOffsetN,
+    ScaleFactorB   := 0.0,                                 // 同上
+    ScaleOffsetB   := 0.0,
+    SlippingOffset := lrFrictionN,                         // 200 N 静摩擦补偿
+    ReadingMode    := iTcHydPressureReadingDefault,
+    Axis           := axHydPressHead,
+    Error          => bReadError,
+    ErrorID        => nReadErrorID
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

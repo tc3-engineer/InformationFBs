@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_MC_AxRtReadPressureSingle_BkPlcMc" Id="{117c47c7-248b-5fe8-8036-79f659a65b9b}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_MC_AxRtReadPressureSingle_BkPlcMc
+VAR
+    fbReadInjPress     : MC_AxRtReadPressureSingle_BkPlcMc;
+    axHydInjPiston     : AXIS_REF_BkPlcMc;
+    nInjPressureRaw    : INT := 0;                       // 从 EL3024 通道映射来的 ADC 值
+    lrScaleFactor      : LREAL := 0.00763;               // 250 bar / 32767 ≈ 0.00763 bar/ADC
+    lrScaleOffset      : LREAL := 0.0;                   // 校准后零点偏移
+    bReadError         : BOOL;
+    nReadErrorID       : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：液压注塑机注射缸压力反馈链。EL3024 模拟量端子接 0-250 bar 压
+//       力变送器（输出 0-10V），本 FB 把 ADC 原始值（0-32767）换算
+//       到 bar 单位写入 axHydInjPiston.pStAxRtData^.fActPressure，供
+//       保压段的 MC_AxCtrlPressure_BkPlcMc 闭环 + HMI 显示
+//       MC_ReadActualTorque_BkPlcMc 使用。
+// 价值：手写需要每周期算 bar = raw × factor + offset 并处理 INT vs
+//       REAL 转换；本 FB 把这套逻辑封装并与液压库的标准数据流对接，
+//       后续闭环 / Read* 等 FB 一致看到的就是这里写入的值。
+// 验证：① 前置：把 EL3024 通道值 in_PressureRaw 映射到 nInjPressureRaw
+//       （PLC 任务里靠 IO 映射完成）；
+//       ② 标定：先 0 bar 状态下记录 nInjPressureRaw 的值 N0；再加压
+//       到已知压力 P1 记录 N1；算出 lrScaleFactor = P1 / (N1 - N0)、
+//       lrScaleOffset = -lrScaleFactor × N0；写入持久参数
+//       axHydInjPiston.pStAxParams^.fCustomerData[...]；
+//       ③ 调用本 FB 后业务侧用
+//       MC_ReadActualTorque_BkPlcMc(axHydInjPiston) 读出的 Torque
+//       应为 bar 单位的压力值，与机械压力表读数对比应吻合。
+// 注意：本 FB 必须每周期调，且在所有压力闭环 FB
+//       (MC_AxCtrlPressure_BkPlcMc 等) 和读出 FB
+//       (MC_ReadActualTorque_BkPlcMc) 之前调用，否则它们读到的是上
+//       一周期的旧值，差一拍影响稳定性。
+// =============================================================================
+
+fbReadInjPress(
+    AdcValue    := nInjPressureRaw,
+    ScaleFactor := lrScaleFactor,
+    ScaleOffset := lrScaleOffset,
+    ReadingMode := iTcHydPressureReadingDefault,           // 写到 fActPressure
+    Axis        := axHydInjPiston,
+    Error       => bReadError,
+    ErrorID     => nReadErrorID
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

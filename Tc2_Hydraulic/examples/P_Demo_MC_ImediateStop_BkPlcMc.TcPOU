@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_MC_ImediateStop_BkPlcMc" Id="{036b7281-039f-5bc6-8e02-216a5c541090}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_MC_ImediateStop_BkPlcMc
+VAR
+    fbImediateStop     : MC_ImediateStop_BkPlcMc;
+    axHydSimulatedAxis : AXIS_REF_BkPlcMc;             // 仅用于仿真环境
+    bSimulationTestReq : BOOL := FALSE;                // 仅在仿真/测试时触发
+    bStopDone          : BOOL;
+    bStopBusy          : BOOL;
+    bStopActive        : BOOL;
+    bStopError         : BOOL;
+    bStopAborted       : BOOL;
+    nStopErrorID       : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：⚠️ 仿真 / 测试环境专用。本 FB 把控制值瞬间设为 0（无斜坡），
+//       对真实液压负载会产生巨大水锤冲击 — 损坏液压元件和机械结构。
+//       仅在以下场景使用：① TwinCAT 仿真模式无真实负载；② 已知动能
+//       极小（轴速度本身就低）；③ 与硬件急停回路联动（硬件已切油源，
+//       本 FB 只做 PLC 侧响应）。
+// 价值：调试 / 仿真专用 — 验证 HMI 上"轴停"状态显示是否正确，或
+//       测试 PLC 内部状态机对"控制值突变"的响应逻辑。
+// 验证（仅仿真环境）：① 让 axHydSimulatedAxis 在 MoveVelocity 中；
+//       ② bSimulationTestReq := TRUE 触发；
+//       ③ MC_ReadActualVelocity_BkPlcMc 应观察 ActVelocity 同周期立
+//       即变 0（无斜坡）；
+//       ④ bStopDone := TRUE；
+//       ⑤ 持续 bSimulationTestReq := TRUE 期间 axHydSimulatedAxis 的
+//       控制电压字段持续为 0。
+// 警告：真实生产环境**禁止使用本 FB**。改用：
+//       - MC_EmergencyStop_BkPlcMc(RampTime := 0.1)：50-100 ms 急停，
+//         冲击在可接受范围
+//       - MC_Stop_BkPlcMc(Deceleration := 大)：可控减速
+//       - 硬件急停：物理切断液压源
+// 拼写：FB 名 ImediateStop 缺一个 'm'（应是 Immediate）是 PDF 原拼
+//       写，不要"修正"成 Immediate 否则编译错。
+// =============================================================================
+
+fbImediateStop(
+    Execute := bSimulationTestReq,                       // 电平触发
+    Axis    := axHydSimulatedAxis,
+    Busy    => bStopBusy,
+    Done    => bStopDone,
+    Error   => bStopError,
+    ErrorID => nStopErrorID,
+    Active  => bStopActive,
+    CommandAborted => bStopAborted
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

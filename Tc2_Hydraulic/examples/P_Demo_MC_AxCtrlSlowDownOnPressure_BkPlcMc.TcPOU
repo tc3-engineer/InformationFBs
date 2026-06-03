@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_MC_AxCtrlSlowDownOnPressure_BkPlcMc" Id="{9d513c7b-80c7-57ad-9d14-f9376ad4e5b6}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_MC_AxCtrlSlowDownOnPressure_BkPlcMc
+VAR
+    fbReadPress     : MC_AxRtReadPressureSingle_BkPlcMc;
+    fbSlowOnPress   : MC_AxCtrlSlowDownOnPressure_BkPlcMc;
+    axHydPressHead  : AXIS_REF_BkPlcMc;
+    bEnableDownLimit: BOOL := TRUE;                      // 正方向（向下）限压
+    bEnableUpLimit  : BOOL := FALSE;                     // 反方向不限
+    bCtrlReset      : BOOL := TRUE;
+    lrPressLimitBar : LREAL := 250.0;                    // 压力上限 bar
+    lrCtrlResponse  : LREAL;                             // 控制器响应观察
+    bCtrlActive     : BOOL;                              // 限压正在介入
+    bCtrlError      : BOOL;
+    nCtrlErrorID    : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：冲压机液压压头向工件正方向（向下）推进。正常工件压力上升到
+//       200 bar 时算冲压完成；但如果工件位置偏离或材料异硬，压力可
+//       能飙升到 350 bar 损坏模具。本 FB 把 fSetPressure 设为 250
+//       bar 作为安全上限，压头向下时（EnableP := TRUE）监控压力，
+//       超限自动减速避免冲击。
+// 价值：手写需要每周期判压力 → 超限发 Halt → 等停 → 再 MoveAbsolute
+//       恢复，破坏工艺连续性；本 FB 作为闭环平滑减速，不打断当前
+//       MoveAbsolute / MoveVelocity 命令，保留工艺连续。
+// 验证：① 前置：axHydPressHead 已 PowerOn 且压力传感器接好；
+//       ② 业务侧设安全压力上限：
+//          axHydPressHead.pStAxRtData^.fSetPressure := lrPressLimitBar;
+//       ③ bCtrlReset := FALSE；
+//       ④ 启动一次 MC_MoveAbsolute_BkPlcMc 让压头向下推进；
+//       ⑤ 正常情况 bCtrlActive 应为 FALSE（压力 < 250），运动按指令
+//       速度走；
+//       ⑥ 模拟过载（压头碰到比预期更硬的工件）→ 压力升到 250 时
+//       bCtrlActive 变 TRUE，lrCtrlResponse 给非零减速量，
+//       MC_ReadActualVelocity_BkPlcMc 应观察速度自动下降；
+//       ⑦ 反向运动（压头退回）不受限：EnableM = FALSE 时反向运
+//       动正常速度，不被限压。
+// 注意：fbReadPress 必须先于本 FB 调用，保证 fActPressure 是当前周
+//       期最新值。
+// =============================================================================
+
+// Step 1: 读实际压力
+fbReadPress(
+    Enable    := TRUE,
+    Axis      := axHydPressHead
+);
+
+// Step 2: 业务设置压力上限
+axHydPressHead.pStAxRtData^.fSetPressure := lrPressLimitBar;
+
+// Step 3: 限压减速控制器（仅正方向）
+fbSlowOnPress(
+    EnableP          := bEnableDownLimit,
+    EnableM          := bEnableUpLimit,
+    Reset            := bCtrlReset,
+    FirstAuxParamIdx := 0,
+    kP               := 0.01,
+    Tn               := 0.5,
+    PreSet           := 0.0,
+    ReadingMode      := iTcHydPressureReadingDefault,
+    Axis             := axHydPressHead,
+    Response         => lrCtrlResponse,
+    Active           => bCtrlActive,
+    Error            => bCtrlError,
+    ErrorID          => nCtrlErrorID
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_MC_MoveVelocity_BkPlcMc" Id="{86d9fbd4-637d-503d-92f4-9f3d6a084fb6}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_MC_MoveVelocity_BkPlcMc
+VAR
+    fbReverseScrew    : MC_MoveVelocity_BkPlcMc;
+    fbStopAtTimeout   : MC_Stop_BkPlcMc;
+    axHydInjectScrew  : AXIS_REF_BkPlcMc;
+    rtStartReverseTrig: R_TRIG;
+    bStartReverseFeed : BOOL := FALSE;                   // 启动退料
+    bReverseInVelocity: BOOL;                            // 已到目标速度
+    bReverseBusy      : BOOL;
+    bReverseAborted   : BOOL;
+    bReverseError     : BOOL;
+    nReverseErrorID   : UDINT;
+    // 8 秒后自动停
+    tonStopDelay      : TON;
+    bStopTriggered    : BOOL;
+    bStopDone         : BOOL;
+    bStopBusy         : BOOL;
+    bStopError        : BOOL;
+    nStopErrorID      : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：液压注塑机塑化螺杆退料工序。螺杆需要反向恒速旋转 8 秒，把料筒
+//       中的塑料颗粒拉到螺杆前端；时间到后停车进入预塑段。
+// 价值：手写需要在液压算法层切换到 ExtGen 模式自己写速度环；本 FB 一
+//       行启动恒速运动，InVelocity 反馈"速度已到目标"，业务侧只需配
+//       合定时器和 MC_Stop_BkPlcMc 即可完成整段工序。
+// 验证：① 前置使能 MC_Power_BkPlcMc.Status = TRUE；
+//       ② bStartReverseFeed := TRUE → 触发上升沿；
+//       ③ bReverseBusy 立即变 TRUE；MC_ReadActualVelocity_BkPlcMc 应
+//       观察速度上升到 -100 mm/s（负号 = 反向）；
+//       ④ 1-2 秒后速度稳定，bReverseInVelocity := TRUE；
+//       ⑤ TON 8 秒后 bStopTriggered := TRUE → MC_Stop_BkPlcMc 触发；
+//       ⑥ bReverseAborted := TRUE (被 Stop 打断)，bStopDone := TRUE
+//       (停成功)。
+// 注意：MC_MoveVelocity_BkPlcMc 没有 Done 字段 — 它表示"恒速运动"没
+//       有"完成"的概念；要停必须主动发 MC_Stop_BkPlcMc。如果不主动
+//       停，运动会一直到撞软限位才报错。
+// =============================================================================
+
+rtStartReverseTrig(CLK := bStartReverseFeed);
+
+// 主运动 FB：反向恒速 100 mm/s
+fbReverseScrew(
+    Execute      := rtStartReverseTrig.Q,
+    Velocity     := 100.0,                                 // 注：方向由 Direction 决定，速度本身是正数
+    Acceleration := 500.0,
+    Deceleration := 500.0,
+    Direction    := MC_Negative_Direction_BkPlcMc,         // 反向退料
+    BufferMode   := Aborting_BkPlcMc,
+    Axis         := axHydInjectScrew,
+    Busy         => bReverseBusy,
+    InVelocity   => bReverseInVelocity,
+    CommandAborted => bReverseAborted,
+    Error        => bReverseError,
+    ErrorID      => nReverseErrorID
+);
+
+// 退料 8 秒后自动停
+tonStopDelay(IN := bReverseBusy, PT := T#8S, Q => bStopTriggered);
+
+fbStopAtTimeout(
+    Execute      := bStopTriggered,
+    Deceleration := 500.0,
+    Jerk         := 0.0,
+    RampTime     := 0.0,
+    BufferMode   := Aborting_BkPlcMc,
+    Axis         := axHydInjectScrew,
+    Busy         => bStopBusy,
+    Done         => bStopDone,
+    Error        => bStopError,
+    ErrorID      => nStopErrorID
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

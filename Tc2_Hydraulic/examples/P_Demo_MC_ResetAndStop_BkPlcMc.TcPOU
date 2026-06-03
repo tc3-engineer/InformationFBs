@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_MC_ResetAndStop_BkPlcMc" Id="{f103a141-b1aa-5e65-aec9-a8608c9db6b4}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_MC_ResetAndStop_BkPlcMc
+VAR
+    fbSafeRecover     : MC_ResetAndStop_BkPlcMc;
+    axHydClampingHead : AXIS_REF_BkPlcMc;
+    rtRecoverButton   : R_TRIG;
+    bSafeRecoverReq   : BOOL := FALSE;                   // HMI 安全恢复按钮
+    bRecoverDone      : BOOL;
+    bRecoverBusy      : BOOL;
+    bRecoverError     : BOOL;
+    nRecoverErrorID   : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：注塑机急停拉起后的安全恢复流程。操作员确认现场无障碍、油压正常
+//       后按 HMI "安全恢复"按钮。本 FB 在一次调用内：
+//         ① 用 500 mm/s² 的减速度把液压锁模轴刹住（若还在动）
+//         ② 清掉所有轴错误状态
+//         ③ 等两步都成功（Done = TRUE）才允许操作员 jog 回零位
+// 价值：手写需要 MC_Stop → 等 Errorstop → MC_Reset → 等 Done 四步，并自
+//       己处理时序；本 FB 一次调用完成全流程，停车 + 清错原子化保证不会
+//       出"清错了但轴还在动"或"停了但没清错"的中间态。
+// 验证：① 触发一个轴错误状态（任意运动 FB 抛错，例如位置越过软限位）；
+//       ② 在 axHydClampingHead 上 Errorstop = TRUE；
+//       ③ bSafeRecoverReq := TRUE → 上升沿触发；
+//       ④ 若轴仍有残余运动 bRecoverBusy 期间观察 ActVelocity 平稳减
+//       速到 0；
+//       ⑤ bRecoverDone := TRUE 后 Errorstop 应回 FALSE，StandStill 应
+//       为 TRUE。
+// 注意：Deceleration = 500 是经验值；液压轴质量大减速时间长，过激（如
+//       2000 mm/s²）会冲击模具。Jerk = 5000 平滑减速冲击。
+// =============================================================================
+
+rtRecoverButton(CLK := bSafeRecoverReq);
+
+fbSafeRecover(
+    Execute      := rtRecoverButton.Q,
+    Deceleration := 500.0,                                // mm/s² 经验值
+    Jerk         := 5000.0,                               // mm/s³ 平滑减速
+    RampTime     := 0.0,                                  // 给 Deceleration 即不用 RampTime
+    BufferMode   := Aborting_BkPlcMc,                     // 当前版本仅允许此值
+    Axis         := axHydClampingHead,
+    Busy         => bRecoverBusy,
+    Done         => bRecoverDone,
+    Error        => bRecoverError,
+    ErrorID      => nRecoverErrorID
+);
+
+// 业务侧：bRecoverDone 后才允许 jog；bRecoverError 反复 → 物理故障未除
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

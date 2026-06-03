@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_MC_CamIn_BkPlcMc" Id="{a36e1d82-e0f8-5cd5-8e21-b9ee6c40c995}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_MC_CamIn_BkPlcMc
+VAR
+    fbCouplingByCam   : MC_CamIn_BkPlcMc;
+    axHydClampingHead : AXIS_REF_BkPlcMc;            // 主轴 — 锁模
+    axHydInjectionHead: AXIS_REF_BkPlcMc;            // 从轴 — 注射头
+    rtCamCoupleTrig   : R_TRIG;
+    bRequestCamSync   : BOOL := FALSE;
+    stCamTableId      : MC_CAM_ID_BkPlcMc;           // 凸轮表 ID — 需先由 MC_CamTableSelect 初始化
+    bCamBusy          : BOOL;
+    bCamInSync        : BOOL;
+    bCamAborted       : BOOL;
+    bCamError         : BOOL;
+    nCamErrorID       : UDINT;
+    bMasterEndOfTable : BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：注塑机锁模与注射的协同动作。锁模合到一定位置后，注射头按非线
+//       性曲线推进 — 离线设计的凸轮表预先编程好"锁模位置 0-350 mm
+//       对应注射头 0-50 mm"的映射（曲线 / 阶跃 / 加减速段）。本 FB
+//       把锁模轴定为主、注射轴定为从，启动后注射头按表自动跟随。
+// 价值：复杂运动轨迹无需 PLC 周期性计算（高动态轴 1 ms 周期内手动算
+//       会延迟），凸轮表离线编程后实时跟随；适合数学难以描述的工艺
+//       曲线（注塑保压 / 锻造 / 弯管等）。
+// 验证：① 前置：必须先用 MC_CamTableSelect_BkPlcMc 把凸轮表（通常从
+//       TwinCAT NC PTP 的凸轮编辑器生成）赋给 stCamTableId 并让
+//       bValidated := TRUE；
+//       ② 两轴都静止；
+//       ③ bRequestCamSync := TRUE → 触发；
+//       ④ bCamInSync := TRUE；
+//       ⑤ 用 MC_MoveAbsolute_BkPlcMc 让 axHydClampingHead 缓慢从 0
+//       开到 350，观察 axHydInjectionHead 自动跟随按凸轮表定义的曲线
+//       动作；
+//       ⑥ 主轴超出表范围时 bMasterEndOfTable 触发一个周期脉冲。
+// 注意：本例 stCamTableId 假设已初始化；实际工程在 PROGRAM_INIT
+//       阶段或开机一次性调用 MC_CamTableSelect_BkPlcMc 完成。
+//       MasterScaling / SlaveScaling 给 1.0 是经验默认；PDF 描述模糊，
+//       不确定时实测验证。
+// =============================================================================
+
+rtCamCoupleTrig(CLK := bRequestCamSync);
+
+fbCouplingByCam(
+    Execute       := rtCamCoupleTrig.Q,
+    MasterOffset  := 0.0,                                // 主轴查表前不偏移
+    SlaveOffset   := 0.0,                                // 从轴查表后不偏移
+    MasterScaling := 1.0,                                // 不缩放（PDF 描述模糊，按 1.0 经验）
+    SlaveScaling  := 1.0,
+    StartMode     := MC_StartMode_Absolute,              // 绝对模式启动
+    CamTableId    := stCamTableId,
+    BufferMode    := Aborting_BkPlcMc,
+    Master        := axHydClampingHead,
+    Slave         := axHydInjectionHead,
+    Busy          => bCamBusy,
+    InSync        => bCamInSync,
+    CommandAborted => bCamAborted,
+    Error         => bCamError,
+    ErrorID       => nCamErrorID,
+    EndOfProfile  => bMasterEndOfTable
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

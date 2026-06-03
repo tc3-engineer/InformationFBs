@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_MC_Halt_BkPlcMc" Id="{fdc9851b-cb35-599e-84a1-9f36a31187f0}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_MC_Halt_BkPlcMc
+VAR
+    fbHaltClamp        : MC_Halt_BkPlcMc;
+    axHydClampingHead  : AXIS_REF_BkPlcMc;
+    rtHaltTrigger      : R_TRIG;
+    bRequestPauseHalt  : BOOL := FALSE;                  // HMI 工艺暂停
+    bHaltDone          : BOOL;
+    bHaltBusy          : BOOL;
+    bHaltActive        : BOOL;
+    bHaltError         : BOOL;
+    bHaltAborted       : BOOL;                           // 期间被新命令打断
+    nHaltErrorID       : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：注塑机锁模完成后到下一周期合模之间的工艺暂停。用 Halt 而非
+//       Stop，因为如果操作员中途按"急换模 / 手动复位"，业务侧需要立
+//       即接新命令 — Halt 允许这种打断（停车期间可接新 Move），停车
+//       完成后轴回 StandStill 不锁。
+// 价值：与 MC_Stop 相比 Halt 不锁轴，停后不需要 Reset 就能接新命令；
+//       与"撤 Execute"相比 Halt 是真的减速停车，不是只切控制器。
+// 验证：① 前置：轴在运动中（例如先发 MC_MoveVelocity_BkPlcMc 让轴持
+//       续走）；② bRequestPauseHalt := TRUE → 触发；
+//       ③ bHaltBusy 立即变 TRUE；ActVelocity 应按 800 mm/s² 减速到 0；
+//       ④ bHaltDone := TRUE（一个周期）后 MC_ReadStatus_BkPlcMc.StandStill
+//       应为 TRUE；
+//       ⑤ 验证可打断性：在 bHaltBusy 期间发 MC_MoveAbsolute → 应观察
+//       bHaltAborted 而非 bHaltDone；
+//       ⑥ 对比验证：把 fbHaltClamp 换成 fbStopClamp（MC_Stop） →
+//       同样的"停车中发新命令"动作应被 Stop 拒绝，StandStill 后是
+//       Errorstop。
+// 注意：Deceleration = 800 mm/s² 是注塑机锁模轴经验值；液压大惯量过急
+//       减速冲击模具。RampTime 留 0 因为给了 Deceleration（优先级高）。
+// =============================================================================
+
+rtHaltTrigger(CLK := bRequestPauseHalt);
+
+fbHaltClamp(
+    Execute      := rtHaltTrigger.Q,
+    Deceleration := 800.0,                                // mm/s² 工艺停车减速
+    Jerk         := 0.0,                                  // 仅 jerk-limited 生成器有效
+    RampTime     := 0.0,                                  // 给了 Deceleration 不用 RampTime
+    BufferMode   := Aborting_BkPlcMc,
+    Axis         := axHydClampingHead,
+    Busy         => bHaltBusy,
+    Done         => bHaltDone,
+    Error        => bHaltError,
+    ErrorID      => nHaltErrorID,
+    Active       => bHaltActive,
+    CommandAborted => bHaltAborted
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

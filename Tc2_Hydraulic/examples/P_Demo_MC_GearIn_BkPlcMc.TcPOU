@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_MC_GearIn_BkPlcMc" Id="{aa436f7a-93d8-54fc-81c8-09e433a1397b}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_MC_GearIn_BkPlcMc
+VAR
+    fbCoupleBagPush   : MC_GearIn_BkPlcMc;
+    axHydMainRoller   : AXIS_REF_BkPlcMc;                // 主滚筒（带料带）
+    axHydPushArm      : AXIS_REF_BkPlcMc;                // 从轴推臂
+    rtCoupleTrig      : R_TRIG;
+    bRequestCouple    : BOOL := FALSE;
+    bIsInGear         : BOOL;                            // 首次同步成功（latched）
+    bCoupleBusy       : BOOL;
+    bCoupleActive     : BOOL;
+    bCoupleAborted    : BOOL;
+    bCoupleError      : BOOL;
+    nCoupleErrorID    : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：包装机主滚筒带动料带前行，推送轴必须以主滚筒 2 倍速度同步把
+//       袋子推出（齿比 2:1 — RatioNumerator=2 / RatioDenominator=1）。
+//       建立耦合后 PLC 不用周期性发推送命令，主滚筒动从轴自动跟随。
+// 价值：手写需要在每周期算 slave_pos := master_pos × 2.0 并发位置
+//       命令，对实时性要求极高（PLC 周期抖动会引入跟随误差）；本 FB
+//       在算法层做耦合，业务侧只需触发启停。
+// 验证：① 前置：两轴都已 Power On 且静止（当前版本飞行同步未支持，
+//       两轴动了会 NotStartable 错）；
+//       ② bRequestCouple := TRUE → rtCoupleTrig 给上升沿；
+//       ③ bIsInGear 立即变 TRUE（静止启动同步立即完成）；
+//       ④ 此时用 MC_MoveVelocity_BkPlcMc 让 axHydMainRoller 走
+//       100 mm/s，观察 MC_ReadActualVelocity_BkPlcMc(axHydPushArm).Velocity
+//       应为 200 mm/s（齿比 2 倍）；
+//       ⑤ 撤 bRequestCouple 不会解耦 — 必须调 MC_GearOut_BkPlcMc 才
+//       解；解耦后从轴保持速度继续走，必须再发 Halt/Stop 才停。
+// 注意：bIsInGear 是 latched 语义 — 一旦 TRUE 即使后续从轴因压力波动
+//       跟不上也不会清。要实时跟随状态需自己算
+//       (Master.fActPosition - Slave.fActPosition × 1/2)。
+// =============================================================================
+
+rtCoupleTrig(CLK := bRequestCouple);
+
+fbCoupleBagPush(
+    Execute          := rtCoupleTrig.Q,
+    RatioNumerator   := 2,                                 // 从轴 2 倍速度
+    RatioDenominator := 1,
+    Acceleration     := 1000.0,
+    Deceleration     := 1000.0,
+    Jerk             := 0.0,
+    BufferMode       := Aborting_BkPlcMc,
+    Master           := axHydMainRoller,
+    Slave            := axHydPushArm,
+    Busy             => bCoupleBusy,
+    InGear           => bIsInGear,
+    CommandAborted   => bCoupleAborted,
+    Error            => bCoupleError,
+    ErrorID          => nCoupleErrorID,
+    Active           => bCoupleActive
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

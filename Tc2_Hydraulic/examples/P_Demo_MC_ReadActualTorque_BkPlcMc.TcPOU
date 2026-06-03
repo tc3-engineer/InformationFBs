@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_MC_ReadActualTorque_BkPlcMc" Id="{1aac3bf2-08e1-58c5-b7c9-106fee803288}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_MC_ReadActualTorque_BkPlcMc
+VAR
+    fbReadInjectionPressure : MC_ReadActualTorque_BkPlcMc;
+    axHydInjectionPiston    : AXIS_REF_BkPlcMc;          // 注塑机注射缸
+    bMonitorPressure        : BOOL := TRUE;
+    lrActualPressureBar     : LREAL;                     // 实际活塞压力 bar
+    bPressureValid          : BOOL;
+    bReadError              : BOOL;
+    nReadErrorID            : UDINT;
+    bOverPressureAlarm      : BOOL;                      // > 250 bar 触发
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：注塑机锁模到位后切换到"保压"控制段，HMI 实时显示活塞压力（bar）。
+//       超过 250 bar 触发"过保压"报警保护模具。
+// 价值：该 FB 名字虽然继承 PLCopen 的 Torque（力矩），但在液压库里读的
+//       是 pStAxRtData 中由 MC_AxRtReadPressureSingle_BkPlcMc 等压力反
+//       馈 FB 写入的"压力实际值"。屏蔽编码器/AD 通道故障期间的旧值，
+//       不会让操作员看到假压力。
+// 验证：前置条件：在 axHydInjectionPiston 的 cyclic body 里必须先调过
+//       一个 MC_AxRtReadPressureSingle_BkPlcMc / Diff 把压力写进
+//       pStAxRtData。然后 bMonitorPressure := TRUE，lrActualPressureBar
+//       应跟随物理压力变化；手动加压至 250 bar 以上，bOverPressureAlarm
+//       应触发；如压力传感器线缆拔掉，bPressureValid 应变 FALSE。
+// =============================================================================
+
+fbReadInjectionPressure(
+    Enable  := bMonitorPressure,
+    Axis    := axHydInjectionPiston,
+    Valid   => bPressureValid,
+    Busy    => ,                                          // 始终 FALSE
+    Error   => bReadError,
+    ErrorID => nReadErrorID,
+    Torque  => lrActualPressureBar                        // 实际是 bar/MPa，名字继承 PLCopen
+);
+
+// 过保压报警：只在有效读数下判断
+bOverPressureAlarm := bPressureValid AND (lrActualPressureBar > 250.0);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_MC_MoveAbsolute_BkPlcMc" Id="{38d6b4cb-d5e9-5e0b-ad2a-20c119bcc4e6}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_MC_MoveAbsolute_BkPlcMc
+VAR
+    fbCloseMold        : MC_MoveAbsolute_BkPlcMc;
+    axHydClampingHead  : AXIS_REF_BkPlcMc;
+    rtCloseTrigger     : R_TRIG;
+    bStartCloseMold    : BOOL := FALSE;                  // HMI / 节拍触发
+    lrCloseTargetMm    : LREAL := 350.0;                 // 合模目标 350 mm
+    lrCloseVelocityMmS : LREAL := 200.0;                 // 行进速度 200 mm/s
+    bCloseDone         : BOOL;
+    bCloseBusy         : BOOL;
+    bCloseAborted      : BOOL;
+    bCloseError        : BOOL;
+    nCloseErrorID      : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：注塑机液压锁模轴一周期：合模到 350 mm。每次按 HMI "开始合模"
+//       触发 Execute 上升沿一次性发命令到液压算法，FB 监视轴轨迹直
+//       到 Done = TRUE（到位）/ CommandAborted（被打断）/ Error（出错）。
+// 价值：手写需要操作 axHydClampingHead.pStAxRtData^.fTargetPosition
+//       和算法状态字段，自己写"到位"判定；本 FB 单次调用完成"发命令 +
+//       监视轨迹 + 上报状态"，PLCopen 三态收敛（Done/Aborted/Error）
+//       直接可用。
+// 验证：① 前置：MC_Power_BkPlcMc.Enable := TRUE 等 Status = TRUE；
+//       ② bStartCloseMold := TRUE → rtCloseTrigger.Q 给上升沿；
+//       ③ bCloseBusy 立即变 TRUE；
+//       ④ MC_ReadActualPosition_BkPlcMc 应观察到 Position 从 0 平
+//       滑跑到 350；
+//       ⑤ 到位后 bCloseDone := TRUE（保持一个周期）；
+//       ⑥ 若中途调 MC_Stop_BkPlcMc → bCloseAborted 应变 TRUE 而非 Done。
+// 注意：Acceleration / Deceleration 各 1000 mm/s² 是经验值；液压轴大
+//       惯量加速度太高会产生冲击噪音和阀件磨损。Jerk 保留无效不设。
+// =============================================================================
+
+rtCloseTrigger(CLK := bStartCloseMold);
+
+fbCloseMold(
+    Execute      := rtCloseTrigger.Q,
+    Position     := lrCloseTargetMm,
+    Velocity     := lrCloseVelocityMmS,
+    Acceleration := 1000.0,                              // mm/s² 液压经验值
+    Deceleration := 1000.0,
+    Jerk         := 0.0,                                 // 保留无效
+    Direction    := MC_Shortest_Way_BkPlcMc,             // 保留，给默认
+    BufferMode   := Aborting_BkPlcMc,                    // 保留，给默认
+    Axis         := axHydClampingHead,
+    Busy         => bCloseBusy,
+    Done         => bCloseDone,
+    CommandAborted => bCloseAborted,
+    Error        => bCloseError,
+    ErrorID      => nCloseErrorID
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_MC_Reset_BkPlcMc" Id="{275b2c81-cfcc-58c6-9bb9-dd6a7e34119b}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_MC_Reset_BkPlcMc
+VAR
+    fbResetClamp       : MC_Reset_BkPlcMc;
+    axHydClampingHead  : AXIS_REF_BkPlcMc;
+    rtResetButton      : R_TRIG;                         // 边沿检测器
+    bOperatorResetReq  : BOOL := FALSE;                  // HMI 清错按钮
+    bResetDone         : BOOL;
+    bResetBusy         : BOOL;
+    bResetError        : BOOL;
+    nResetErrorID      : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：注塑机 HMI "清错复位"按钮。操作员发现"轴错误"指示灯亮，先排查
+//       物理原因（编码器、限位、油压），确认无误后按 HMI 按钮。本 FB 触
+//       发轴复位（Errorstop → StandStill），等 bResetDone = TRUE 才允许
+//       重新开机循环。
+// 价值：与直接清 axHydClampingHead.pStAxRtData^.nErrorCode 相比，本 FB
+//       自动处理 KL2531 等驱动器的"清错握手"，确保驱动侧也复位干净；
+//       不会出现"PLC 内错误码清了但驱动器仍报错"的悬挂状态。
+// 验证：① 制造一个轴错误（例如手动设错误码 / 触发软限位）；
+//       ② 在 axHydClampingHead 上 MC_ReadStatus_BkPlcMc.Errorstop 应为
+//       TRUE；
+//       ③ bOperatorResetReq := TRUE → 上升沿触发清错；
+//       ④ 若驱动需要握手 bResetBusy 短暂为 TRUE；
+//       ⑤ 复位成功后 bResetDone := TRUE，Errorstop 应回 FALSE，
+//       StandStill 应为 TRUE，此时才允许发新运动命令。
+// 注意：本 FB 边沿触发；HMI 按钮长按等同一次触发。R_TRIG 边沿检测器是
+//       为了让"操作员长按按钮"不会反复触发清错（虽然反复触发是幂等的，
+//       但反复触发期间 Done/Busy 输出会跳变误导 HMI）。
+// =============================================================================
+
+rtResetButton(CLK := bOperatorResetReq);
+
+fbResetClamp(
+    Execute := rtResetButton.Q,
+    Axis    := axHydClampingHead,
+    Busy    => bResetBusy,
+    Done    => bResetDone,
+    Error   => bResetError,
+    ErrorID => nResetErrorID
+);
+
+// 业务侧：bResetDone 上升沿表示"清错成功，可发新命令"
+// 若 bResetError 反复出现 → 物理故障源未消除，加 alarm 提醒操作员
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>
