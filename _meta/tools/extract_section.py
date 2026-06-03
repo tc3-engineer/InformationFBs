@@ -19,6 +19,34 @@ ROOT = Path(__file__).resolve().parents[2]
 CACHE = ROOT / "_meta" / ".pdf-cache"
 
 
+def _ge_pattern(n: int) -> str:
+    """Regex fragment matching a positive integer >= n.
+
+    Used by extract_section's next-heading scan to enforce monotonic section
+    numbering: a "next section" candidate at depth d may only have a d-th
+    number >= current_section[d-1] + 1 (siblings) or, for shallower ancestors,
+    >= the corresponding part. Anything smaller is a false match (prose row
+    "1 …" inside a 4.3 body etc.).
+    """
+    if n <= 1:
+        return r"\d+"
+    s = str(n)
+    L = len(s)
+    parts: list[str] = [rf"\d{{{L + 1},}}"]  # more digits → strictly larger
+    for i, ch in enumerate(s):
+        d = int(ch)
+        if d == 9:
+            if i == L - 1:
+                parts.append(s)
+            continue
+        head = re.escape(s[:i])
+        lo = d + 1 if i < L - 1 else d
+        tail_len = L - i - 1
+        tail = rf"\d{{{tail_len}}}" if tail_len else ""
+        parts.append(rf"{head}[{lo}-9]{tail}")
+    return "(?:" + "|".join(parts) + ")"
+
+
 def extract(lib: str, section: str) -> str:
     txt = CACHE / f"{lib}.txt"
     if not txt.exists():
@@ -56,11 +84,30 @@ def extract(lib: str, section: str) -> str:
     #     ("3964R") and lowercase-first FCs are still recognized as boundaries.
     # Disallow `:` `,` `.` in the title to avoid matching descriptive lines such
     # as "100 ms pulse (zero): min: 70 ms, typical: 95 ms".
-    depth = section.count(".") + 1
+    # Section numbers are monotonic so the leading number at each depth-d
+    # candidate must be >= the current section's d-th number (strict > for the
+    # full path means "next section"). Stops "Prio Description Conditions
+    # Comments\n1 Synchronization via\nbSync" inside Tc3_BA2_Common
+    # FB_BA_PIDCtrl §4.3.2.1.1 from looking like a fresh chapter-1 boundary.
+    parts = [int(p) for p in section.split(".")]
+    depth = len(parts)
     alts = []
     for d in range(1, depth + 1):
-        num = r"\d+" + (r"\.\d+" * (d - 1))
-        title = r"[A-Z][^.:,\n]{0,80}" if d == 1 else r"[A-Za-z0-9_][^.:,\n]{0,80}"
+        # For depth-d candidate, the first d-1 number parts must match the
+        # current section's prefix exactly, and the d-th part must be >= the
+        # current section's d-th part + (1 if d == depth else 0) — siblings at
+        # depth-d, deeper-numbered ancestors at d < depth.
+        head_lit = "".join(rf"{p}\." for p in parts[: d - 1])
+        min_n = parts[d - 1] + (1 if d == depth else 1)
+        num = head_lit + _ge_pattern(min_n)
+        # Depth-1 chapter titles are short in real Beckhoff manuals (Foreword /
+        # Introduction / Programming / Support and Service / Appendix etc., all
+        # <= ~25 chars). Capping at 30 rejects prose-row matches that share a
+        # leading number, e.g. Tc3_BA2_Common FB_BA_PIDCtrl's "Prio Description"
+        # table row "5 Anti-Reset-Windup Controller enabled - bEn" (41 chars).
+        # Depth >= 2 titles can be long POU names (Tc2_MC2_Drive has 41-char
+        # FB_SoEAX5000ReadActMainVoltage_ByDriveRef) so the 80-char bound stays.
+        title = r"[A-Z][^.:,\n]{0,30}" if d == 1 else r"[A-Za-z0-9_][^.:,\n]{0,80}"
         alts.append(num + r"\s+" + title)
     next_heading = re.compile(r"(?m)^\s*(?:" + "|".join(alts) + r")$")
     after = full[start + 1 :]

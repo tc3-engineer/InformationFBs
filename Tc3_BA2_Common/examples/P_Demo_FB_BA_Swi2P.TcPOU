@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_BA_Swi2P" Id="{e3709214-aed2-5cdf-9b5b-4cc875581d9e}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_BA_Swi2P
+VAR
+    fbDehumSwitch       : FB_BA_Swi2P;
+
+    // ---- 工艺信号 ----
+    bDehumEnable        : BOOL := TRUE;        // 除湿器使能（一直 ON 即可）
+    fHumidityRH         : REAL := 60.0;         // 湿度 % RH（在线写值模拟）
+
+    // ---- 阈值 ----
+    fOnPoint            : REAL := 65.0;         // 高于 65 启动除湿
+    fOffPoint           : REAL := 55.0;         // 低于 55 停止除湿（fOn > fOff = direct 制冷方向）
+    nDelayOnSec         : UDINT := 30;          // 启动延时 30 秒抗瞬态
+    nDelayOffSec        : UDINT := 60;          // 停机延时 60 秒避免短循环
+
+    // ---- 输出 ----
+    bDehumActive        : BOOL;                 // 除湿器开/关命令
+    nRemOnSec           : UDINT;                // 启动倒计时剩余秒数
+    nRemOffSec          : UDINT;                // 停机倒计时剩余秒数
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// Tc3_BA2_Common.FB_BA_Swi2P 演示程序
+// =============================================================================
+// 场景：地下室除湿机。湿度高于 65% RH 启动除湿，降到 55% RH 关闭。要求启动
+//       延时 30 秒抗传感器瞬态尖刺，关闭延时 60 秒避免短循环（压缩机寿命）。
+//
+// 价值：替代手写 IF + 两个 TON 延时定时器 + 状态记忆 (~15 行)，本 FB 一行调用
+//       涵盖：滞回阈值（10% RH 宽度防抖）、上 / 下方向延时分别配置、剩余时间
+//       HMI 显示。控制方向（这里是 direct = 湿度高了开）由 fOn > fOff 自动判定。
+//
+// 验证：
+//   ① 登录后初始：fHumidityRH = 60.0（在 fOff..fOn 中间），bDehumActive = FALSE；
+//   ② 在线写 fHumidityRH := 70.0 → nRemOnSec 立刻 = 30，开始倒数；30 秒后
+//      bDehumActive 翻 TRUE；
+//   ③ 倒数过程中（如剩 15 秒时）把 fHumidityRH := 60.0 拉回 → nRemOnSec 立刻清零
+//      （没穿过 fOn 了），bDehumActive 保持 FALSE；
+//   ④ bDehumActive=TRUE 时把 fHumidityRH := 50.0 → nRemOffSec 立刻 = 60；
+//      60 秒后 bDehumActive 翻 FALSE；
+//   ⑤ 写 bDehumEnable := FALSE → bDehumActive 立即 FALSE，两个倒计时清零。
+//
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_BA2_Common（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』指引在线写值观察
+// =============================================================================
+
+fbDehumSwitch(
+    bEn          := bDehumEnable,
+    fIn          := fHumidityRH,
+    fOn          := fOnPoint,         // 65：穿越向上开启
+    fOff         := fOffPoint,        // 55：穿越向下关闭
+    nDlyOn       := nDelayOnSec,
+    nDlyOff      := nDelayOffSec,
+    bQ           => bDehumActive,
+    nRemTiDlyOn  => nRemOnSec,
+    nRemTiDlyOff => nRemOffSec
+);
+
+// 工程提醒：fOn > fOff（这里 65 > 55）自动判为 direct 控制方向（"测量值高了
+// 开"，比如制冷、除湿）。加热方向反过来写：fOn = 18, fOff = 20（fOn < fOff）。
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

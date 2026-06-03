@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_F_BA_GetUsedEntryCount" Id="{5768b199-b283-51d9-8d42-2ce6b4855f93}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_F_BA_GetUsedEntryCount
+VAR
+    argPArray                      : PVOID                          := 0; // pArray
+    argNLowerBound                 : DINT                           := 0; // nLowerBound
+    argNUpperBound                 : DINT                           := 0; // nUpperBound
+    argXUnusedVal                  : ANY                           ; // xUnusedVal
+    fnReturn                       : DINT; // 返回值
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// Tc3_BA2_Common.F_BA_GetUsedEntryCount 演示程序
+// =============================================================================
+// 场景：动态数组类容器（如调度条目数组）每槽位有"未用 = 0xFF"约定；本 FC 一行得到当前已用槽位数。
+//
+// 价值：一行调用替代 FOR 循环扫描，且自动按 ANY 类型尺寸适配（不用手写不同类型不同步长的循环）。
+//
+// 验证：登录 PLC 后，按例程内变量在线写值；监视输出 / 返回值，结合 §1 功能
+//       简述的预期行为对照（详见配套 .md 文档 §7 业务场景）。
+//
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_BA2_Common（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』指引在线写值观察
+// =============================================================================
+
+fnReturn := F_BA_GetUsedEntryCount(
+    pArray                   := argPArray,
+    nLowerBound              := argNLowerBound,
+    nUpperBound              := argNUpperBound,
+    xUnusedVal               := argXUnusedVal
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

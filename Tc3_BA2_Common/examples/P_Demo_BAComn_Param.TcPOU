@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_BAComn_Param" Id="{46c49ea5-d3ee-5345-ae91-e6fd9c7477d1}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_BAComn_Param
+VAR
+    nBufferSize         : UINT;        // 读 BAComn_Param.nStrTokenizer_BufferSize
+    nMaxLevel           : BYTE;        // 读 BAComn_Param.nStrTokenizer_MaxLevel
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// Tc3_BA2_Common.BAComn_Param 演示程序
+// =============================================================================
+// 场景：调整内部 tokenizer 缓冲尺寸（极少需要修改，默认即可）。
+//
+// 价值：集中可调参数，避免散落。
+//
+// 验证：登录 PLC 后，按例程内变量在线写值；监视输出 / 返回值，结合 §1 功能
+//       简述的预期行为对照（详见配套 .md 文档 §7 业务场景）。
+//
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_BA2_Common（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』指引在线写值观察
+// =============================================================================
+
+nBufferSize := BAComn_Param.nStrTokenizer_BufferSize; // 默认 32
+nMaxLevel   := BAComn_Param.nStrTokenizer_MaxLevel;   // 默认 5
+
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

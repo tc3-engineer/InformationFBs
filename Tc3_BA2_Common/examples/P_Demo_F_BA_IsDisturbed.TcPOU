@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_F_BA_IsDisturbed" Id="{5cc96b96-4d22-5494-8c10-1da78401f01d}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_F_BA_IsDisturbed
+VAR
+    argStStateFlags                : ST_BA_StatusFlags             ; // stStateFlags
+    fnReturn                       : BOOL; // 返回值
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// Tc3_BA2_Common.F_BA_IsDisturbed 演示程序
+// =============================================================================
+// 场景：趋势记录 FB 决定是否把当前值写入历史：测点状态被报为 disturbed 时跳过该样本。
+//
+// 价值：一行 FC 替代位级判断 `(stStatus.nFlags AND 16#01) <> 0`。
+//
+// 验证：登录 PLC 后，按例程内变量在线写值；监视输出 / 返回值，结合 §1 功能
+//       简述的预期行为对照（详见配套 .md 文档 §7 业务场景）。
+//
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_BA2_Common（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』指引在线写值观察
+// =============================================================================
+
+fnReturn := F_BA_IsDisturbed(
+    stStateFlags             := argStStateFlags
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

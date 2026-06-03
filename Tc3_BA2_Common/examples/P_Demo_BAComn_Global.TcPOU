@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_BAComn_Global" Id="{07c8d0c8-a7ed-55a1-a65b-dc04aa0d58f6}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_BAComn_Global
+VAR
+    nMinByteSample      : BYTE;        // 读 BAComn_Global.nMinByte
+    nMaxIntSample       : INT;         // 读 BAComn_Global.nMaxInt
+    n24hAsSeconds       : UDINT;       // 读 BAComn_Global.n24Hour2Hour
+    fAlmostZero         : REAL;        // 读 BAComn_Global.fCloseToZero
+    bChar0              : BYTE;        // 读 BAComn_Global.bChar_0
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// Tc3_BA2_Common.BAComn_Global 演示程序
+// =============================================================================
+// 场景：在自定义 BA FB 中需要"24 小时换算成秒数"时直接用 `BAComn_Global.n24Hour2Hour`，避免到处写 `24 * 60 * 60` 散落各处。
+//
+// 价值：集中管理避免硬编码魔数；常量统一命名便于 IDE 搜索。
+//
+// 验证：登录 PLC 后，按例程内变量在线写值；监视输出 / 返回值，结合 §1 功能
+//       简述的预期行为对照（详见配套 .md 文档 §7 业务场景）。
+//
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_BA2_Common（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』指引在线写值观察
+// =============================================================================
+
+// 每周期把 BAComn_Global 中几个常用常量复制到本地，HMI 可观察其数值。
+nMinByteSample := BAComn_Global.nMinByte;       // = 16#00
+nMaxIntSample  := BAComn_Global.nMaxInt;        // = 16#7FFF (32767)
+n24hAsSeconds  := BAComn_Global.n24Hour2Hour;   // = 86400 秒
+fAlmostZero    := BAComn_Global.fCloseToZero;   // = 0.00001（用于避免除零）
+bChar0         := BAComn_Global.bChar_0;        // = 16#30（数字 0 的 ASCII）
+
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

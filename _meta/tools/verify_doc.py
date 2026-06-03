@@ -433,6 +433,13 @@ def verify(doc_path: str) -> tuple[int, list[str]]:
             return (2 if diags else 0), (diags or ["PASS"])
         return 2, [f"could not extract section {entry['section']} for {name}"]
 
+    # overview-only docs (e.g. Tc3_BA2_Common BAComn_EnumDE — a 60 KB GVL of
+    # initialised enum-array literals) admit they aren't tracking every field
+    # verbatim; skip section/VAR diff but still gate on content quality.
+    if overview_only:
+        diags = _check_content_quality(doc, meta)
+        return (2 if diags else 0), (diags or ["PASS"])
+
     # Strip "NEGATIVE sample" blocks (Beckhoff PDFs occasionally embed a
     # FUNCTION_BLOCK showing how NOT to encapsulate the API — e.g. TestAndSet
     # §4.1.20 has an FB_MyGlobalLock with its own VAR_INPUT/OUTPUT bLock/

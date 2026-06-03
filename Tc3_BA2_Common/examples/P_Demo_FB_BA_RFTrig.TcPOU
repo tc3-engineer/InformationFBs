@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_BA_RFTrig" Id="{93b8ead1-7616-550a-b56d-bf30a63274a1}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_BA_RFTrig
+VAR
+    fbDoorSensorTrig    : FB_BA_RFTrig;   // 红外门感应触发器
+
+    // ---- 被监视量 ----
+    bDoorIrSensor       : BOOL := FALSE;   // 红外感应布尔；在线写 TRUE/FALSE 模拟
+
+    // ---- 输出（在线 monitor）----
+    bAnyEdge            : BOOL;            // 任意边沿 → 写日志
+    bRisingEdge         : BOOL;            // 上升沿 → 开门 + 灯亮 + 通风启动
+    bFallingEdge        : BOOL;            // 下降沿 → 触发关灯延时
+
+    // ---- 累计动作次数（验证用）----
+    nOpenActions        : UDINT;
+    nCloseDelayActions  : UDINT;
+    nLogEntries         : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// Tc3_BA2_Common.FB_BA_RFTrig 演示程序
+// =============================================================================
+// 场景：办公楼大门红外感应。bDoorIrSensor 从 FALSE → TRUE 时立即开门、灯亮、
+//       通风启动；TRUE → FALSE 时触发关灯延时；任意变化都要写一条日志。
+//       一个 FB_BA_RFTrig 实例同时给出 3 个输出，省去单独的 R_TRIG + F_TRIG。
+//
+// 价值：相比 IEC 标准 `R_TRIG + F_TRIG` 双实例方案，本 FB 单实例提供 Qr / Qf
+//       / Q 三个输出，少 1 个变量、少 1 行调用，命名直观（Qr=Rising,Qf=Falling,
+//       Q=Any）。
+//
+// 验证：
+//   ① 登录后初始：bDoorIrSensor = FALSE，bAnyEdge / bRisingEdge / bFallingEdge
+//      全 FALSE，计数器全 0；
+//   ② 在线写 bDoorIrSensor := TRUE → 下个周期 bRisingEdge = TRUE 一周期、
+//      bAnyEdge = TRUE 一周期；nOpenActions += 1, nLogEntries += 1；
+//   ③ 等几个周期后，bDoorIrSensor 仍为 TRUE，三输出全 FALSE（无变化）；
+//   ④ 在线写 bDoorIrSensor := FALSE → 下个周期 bFallingEdge = TRUE 一周期、
+//      bAnyEdge = TRUE 一周期；nCloseDelayActions += 1, nLogEntries += 1。
+//
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_BA2_Common（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』指引在线写值观察
+// =============================================================================
+
+// 单次调用形式：所有 VAR_INPUT 显式赋值，3 个输出全部接出
+fbDoorSensorTrig(
+    bValue := bDoorIrSensor,
+    Q      => bAnyEdge,
+    Qr     => bRisingEdge,
+    Qf     => bFallingEdge
+);
+
+// 业务逻辑：每条边沿对应一个动作（这里只累加计数器示意）
+IF bRisingEdge THEN
+    nOpenActions := nOpenActions + 1;          // 真实工程：开门 + 灯亮 + 通风
+END_IF
+IF bFallingEdge THEN
+    nCloseDelayActions := nCloseDelayActions + 1;  // 真实工程：启动 30s 关灯延时定时器
+END_IF
+IF bAnyEdge THEN
+    nLogEntries := nLogEntries + 1;            // 真实工程：写一条事件日志
+END_IF
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

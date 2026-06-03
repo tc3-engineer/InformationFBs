@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_BA_ATrigCOV" Id="{e505e07a-b441-598b-93fe-41a1b313ca6d}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_BA_ATrigCOV
+VAR
+    fbCovRoomTemp     : FB_BA_ATrigCOV;       // 监视一个 REAL 房间温度（4 字节）
+    fbCovValveState   : FB_BA_ATrigCOV;       // 监视一个 BYTE 阀门状态码
+
+    // ---- 被监视量（来自传感器 / 控制逻辑）----
+    fRoomTemp         : REAL := 22.0;          // 房间温度 [℃]；在线改值模拟变化
+    nValveStateCode   : BYTE := 0;             // 阀门状态：0=Closed, 1=Opening, 2=Open
+
+    // ---- BMS 强制刷新（订阅同步用）----
+    bBmsRequestRefresh: BOOL := FALSE;         // BMS 上线时强制推送一次所有点
+
+    // ---- 监视输出 ----
+    bRoomTempCovReady : BOOL;                  // 监视器是否就绪
+    bRoomTempChanged  : BOOL;                  // 房间温度变化触发
+    bValveCovReady    : BOOL;
+    bValveChanged     : BOOL;                  // 阀门状态变化触发
+
+    // ---- BACnet 推送计数（伪代码：每次 bChanged 加 1）----
+    nRoomTempPushCnt  : UDINT;                 // 房间温度推送次数累计
+    nValvePushCnt     : UDINT;                 // 阀门推送次数累计
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// Tc3_BA2_Common.FB_BA_ATrigCOV 演示程序
+// =============================================================================
+// 场景：BACnet IP 楼宇网关：PLC 内有 2 个测点要按 COV（Change Of Value）模式
+//       上报到 BMS。①房间温度 REAL（4 字节）②阀门状态 BYTE（1 字节）。
+//       BMS 上线时点一下"强制刷新"按钮可触发所有点立刻推一遍（bForce 用法）。
+//
+// 价值：相比手写 "上次值 buffer + IF 比较" 模式，FB 一行调用替代 5-10 行重复
+//       代码；ANY 类型支持任意 ≤ 4 字节标量；自带 bForce 引脚实现"按需强制
+//       刷新"无须单独再写边沿检测。50 个测点工程一共节省 250-500 行代码。
+//
+// 验证：
+//   ① 登录后观察初始几个周期：fRoomTemp = 22.0 ≠ 0 → 首周期 bRoomTempChanged
+//      会触发一次（"上次值 buffer 初始为 0"造成的首次假触发）；
+//   ② 在线写 fRoomTemp := 22.5（任何变化）→ 下个周期 bRoomTempChanged 触发，
+//      nRoomTempPushCnt += 1；
+//   ③ fRoomTemp 不动时 bRoomTempChanged 始终 FALSE，nRoomTempPushCnt 不增；
+//   ④ 强制刷新：写 bBmsRequestRefresh := TRUE → 当前周期 bRoomTempChanged +
+//      bValveChanged 同时触发；写回 FALSE 即可；
+//   ⑤ 阀门状态测试：写 nValveStateCode := 1 → bValveChanged 触发 +
+//      nValvePushCnt += 1。
+//
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_BA2_Common（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』指引在线写值观察
+// =============================================================================
+
+// 测点 1：房间温度（REAL，4 字节）
+fbCovRoomTemp(
+    xValue  := fRoomTemp,
+    bForce  := bBmsRequestRefresh,
+    bReady  => bRoomTempCovReady,
+    bQ      => bRoomTempChanged
+);
+
+// 测点 2：阀门状态码（BYTE，1 字节）
+fbCovValveState(
+    xValue  := nValveStateCode,
+    bForce  := bBmsRequestRefresh,
+    bReady  => bValveCovReady,
+    bQ      => bValveChanged
+);
+
+// 推送计数器（实际工程中这里会调 BACnet 推送 FB）
+IF bRoomTempChanged THEN
+    nRoomTempPushCnt := nRoomTempPushCnt + 1;
+END_IF
+IF bValveChanged THEN
+    nValvePushCnt := nValvePushCnt + 1;
+END_IF
+
+// 工程提醒：每个被监视量需要 *独立* 的 FB_BA_ATrigCOV 实例；不要复用
+// 同一实例去监视不同变量（内部上次值会被覆盖造成检测错乱）。
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

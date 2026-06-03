@@ -83,7 +83,7 @@
 | Tc2_KNXLib | ~30 | ❌ unavailable | KNX/EIB（PDF 404） |
 | Tc2_EIB | 48 ✅ done (v1.16.1) | ✅ done | EIB（旧 KNX）— KL6301 耦合器接入 + 15 个 receive FB + 29 个 send FB + 2 个地址转换 FC |
 | Tc2_EnOcean | 20 ✅ done (v1.7.1) | ✅ done | 无线传感（KL6021-0023 / KL6581 终端 + receive/send/teach-in + 字节转换 FC） |
-| Tc3_BA2 | ~200 | ⏳ pending | Building Automation 2.0（走 Tc3_BA2_Common 别名） |
+| Tc3_BA2_Common | 80 ✅ done (v1.0.2) | ✅ done | Building Automation 2.0 公用底座（9 FB + 68 FC + 3 GVL）。控制器/IO/触发/斜坡滤波/迟滞/持久化/比较/内存/枚举/时间/调度/趋势/日志 等 19 类 |
 | Tc2_HVAC | ~50 | ⏳ pending | 暖通（走 TF8000 别名） |
 | Tc2_Lighting | ~30 | ⏳ pending | 照明控制（走 TF8050 别名） |
 | Tc2_Coupler | 7 | ✅ done (7/7) | 老式 BK 耦合器（含 1 个 obsolete FC） |

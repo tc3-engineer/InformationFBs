@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_F_BA_CompareVersion" Id="{b697a3fd-744b-55fc-9fb1-af9929ec7b9b}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_F_BA_CompareVersion
+VAR
+    argStVersion1                  : ST_BA_Version                 ; // stVersion1
+    argStVersion2                  : ST_BA_Version                 ; // stVersion2
+    argECompare                    : E_BA_CompareMode              ; // eCompare
+    argNLimit                      : UINT(1 .. 4)                   := 4; // nLimit
+    fnReturn                       : BOOL; // 返回值
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// Tc3_BA2_Common.F_BA_CompareVersion 演示程序
+// =============================================================================
+// 场景：楼宇控制器启动时检查 Tc3_BA2_Common 库版本：若 < V2.1.20.0 则报警阻止启动（避免运行时调用不存在的 FB）。
+//
+// 价值：一行 FC 调用替代手写 `IF v.major < 2 OR (v.major = 2 AND v.minor < 1) THEN ...` 这种繁琐多级 IF；`nLimit` 让你按需控制比较精度。
+//
+// 验证：登录 PLC 后，按例程内变量在线写值；监视输出 / 返回值，结合 §1 功能
+//       简述的预期行为对照（详见配套 .md 文档 §7 业务场景）。
+//
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_BA2_Common（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』指引在线写值观察
+// =============================================================================
+
+fnReturn := F_BA_CompareVersion(
+    stVersion1               := argStVersion1,
+    stVersion2               := argStVersion2,
+    eCompare                 := argECompare,
+    nLimit                   := argNLimit
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_F_BA_TrendBufferSize" Id="{4135d95c-c59b-50da-bbd3-87be13ea21b0}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_F_BA_TrendBufferSize
+VAR
+    ioABuffer                      : ARRAY [*] OF ST_BA_TrendEntry; // aBuffer 双向
+    fnReturn                       : DINT; // 返回值
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// Tc3_BA2_Common.F_BA_TrendBufferSize 演示程序
+// =============================================================================
+// 场景："温度趋势保留 7 天、每分钟采一次"——本 FC 算出需要分配多大的 `ARRAY OF ST_BA_TrendEntry` 缓冲。
+//
+// 价值：替代手算 `7 * 24 * 60 * SIZEOF(ST_BA_TrendEntry)`；FC 内部考虑了带 event 标记的额外字段开销。
+//
+// 验证：登录 PLC 后，按例程内变量在线写值；监视输出 / 返回值，结合 §1 功能
+//       简述的预期行为对照（详见配套 .md 文档 §7 业务场景）。
+//
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_BA2_Common（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』指引在线写值观察
+// =============================================================================
+
+fnReturn := F_BA_TrendBufferSize(
+    aBuffer                  := ioABuffer
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

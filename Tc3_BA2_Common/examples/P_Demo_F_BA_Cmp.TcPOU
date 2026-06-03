@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_F_BA_Cmp" Id="{775dc81b-edc0-5c66-b593-7cac5f464d42}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_F_BA_Cmp
+VAR
+    argPValue                      : PVOID                          := 0; // pValue
+    argPCompare                    : PVOID                          := 0; // pCompare
+    argNSize                       : UXINT                         ; // nSize
+    outNEqualBytes                 : UINT; // nEqualBytes 输出
+    fnReturn                       : DINT; // 返回值
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// Tc3_BA2_Common.F_BA_Cmp 演示程序
+// =============================================================================
+// 场景：比较两个 ST_BA_Date 结构是否相同；或比较 firmware 数据块前 N 字节匹配头部魔数。
+//
+// 价值：相比 IEC 标准 `MEMCMP`（只返回 -1/0/1），本 FC 额外给出"前缀相同字节数"，便于精细诊断差异位置。
+//
+// 验证：登录 PLC 后，按例程内变量在线写值；监视输出 / 返回值，结合 §1 功能
+//       简述的预期行为对照（详见配套 .md 文档 §7 业务场景）。
+//
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_BA2_Common（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』指引在线写值观察
+// =============================================================================
+
+fnReturn := F_BA_Cmp(
+    pValue                   := argPValue,
+    pCompare                 := argPCompare,
+    nSize                    := argNSize,
+    nEqualBytes              => outNEqualBytes
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>
