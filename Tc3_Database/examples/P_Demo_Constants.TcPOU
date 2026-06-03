@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_Constants" Id="{fd8b0fcf-6a5c-5122-b1c1-b39c31a27fcb}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_Constants
+VAR
+    // ==== 用 TF6420 全局常量声明数组（最佳实践）====
+    aDbConfigs       : ARRAY[1..MAX_CONFIGURATIONS] OF ST_ConfigDB;       // 数据库连接配置（255 槽）
+    aAutoLogConfigs  : ARRAY[1..MAX_CONFIGURATIONS] OF ST_ConfigAutoLogGrp; // AutoLog 组配置
+    aColumnNames     : ARRAY[0..MAX_DBCOLUMNS] OF STRING(50);              // 列名数组（255 列）
+    aSPParams        : ARRAY[0..MAX_SPPARAMETER] OF ST_SQLSPParameter;     // 存储过程参数（255 参数）
+    aColumnInfo      : ARRAY[0..MAX_DBCOLUMNS] OF ST_ColumnInfo;            // 列定义数组
+    aAutoLogStatus   : ARRAY[1..MAX_CONFIGURATIONS] OF ST_AutoLogGrpStatus; // AutoLog 状态
+
+    // ==== ADS 端口号常量用例 ====
+    // 假设要旁路本库做底层 ADS 通讯（罕见），目标 Port 必须 AMSPORT_DBSRV
+    nTargetPort      : UINT := AMSPORT_DBSRV;     // = 21372
+    sTargetNetId     : STRING(23) := '127.0.0.1.1.1';
+
+    // ==== Monitor 用：显示各常量值便于在线确认 ====
+    nAmsPortDbSrv    : UINT := AMSPORT_DBSRV;
+    nMaxDbConnections: UDINT := MAX_DBCONNECTIONS;
+    nMaxDbColumns    : UDINT := MAX_DBCOLUMNS;
+    nMaxSPParameter  : UDINT := MAX_SPPARAMETER;
+    nMaxConfigs      : UDINT := MAX_CONFIGURATIONS;
+    nMaxRecords      : UDINT := MAX_RECORDS;
+
+    bShowConstantsReq : BOOL := TRUE;     // 持续 monitor
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：OEM 设备数据库子系统初始化代码用 TF6420 全局常量声明数组维度——
+//       MAX_CONFIGURATIONS、MAX_DBCOLUMNS、MAX_SPPARAMETER、MAX_RECORDS 等。
+//       本程序声明全部 5 个数组上限常量对应的标准数组 + 展示 AMSPORT_DBSRV
+//       端口号用法，便于工程师快速复制到自己工程。
+// 价值：常量表达意图（"max database columns" 比 "255" 清晰）；与 Server
+//       接收上限一致避免空槽 / 越界；ADS 端口集中维护避免 magic number。
+// 验证步骤：
+//   1. 右键 POUs → Add → Existing Item → 选本 .TcPOU；引用 Tc3_Database
+//   2. 编译 → 登录 → 运行
+//   3. monitor 各常量字段：
+//      - nAmsPortDbSrv = 21372
+//      - nMaxDbConnections = nMaxDbColumns = nMaxSPParameter = nMaxConfigs = nMaxRecords = 255
+//   4. 把数组维度从 MAX_DBCOLUMNS 改成硬编码 255 编译能过但意图丢失
+//   5. 在 TwinCAT 路由表里搜端口 21372 应能看到 TwinCAT Database Server
+// =============================================================================
+
+// 常量声明属于编译期 —— 运行时无需调用任何方法
+// 数组在 VAR 区已声明，使用时直接索引即可：
+// 例：
+//   aColumnNames[0] := 'colA';
+//   aColumnInfo[0].sName := 'colA';
+//   aSPParams[0].sParameterName := '@p1';
+//
+// 业务侧 monitor 标志，无实际计算逻辑
+
+IF bShowConstantsReq THEN
+    // 这一段是为了让编译器认为数组被使用避免「未使用变量」警告
+    aDbConfigs[1].sDBName := '';
+    aAutoLogConfigs[1].sAutoLogGrpName := '';
+    aColumnNames[0] := '';
+    aColumnInfo[0].sName := '';
+    aSPParams[0].sParameterName := '';
+    aAutoLogStatus[1].nGroupID := 0;
+END_IF
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

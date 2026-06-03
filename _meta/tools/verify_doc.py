@@ -226,11 +226,11 @@ def _find_section_in_body(lib: str, name: str) -> str | None:
     # ("6.2.1 FB_MBReadCoils (Modbus function 1)"). The negative-lookahead
     # `(?![A-Za-z0-9_])` still guards against prefix matches like
     # "FB_MBRead" hitting "FB_MBReadCoils".
-    strict = re.compile(rf"(?m)^\s*(\d+(?:\.\d+){{0,4}})\s+{re.escape(name)}\s*$")
+    strict = re.compile(rf"(?m)^\s*(\d+(?:\.\d+){{0,6}})\s+{re.escape(name)}\s*$")
     secs = strict.findall(body)
     if not secs:
         loose = re.compile(
-            rf"(?m)^\s*(\d+(?:\.\d+){{0,4}})\s+{re.escape(name)}(?![A-Za-z0-9_]).*$"
+            rf"(?m)^\s*(\d+(?:\.\d+){{0,6}})\s+{re.escape(name)}(?![A-Za-z0-9_]).*$"
         )
         secs = loose.findall(body)
     if not secs:

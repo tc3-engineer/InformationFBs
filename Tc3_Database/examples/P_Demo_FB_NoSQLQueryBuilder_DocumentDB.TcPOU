@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_NoSQLQueryBuilder_DocumentDB" Id="{f042465b-f205-5de2-95b5-a3c98c7cc512}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_NoSQLQueryBuilder_DocumentDB
+VAR
+    fbBuilder          : FB_NoSQLQueryBuilder_DocumentDB;
+    fbExecutor         : FB_NoSQLQueryEvt(sNetID := '', tTimeout := T#15S);
+    fbResult           : FB_NoSQLResultEvt(sNetID := '', tTimeout := T#15S);
+
+    // ==== 业务输入 ====
+    bInsertProductReq  : BOOL := FALSE;        // 在线置 TRUE：插入一个产品 JSON
+    bFindProductReq    : BOOL := FALSE;        // 在线置 TRUE：按 productId 查
+    nMongoDbId         : UDINT := 1;           // MongoDB 连接 ID
+
+    // ==== InsertOne 用 ====
+    stInsertOpt        : T_QueryOptionDocumentDB_Insert;
+    sProductJson       : STRING(1000) := '{"productId":"P12345","temperature":[235.6,236.1,234.9],"pressure":[145.2,146.0,144.8]}';
+
+    // ==== Find 用 ====
+    stFindOpt          : T_QueryOptionDocumentDB_Find;
+    sFindFilter        : STRING(255) := '{"productId":"P12345"}';
+
+    // ==== 状态机 ====
+    nState             : INT := 0;             // 0 idle, 10 insert, 20 find
+    bExecuteDone       : BOOL;
+    bExecuteReturnDone : BOOL;
+    bLastWasError      : BOOL;
+    ipLastTcMsg        : Tc3_EventLogger.I_TcMessage;
+    sLastErrText       : STRING(255);
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：注塑机把每个产品的工艺曲线（300 时刻点 + 嵌套数组）作为 1 个 JSON
+//       文档存到 MongoDB 集合 production_curves。SQL 表存这种非定长嵌套
+//       数据要么 BLOB 要么多表拆分，性能 / PLC 端解码都不好。MongoDB +
+//       本 Builder：1 文档 1 产品，Builder 描述「Find / InsertOne / ...」
+//       Executor 实发查询。本程序演示 InsertOne 与 Find 两种模式。
+// 价值：嵌套 / 非定长数据无需 PLC 端序列化；MongoDB 横向扩展不受单表限制；
+//       Builder 模式让一个 FB 覆盖 MongoDB 全部查询类型。
+// 验证步骤：
+//   1. 右键 POUs → Add → Existing Item → 选本 .TcPOU；引用 Tc3_Database 与
+//      Tc3_EventLogger
+//   2. 前置：TF6420 配置器里配 MongoDB 连接（hDBID=1）；MongoDB 实例在跑；
+//      集合 production_curves 自动建（MongoDB 不要求预建集合）
+//   3. 编译 → 登录 → 运行；启动 TF6420 服务
+//   4. 在线写 bInsertProductReq := TRUE → nState 走 0→10→0；
+//      MongoDB 多 1 文档，可用 mongoshell `db.production_curves.find({productId:"P12345"})` 验证
+//   5. 在线写 bFindProductReq := TRUE → nState 走 0→20→0；fbResult 缓存
+//      返回的 JSON 文档，可用 ReadAsString 读
+//   6. 改 sProductJson 中 productId 反复插入 → MongoDB 多多个文档
+//   7. 故意把 sFindFilter 改成非 JSON（如 'broken'）→ bLastWasError=TRUE
+// =============================================================================
+
+// ---- 1. 业务路由 ----
+IF nState = 0 THEN
+    IF bInsertProductReq THEN
+        bInsertProductReq := FALSE;
+
+        // 配置 Builder：InsertOne 模式
+        fbBuilder.eQueryType      := E_DocumentDbQueryType.InsertOne;
+        fbBuilder.sCollectionName := 'production_curves';
+        fbBuilder.pQueryOptions   := ADR(stInsertOpt);
+        fbBuilder.cbQueryOptions  := SIZEOF(stInsertOpt);
+
+        // 配置 Insert 选项：要插入的 JSON 文档地址
+        stInsertOpt.pDocuments := ADR(sProductJson);
+        stInsertOpt.cbDocuments := SIZEOF(sProductJson);
+
+        nState := 10;
+    ELSIF bFindProductReq THEN
+        bFindProductReq := FALSE;
+
+        // 配置 Builder：Find 模式（同一 Builder 实例切换 eQueryType）
+        fbBuilder.eQueryType      := E_DocumentDbQueryType.Find;
+        fbBuilder.sCollectionName := 'production_curves';
+        fbBuilder.pQueryOptions   := ADR(stFindOpt);
+        fbBuilder.cbQueryOptions  := SIZEOF(stFindOpt);
+
+        // 配置 Find 选项：filter JSON
+        stFindOpt.pFilter  := ADR(sFindFilter);
+        stFindOpt.cbFilter := SIZEOF(sFindFilter);
+
+        nState := 20;
+    END_IF
+END_IF
+
+// ---- state=10：InsertOne ----
+IF nState = 10 THEN
+    bExecuteDone := fbExecutor.Execute(
+        hDBID              := nMongoDbId,
+        iNoSQLQueryBuilder := fbBuilder
+    );
+    IF bExecuteDone THEN
+        IF fbExecutor.bError THEN
+            ipLastTcMsg := fbExecutor.ipTcResult;
+            ipLastTcMsg.RequestEventText(1033, ADR(sLastErrText), SIZEOF(sLastErrText));
+            bLastWasError := TRUE;
+        ELSE
+            bLastWasError := FALSE;
+        END_IF
+        nState := 0;
+    END_IF
+END_IF
+
+// ---- state=20：Find 配 fbResult 接收 ----
+IF nState = 20 THEN
+    bExecuteReturnDone := fbExecutor.ExecuteDataReturn(
+        hDBID              := nMongoDbId,
+        iNoSSQLQueryBuilder := fbBuilder,
+        pNoSQLResult       := ADR(fbResult)
+    );
+    IF bExecuteReturnDone THEN
+        IF fbExecutor.bError THEN
+            ipLastTcMsg := fbExecutor.ipTcResult;
+            ipLastTcMsg.RequestEventText(1033, ADR(sLastErrText), SIZEOF(sLastErrText));
+            bLastWasError := TRUE;
+        ELSE
+            bLastWasError := FALSE;
+            // 此时 fbResult 已绑结果，可调 .ReadAsString 或 .ReadAsStruct 取数据
+        END_IF
+        nState := 0;
+    END_IF
+END_IF
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

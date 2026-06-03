@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_PLCDBCreateEvt" Id="{f8a92c66-5719-576b-9f01-e381b1b0ae75}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_PLCDBCreateEvt
+VAR
+    fbCreate           : FB_PLCDBCreateEvt(sNetID := '', tTimeout := T#10S);
+
+    // ==== 业务输入 ====
+    bCreateRecipeDbReq : BOOL := FALSE;       // 在线置 TRUE：一键建配方库 + 配方表
+    bCreateTableOnlyReq: BOOL := FALSE;       // 在线置 TRUE：仅在已有库里建一张新表
+    sRecipeDbPath      : STRING(80) := 'D:\\Recipes.sdf';   // SQL Compact 文件路径
+    sNewTableName      : STRING(80) := 'tbl_Recipes';
+
+    // ==== Database 用 ====
+    stSqlCompactCfg    : T_DBConfig_MsCompactSQL;
+    hRecipeDbId        : UDINT;               // Database() 成功后返回的 hDBID
+
+    // ==== Table 用：5 列（ID 自增 / 配方名 / 温度 / 压力 / 周期计数） ====
+    aRecipeColumns     : ARRAY[0..4] OF ST_ColumnInfo;
+
+    // ==== 状态机 ====
+    nState             : INT := 0;            // 0 idle, 10 creating_db, 20 creating_table
+    bDatabaseDone      : BOOL;
+    bTableDone         : BOOL;
+    bLastWasError      : BOOL;
+
+    // ==== EventLogger 错误诊断 ====
+    ipLastTcMsg        : Tc3_EventLogger.I_TcMessage;
+    sLastErrText       : STRING(255);
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：注塑机 OEM 量产线，每台机器装机后需要本地建一个 SQL Compact 配方库
+//       D:\Recipes.sdf 并在里头建 tbl_Recipes (5 列)。技师只接电配 IP，PLC
+//       启动序列自动跑本程序：先 Database() 建文件 + 注册 XML 拿 hDBID，再
+//       Table() 用 ST_ColumnInfo 数组定义 5 列建表，后续业务程序就能写入。
+// 价值：装机零配置，技师无需打开 Database Server 配置器；OEM 改列定义只升
+//       级 PLC 程序，下次装机自动应用；首次部署链路全在 PLC 可观察。
+// 验证步骤：
+//   1. 右键 POUs → Add → Existing Item → 选本 .TcPOU；引用 Tc3_Database 与
+//      Tc3_EventLogger；确保 TwinCAT Functions 下 TF6420 服务运行
+//   2. 编译 → 登录 → 运行
+//   3. 在线写 bCreateRecipeDbReq := TRUE → 观察 nState 走 0→10→20→0；
+//      hRecipeDbId 应得到一个 ≥ 1 的整数；磁盘 D:\Recipes.sdf 文件出现
+//   4. 用 SQL Compact Toolbox（或 SSMS 加 Compact 插件）打开该文件可见
+//      tbl_Recipes 表，5 列结构正确
+//   5. 改 sNewTableName 后写 bCreateTableOnlyReq := TRUE 测试已有 hDBID
+//      下追加表；nState 走 0→20→0
+//   6. 故意把 sRecipeDbPath 改成无权限路径（如 C:\Windows\Recipes.sdf）再
+//      试，应得 bLastWasError = TRUE，sLastErrText 描述权限错误
+// =============================================================================
+
+// ---- 0. 事件分级 ----
+fbCreate.eTraceLevel := Tc3_EventLogger.TcEventSeverity.Warning;
+
+// ---- 1. 业务请求路由 ----
+IF nState = 0 THEN
+    IF bCreateRecipeDbReq THEN
+        bCreateRecipeDbReq := FALSE;
+
+        // 准备 SQL Compact 配置（PDF §6.1.2.1.8.3 T_DBConfig_MsCompactSQL）
+        stSqlCompactCfg.sServer          := sRecipeDbPath;     // .sdf 文件全路径
+        stSqlCompactCfg.bAuthentification := FALSE;             // SQL Compact 无服务器认证
+
+        // 预填列定义数组（OEM 工艺的 5 列示例）
+        aRecipeColumns[0].sName     := 'nID';
+        aRecipeColumns[0].eType     := E_ColumnType.BigInt;
+        aRecipeColumns[0].nLength   := 8;
+        aRecipeColumns[0].sProperty := 'IDENTITY(1,1) PRIMARY KEY';
+
+        aRecipeColumns[1].sName     := 'sName';
+        aRecipeColumns[1].eType     := E_ColumnType.NVarChar;
+        aRecipeColumns[1].nLength   := 64;                      // 64 字符配方名，中文需算字符数
+        aRecipeColumns[1].sProperty := 'NOT NULL';
+
+        aRecipeColumns[2].sName     := 'rTemperature';
+        aRecipeColumns[2].eType     := E_ColumnType.Real;
+        aRecipeColumns[2].nLength   := 4;
+
+        aRecipeColumns[3].sName     := 'rPressure';
+        aRecipeColumns[3].eType     := E_ColumnType.Real;
+        aRecipeColumns[3].nLength   := 4;
+
+        aRecipeColumns[4].sName     := 'nCycleCount';
+        aRecipeColumns[4].eType     := E_ColumnType.Integer;
+        aRecipeColumns[4].nLength   := 4;
+        aRecipeColumns[4].sProperty := 'DEFAULT 0';
+
+        nState := 10;
+    ELSIF bCreateTableOnlyReq AND hRecipeDbId > 0 THEN
+        bCreateTableOnlyReq := FALSE;
+        nState := 20;                       // 跳过建库，直接建表
+    END_IF
+END_IF
+
+// ---- 2a. state=10：物理建库 + 注册 XML 拿 hDBID ----
+IF nState = 10 THEN
+    bDatabaseDone := fbCreate.Database(
+        pDatabaseConfig  := ADR(stSqlCompactCfg),
+        cbDatabaseConfig := SIZEOF(stSqlCompactCfg),
+        bCreateXMLConfig := TRUE,             // 一步走完：建文件 + 注册到 XML
+        pDBID            := ADR(hRecipeDbId)
+    );
+    IF bDatabaseDone THEN
+        IF fbCreate.bError THEN
+            ipLastTcMsg := fbCreate.ipTcResult;
+            ipLastTcMsg.RequestEventText(1033, ADR(sLastErrText), SIZEOF(sLastErrText));
+            bLastWasError := TRUE;
+            nState := 0;                      // 失败直接回 idle，不进入建表
+        ELSE
+            bLastWasError := FALSE;
+            nState := 20;                     // 顺利进入建表
+        END_IF
+    END_IF
+END_IF
+
+// ---- 2b. state=20：在 hRecipeDbId 下建表 tbl_Recipes ----
+IF nState = 20 THEN
+    bTableDone := fbCreate.Table(
+        hDBID       := hRecipeDbId,
+        sTableName  := sNewTableName,
+        pTableCfg   := ADR(aRecipeColumns),
+        cbTableCfg  := SIZEOF(aRecipeColumns)
+    );
+    IF bTableDone THEN
+        IF fbCreate.bError THEN
+            ipLastTcMsg := fbCreate.ipTcResult;
+            ipLastTcMsg.RequestEventText(1033, ADR(sLastErrText), SIZEOF(sLastErrText));
+            bLastWasError := TRUE;
+        ELSE
+            bLastWasError := FALSE;
+        END_IF
+        nState := 0;
+    END_IF
+END_IF
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

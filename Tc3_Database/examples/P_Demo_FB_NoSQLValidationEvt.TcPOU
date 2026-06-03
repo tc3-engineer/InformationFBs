@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_NoSQLValidationEvt" Id="{9e899e3d-1bb6-5192-ab24-51f8c0203ef3}" SpecialFunc="None">
+    <Declaration><![CDATA[TYPE ST_RecipeAssumed :
+STRUCT
+    recipeId       : STRING(50);
+    name           : STRING(50);
+    rTemperature   : REAL;
+    rPressure      : REAL;
+    rMoldTemp      : REAL;        // PLC 假设有这字段；DB 里可能叫 mold_temperature 或缺失
+END_STRUCT
+END_TYPE
+
+PROGRAM P_Demo_FB_NoSQLValidationEvt
+VAR
+    fbExec             : FB_NoSQLQueryEvt(sNetID := '', tTimeout := T#30S);
+    fbBuilder          : FB_NoSQLQueryBuilder_DocumentDB;
+    fbResult           : FB_NoSQLResultEvt(sNetID := '', tTimeout := T#15S);
+    fbValidation       : FB_NoSQLValidationEvt(sNetID := '', tTimeout := T#15S);
+
+    bDebugQueryReq     : BOOL := FALSE;        // 触发：查 MongoDB recipes + 验证
+    bGetIssuesReq      : BOOL := FALSE;        // 取问题列表
+    bGetRemainingReq   : BOOL := FALSE;        // 取未映射 JSON
+    bReleaseReq        : BOOL := FALSE;
+
+    nMongoDbId         : UDINT := 2;
+    stFindOpt          : T_QueryOptionDocumentDB_Find;
+    sFilter            : STRING(255) := '{}';   // 取全部
+
+    aRecipes           : ARRAY[0..9] OF ST_RecipeAssumed;
+    aIssues            : ARRAY[0..49] OF T_MAXSTRING;
+    aRemainingJson     : ARRAY[0..49] OF STRING(1000);
+
+    nState             : INT := 0;
+    bExecDataDone      : BOOL;
+    bReadStructDone    : BOOL;
+    bGetIssuesDone     : BOOL;
+    bGetRemainingDone  : BOOL;
+    bReleaseDone       : BOOL;
+    bResultCached      : BOOL := FALSE;
+
+    ipLastTcMsg        : Tc3_EventLogger.I_TcMessage;
+    sLastErrText       : STRING(255);
+    bLastWasError      : BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：OEM 设备部署到新车间，日志报「读 MongoDB recipes 字段缺失」。本程序
+//       是维护诊断专用：查 recipes 集合，开 bValidate := TRUE 让 fbValidation
+//       收集 schema 差异，然后 GetIssues 取问题列表（"字段 mold_temperature
+//       不在 PLC 结构"等）+ GetRemainingData 取无法映射的原文档，便于运维
+//       一眼定位「DB 端字段叫什么」。
+// 价值：schema 漂移自动可见，不依赖 mongoshell；OEM 跨车间适配快；EventLogger
+//       错误诊断；省去 PLC 端写 JSON 解析器。
+// 验证步骤：
+//   1. 右键 POUs → Add → Existing Item → 选本 .TcPOU；引用 Tc3_Database 与
+//      Tc3_EventLogger
+//   2. 前置：TF6420 配 MongoDB hDBID=2；recipes 集合有若干文档，字段与
+//      ST_RecipeAssumed 可能不完全匹配
+//   3. 编译 → 登录 → 运行
+//   4. 在线写 bDebugQueryReq := TRUE → nState 走 0→10→20→0；aRecipes 填上
+//      DB 里能映射的字段；bResultCached=TRUE
+//   5. 在线写 bGetIssuesReq := TRUE → nState 走 0→30→0；aIssues 填上每个
+//      不匹配字段的描述
+//   6. 在线写 bGetRemainingReq := TRUE → nState 走 0→40→0；aRemainingJson
+//      填上整文档无法映射的原 JSON
+//   7. 写 bReleaseReq := TRUE 释放
+//   8. 假设 DB 里 recipes 文档实际叫 'mold_temperature' 而 PLC 字段是
+//      'rMoldTemp'：fbValidation.GetIssues 应回 "field 'rMoldTemp' not filled,
+//      JSON has 'mold_temperature' instead" 类描述
+// =============================================================================
+
+fbValidation.eTraceLevel := Tc3_EventLogger.TcEventSeverity.Verbose;  // 调试期取详细
+
+IF nState = 0 THEN
+    IF bDebugQueryReq THEN
+        bDebugQueryReq := FALSE;
+        fbBuilder.eQueryType      := E_DocumentDbQueryType.Find;
+        fbBuilder.sCollectionName := 'recipes';
+        fbBuilder.pQueryOptions   := ADR(stFindOpt);
+        fbBuilder.cbQueryOptions  := SIZEOF(stFindOpt);
+        stFindOpt.pFilter  := ADR(sFilter);
+        stFindOpt.cbFilter := SIZEOF(sFilter);
+        nState := 10;
+    ELSIF bGetIssuesReq AND bResultCached THEN
+        bGetIssuesReq := FALSE;
+        nState := 30;
+    ELSIF bGetRemainingReq AND bResultCached THEN
+        bGetRemainingReq := FALSE;
+        nState := 40;
+    ELSIF bReleaseReq AND bResultCached THEN
+        bReleaseReq := FALSE;
+        nState := 50;
+    END_IF
+END_IF
+
+// ---- state=10：发查询 ----
+IF nState = 10 THEN
+    bExecDataDone := fbExec.ExecuteDataReturn(
+        hDBID               := nMongoDbId,
+        iNoSSQLQueryBuilder := fbBuilder,
+        pNoSQLResult        := ADR(fbResult)
+    );
+    IF bExecDataDone THEN
+        IF NOT fbExec.bError THEN
+            nState := 20;
+        ELSE
+            bLastWasError := TRUE;
+            nState := 0;
+        END_IF
+    END_IF
+END_IF
+
+// ---- state=20：ReadAsStruct 配 bValidate=TRUE 让 fbValidation 收集 issues ----
+IF nState = 20 THEN
+    bReadStructDone := fbResult.ReadAsStruct(
+        nStartIndex      := 0,
+        nRecordCount     := 10,
+        pData            := ADR(aRecipes),
+        cbData           := SIZEOF(aRecipes),
+        bValidate        := TRUE,                          // 关键：开验证
+        pNoSQLValidation := ADR(fbValidation),             // 验证结果写到此 FB 的缓存
+        bDataRelease     := FALSE
+    );
+    IF bReadStructDone THEN
+        IF NOT fbResult.bError THEN
+            bResultCached := TRUE;
+            // 现在 fbValidation 的 Server 端缓存有 issues 与 remaining data
+        END_IF
+        nState := 0;
+    END_IF
+END_IF
+
+// ---- state=30：GetIssues 取问题列表 ----
+IF nState = 30 THEN
+    bGetIssuesDone := fbValidation.GetIssues(
+        pData         := ADR(aIssues),
+        cbData        := SIZEOF(aIssues),
+        bDataRelease  := FALSE                              // 保留供 GetRemainingData 用
+    );
+    IF bGetIssuesDone THEN
+        IF fbValidation.bError THEN
+            ipLastTcMsg := fbValidation.ipTcResult;
+            ipLastTcMsg.RequestEventText(1033, ADR(sLastErrText), SIZEOF(sLastErrText));
+            bLastWasError := TRUE;
+        END_IF
+        nState := 0;
+    END_IF
+END_IF
+
+// ---- state=40：GetRemainingData 取整文档无法映射的原 JSON ----
+IF nState = 40 THEN
+    bGetRemainingDone := fbValidation.GetRemainingData(
+        pData        := ADR(aRemainingJson),
+        cbData       := SIZEOF(aRemainingJson),
+        cbDocument   := 1000,
+        bDataRelease := TRUE                                // 取完释放
+    );
+    IF bGetRemainingDone THEN
+        IF fbValidation.bError THEN
+            bLastWasError := TRUE;
+        END_IF
+        nState := 0;
+    END_IF
+END_IF
+
+// ---- state=50：显式 Release Result 缓存 ----
+IF nState = 50 THEN
+    bReleaseDone := fbResult.Release();
+    IF bReleaseDone THEN
+        IF NOT fbResult.bError THEN
+            bResultCached := FALSE;
+        END_IF
+        nState := 0;
+    END_IF
+END_IF
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_SQLResult" Id="{f618b0e4-a3ca-5251-b044-8c7b55af7086}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_SQLResult
+VAR
+    // ⚠️ obsolete —— 新项目用 FB_SQLResultEvt
+    fbSqlDb            : FB_SQLDatabase(sNetID := '', tTimeout := T#30S);
+    fbSqlCmd           : FB_SQLCommand(sNetID := '', tTimeout := T#15S);
+    fbSqlResult        : FB_SQLResult(sNetID := '', tTimeout := T#15S);
+
+    bInitReq           : BOOL := FALSE;
+    bRunQueryReq       : BOOL := FALSE;
+    bReadPageReq       : BOOL := FALSE;
+    bReleaseReq        : BOOL := FALSE;
+
+    sSelectCmd         : STRING(500) := 'SELECT TOP 100 ID, Timestamp, Name, Value FROM myTable_Double ORDER BY ID DESC';
+    aHistoryBuffer     : ARRAY[0..9] OF ST_StandardRecord;
+    nPageStart         : UDINT := 0;
+
+    nState             : INT := 0;
+    bConnDone          : BOOL;
+    bCmdInitDone       : BOOL;
+    bExecDataDone      : BOOL;
+    bReadDone          : BOOL;
+    bReleaseDone       : BOOL;
+    bCmdReady          : BOOL := FALSE;
+    bResultCached      : BOOL := FALSE;
+
+    ipLastTcResult     : Tc3_EventLogger.I_TcResultEvent;
+    sLastErrText       : STRING(255);
+    bLastWasError      : BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：老 OEM SQL 查询结果集分页读取。本程序展示老风格：Connect → CreateCmd
+//       → ExecuteDataReturn 把结果缓存到 obsolete FB_SQLResult；分页用 Read
+//       (bDataRelease := FALSE)；全读完显式 Release。新项目改用 P_Demo_FB_SQLResultEvt。
+// 价值：保护已部署设备的二进制兼容。
+// 验证步骤：
+//   1. 右键 POUs → Add → Existing Item → 选本 .TcPOU；引用 Tc3_Database 与
+//      Tc3_EventLogger
+//   2. 前置：XML hDBID=1 MS SQL；myTable_Double 表至少 100 行
+//   3. 编译 → 登录 → 运行
+//   4. 在线写 bInitReq := TRUE → bCmdReady=TRUE
+//   5. 写 bRunQueryReq := TRUE → bResultCached=TRUE
+//   6. 反复写 bReadPageReq := TRUE → 每次取 10 行到 aHistoryBuffer
+//   7. 写 bReleaseReq := TRUE 释放
+// =============================================================================
+
+IF nState = 0 THEN
+    IF bInitReq THEN
+        bInitReq := FALSE;
+        nState := 10;
+    ELSIF bRunQueryReq AND bCmdReady THEN
+        bRunQueryReq := FALSE;
+        nPageStart := 0;
+        nState := 30;
+    ELSIF bReadPageReq AND bResultCached THEN
+        bReadPageReq := FALSE;
+        nState := 40;
+    ELSIF bReleaseReq AND bResultCached THEN
+        bReleaseReq := FALSE;
+        nState := 50;
+    END_IF
+END_IF
+
+IF nState = 10 THEN
+    bConnDone := fbSqlDb.Connect(hDBID := 1);
+    IF bConnDone AND NOT fbSqlDb.bError THEN
+        nState := 20;
+    ELSIF bConnDone THEN
+        bLastWasError := TRUE;
+        nState := 0;
+    END_IF
+END_IF
+
+IF nState = 20 THEN
+    bCmdInitDone := fbSqlDb.CreateCmd(pSQLCommand := ADR(fbSqlCmd));
+    IF bCmdInitDone THEN
+        IF NOT fbSqlDb.bError THEN
+            bCmdReady := TRUE;
+        END_IF
+        nState := 0;
+    END_IF
+END_IF
+
+IF nState = 30 THEN
+    bExecDataDone := fbSqlCmd.ExecuteDataReturn(
+        pSQLCmd      := ADR(sSelectCmd),
+        cbSQLCmd     := SIZEOF(sSelectCmd),
+        pSQLDBResult := ADR(fbSqlResult)
+    );
+    IF bExecDataDone THEN
+        IF NOT fbSqlCmd.bError THEN
+            bResultCached := TRUE;
+        END_IF
+        nState := 0;
+    END_IF
+END_IF
+
+IF nState = 40 THEN
+    bReadDone := fbSqlResult.Read(
+        nStartIndex    := nPageStart,
+        nRecordCount   := 10,
+        pData          := ADR(aHistoryBuffer),
+        cbData         := SIZEOF(aHistoryBuffer),
+        bWithVerifying := TRUE,
+        bDataRelease   := FALSE
+    );
+    IF bReadDone THEN
+        IF fbSqlResult.bError THEN
+            ipLastTcResult := fbSqlResult.ipTcResultEvent;
+            ipLastTcResult.RequestEventText(1033, ADR(sLastErrText), SIZEOF(sLastErrText));
+            bLastWasError := TRUE;
+        ELSE
+            nPageStart := nPageStart + 10;
+        END_IF
+        nState := 0;
+    END_IF
+END_IF
+
+IF nState = 50 THEN
+    bReleaseDone := fbSqlResult.Release();
+    IF bReleaseDone THEN
+        IF NOT fbSqlResult.bError THEN
+            bResultCached := FALSE;
+        END_IF
+        nState := 0;
+    END_IF
+END_IF
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

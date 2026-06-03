@@ -1284,3 +1284,30 @@
 2026-06-03T00:00:00Z | Tc2_BACnet     | primitive_values                        | FB_BACnet_Time                           | verified | PDF chapter-overview (chapter-overview-only)
 2026-06-03T00:00:00Z | Tc2_BACnet     | server                                  | FB_BACnet_ReadProperty                   | verified | PDF chapter-overview (infer-from-naming-convention)
 2026-06-03T00:00:00Z | Tc2_BACnet     | server                                  | FB_BACnet_WriteProperty                  | verified | PDF chapter-overview (infer-from-naming-convention)
+2026-06-03T00:00:00Z | Tc3_Database   | function_blocks                         | FB_ConfigTcDBSrvEvt                      | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_Database   | function_blocks                         | FB_NoSQLObjectId_MongoDB                 | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_Database   | function_blocks                         | FB_NoSQLQueryBuilder_DocumentDB          | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_Database   | function_blocks                         | FB_NoSQLQueryBuilder_TimeSeriesDB        | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_Database   | function_blocks                         | FB_NoSQLQueryEvt                         | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_Database   | function_blocks                         | FB_NoSQLResultEvt                        | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_Database   | function_blocks                         | FB_NoSQLValidationEvt                    | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_Database   | function_blocks                         | FB_PLCDBAutoLogEvt                       | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_Database   | function_blocks                         | FB_PLCDBCmdEvt                           | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_Database   | function_blocks                         | FB_PLCDBCreateEvt                        | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_Database   | function_blocks                         | FB_PLCDBReadEvt                          | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_Database   | function_blocks                         | FB_PLCDBWriteEvt                         | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_Database   | function_blocks                         | FB_SQLCommandEvt                         | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_Database   | function_blocks                         | FB_SQLDatabaseEvt                        | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_Database   | function_blocks                         | FB_SQLResultEvt                          | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_Database   | function_blocks                         | FB_SQLStoredProcedureEvt                 | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_Database   | global_constants                        | Constants                                | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_Database   | obsolete                                | FB_ConfigTcDBSrv                         | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_Database   | obsolete                                | FB_PLCDBAutoLog                          | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_Database   | obsolete                                | FB_PLCDBCmd                              | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_Database   | obsolete                                | FB_PLCDBCreate                           | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_Database   | obsolete                                | FB_PLCDBRead                             | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_Database   | obsolete                                | FB_PLCDBWrite                            | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_Database   | obsolete                                | FB_SQLCommand                            | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_Database   | obsolete                                | FB_SQLDatabase                           | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_Database   | obsolete                                | FB_SQLResult                             | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_Database   | obsolete                                | FB_SQLStoredProcedure                    | verified | PDF + InfoSys cross-verified

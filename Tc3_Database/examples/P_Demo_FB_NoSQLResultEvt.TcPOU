@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_NoSQLResultEvt" Id="{58aac560-8f9f-51fe-9c40-bbd512f6d887}" SpecialFunc="None">
+    <Declaration><![CDATA[TYPE ST_EnergyRead :
+STRUCT
+    rPower_kW   : REAL;
+    rEnergy_kWh : REAL;
+END_STRUCT
+END_TYPE
+
+PROGRAM P_Demo_FB_NoSQLResultEvt
+VAR
+    fbExec             : FB_NoSQLQueryEvt(sNetID := '', tTimeout := T#30S);
+    fbBuilder          : FB_NoSQLQueryBuilder_TimeSeriesDB;
+    fbResult           : FB_NoSQLResultEvt(sNetID := '', tTimeout := T#15S);
+    fbValidation       : FB_NoSQLValidationEvt(sNetID := '', tTimeout := T#15S);
+
+    bRunQueryReq       : BOOL := FALSE;        // 触发 InfluxDB 查询
+    bReadStructReq     : BOOL := FALSE;        // 把缓存结果按结构读出
+    bReadAsStringReq   : BOOL := FALSE;        // 也支持按 JSON 字符串读
+    bReleaseReq        : BOOL := FALSE;        // 全部读完后释放缓存
+
+    nInfluxDbId        : UDINT := 1;
+    stQueryOpt         : T_QueryOptionTimeSeriesDB_Query;
+    sQueryString       : STRING(255) := 'SELECT * FROM energy_5min WHERE time > now() - 1h';
+
+    // 分页读取缓冲（每页 100 行）
+    aEnergyRows        : ARRAY[0..99] OF ST_EnergyRead;
+    aJsonStrings       : ARRAY[0..99] OF STRING(1000);
+    nPageStart         : UDINT := 0;
+    nTotalReturned     : UDINT;                // = fbResult.nDataCount
+
+    nState             : INT := 0;
+    bExecDataDone      : BOOL;
+    bReadStructDone    : BOOL;
+    bReadStringDone    : BOOL;
+    bReleaseDone       : BOOL;
+    bResultCached      : BOOL := FALSE;
+
+    ipLastTcMsg        : Tc3_EventLogger.I_TcMessage;
+    sLastErrText       : STRING(255);
+    bLastWasError      : BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：HMI 触发「查最近 1 小时所有电表读数」→ PLC 用 NoSQLQueryEvt 查
+//       InfluxDB，结果缓存到 fbResult。HMI 分页展示——每页 100 条，PLC
+//       分多次 ReadAsStruct 各取 100 行；同时演示 ReadAsString 方式（拿
+//       JSON 字符串）。读完 Release 缓存。开 bValidate := TRUE 验证字段
+//       匹配，差异通过 fbValidation 暴露。
+// 价值：大结果集分页避免单次 ADS 传输爆掉；JSON 与结构两种读取格式覆盖
+//       不同 HMI 需求；schema 验证防 InfluxDB measurement 结构改了 PLC
+//       不知道；EventLogger 错误诊断。
+// 验证步骤：
+//   1. 右键 POUs → Add → Existing Item → 选本 .TcPOU；引用 Tc3_Database 与
+//      Tc3_EventLogger
+//   2. 前置：TF6420 配 InfluxDB hDBID=1；measurement energy_5min 有 720 条
+//      （5s 间隔 × 1小时 = 720）。可用 P_Demo_FB_NoSQLQueryBuilder_TimeSeriesDB
+//      预先写入
+//   3. 编译 → 登录 → 运行
+//   4. 在线写 bRunQueryReq := TRUE → nState 走 0→10→0；nTotalReturned=720
+//   5. 反复写 bReadStructReq := TRUE 8 次 → 每次取 100 行到 aEnergyRows，
+//      nPageStart += 100；HMI monitor 数组
+//   6. 改 bReadAsStringReq := TRUE 也能读但作为 JSON 字符串
+//   7. 全读完后 bReleaseReq := TRUE 释放缓存；bResultCached = FALSE
+// =============================================================================
+
+fbResult.eTraceLevel := Tc3_EventLogger.TcEventSeverity.Warning;
+
+IF nState = 0 THEN
+    IF bRunQueryReq THEN
+        bRunQueryReq := FALSE;
+        // 配置时序 Builder（Query 模式）
+        fbBuilder.pQueryOptions  := ADR(stQueryOpt);
+        fbBuilder.cbQueryOptions := SIZEOF(stQueryOpt);
+        stQueryOpt.pQueryString  := ADR(sQueryString);     // InfluxQL / Flux 查询
+        stQueryOpt.cbQueryString := SIZEOF(sQueryString);
+        nPageStart := 0;
+        nState := 10;
+    ELSIF bReadStructReq AND bResultCached THEN
+        bReadStructReq := FALSE;
+        nState := 20;
+    ELSIF bReadAsStringReq AND bResultCached THEN
+        bReadAsStringReq := FALSE;
+        nState := 30;
+    ELSIF bReleaseReq AND bResultCached THEN
+        bReleaseReq := FALSE;
+        nState := 40;
+    END_IF
+END_IF
+
+// ---- state=10：ExecuteDataReturn 把结果缓存到 fbResult ----
+IF nState = 10 THEN
+    bExecDataDone := fbExec.ExecuteDataReturn(
+        hDBID               := nInfluxDbId,
+        iNoSSQLQueryBuilder := fbBuilder,
+        pNoSQLResult        := ADR(fbResult)
+    );
+    IF bExecDataDone THEN
+        IF fbExec.bError THEN
+            ipLastTcMsg := fbExec.ipTcResult;
+            ipLastTcMsg.RequestEventText(1033, ADR(sLastErrText), SIZEOF(sLastErrText));
+            bLastWasError := TRUE;
+        ELSE
+            bResultCached := TRUE;
+            nTotalReturned := fbResult.nDataCount;        // 取总行数
+        END_IF
+        nState := 0;
+    END_IF
+END_IF
+
+// ---- state=20：ReadAsStruct 一页 100 行（含 schema 验证） ----
+IF nState = 20 THEN
+    bReadStructDone := fbResult.ReadAsStruct(
+        nStartIndex      := nPageStart,
+        nRecordCount     := 100,
+        pData            := ADR(aEnergyRows),
+        cbData           := SIZEOF(aEnergyRows),
+        bValidate        := TRUE,                          // 开 schema 验证
+        pNoSQLValidation := ADR(fbValidation),             // 差异由 fbValidation 暴露
+        bDataRelease     := FALSE                          // 保留缓存供下次读
+    );
+    IF bReadStructDone THEN
+        IF fbResult.bError THEN
+            ipLastTcMsg := fbResult.ipTcResult;
+            ipLastTcMsg.RequestEventText(1033, ADR(sLastErrText), SIZEOF(sLastErrText));
+            bLastWasError := TRUE;
+        ELSE
+            bLastWasError := FALSE;
+            nPageStart := nPageStart + 100;
+        END_IF
+        nState := 0;
+    END_IF
+END_IF
+
+// ---- state=30：ReadAsString 把结果作为 JSON 字符串读出 ----
+// 适合 HMI 需要原 JSON 而非映射后的 PLC 结构
+IF nState = 30 THEN
+    bReadStringDone := fbResult.ReadAsString(
+        nStartIndex      := nPageStart,
+        nRecordCount     := 100,
+        pData            := ADR(aJsonStrings),
+        cbData           := SIZEOF(aJsonStrings),
+        nMaxDocumentSize := 1000,                          // 每条文档 ≤ 1000 字节
+        bDataRelease     := FALSE
+    );
+    IF bReadStringDone THEN
+        IF NOT fbResult.bError THEN
+            nPageStart := nPageStart + 100;
+        END_IF
+        nState := 0;
+    END_IF
+END_IF
+
+// ---- state=40：显式 Release ----
+IF nState = 40 THEN
+    bReleaseDone := fbResult.Release();
+    IF bReleaseDone THEN
+        IF NOT fbResult.bError THEN
+            bResultCached := FALSE;
+        END_IF
+        nState := 0;
+    END_IF
+END_IF
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

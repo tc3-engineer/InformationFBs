@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_PLCDBAutoLog" Id="{d09db850-46e1-5f40-97e6-58b160d0fd4d}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_PLCDBAutoLog
+VAR
+    // ⚠️ obsolete —— 新项目用 FB_PLCDBAutoLogEvt
+    fbAutoLog         : FB_PLCDBAutoLog(sNetID := '', tTimeout := T#5S);
+
+    bStartAllReq      : BOOL := FALSE;
+    bEmergencySnapReq : BOOL := FALSE;
+    bStopAllReq       : BOOL := FALSE;
+    bStatusPollReq    : BOOL := TRUE;
+
+    aAutoLogStatus    : ARRAY[1..MAX_CONFIGURATIONS] OF ST_AutoLogGrpStatus;
+    bAnyGroupError    : BOOL;
+
+    nState            : INT := 0;
+    bStartDone        : BOOL;
+    bStopDone         : BOOL;
+    bRunOnceDone      : BOOL;
+    bStatusDone       : BOOL;
+
+    // 旧式 I_TcResultEvent 接口
+    ipLastTcResult    : Tc3_EventLogger.I_TcResultEvent;
+    sLastErrText      : STRING(255);
+    bLastWasError     : BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：老 OEM 能源监控柜（2018 年 TF6420 v1.8）用本 FB 控 AutoLog 组。
+//       本程序演示老风格 AutoLog 调用，输出走 ipTcResultEvent : I_TcResultEvent。
+//       新项目应改用 P_Demo_FB_PLCDBAutoLogEvt（接口 I_TcMessage）。
+// 价值：保护已部署设备的二进制兼容；展示新旧风格 EventLogger 接口差异。
+// 验证步骤：
+//   1. 右键 POUs → Add → Existing Item → 选本 .TcPOU；引用 Tc3_Database 与
+//      Tc3_EventLogger；TF6420 服务运行
+//   2. 编译 → 登录 → 运行
+//   3. 在线写 bStartAllReq := TRUE → 启动所有 AutoLog 组
+//   4. 在线写 bEmergencySnapReq := TRUE → 强制全组采集一次
+//   5. 写 bStopAllReq := TRUE → 停止
+//   6. Status 在 bStatusPollReq=TRUE 下持续轮询
+//   7. 故意触发错误情况看 sLastErrText
+// =============================================================================
+
+IF nState = 0 THEN
+    IF bStartAllReq THEN
+        bStartAllReq := FALSE;
+        nState := 10;
+    ELSIF bStopAllReq THEN
+        bStopAllReq := FALSE;
+        nState := 20;
+    ELSIF bEmergencySnapReq THEN
+        bEmergencySnapReq := FALSE;
+        nState := 30;
+    END_IF
+END_IF
+
+IF nState = 10 THEN
+    bStartDone := fbAutoLog.Start();
+    IF bStartDone THEN
+        IF fbAutoLog.bError THEN
+            ipLastTcResult := fbAutoLog.ipTcResultEvent;
+            ipLastTcResult.RequestEventText(1033, ADR(sLastErrText), SIZEOF(sLastErrText));
+            bLastWasError := TRUE;
+        END_IF
+        nState := 0;
+    END_IF
+END_IF
+
+IF nState = 20 THEN
+    bStopDone := fbAutoLog.Stop();
+    IF bStopDone THEN
+        nState := 0;
+    END_IF
+END_IF
+
+IF nState = 30 THEN
+    bRunOnceDone := fbAutoLog.RunOnce(hAutoLogGrpID := 0, bAll := TRUE);
+    IF bRunOnceDone THEN
+        nState := 0;
+    END_IF
+END_IF
+
+// Status 与上面三个 state 并行，独立 busy 位
+IF bStatusPollReq THEN
+    bStatusDone := fbAutoLog.Status(
+        tCheckCycle        := T#1S,
+        pError             := ADR(bAnyGroupError),
+        pAutoLogGrpStatus  := ADR(aAutoLogStatus),
+        cbAutoLogGrpStatus := SIZEOF(aAutoLogStatus)
+    );
+END_IF
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

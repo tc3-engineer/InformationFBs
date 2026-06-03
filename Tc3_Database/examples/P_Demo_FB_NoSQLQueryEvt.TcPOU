@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_NoSQLQueryEvt" Id="{5cc646cf-4b50-59fa-b01b-00f41cab84ac}" SpecialFunc="None">
+    <Declaration><![CDATA[TYPE ST_EnergyPoint :
+STRUCT
+    rPower_kW    : REAL;
+    rEnergy_kWh  : REAL;
+END_STRUCT
+END_TYPE
+
+PROGRAM P_Demo_FB_NoSQLQueryEvt
+VAR
+    fbExec             : FB_NoSQLQueryEvt(sNetID := '', tTimeout := T#30S);
+    fbBuilderTSDB      : FB_NoSQLQueryBuilder_TimeSeriesDB;
+    fbBuilderDocDB     : FB_NoSQLQueryBuilder_DocumentDB;
+    fbResult           : FB_NoSQLResultEvt(sNetID := '', tTimeout := T#15S);
+
+    bWriteEnergyReq    : BOOL := FALSE;        // 时序：写 60 点电能数据到 InfluxDB
+    bWriteRecipeReq    : BOOL := FALSE;        // 文档：写 1 条配方到 MongoDB
+    bFindRecipeReq     : BOOL := FALSE;        // 文档：按 ID 查配方
+
+    nInfluxDbId        : UDINT := 1;           // InfluxDB hDBID
+    nMongoDbId         : UDINT := 2;           // MongoDB hDBID
+
+    // 时序数据
+    aEnergyBuffer      : ARRAY[0..59] OF ST_EnergyPoint;
+    stTSInsertOpt      : T_QueryOptionTimeSeriesDB_Insert;
+
+    // 文档数据
+    stDocInsertOpt     : T_QueryOptionDocumentDB_Insert;
+    stDocFindOpt       : T_QueryOptionDocumentDB_Find;
+    sRecipeJson        : STRING(1000) := '{"recipeId":"R001","name":"PartA","temp":235.6,"pressure":145.2}';
+    sFindFilter        : STRING(255) := '{"recipeId":"R001"}';
+
+    // 状态机
+    nState             : INT := 0;
+    bExecDone          : BOOL;
+    bExecDataDone      : BOOL;
+    nReturnedRowCount  : UDINT;                // 取 fbExec.nDataCount
+
+    ipLastTcMsg        : Tc3_EventLogger.I_TcMessage;
+    sLastErrText       : STRING(255);
+    bLastWasError      : BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：能源管理系统 PLC：(1) 每 5 分钟把 60 点电能数据批量写入 InfluxDB
+//       时序库；(2) 每天一次工艺配方写入 MongoDB 文档库；(3) HMI 触发按
+//       recipeId 从 MongoDB 查配方。同一个 fbExec 实例通过 I_NoSQLQueryBuilder
+//       接口多态承担两类 NoSQL 操作——演示 Executor 一对多 Builder 模式。
+// 价值：单 Executor 实例统一处理时序 + 文档；批量写入异步发送；EventLogger
+//       错误诊断；连接管理仅靠 hDBID。
+// 验证步骤：
+//   1. 右键 POUs → Add → Existing Item → 选本 .TcPOU；引用 Tc3_Database 与
+//      Tc3_EventLogger
+//   2. 前置：TF6420 配置器配 InfluxDB (hDBID=1) + MongoDB (hDBID=2) 两个连接
+//   3. 编译 → 登录 → 运行
+//   4. 在线写 bWriteEnergyReq := TRUE → nState 走 0→10→0；InfluxDB 多 60 点
+//   5. 在线写 bWriteRecipeReq := TRUE → nState 走 0→20→0；MongoDB 多 1 文档
+//   6. 在线写 bFindRecipeReq := TRUE → nState 走 0→30→0；
+//      nReturnedRowCount = fbExec.nDataCount（找到的行数）；fbResult 缓存数据
+//   7. 故意把 nInfluxDbId 改成 99（不存在）→ bLastWasError=TRUE
+// =============================================================================
+
+fbExec.eTraceLevel := Tc3_EventLogger.TcEventSeverity.Warning;
+
+// ---- 业务路由 ----
+IF nState = 0 THEN
+    IF bWriteEnergyReq THEN
+        bWriteEnergyReq := FALSE;
+        // 配置时序 Builder
+        fbBuilderTSDB.pQueryOptions  := ADR(stTSInsertOpt);
+        fbBuilderTSDB.cbQueryOptions := SIZEOF(stTSInsertOpt);
+        stTSInsertOpt.sTableName     := 'energy_5min';
+        stTSInsertOpt.sDataType      := 'ST_EnergyPoint';
+        stTSInsertOpt.pSymbol        := ADR(aEnergyBuffer);
+        stTSInsertOpt.cbSymbol       := SIZEOF(aEnergyBuffer);
+        stTSInsertOpt.nDataCount     := 60;
+        stTSInsertOpt.nStartTimestamp:= F_GetSystemTime();
+        stTSInsertOpt.nCycleTime     := 300_000_000;     // 5 分钟 = 300_000 ms = 300_000_000 µs
+        nState := 10;
+    ELSIF bWriteRecipeReq THEN
+        bWriteRecipeReq := FALSE;
+        // 配置文档 Builder（InsertOne）
+        fbBuilderDocDB.eQueryType      := E_DocumentDbQueryType.InsertOne;
+        fbBuilderDocDB.sCollectionName := 'recipes';
+        fbBuilderDocDB.pQueryOptions   := ADR(stDocInsertOpt);
+        fbBuilderDocDB.cbQueryOptions  := SIZEOF(stDocInsertOpt);
+        stDocInsertOpt.pDocuments  := ADR(sRecipeJson);
+        stDocInsertOpt.cbDocuments := SIZEOF(sRecipeJson);
+        nState := 20;
+    ELSIF bFindRecipeReq THEN
+        bFindRecipeReq := FALSE;
+        // 配置文档 Builder（Find）
+        fbBuilderDocDB.eQueryType      := E_DocumentDbQueryType.Find;
+        fbBuilderDocDB.sCollectionName := 'recipes';
+        fbBuilderDocDB.pQueryOptions   := ADR(stDocFindOpt);
+        fbBuilderDocDB.cbQueryOptions  := SIZEOF(stDocFindOpt);
+        stDocFindOpt.pFilter  := ADR(sFindFilter);
+        stDocFindOpt.cbFilter := SIZEOF(sFindFilter);
+        nState := 30;
+    END_IF
+END_IF
+
+// ---- state=10：时序批量写 ----
+IF nState = 10 THEN
+    bExecDone := fbExec.Execute(
+        hDBID              := nInfluxDbId,
+        iNoSQLQueryBuilder := fbBuilderTSDB
+    );
+    IF bExecDone THEN
+        IF fbExec.bError THEN
+            ipLastTcMsg := fbExec.ipTcResult;
+            ipLastTcMsg.RequestEventText(1033, ADR(sLastErrText), SIZEOF(sLastErrText));
+            bLastWasError := TRUE;
+        ELSE
+            bLastWasError := FALSE;
+        END_IF
+        nState := 0;
+    END_IF
+END_IF
+
+// ---- state=20：文档 InsertOne ----
+IF nState = 20 THEN
+    bExecDone := fbExec.Execute(
+        hDBID              := nMongoDbId,
+        iNoSQLQueryBuilder := fbBuilderDocDB
+    );
+    IF bExecDone THEN
+        IF fbExec.bError THEN
+            ipLastTcMsg := fbExec.ipTcResult;
+            ipLastTcMsg.RequestEventText(1033, ADR(sLastErrText), SIZEOF(sLastErrText));
+            bLastWasError := TRUE;
+        ELSE
+            bLastWasError := FALSE;
+        END_IF
+        nState := 0;
+    END_IF
+END_IF
+
+// ---- state=30：文档 Find + 取结果 ----
+// 注：PDF 印刷里此方法入参名是 iNoSSQLQueryBuilder（多一个 S），照此拼写
+IF nState = 30 THEN
+    bExecDataDone := fbExec.ExecuteDataReturn(
+        hDBID               := nMongoDbId,
+        iNoSSQLQueryBuilder := fbBuilderDocDB,
+        pNoSQLResult        := ADR(fbResult)
+    );
+    IF bExecDataDone THEN
+        IF fbExec.bError THEN
+            ipLastTcMsg := fbExec.ipTcResult;
+            ipLastTcMsg.RequestEventText(1033, ADR(sLastErrText), SIZEOF(sLastErrText));
+            bLastWasError := TRUE;
+        ELSE
+            bLastWasError := FALSE;
+            nReturnedRowCount := fbExec.nDataCount;     // 取返回行数
+            // fbResult 已绑结果，可调 ReadAsString / ReadAsStruct 取文档
+        END_IF
+        nState := 0;
+    END_IF
+END_IF
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

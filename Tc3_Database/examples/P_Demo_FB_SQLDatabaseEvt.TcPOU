@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_SQLDatabaseEvt" Id="{23e7ee64-2b46-5083-9f1a-5312fa5ce441}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_SQLDatabaseEvt
+VAR
+    fbSqlDb            : FB_SQLDatabaseEvt(sNetID := '', tTimeout := T#30S);
+    fbSqlCmd           : FB_SQLCommandEvt(sNetID := '', tTimeout := T#15S);
+    fbSqlSP            : FB_SQLStoredProcedureEvt(sNetID := '', tTimeout := T#15S);
+
+    // ==== 业务输入 ====
+    bConnectReq        : BOOL := FALSE;        // PLC 启动后置 TRUE 一次：建常驻连接
+    bDisconnectReq     : BOOL := FALSE;        // PLC 停机前置 TRUE 一次：断连
+    nReqDbId           : UDINT := 1;           // 目标 hDBID
+
+    // ==== 存储过程参数描述（演示：SP_GetCustomerPositions 1 个 IN 参） ====
+    aSPParams          : ARRAY[0..0] OF ST_SQLSPParameter;
+    sStoredProcName    : T_MaxString := 'dbo.SP_GetCustomerPositions';
+
+    // ==== 状态机 ====
+    nState             : INT := 0;             // 0 idle, 10 connect, 20 createCmd, 30 createSP, 40 disconnect
+    bConnectDone       : BOOL;
+    bCreateCmdDone     : BOOL;
+    bCreateSPDone      : BOOL;
+    bDisconnectDone    : BOOL;
+
+    // ==== 业务侧标志：连接 + Cmd + SP 都就绪后可由其他程序用 ====
+    bConnReady         : BOOL := FALSE;
+    bCmdReady          : BOOL := FALSE;
+    bSPReady           : BOOL := FALSE;
+
+    // ==== EventLogger 诊断 ====
+    ipLastTcMsg        : Tc3_EventLogger.I_TcMessage;
+    sLastErrText       : STRING(255);
+    bLastWasError      : BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：CX 控制器每秒向 MS SQL 写 100 条工艺参数（高吞吐采集）+ 偶尔调存储
+//       过程做日终汇总。本程序在启动时建一次常驻 SQL 连接，然后把连接同时
+//       绑给 fbSqlCmd（自由 SQL 用）和 fbSqlSP（存储过程用），后续业务程序
+//       直接调它们的方法，无需每次重连。
+// 价值：高吞吐场景下连接复用让单条写入从 ~200 ms 降到 ~5-10 ms；存储过程
+//       参数描述一次建立反复用；EventLogger 错误诊断。
+// 验证步骤：
+//   1. 右键 POUs → Add → Existing Item → 选本 .TcPOU；引用 Tc3_Database 与
+//      Tc3_EventLogger
+//   2. 前置：XML 中已有 hDBID=1 的 MS SQL 配置；DB 中已建 SP_GetCustomerPositions
+//      存储过程（接受 1 个 BigInt IN 参 @Customer_ID）
+//   3. 编译 → 登录 → 运行；启动 TF6420 服务
+//   4. 在线写 bConnectReq := TRUE → 观察 nState 走 0→10→20→30→0；
+//      bConnReady = bCmdReady = bSPReady = TRUE
+//   5. 此时 fbSqlCmd / fbSqlSP 已绑好连接 + 参数描述，其他程序可直接调
+//      fbSqlCmd.Execute(ADR(sCmd), SIZEOF(sCmd)) 而不重连
+//   6. PLC 停机前在线写 bDisconnectReq := TRUE → nState 走 0→40→0；
+//      bConnReady = FALSE 业务侧停用 fbSqlCmd / fbSqlSP
+//   7. 故意把 nReqDbId 改成不存在的 ID（如 99）再 Connect → bLastWasError =
+//      TRUE，sLastErrText 显示连接错误
+// =============================================================================
+
+fbSqlDb.eTraceLevel := Tc3_EventLogger.TcEventSeverity.Warning;
+
+// ---- 0. 一次性准备存储过程参数描述 ----
+aSPParams[0].sParameterName     := '@Customer_ID';
+aSPParams[0].eParameterType     := E_SPParameterType.Input;
+aSPParams[0].eParameterDataType := E_ColumnType.BigInt;
+aSPParams[0].nParameterSize     := 8;
+
+// ---- 1. 业务请求路由 ----
+IF nState = 0 THEN
+    IF bConnectReq THEN
+        bConnectReq := FALSE;
+        nState := 10;                       // 建连
+    ELSIF bDisconnectReq THEN
+        bDisconnectReq := FALSE;
+        bConnReady := FALSE;                // 业务侧立即停用
+        bCmdReady := FALSE;
+        bSPReady := FALSE;
+        nState := 40;                       // 断连
+    END_IF
+END_IF
+
+// ---- 2a. state=10：Connect 建常驻连接 ----
+IF nState = 10 THEN
+    bConnectDone := fbSqlDb.Connect(hDBID := nReqDbId);
+    IF bConnectDone THEN
+        IF fbSqlDb.bError THEN
+            ipLastTcMsg := fbSqlDb.ipTcResult;
+            ipLastTcMsg.RequestEventText(1033, ADR(sLastErrText), SIZEOF(sLastErrText));
+            bLastWasError := TRUE;
+            nState := 0;
+        ELSE
+            bLastWasError := FALSE;
+            bConnReady := TRUE;
+            nState := 20;                   // 顺利进入 CreateCmd
+        END_IF
+    END_IF
+END_IF
+
+// ---- 2b. state=20：CreateCmd 绑连接到 fbSqlCmd ----
+IF nState = 20 THEN
+    bCreateCmdDone := fbSqlDb.CreateCmd(pSQLCommand := ADR(fbSqlCmd));
+    IF bCreateCmdDone THEN
+        IF fbSqlDb.bError THEN
+            ipLastTcMsg := fbSqlDb.ipTcResult;
+            ipLastTcMsg.RequestEventText(1033, ADR(sLastErrText), SIZEOF(sLastErrText));
+            bLastWasError := TRUE;
+            nState := 0;
+        ELSE
+            bCmdReady := TRUE;
+            nState := 30;                   // 进入 CreateSP
+        END_IF
+    END_IF
+END_IF
+
+// ---- 2c. state=30：CreateSP 绑连接 + 参数描述到 fbSqlSP ----
+IF nState = 30 THEN
+    bCreateSPDone := fbSqlDb.CreateSP(
+        sProcedureName  := sStoredProcName,
+        pParameterInfo  := ADR(aSPParams),
+        cbParameterInfo := SIZEOF(aSPParams),
+        pSQLProcedure   := ADR(fbSqlSP)
+    );
+    IF bCreateSPDone THEN
+        IF fbSqlDb.bError THEN
+            ipLastTcMsg := fbSqlDb.ipTcResult;
+            ipLastTcMsg.RequestEventText(1033, ADR(sLastErrText), SIZEOF(sLastErrText));
+            bLastWasError := TRUE;
+        ELSE
+            bSPReady := TRUE;
+        END_IF
+        nState := 0;                        // 完成全部初始化
+    END_IF
+END_IF
+
+// ---- 2d. state=40：Disconnect 断连 ----
+IF nState = 40 THEN
+    bDisconnectDone := fbSqlDb.Disconnect();
+    IF bDisconnectDone THEN
+        IF fbSqlDb.bError THEN
+            ipLastTcMsg := fbSqlDb.ipTcResult;
+            ipLastTcMsg.RequestEventText(1033, ADR(sLastErrText), SIZEOF(sLastErrText));
+            bLastWasError := TRUE;
+        ELSE
+            bLastWasError := FALSE;
+        END_IF
+        nState := 0;
+    END_IF
+END_IF
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

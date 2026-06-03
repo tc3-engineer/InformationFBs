@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_PLCDBCmdEvt" Id="{33482abd-a228-5842-9d8e-452f0a425aae}" SpecialFunc="None">
+    <Declaration><![CDATA[TYPE ST_BatchData :
+STRUCT
+    nBatchId        : DINT;
+    sProductType    : STRING(50);
+    dtStart         : DT;
+    dtEnd           : DT;
+    nTotalGood      : DINT;
+    nTotalBad       : DINT;
+END_STRUCT
+END_TYPE
+
+PROGRAM P_Demo_FB_PLCDBCmdEvt
+VAR
+    fbCmd              : FB_PLCDBCmdEvt(sNetID := '', tTimeout := T#15S);
+
+    // ==== 业务输入 ====
+    bInsertBatchReq    : BOOL := FALSE;       // 在线置 TRUE：一批生产结束 INSERT 一行
+    nMesDbId           : UDINT := 1;
+
+    // ==== INSERT 用：当前批数据 ====
+    stBatch            : ST_BatchData := (
+                            nBatchId := 12345,
+                            sProductType := 'PartA',
+                            dtStart := DT#2026-06-03-08:00:00,
+                            dtEnd := DT#2026-06-03-10:30:00,
+                            nTotalGood := 487,
+                            nTotalBad := 13
+                         );
+
+    // ==== 参数描述数组（6 个占位符）====
+    aParaInfo          : ARRAY[0..5] OF ST_ExpParameter;
+
+    // ==== SQL 模板（占位符 {name} 形式）====
+    sInsertSQL         : STRING(1000) := 'INSERT INTO tbl_BatchResult (batchId, productType, startTime, endTime, totalGood, totalBad) VALUES ({nBatchId}, {sProductType}, {dtStart}, {dtEnd}, {nTotalGood}, {nTotalBad})';
+
+    // ==== 状态机 ====
+    nState             : INT := 0;
+    bExecuteDone       : BOOL;
+    bLastWasError      : BOOL;
+
+    // ==== EventLogger 诊断 ====
+    ipLastTcMsg        : Tc3_EventLogger.I_TcMessage;
+    sLastErrText       : STRING(255);
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：MES 客户端要求 PLC 在每批生产结束后 INSERT 一行批次结果到
+//       tbl_BatchResult (6 列：batchId, productType, startTime, endTime,
+//       totalGood, totalBad)。手工拼 SQL 既要处理引号转义又要处理 DateTime
+//       格式还要防注入；用本 FB 的占位符语法：SQL 文本固定，每批只填 stBatch
+//       结构，调一次 Execute 即可。
+// 价值：参数化 SQL = 无注入风险 + 类型转换由 Server 做；同一 SQL 模板反
+//       复执行只改数据；EventLogger 错误诊断快定位问题。
+// 验证步骤：
+//   1. 右键 POUs → Add → Existing Item → 选本 .TcPOU；引用 Tc3_Database 与
+//      Tc3_EventLogger
+//   2. 前置：DB 里有 tbl_BatchResult 表（6 列同结构）；TF6420 服务在跑
+//   3. 编译 → 登录 → 运行
+//   4. 在线写 bInsertBatchReq := TRUE → 观察 nState 走 0→10→0；DB 里
+//      tbl_BatchResult 多 1 行 batchId=12345
+//   5. 修改 stBatch.nBatchId = 12346 再触发 → 再插一行，行数 +1（验证
+//      同一 SQL 模板可反复执行）
+//   6. 故意把 sInsertSQL 改成有语法错的（如缺右括号）→ 触发后 bLastWasError
+//      = TRUE，sLastErrText 显示 "Syntax error"
+//   7. 故意把 aParaInfo[0].sParaName 改成不存在的占位名 → 触发后报
+//      "Placeholder not found" 类错误
+// =============================================================================
+
+fbCmd.eTraceLevel := Tc3_EventLogger.TcEventSeverity.Warning;
+
+// ---- 0. 一次性准备参数描述数组（占位符元数据） ----
+// 顺序必须与 ST_BatchData 结构字段顺序对齐
+aParaInfo[0].sParaName := 'nBatchId';
+aParaInfo[0].eParaType := E_ExpParameterType.Int32;
+aParaInfo[0].nParaSize := SIZEOF(stBatch.nBatchId);
+
+aParaInfo[1].sParaName := 'sProductType';
+aParaInfo[1].eParaType := E_ExpParameterType.STRING_;
+aParaInfo[1].nParaSize := SIZEOF(stBatch.sProductType);
+
+aParaInfo[2].sParaName := 'dtStart';
+aParaInfo[2].eParaType := E_ExpParameterType.DateTime;
+aParaInfo[2].nParaSize := SIZEOF(stBatch.dtStart);
+
+aParaInfo[3].sParaName := 'dtEnd';
+aParaInfo[3].eParaType := E_ExpParameterType.DateTime;
+aParaInfo[3].nParaSize := SIZEOF(stBatch.dtEnd);
+
+aParaInfo[4].sParaName := 'nTotalGood';
+aParaInfo[4].eParaType := E_ExpParameterType.Int32;
+aParaInfo[4].nParaSize := SIZEOF(stBatch.nTotalGood);
+
+aParaInfo[5].sParaName := 'nTotalBad';
+aParaInfo[5].eParaType := E_ExpParameterType.Int32;
+aParaInfo[5].nParaSize := SIZEOF(stBatch.nTotalBad);
+
+// ---- 1. 业务触发 ----
+IF bInsertBatchReq AND nState = 0 THEN
+    bInsertBatchReq := FALSE;
+    nState := 10;
+END_IF
+
+// ---- 2. state=10：Execute 占位符 SQL ----
+IF nState = 10 THEN
+    bExecuteDone := fbCmd.Execute(
+        hDBID       := nMesDbId,
+        pExpression := ADR(sInsertSQL),
+        cbExpression:= SIZEOF(sInsertSQL),
+        pData       := ADR(stBatch),         // 占位符替换源
+        cbData      := SIZEOF(stBatch),
+        pParameter  := ADR(aParaInfo),       // 占位符元数据数组
+        cbParameter := SIZEOF(aParaInfo)
+    );
+    IF bExecuteDone THEN
+        IF fbCmd.bError THEN
+            ipLastTcMsg := fbCmd.ipTcResult;
+            ipLastTcMsg.RequestEventText(1033, ADR(sLastErrText), SIZEOF(sLastErrText));
+            bLastWasError := TRUE;
+        ELSE
+            bLastWasError := FALSE;
+        END_IF
+        nState := 0;
+    END_IF
+END_IF
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

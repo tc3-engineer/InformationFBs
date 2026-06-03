@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_PLCDBRead" Id="{47b3f079-671f-56ae-9904-8ab884276a40}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_PLCDBRead
+VAR
+    // ⚠️ obsolete —— 新项目用 FB_PLCDBReadEvt
+    fbRead             : FB_PLCDBRead(sNetID := '', tTimeout := T#15S);
+
+    bShowHistoryReq    : BOOL := FALSE;
+    nReqDbId           : UDINT := 1;
+    sReqTableName      : STRING(80) := 'tbl_TempHistory';
+    sReqSymbolFilter   : STRING(80) := 'Reactor1_Temp';
+    aHistoryBuffer     : ARRAY[0..9] OF ST_StandardRecord;
+    nTotalMatching     : UDINT;
+
+    nState             : INT := 0;
+    bReadDone          : BOOL;
+    bLastWasError      : BOOL;
+    ipLastTcResult     : Tc3_EventLogger.I_TcResultEvent;
+    sLastErrText       : STRING(255);
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：老 OEM 工程历史曲线模块用本 FB 读 Beckhoff 标准 4 列日志表。新模块
+//       应迁移到 P_Demo_FB_PLCDBReadEvt。本程序演示老风格读取。
+// 价值：保护已部署设备的二进制兼容。
+// 验证步骤：
+//   1. 右键 POUs → Add → Existing Item → 选本 .TcPOU；引用 Tc3_Database 与
+//      Tc3_EventLogger
+//   2. 前置：tbl_TempHistory 有若干 Name='Reactor1_Temp' 的行
+//   3. 编译 → 登录 → 运行
+//   4. 在线写 bShowHistoryReq := TRUE → aHistoryBuffer 填上数据，
+//      nTotalMatching = DB 中匹配总条数
+// =============================================================================
+
+IF bShowHistoryReq AND nState = 0 THEN
+    bShowHistoryReq := FALSE;
+    nState := 10;
+END_IF
+
+IF nState = 10 THEN
+    bReadDone := fbRead.Read(
+        hDBID         := nReqDbId,
+        sTableName    := sReqTableName,
+        sDBSymbolName := sReqSymbolFilter,
+        eOrderBy      := E_OrderColumn.eColumnID,
+        eOrderType    := E_OrderType.eOrder_DESC,
+        nStartIndex   := 0,
+        nRecordCount  := 10,
+        pData         := ADR(aHistoryBuffer),
+        cbData        := SIZEOF(aHistoryBuffer)
+    );
+    IF bReadDone THEN
+        IF fbRead.bError THEN
+            ipLastTcResult := fbRead.ipTcResultEvent;
+            ipLastTcResult.RequestEventText(1033, ADR(sLastErrText), SIZEOF(sLastErrText));
+            bLastWasError := TRUE;
+        ELSE
+            nTotalMatching := fbRead.nRecords;
+        END_IF
+        nState := 0;
+    END_IF
+END_IF
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

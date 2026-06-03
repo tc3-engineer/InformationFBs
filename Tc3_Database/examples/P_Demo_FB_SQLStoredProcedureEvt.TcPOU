@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_SQLStoredProcedureEvt" Id="{744f03af-412f-516c-8ff9-5be41f0ee71a}" SpecialFunc="None">
+    <Declaration><![CDATA[TYPE ST_ShiftParams :
+STRUCT
+    nBatchId       : DINT;                  // IN: 班次 ID
+    dtShiftStart   : DT;                    // IN: 班次起始时间
+    dtShiftEnd     : DT;                    // IN: 班次结束时间
+    nTotalCount    : DINT;                  // OUT: 过程回填的归档行数
+    rQualityIndex  : LREAL;                 // OUT: 过程回填的质量指数
+END_STRUCT
+END_TYPE
+
+PROGRAM P_Demo_FB_SQLStoredProcedureEvt
+VAR
+    fbSqlDb            : FB_SQLDatabaseEvt(sNetID := '', tTimeout := T#30S);
+    fbSP               : FB_SQLStoredProcedureEvt(sNetID := '', tTimeout := T#30S);
+
+    bInitReq           : BOOL := FALSE;        // 启动：Connect + CreateSP 绑过程
+    bCloseShiftReq     : BOOL := FALSE;        // 班次结束触发：调存储过程
+    bReleaseReq        : BOOL := FALSE;        // 停用前释放参数描述
+
+    sStoredProcName    : T_MaxString := 'dbo.SP_CloseShift';
+    aSPParams          : ARRAY[0..4] OF ST_SQLSPParameter;
+
+    // 班次参数 + OUTPUT 回填
+    stShift            : ST_ShiftParams := (
+                            nBatchId := 20260603,
+                            dtShiftStart := DT#2026-06-03-08:00:00,
+                            dtShiftEnd := DT#2026-06-03-16:00:00,
+                            nTotalCount := 0,
+                            rQualityIndex := 0.0
+                         );
+
+    // 状态机
+    nState             : INT := 0;             // 0 idle, 10 connect, 20 createSP, 30 execute, 40 release
+    bConnDone          : BOOL;
+    bCreateSPDone      : BOOL;
+    bExecuteDone       : BOOL;
+    bReleaseDone       : BOOL;
+    bSPReady           : BOOL := FALSE;
+
+    ipLastTcMsg        : Tc3_EventLogger.I_TcMessage;
+    sLastErrText       : STRING(255);
+    bLastWasError      : BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：每班次结束 PLC 调 DBA 写好的 dbo.SP_CloseShift(@batchId IN, @shiftStart
+//       IN, @shiftEnd IN, @totalCount OUT, @qualityIndex OUT) 把当班次数据
+//       归档、计算质量指数、更新统计表，OUTPUT 归档行数 + 质量指数让 HMI 显示。
+// 价值：业务逻辑集中在 DB 层 → DBA 改归档规则不需要 PLC 改代码 + 升级；
+//       参数化无 SQL 注入；OUTPUT 参数直接拿回结果无需再发 SELECT；
+//       EventLogger 错误诊断。
+// 验证步骤：
+//   1. 右键 POUs → Add → Existing Item → 选本 .TcPOU；引用 Tc3_Database 与
+//      Tc3_EventLogger
+//   2. 前置：XML 有 hDBID=1 MS SQL；DB 有 SP_CloseShift 存储过程；用户有
+//      EXECUTE 权限；TF6420 服务在跑
+//   3. 编译 → 登录 → 运行
+//   4. 在线写 bInitReq := TRUE → nState 走 0→10→20→0；bSPReady=TRUE
+//   5. 在线写 bCloseShiftReq := TRUE → nState 走 0→30→0；
+//      stShift.nTotalCount 与 rQualityIndex 被存储过程 OUTPUT 回填
+//   6. 修改 stShift.nBatchId 后再触发 → 新班次的 OUTPUT 值不同
+//   7. 停用前写 bReleaseReq := TRUE → nState 走 0→40→0；bSPReady=FALSE
+//   8. 故意把 sStoredProcName 改成不存在的 → CreateSP 失败 bLastWasError=TRUE
+// =============================================================================
+
+fbSP.eTraceLevel := Tc3_EventLogger.TcEventSeverity.Warning;
+
+// ---- 0. 一次性准备参数描述数组（顺序须与 ST_ShiftParams 字段一致） ----
+aSPParams[0].sParameterName     := '@batchId';
+aSPParams[0].eParameterType     := E_SPParameterType.Input;
+aSPParams[0].eParameterDataType := E_ColumnType.Integer;
+aSPParams[0].nParameterSize     := SIZEOF(stShift.nBatchId);
+
+aSPParams[1].sParameterName     := '@shiftStart';
+aSPParams[1].eParameterType     := E_SPParameterType.Input;
+aSPParams[1].eParameterDataType := E_ColumnType.DateTime;
+aSPParams[1].nParameterSize     := SIZEOF(stShift.dtShiftStart);
+
+aSPParams[2].sParameterName     := '@shiftEnd';
+aSPParams[2].eParameterType     := E_SPParameterType.Input;
+aSPParams[2].eParameterDataType := E_ColumnType.DateTime;
+aSPParams[2].nParameterSize     := SIZEOF(stShift.dtShiftEnd);
+
+aSPParams[3].sParameterName     := '@totalCount';
+aSPParams[3].eParameterType     := E_SPParameterType.Output;          // OUTPUT 参数
+aSPParams[3].eParameterDataType := E_ColumnType.Integer;
+aSPParams[3].nParameterSize     := SIZEOF(stShift.nTotalCount);
+
+aSPParams[4].sParameterName     := '@qualityIndex';
+aSPParams[4].eParameterType     := E_SPParameterType.Output;          // OUTPUT 参数
+aSPParams[4].eParameterDataType := E_ColumnType.Float;
+aSPParams[4].nParameterSize     := SIZEOF(stShift.rQualityIndex);
+
+// ---- 1. 业务路由 ----
+IF nState = 0 THEN
+    IF bInitReq THEN
+        bInitReq := FALSE;
+        nState := 10;
+    ELSIF bCloseShiftReq AND bSPReady THEN
+        bCloseShiftReq := FALSE;
+        nState := 30;
+    ELSIF bReleaseReq AND bSPReady THEN
+        bReleaseReq := FALSE;
+        nState := 40;
+    END_IF
+END_IF
+
+// ---- state=10：Connect ----
+IF nState = 10 THEN
+    bConnDone := fbSqlDb.Connect(hDBID := 1);
+    IF bConnDone THEN
+        IF NOT fbSqlDb.bError THEN
+            nState := 20;
+        ELSE
+            bLastWasError := TRUE;
+            nState := 0;
+        END_IF
+    END_IF
+END_IF
+
+// ---- state=20：CreateSP 把连接 + 参数描述绑到 fbSP ----
+// 注：CreateSP 可能跨多周期，需周期调
+IF nState = 20 THEN
+    bCreateSPDone := fbSqlDb.CreateSP(
+        sProcedureName  := sStoredProcName,
+        pParameterInfo  := ADR(aSPParams),
+        cbParameterInfo := SIZEOF(aSPParams),
+        pSQLProcedure   := ADR(fbSP)
+    );
+    IF bCreateSPDone THEN
+        IF fbSqlDb.bError THEN
+            ipLastTcMsg := fbSqlDb.ipTcResult;
+            ipLastTcMsg.RequestEventText(1033, ADR(sLastErrText), SIZEOF(sLastErrText));
+            bLastWasError := TRUE;
+        ELSE
+            bSPReady := TRUE;
+        END_IF
+        nState := 0;
+    END_IF
+END_IF
+
+// ---- state=30：Execute 调存储过程，IN 参数已填，调用后 OUT 参数回填到 stShift ----
+IF nState = 30 THEN
+    bExecuteDone := fbSP.Execute(
+        pParameterStrc  := ADR(stShift),
+        cbParameterStrc := SIZEOF(stShift)
+    );
+    IF bExecuteDone THEN
+        IF fbSP.bError THEN
+            ipLastTcMsg := fbSP.ipTcResult;
+            ipLastTcMsg.RequestEventText(1033, ADR(sLastErrText), SIZEOF(sLastErrText));
+            bLastWasError := TRUE;
+        ELSE
+            bLastWasError := FALSE;
+            // 此时 stShift.nTotalCount 与 .rQualityIndex 已被 Server 回填
+            // HMI 直接 monitor 这两个字段即可显示
+        END_IF
+        nState := 0;
+    END_IF
+END_IF
+
+// ---- state=40：Release 释放参数描述（停用本 FB 前必做） ----
+IF nState = 40 THEN
+    bReleaseDone := fbSP.Release();
+    IF bReleaseDone THEN
+        IF NOT fbSP.bError THEN
+            bSPReady := FALSE;
+        END_IF
+        nState := 0;
+    END_IF
+END_IF
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

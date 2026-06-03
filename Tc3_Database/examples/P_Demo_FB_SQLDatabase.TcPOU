@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_SQLDatabase" Id="{d3a097ed-c521-550e-a597-950a19157d77}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_SQLDatabase
+VAR
+    // ⚠️ obsolete —— 新项目用 FB_SQLDatabaseEvt
+    fbSqlDb            : FB_SQLDatabase(sNetID := '', tTimeout := T#30S);
+    fbSqlCmd           : FB_SQLCommand(sNetID := '', tTimeout := T#15S);    // obsolete 配套
+    fbSqlSP            : FB_SQLStoredProcedure(sNetID := '', tTimeout := T#15S);
+
+    bInitReq           : BOOL := FALSE;
+    nReqDbId           : UDINT := 1;
+    aSPParams          : ARRAY[0..0] OF ST_SQLSPParameter;
+    sStoredProcName    : T_MaxString := 'dbo.SP_GetCustomerPositions';
+
+    nState             : INT := 0;
+    bConnDone          : BOOL;
+    bCmdInitDone       : BOOL;
+    bSPInitDone        : BOOL;
+    bConnReady         : BOOL := FALSE;
+    bCmdReady          : BOOL := FALSE;
+    bSPReady           : BOOL := FALSE;
+
+    ipLastTcResult     : Tc3_EventLogger.I_TcResultEvent;
+    sLastErrText       : STRING(255);
+    bLastWasError      : BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：老 OEM SQL 长连接模块。本程序展示老风格调用：用 obsolete FB_SQLDatabase
+//       Connect 建连接，CreateCmd / CreateSP 绑给 obsolete 配套 FB_SQLCommand
+//       与 FB_SQLStoredProcedure。新项目改用 P_Demo_FB_SQLDatabaseEvt。
+// 价值：保护已部署设备的二进制兼容。
+// 验证步骤：
+//   1. 右键 POUs → Add → Existing Item → 选本 .TcPOU；引用 Tc3_Database 与
+//      Tc3_EventLogger
+//   2. 前置：XML 有 hDBID=1 MS SQL；DB 有 SP_GetCustomerPositions（@Customer_ID BIGINT IN）
+//   3. 编译 → 登录 → 运行
+//   4. 在线写 bInitReq := TRUE → nState 走 0→10→20→30→0；bConnReady=bCmdReady=bSPReady=TRUE
+// =============================================================================
+
+aSPParams[0].sParameterName     := '@Customer_ID';
+aSPParams[0].eParameterType     := E_SPParameterType.Input;
+aSPParams[0].eParameterDataType := E_ColumnType.BigInt;
+aSPParams[0].nParameterSize     := 8;
+
+IF bInitReq AND nState = 0 THEN
+    bInitReq := FALSE;
+    nState := 10;
+END_IF
+
+IF nState = 10 THEN
+    bConnDone := fbSqlDb.Connect(hDBID := nReqDbId);
+    IF bConnDone THEN
+        IF fbSqlDb.bError THEN
+            ipLastTcResult := fbSqlDb.ipTcResultEvent;
+            ipLastTcResult.RequestEventText(1033, ADR(sLastErrText), SIZEOF(sLastErrText));
+            bLastWasError := TRUE;
+            nState := 0;
+        ELSE
+            bConnReady := TRUE;
+            nState := 20;
+        END_IF
+    END_IF
+END_IF
+
+IF nState = 20 THEN
+    bCmdInitDone := fbSqlDb.CreateCmd(pSQLCommand := ADR(fbSqlCmd));   // 绑 obsolete FB_SQLCommand
+    IF bCmdInitDone THEN
+        IF NOT fbSqlDb.bError THEN
+            bCmdReady := TRUE;
+            nState := 30;
+        ELSE
+            nState := 0;
+        END_IF
+    END_IF
+END_IF
+
+IF nState = 30 THEN
+    bSPInitDone := fbSqlDb.CreateSP(
+        sProcedureName  := sStoredProcName,
+        pParameterInfo  := ADR(aSPParams),
+        cbParameterInfo := SIZEOF(aSPParams),
+        pSQLProcedure   := ADR(fbSqlSP)
+    );
+    IF bSPInitDone THEN
+        IF NOT fbSqlDb.bError THEN
+            bSPReady := TRUE;
+        END_IF
+        nState := 0;
+    END_IF
+END_IF
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

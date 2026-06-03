@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_PLCDBCreate" Id="{f6832c28-7565-5133-ac2b-2fb29f7ba1ff}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_PLCDBCreate
+VAR
+    // ⚠️ obsolete —— 新项目用 FB_PLCDBCreateEvt
+    fbCreate          : FB_PLCDBCreate(sNetID := '', tTimeout := T#10S);
+
+    bCreateRecipeDbReq : BOOL := FALSE;
+    sRecipeDbPath     : STRING(80) := 'D:\\OldRecipes.sdf';
+    stSqlCompactCfg   : T_DBConfig_MsCompactSQL;
+    hRecipeDbId       : UDINT;
+    aRecipeColumns    : ARRAY[0..2] OF ST_ColumnInfo;
+
+    nState            : INT := 0;
+    bDatabaseDone     : BOOL;
+    bTableDone        : BOOL;
+    bLastWasError     : BOOL;
+    ipLastTcResult    : Tc3_EventLogger.I_TcResultEvent;
+    sLastErrText      : STRING(255);
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：老 OEM 注塑机 2018 年代码用本 FB 装机自动建 SQL Compact 配方库 + 表。
+//       本程序展示老风格调用，输出走 ipTcResultEvent : I_TcResultEvent。新
+//       项目应改用 P_Demo_FB_PLCDBCreateEvt（接口 I_TcMessage）。
+// 价值：保护已部署设备的二进制兼容。
+// 验证步骤：
+//   1. 右键 POUs → Add → Existing Item → 选本 .TcPOU；引用 Tc3_Database 与
+//      Tc3_EventLogger；TF6420 服务运行
+//   2. 编译 → 登录 → 运行
+//   3. 在线写 bCreateRecipeDbReq := TRUE → 观察 nState 走 0→10→20→0；
+//      磁盘出现 D:\OldRecipes.sdf，hRecipeDbId 得到值，DB 内 tbl_OldRecipes 建好
+// =============================================================================
+
+IF bCreateRecipeDbReq AND nState = 0 THEN
+    bCreateRecipeDbReq := FALSE;
+    stSqlCompactCfg.sServer := sRecipeDbPath;
+    stSqlCompactCfg.bAuthentification := FALSE;
+
+    aRecipeColumns[0].sName := 'nID';
+    aRecipeColumns[0].eType := E_ColumnType.BigInt;
+    aRecipeColumns[0].nLength := 8;
+    aRecipeColumns[0].sProperty := 'IDENTITY(1,1) PRIMARY KEY';
+    aRecipeColumns[1].sName := 'sName';
+    aRecipeColumns[1].eType := E_ColumnType.NVarChar;
+    aRecipeColumns[1].nLength := 64;
+    aRecipeColumns[2].sName := 'rValue';
+    aRecipeColumns[2].eType := E_ColumnType.Real;
+    aRecipeColumns[2].nLength := 4;
+
+    nState := 10;
+END_IF
+
+IF nState = 10 THEN
+    bDatabaseDone := fbCreate.Database(
+        pDatabaseConfig  := ADR(stSqlCompactCfg),
+        cbDatabaseConfig := SIZEOF(stSqlCompactCfg),
+        bCreateXMLConfig := TRUE,
+        pDBID            := ADR(hRecipeDbId)
+    );
+    IF bDatabaseDone THEN
+        IF fbCreate.bError THEN
+            ipLastTcResult := fbCreate.ipTcResultEvent;
+            ipLastTcResult.RequestEventText(1033, ADR(sLastErrText), SIZEOF(sLastErrText));
+            bLastWasError := TRUE;
+            nState := 0;
+        ELSE
+            nState := 20;
+        END_IF
+    END_IF
+END_IF
+
+IF nState = 20 THEN
+    bTableDone := fbCreate.Table(
+        hDBID       := hRecipeDbId,
+        sTableName  := 'tbl_OldRecipes',
+        pTableCfg   := ADR(aRecipeColumns),
+        cbTableCfg  := SIZEOF(aRecipeColumns)
+    );
+    IF bTableDone THEN
+        IF fbCreate.bError THEN
+            ipLastTcResult := fbCreate.ipTcResultEvent;
+            ipLastTcResult.RequestEventText(1033, ADR(sLastErrText), SIZEOF(sLastErrText));
+            bLastWasError := TRUE;
+        END_IF
+        nState := 0;
+    END_IF
+END_IF
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

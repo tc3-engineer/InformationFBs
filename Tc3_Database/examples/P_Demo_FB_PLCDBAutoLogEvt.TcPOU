@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_PLCDBAutoLogEvt" Id="{c7b42c2b-bf41-5ce0-9f40-6d00708b8aa1}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_PLCDBAutoLogEvt
+VAR
+    fbAutoLog          : FB_PLCDBAutoLogEvt(sNetID := '', tTimeout := T#5S);
+
+    // ==== 业务输入：上层 / HMI 触发 ====
+    bStartAllReq       : BOOL := FALSE;        // 在线置 TRUE 启动所有 AutoLog 组（开机一次）
+    bStopAllReq        : BOOL := FALSE;        // 在线置 TRUE 停所有
+    bEmergencySnapReq  : BOOL := FALSE;        // 在线置 TRUE：急停事件 RunOnce(bAll := TRUE) 强制一次全量快照
+    nGroupIdRunOnce    : UDINT := 1;           // 只跑某组时填这个 ID
+
+    // ==== Status 监控（HMI 1Hz 刷新即可） ====
+    bStatusPollReq     : BOOL := TRUE;         // 上线保持 TRUE，持续轮询状态
+    aAutoLogStatus     : ARRAY[1..MAX_CONFIGURATIONS] OF ST_AutoLogGrpStatus;
+    bAnyGroupHasError  : BOOL;                 // Server 聚合：任一组报错 → TRUE
+    bStatusDone        : BOOL;
+    bStartDone         : BOOL;
+    bStopDone          : BOOL;
+    bRunOnceDone       : BOOL;
+
+    // ==== Tc3 EventLogger 错误诊断 ====
+    ipLastTcMsg        : Tc3_EventLogger.I_TcMessage;
+    sLastErrText       : STRING(255);
+    bLastWasError      : BOOL;
+
+    // ==== 内部状态机 ====
+    nState             : INT := 0;             // 0=idle, 10=starting, 20=stopping, 30=runonce_all, 40=runonce_one
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：能源监控柜内 96 个电表通道每 5 秒一次写 InfluxDB。
+//       开机后用 Start 让 Server 后台按周期采集；HMI 1Hz 周期调 Status 显示
+//       每组运行情况；急停事件触发时 RunOnce(bAll := TRUE) 强制把所有通道
+//       立刻多记一帧快照便于事后回溯。
+// 价值：Server 端批量采集 + 入库的开销几乎不占 PLC 主循环；EventLogger 错
+//       误流式输出可直接接 HMI 事件列表；Status 与 Start/Stop 独立 busy，可
+//       并行使用而不互相阻塞。
+// 验证步骤：
+//   1. 右键 POUs → Add → Existing Item → 选本 .TcPOU；引用 Tc3_Database
+//      与 Tc3_EventLogger
+//   2. 前置：在 TwinCAT Database Server 配置器里至少配 1 个 AutoLog 组
+//      （Configure mode）；或先跑 FB_ConfigTcDBSrvEvt 动态创建
+//   3. 编译 → 登录 → 运行；启动 TF6420 Database Server 服务
+//   4. 在线写 bStartAllReq := TRUE → 观察 nState 走 0→10→0；
+//      bStartDone 短暂 TRUE，bLastWasError 应为 FALSE
+//   5. 观察 aAutoLogStatus[1..N] 在 1Hz 节奏下更新（看 nRecordsSinceStart 增长）
+//   6. 写 bEmergencySnapReq := TRUE → nState 走 0→30→0；之后查 DB 多一帧记录
+//   7. 写 bStopAllReq := TRUE → nState 走 0→20→0；nRecordsSinceStart 停止增长
+// =============================================================================
+
+// ---- 0. 事件分级 ----
+// 开发期可改为 Verbose 看全量日志；生产期 Warning 起即可
+fbAutoLog.eTraceLevel := Tc3_EventLogger.TcEventSeverity.Warning;
+
+// ---- 1. 业务请求路由到状态机 ----
+IF nState = 0 THEN
+    IF bStartAllReq THEN
+        bStartAllReq := FALSE;
+        nState := 10;
+    ELSIF bStopAllReq THEN
+        bStopAllReq := FALSE;
+        nState := 20;
+    ELSIF bEmergencySnapReq THEN
+        bEmergencySnapReq := FALSE;
+        nState := 30;                       // RunOnce(bAll := TRUE)
+    END_IF
+END_IF
+
+// ---- 2a. state=10：启动所有 AutoLog 组 ----
+IF nState = 10 THEN
+    bStartDone := fbAutoLog.Start();
+    IF bStartDone THEN
+        IF fbAutoLog.bError THEN
+            ipLastTcMsg := fbAutoLog.ipTcResult;
+            ipLastTcMsg.RequestEventText(1033, ADR(sLastErrText), SIZEOF(sLastErrText));
+            bLastWasError := TRUE;
+        ELSE
+            bLastWasError := FALSE;
+        END_IF
+        nState := 0;
+    END_IF
+END_IF
+
+// ---- 2b. state=20：停所有 ----
+IF nState = 20 THEN
+    bStopDone := fbAutoLog.Stop();
+    IF bStopDone THEN
+        IF fbAutoLog.bError THEN
+            ipLastTcMsg := fbAutoLog.ipTcResult;
+            ipLastTcMsg.RequestEventText(1033, ADR(sLastErrText), SIZEOF(sLastErrText));
+            bLastWasError := TRUE;
+        ELSE
+            bLastWasError := FALSE;
+        END_IF
+        nState := 0;
+    END_IF
+END_IF
+
+// ---- 2c. state=30：急停 → 所有组强制再采一帧 ----
+IF nState = 30 THEN
+    bRunOnceDone := fbAutoLog.RunOnce(hAutoLogGrpID := 0, bAll := TRUE);
+    IF bRunOnceDone THEN
+        IF fbAutoLog.bError THEN
+            ipLastTcMsg := fbAutoLog.ipTcResult;
+            ipLastTcMsg.RequestEventText(1033, ADR(sLastErrText), SIZEOF(sLastErrText));
+            bLastWasError := TRUE;
+        ELSE
+            bLastWasError := FALSE;
+        END_IF
+        nState := 0;
+    END_IF
+END_IF
+
+// ---- 3. Status 监控 —— 独立 busy 位，可与上面并行调用 ----
+// PDF 关键设计点：Status 有 bBusy_Status，与 bBusy 互不影响
+IF bStatusPollReq THEN
+    bStatusDone := fbAutoLog.Status(
+        tCheckCycle        := T#1S,                     // Server 每 1 秒更新一次状态数组
+        pError             := ADR(bAnyGroupHasError),
+        pAutoLogGrpStatus  := ADR(aAutoLogStatus),
+        cbAutoLogGrpStatus := SIZEOF(aAutoLogStatus)
+    );
+    // bStatusDone 是「这一次调用完成」的标志；Status 通常每周期立即完成
+END_IF
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>
