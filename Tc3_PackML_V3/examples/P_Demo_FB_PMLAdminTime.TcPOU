@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_PMLAdminTime" Id="{21460e4a-e9e9-5346-9b6c-16b7a48afc8c}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_PMLAdminTime
+VAR
+    fbAdminTime      : FB_PMLAdminTime;
+    stPackTagAdmin   : ST_PMLa;
+    stPackTagStatus  : ST_PMLs;
+    stAdminOpt       : ST_PMLAdminTimeOptions;  // V3 实际类型（PDF §5.1.1）
+
+    // 模拟当前 Mode/State 写入
+    bSimulateMode    : BOOL := FALSE;
+    bBtnReset        : BOOL := FALSE;
+    rtrigReset       : R_TRIG;
+    bResetOk         : BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc3_PackML_V3.FB_PMLAdminTime 演示程序
+// ============================================================
+// 场景：一台 24/7 灌装线计算 OEE。本 FB 周期调用，自动累计"Production
+//       模式下 Execute 态停留时间 / Stopped 态停留时间"等矩阵。MES 通过
+//       OPC UA 拉 CumulativeTimes[0].ModeStateTimes[1].State[6] 作为
+//       OEE 的 Run Time。
+// 价值：OEE 时间分配数据由本 FB 标准化提供——应用层不必写"状态变化
+//       时间戳 + 停留时长累计"。V3 比 V2 多了 M_ResetCumulativeTime
+//       方法可指定下标复位，更灵活。
+// 验证：登录后操作：
+//       1. 默认 stPackTagStatus.UnitModeCurrent = 0, StateCurrent = 0
+//          → 时间全累计到 ModeStateTimes[0].State[0]。
+//       2. 写 bSimulateMode := TRUE → 程序把 UnitModeCurrent 设 1
+//          (Production), StateCurrent 设 6 (Execute)。
+//       3. 等 5-10 秒 → 观察 PackTagAdmin.CumulativeTimes[0].ModeStateTimes[1].State[6]
+//          在增长（单位 PDF 未明示，可能是 ms 或 s）。
+//       4. 观察 PackTagAdmin.PlcDateTime.Year/Month/... 在更新。
+//       5. 写 bBtnReset := TRUE → 调 M_ResetCumulativeTime(idx=0)
+//          → 观察 CumulativeTimes[0] 全归零。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_PackML_V3（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方"验证"指引在线写值观察
+// ============================================================
+
+(* 模拟状态机写当前 Mode/State——真实项目应由 FB_PMLStateMachine 写 *)
+IF bSimulateMode THEN
+    stPackTagStatus.UnitModeCurrent := 1;    // Production
+    stPackTagStatus.StateCurrent    := 6;    // Execute (按 E_PMLState 枚举)
+ELSE
+    stPackTagStatus.UnitModeCurrent := 0;
+    stPackTagStatus.StateCurrent    := 0;
+END_IF
+
+(* 主调用——每周期 *)
+fbAdminTime(
+    stAdmin   := stPackTagAdmin,
+    stStatus  := stPackTagStatus,
+    stOptions := stAdminOpt
+);
+
+(* V3 用方法复位累计时间（V2 是 bReset 输入）；上升沿调用一次 *)
+rtrigReset(CLK := bBtnReset);
+IF rtrigReset.Q THEN
+    bResetOk := fbAdminTime.M_ResetCumulativeTime(CumulativeTimesIdx := 0);
+END_IF
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

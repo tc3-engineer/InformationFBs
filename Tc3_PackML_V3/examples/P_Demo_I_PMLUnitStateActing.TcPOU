@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_I_PMLUnitStateActing" Id="{eeeb9958-7fbe-594f-95b4-47a5a2e36a1e}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_I_PMLUnitStateActing
+VAR
+    ipActor          : I_PMLUnitStateActing;
+    bStateComplete   : BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc3_PackML_V3.I_PMLUnitStateActing 演示程序
+// ============================================================
+// 场景：本示例演示如何通过 INTERFACE 引用调用应用 FB 实现的过渡态
+//       方法。真实工程把 ipActor 指向某个 IMPLEMENTS I_PMLUnitStateActing
+//       的应用 FB（如 FB_LabelActor），状态机检测到 Starting 态时调
+//       ipActor.M_Starting()，FB 内部执行预热/上料/启动序列；完成时
+//       置 M_StateComplete 让状态机切到 Execute。
+// 价值：接口让应用层"做事"代码与状态机标准化逻辑解耦——状态机库
+//       不需要知道应用怎么启动，应用 FB 只关心动作本身。
+// 验证：本示例只演示接口调用语法，不能直接编译运行（ipActor 需要
+//       先指向具体实现 FB）。实际项目应：
+//       1. 创建一个新 FB（如 FB_LabelActor）；
+//       2. 在该 FB 头部 IMPLEMENTS I_PMLUnitStateActing；
+//       3. 实现全部 12 个方法（M_Aborting, M_Clearing, ... M_Unsuspending）；
+//       4. 在 P_MAIN 中 ipActor := fbLabelActor; 然后调 ipActor.M_Starting();
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_PackML_V3（References → Add library）
+//   3. 编译可能因 ipActor 未指向实例而报错——这是接口示例的正常情况；
+//      把本程序作为接口契约的参考。
+// ============================================================
+
+(* 模拟调用接口方法——实际项目中 ipActor 由具体 FB 实例赋值 *)
+IF ipActor <> 0 THEN
+    bStateComplete := ipActor.M_StateComplete();
+END_IF
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

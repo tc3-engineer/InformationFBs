@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_M_SetStopReason" Id="{2cd34698-c8f6-5da8-8c71-22e3d89b8876}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_M_SetStopReason
+VAR
+    fbAdminAlarm     : FB_PMLAdminAlarm;
+    fbAdminTime      : FB_PMLAdminTime;
+    stPackTagAdmin   : ST_PMLa;
+    stPackTagStatus  : ST_PMLs;
+    stAdminOpt       : ST_PMLAdminTimeOptions;
+
+    // 三种典型停机原因
+    stShiftEndReason : ST_PMLEvent := (Id := 1, Message := 'Shift change',  Category := 5);
+    stMaintReason    : ST_PMLEvent := (Id := 2, Message := 'Maintenance',    Category := 3);
+    stFaultReason    : ST_PMLEvent := (Id := 3, Message := 'Critical fault', Category := 1);
+
+    // HMI 按钮
+    bBtnShiftEnd     : BOOL := FALSE;
+    bBtnMaintenance  : BOOL := FALSE;
+    bBtnFault        : BOOL := FALSE;
+
+    rtrigShiftEnd    : R_TRIG;
+    rtrigMaintenance : R_TRIG;
+    rtrigFault       : R_TRIG;
+
+    bSetOk           : BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc3_PackML_V3.FB_PMLAdminAlarm.M_SetStopReason 演示程序
+// ============================================================
+// 场景：班长操作 HMI 选择"换班停机/维护停机/故障停机"按钮——本方法
+//       写入 StopReason，MES 实时拿到当前停机原因计算 OEE 损失分类。
+// 价值：标准化 OEE 停机原因数据采集——PackML PackTags.Admin.StopReason
+//       是行业标准字段，MES/SCADA 通用消费。V3 改 StopReason 为单值
+//       （V2 是数组），写入直接覆盖，符合"当前停机原因只有一个"语义。
+// 验证：登录后操作：
+//       1. 写 bBtnShiftEnd := TRUE → 观察 stPackTagAdmin.StopReason.Id=1,
+//          Trigger=TRUE, DateTime 已填, Message='Shift change'。
+//       2. 写 bBtnMaintenance := TRUE → 观察 StopReason.Id 变 2,
+//          Message 变 'Maintenance'（覆盖了旧的换班原因）。
+//       3. 写 bBtnFault := TRUE → 观察 StopReason.Id=3, Category=1。
+//       说明：V3 单值语义——新写入直接覆盖。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_PackML_V3（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方"验证"指引在线写值观察
+// ============================================================
+
+fbAdminTime(stAdmin := stPackTagAdmin, stStatus := stPackTagStatus, stOptions := stAdminOpt);
+
+rtrigShiftEnd(CLK := bBtnShiftEnd);
+rtrigMaintenance(CLK := bBtnMaintenance);
+rtrigFault(CLK := bBtnFault);
+
+IF rtrigShiftEnd.Q THEN
+    bSetOk := fbAdminAlarm.M_SetStopReason(stAdmin := stPackTagAdmin, stStopReason := stShiftEndReason);
+END_IF
+IF rtrigMaintenance.Q THEN
+    bSetOk := fbAdminAlarm.M_SetStopReason(stAdmin := stPackTagAdmin, stStopReason := stMaintReason);
+END_IF
+IF rtrigFault.Q THEN
+    bSetOk := fbAdminAlarm.M_SetStopReason(stAdmin := stPackTagAdmin, stStopReason := stFaultReason);
+END_IF
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

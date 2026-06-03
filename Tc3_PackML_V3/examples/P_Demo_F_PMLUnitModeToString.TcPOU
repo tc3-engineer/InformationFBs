@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_F_PMLUnitModeToString" Id="{72558748-6888-5fc6-b4cb-9729d5de3054}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_F_PMLUnitModeToString
+VAR
+    eCurrentMode    : DINT := 1;     // 演示用：当前 UnitMode（1 = Production）
+    sModeName       : STRING;        // 转换后的可读名称（在线观察）
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc3_PackML_V3.F_PMLUnitModeToString 演示程序
+// ============================================================
+// 场景：HMI 顶端"当前模式"标签实时显示——PackTags.Status.UnitModeCurrent
+//       是数字（1），操作员看不出是 Production / Maintenance / Manual /
+//       自定义模式。本函数把数字翻译成模式名。
+// 价值：基础模式 + 自定义模式统一映射；新增模式只需调用一次
+//       FB_PMLUnitModeConfig 注册，反查自动同步。避免手写 case 表。
+// 验证：登录后改 eCurrentMode 为 1/2/3，观察 sModeName 字符串变化
+//       （应为 'Production' / 'Maintenance' / 'Manual'）。注意：4-31 的
+//       自定义模式需要先用 FB_PMLUnitModeConfig 注册才能反查。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_PackML_V3（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方"验证"指引在线写值观察
+// ============================================================
+
+(* 纯函数调用——单行完成 *)
+sModeName := F_PMLUnitModeToString(eMode := eCurrentMode);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

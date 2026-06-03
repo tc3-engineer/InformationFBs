@@ -1206,3 +1206,35 @@
 2026-06-03T00:00:00Z | Tc2_Hydraulic  | pressure_force_sensing                  | MC_AxRtReadForceSingle_BkPlcMc           | verified | PDF + InfoSys cross-verified
 2026-06-03T00:00:00Z | Tc2_Hydraulic  | pressure_force_sensing                  | MC_AxRtReadPressureDiff_BkPlcMc          | verified | PDF + InfoSys cross-verified
 2026-06-03T00:00:00Z | Tc2_Hydraulic  | pressure_force_sensing                  | MC_AxRtReadPressureSingle_BkPlcMc        | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_PackML_V3  | conversion                              | DCTIME64_TO_PMLTime                      | verified | PDF single-source (not-on-infosys, V3 new)
+2026-06-03T00:00:00Z | Tc3_PackML_V3  | conversion                              | DT_TO_PMLTime                            | verified | PDF single-source (not-on-infosys, V3 new)
+2026-06-03T00:00:00Z | Tc3_PackML_V3  | conversion                              | F_PMLStateCommandToString                | verified | PDF single-source (not-on-infosys, V3 new)
+2026-06-03T00:00:00Z | Tc3_PackML_V3  | conversion                              | F_PMLUnitModeToString                    | verified | PDF single-source (not-on-infosys, V3 new)
+2026-06-03T00:00:00Z | Tc3_PackML_V3  | conversion                              | LTIME_TO_PMLTime                         | verified | PDF single-source (not-on-infosys, V3 new)
+2026-06-03T00:00:00Z | Tc3_PackML_V3  | conversion                              | TIMESTRUCT_TO_PMLTime                    | verified | PDF single-source (not-on-infosys, V3 new)
+2026-06-03T00:00:00Z | Tc3_PackML_V3  | conversion                              | TIME_TO_PMLTime                          | verified | PDF single-source (not-on-infosys, V3 new)
+2026-06-03T00:00:00Z | Tc3_PackML_V3  | conversion                              | ULINT_TO_PMLTime                         | verified | PDF single-source (not-on-infosys, V3 new)
+2026-06-03T00:00:00Z | Tc3_PackML_V3  | general                                 | FB_PMLAdminAlarm                         | verified | PDF single-source (not-on-infosys, V3 new)
+2026-06-03T00:00:00Z | Tc3_PackML_V3  | general                                 | FB_PMLAdminTime                          | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_PackML_V3  | general                                 | M_AcknowledgeAlarm                       | verified | PDF single-source (not-on-infosys, V3 new)
+2026-06-03T00:00:00Z | Tc3_PackML_V3  | general                                 | M_AcknowledgeAllAlarms                   | verified | PDF single-source (not-on-infosys, V3 new)
+2026-06-03T00:00:00Z | Tc3_PackML_V3  | general                                 | M_AcknowledgeAllWarning                  | verified | PDF single-source (not-on-infosys, V3 new)
+2026-06-03T00:00:00Z | Tc3_PackML_V3  | general                                 | M_AcknowledgeStopReason                  | verified | PDF single-source (not-on-infosys, V3 new)
+2026-06-03T00:00:00Z | Tc3_PackML_V3  | general                                 | M_AcknowledgeWarning                     | verified | PDF single-source (not-on-infosys, V3 new)
+2026-06-03T00:00:00Z | Tc3_PackML_V3  | general                                 | M_ClearAlarm                             | verified | PDF single-source (not-on-infosys, V3 new)
+2026-06-03T00:00:00Z | Tc3_PackML_V3  | general                                 | M_ClearAllAlarms                         | verified | PDF single-source (not-on-infosys, V3 new)
+2026-06-03T00:00:00Z | Tc3_PackML_V3  | general                                 | M_ClearAllWarning                        | verified | PDF single-source (not-on-infosys, V3 new)
+2026-06-03T00:00:00Z | Tc3_PackML_V3  | general                                 | M_ClearStopReason                        | verified | PDF single-source (not-on-infosys, V3 new)
+2026-06-03T00:00:00Z | Tc3_PackML_V3  | general                                 | M_ClearWarning                           | verified | PDF single-source (not-on-infosys, V3 new)
+2026-06-03T00:00:00Z | Tc3_PackML_V3  | general                                 | M_GetAlarmCategory                       | verified | PDF single-source (not-on-infosys, V3 new)
+2026-06-03T00:00:00Z | Tc3_PackML_V3  | general                                 | M_HasAlarm                               | verified | PDF single-source (not-on-infosys, V3 new)
+2026-06-03T00:00:00Z | Tc3_PackML_V3  | general                                 | M_HasStopReason                          | verified | PDF single-source (not-on-infosys, V3 new)
+2026-06-03T00:00:00Z | Tc3_PackML_V3  | general                                 | M_HasWarning                             | verified | PDF single-source (not-on-infosys, V3 new)
+2026-06-03T00:00:00Z | Tc3_PackML_V3  | general                                 | M_SetAlarm                               | verified | PDF single-source (not-on-infosys, V3 new)
+2026-06-03T00:00:00Z | Tc3_PackML_V3  | general                                 | M_SetStopReason                          | verified | PDF single-source (not-on-infosys, V3 new)
+2026-06-03T00:00:00Z | Tc3_PackML_V3  | general                                 | M_SetWarning                             | verified | PDF single-source (not-on-infosys, V3 new)
+2026-06-03T00:00:00Z | Tc3_PackML_V3  | interfaces                              | I_PMLUnitStateActing                     | verified | PDF single-source (not-on-infosys, V3 new)
+2026-06-03T00:00:00Z | Tc3_PackML_V3  | interfaces                              | I_PMLUnitStateWaiting                    | verified | PDF single-source (not-on-infosys, V3 new)
+2026-06-03T00:00:00Z | Tc3_PackML_V3  | packaging_machine_state                 | FB_PMLStateMachine                       | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_PackML_V3  | packaging_machine_state                 | FB_PMLUnitModeConfig                     | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_PackML_V3  | packaging_machine_state                 | FB_PMLUnitModeManager                    | verified | PDF + InfoSys cross-verified

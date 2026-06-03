@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_M_ClearAllAlarms" Id="{f657174a-ddd1-52cc-ae78-cb1ae620d459}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_M_ClearAllAlarms
+VAR
+    fbAdminAlarm     : FB_PMLAdminAlarm;
+    fbAdminTime      : FB_PMLAdminTime;
+    stPackTagAdmin   : ST_PMLa;
+    stPackTagStatus  : ST_PMLs;
+    stAdminOpt       : ST_PMLAdminTimeOptions;
+
+    stAlarm1         : ST_PMLEvent := (Id := 1001, Message := 'High temp', Category := 1);
+    stAlarm2         : ST_PMLEvent := (Id := 1002, Message := 'Low pressure', Category := 2);
+
+    bBtnFireAll      : BOOL := FALSE;
+    bBtnAckAll       : BOOL := FALSE;
+    bBtnClearAll     : BOOL := FALSE;
+
+    rtrigFire        : R_TRIG;
+    rtrigAck         : R_TRIG;
+    rtrigClear       : R_TRIG;
+
+    bClearOk         : BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc3_PackML_V3.FB_PMLAdminAlarm.M_ClearAllAlarms 演示程序
+// ============================================================
+// 场景：操作员处理完多条故障后按 HMI"全部清除"按钮，所有已 Ack 的
+//       alarm 一次搬入 AlarmHistory，主显示区清空。
+// 价值：V3 新增的批量方法让 HMI 一键操作免去 for 循环。配合
+//       M_AcknowledgeAllAlarms 形成标准的"全确认→全清除"两键流程。
+// 验证：登录后操作：
+//       1. 写 bBtnFireAll := TRUE → Alarm[0..1] 写入两条 alarm。
+//       2. 写 bBtnAckAll := TRUE → 两条 Trigger=FALSE, AckDateTime 已填。
+//       3. 写 bBtnClearAll := TRUE → Alarm[0..1] 清空且被搬入
+//          AlarmHistory[0..1]（因为已 Ack）。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_PackML_V3（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方"验证"指引在线写值观察
+// ============================================================
+
+fbAdminTime(stAdmin := stPackTagAdmin, stStatus := stPackTagStatus, stOptions := stAdminOpt);
+
+rtrigFire(CLK := bBtnFireAll);
+rtrigAck(CLK := bBtnAckAll);
+rtrigClear(CLK := bBtnClearAll);
+
+IF rtrigFire.Q THEN
+    fbAdminAlarm.M_SetAlarm(stAdmin := stPackTagAdmin, stAlarm := stAlarm1);
+    fbAdminAlarm.M_SetAlarm(stAdmin := stPackTagAdmin, stAlarm := stAlarm2);
+END_IF
+IF rtrigAck.Q THEN
+    fbAdminAlarm.M_AcknowledgeAllAlarms(stAdmin := stPackTagAdmin);
+END_IF
+IF rtrigClear.Q THEN
+    bClearOk := fbAdminAlarm.M_ClearAllAlarms(stAdmin := stPackTagAdmin);
+END_IF
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

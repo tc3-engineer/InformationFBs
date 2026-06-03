@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_M_SetAlarm" Id="{44e472c9-698c-5aa6-8b69-367ca844ad83}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_M_SetAlarm
+VAR
+    fbAdminAlarm         : FB_PMLAdminAlarm;
+    fbAdminTime          : FB_PMLAdminTime;
+    stPackTagAdmin       : ST_PMLa;
+    stPackTagStatus      : ST_PMLs;
+    stAdminOpt           : ST_PMLAdminTimeOptions;
+
+    // 模拟温度传感器
+    rOutletTempC         : REAL := 60.0;       // 在线写值模拟温度变化
+    R_TRIG_TempHigh      : R_TRIG;             // 边沿检测
+    bTempHighCondition   : BOOL;
+
+    // alarm 模板
+    stHighTempAlarm      : ST_PMLEvent := (Id := 1001, Value := 90, Message := 'Outlet temperature exceeded 85C', Category := 1);
+
+    bSetOk               : BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc3_PackML_V3.FB_PMLAdminAlarm.M_SetAlarm 演示程序
+// ============================================================
+// 场景：灌装机出料温度传感器检测到 > 85°C，触发高温 alarm 上报。
+//       MES 通过 OPC UA 订阅 PackTags.Admin.Alarm[*] 收到事件流。
+// 价值：标准化的 alarm 上报接口——HMI/MES 端按 PackML 标准消费，
+//       跨厂家可互通。本方法封装"找空位 + 写时间戳 + 拷贝字段"细节。
+// 验证：登录后操作：
+//       1. 写 rOutletTempC := 90.0 → 检测到温度上升沿超阈值，
+//          M_SetAlarm 上升沿触发一次性调用。
+//       2. 观察 stPackTagAdmin.Alarm[0]：
+//          - Trigger = TRUE
+//          - Id = 1001, Value = 90, Message = 'Outlet temperature exceeded 85C'
+//          - DateTime 已填（区别于零值即可）
+//          - bSetOk = TRUE
+//       3. 写 rOutletTempC := 60.0 → 温度回落，但 alarm 还在
+//          （需要 M_AcknowledgeAlarm 才能确认）。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_PackML_V3（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方"验证"指引在线写值观察
+// ============================================================
+
+fbAdminTime(stAdmin := stPackTagAdmin, stStatus := stPackTagStatus, stOptions := stAdminOpt);
+
+(* 上升沿避免每周期重复 Set（PDF 警告：每周期调会立刻填满数组） *)
+bTempHighCondition := rOutletTempC > 85.0;
+R_TRIG_TempHigh(CLK := bTempHighCondition);
+
+IF R_TRIG_TempHigh.Q THEN
+    bSetOk := fbAdminAlarm.M_SetAlarm(stAdmin := stPackTagAdmin, stAlarm := stHighTempAlarm);
+END_IF
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

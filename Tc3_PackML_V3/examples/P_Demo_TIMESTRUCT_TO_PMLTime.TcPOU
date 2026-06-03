@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_TIMESTRUCT_TO_PMLTime" Id="{c4c05b37-bf37-5e03-85d5-3cf83f9a3bb9}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_TIMESTRUCT_TO_PMLTime
+VAR
+    stLocalTime    : TIMESTRUCT := (wYear:=2026, wMonth:=6, wDayOfWeek:=3, wDay:=3, wHour:=14, wMinute:=30, wSecond:=45, wMilliseconds:=678);
+    stPMLTimestamp : ST_PMLDateAndTime;           // 转换结果（在线观察各字段）
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc3_PackML_V3.TIMESTRUCT_TO_PMLTime 演示程序
+// ============================================================
+// 场景：Tc2_Utilities.NT_GetLocalTime 周期返回 TIMESTRUCT 当前本地时间
+//       （带毫秒精度），调本函数转成 PackML 结构写入
+//       PackTags.Admin.PlcDateTime 供报警时间戳使用。
+// 价值：TIMESTRUCT 是 Beckhoff 系统库的标准时间表示；PackML 需要
+//       ST_PMLDateAndTime。本函数把两者标准互转，保留毫秒精度。
+// 验证：登录后观察 stPMLTimestamp 字段：应得 Year=2026, Month=6, Day=3,
+//       Hour=14, Minute=30, Second=45, mSec=678（wDayOfWeek 被丢弃）。
+//       实战中把 stLocalTime 接 Tc2_Utilities.NT_GetLocalTime 的输出。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_PackML_V3（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方"验证"指引在线写值观察
+// ============================================================
+
+(* 纯函数调用——单行完成 *)
+stPMLTimestamp := TIMESTRUCT_TO_PMLTime(Input := stLocalTime);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

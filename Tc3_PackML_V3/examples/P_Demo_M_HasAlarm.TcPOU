@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_M_HasAlarm" Id="{a6cf807c-cc4c-5666-b785-e3ffd45fd9a3}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_M_HasAlarm
+VAR
+    fbAdminAlarm     : FB_PMLAdminAlarm;
+    fbAdminTime      : FB_PMLAdminTime;
+    stPackTagAdmin   : ST_PMLa;
+    stPackTagStatus  : ST_PMLs;
+    stAdminOpt       : ST_PMLAdminTimeOptions;
+
+    stAlarm1         : ST_PMLEvent := (Id := 1001, Message := 'High temp', Category := 1);
+
+    bBtnFire         : BOOL := FALSE;
+    bBtnAck          : BOOL := FALSE;
+    rtrigFire        : R_TRIG;
+    rtrigAck         : R_TRIG;
+
+    // 状态查询结果（在线观察）
+    bAnyActiveAlarm  : BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc3_PackML_V3.FB_PMLAdminAlarm.M_HasAlarm 演示程序
+// ============================================================
+// 场景：PackML 状态机判断"现在能不能进入 Idle / Execute"——必须先确认
+//       没有未处理 alarm。本方法每周期调用提供布尔条件。
+// 价值：V3 新增方法把"是否有未确认 alarm"封装好，状态机条件代码简洁。
+//       HMI 顶端"故障在线"指示灯直接绑本方法返回值。
+// 验证：登录后操作：
+//       1. 默认 bAnyActiveAlarm = FALSE（数组里无 Trigger=TRUE）。
+//       2. 写 bBtnFire := TRUE → 观察 bAnyActiveAlarm 变 TRUE。
+//       3. 写 bBtnAck := TRUE → 观察 bAnyActiveAlarm 变 FALSE
+//          （因为 Ack 把 Trigger 置 FALSE）。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_PackML_V3（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方"验证"指引在线写值观察
+// ============================================================
+
+fbAdminTime(stAdmin := stPackTagAdmin, stStatus := stPackTagStatus, stOptions := stAdminOpt);
+
+rtrigFire(CLK := bBtnFire);
+rtrigAck(CLK := bBtnAck);
+
+IF rtrigFire.Q THEN
+    fbAdminAlarm.M_SetAlarm(stAdmin := stPackTagAdmin, stAlarm := stAlarm1);
+END_IF
+IF rtrigAck.Q THEN
+    fbAdminAlarm.M_AcknowledgeAlarm(stAdmin := stPackTagAdmin, stAlarm := stAlarm1);
+END_IF
+
+(* 每周期查询——开销极小（最多 10 个 BOOL 比较） *)
+bAnyActiveAlarm := fbAdminAlarm.M_HasAlarm(stAdmin := stPackTagAdmin);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

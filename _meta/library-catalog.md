@@ -69,7 +69,7 @@
 |---|---|---|---|
 | Tc3_OPCUA / Tc3_IotBase | ~50 | ⏳ pending | 对外 IT 集成 |
 | Tc3_PackML_V2 | 25 ✅ done (v1.2.4) | ✅ done | OMAC PackML 包装机械（3 接口 + 5 FB + 9 PML_AdminAlarm 方法 + 8 转换 FC） |
-| Tc3_PackML_V3 | ~30 | ⏳ pending | OMAC PackML V3 升级版 |
+| Tc3_PackML_V3 | 32 ✅ done (v1.0.0, 2025-08-25) | ✅ done | OMAC PackML V3 升级版（2 接口 + 5 FB + 17 PMLAdminAlarm 方法 + 8 转换 FC）。FB_PML* 命名前缀；Alarm 方法 9→17 扩展；StopReason 容器从数组改单值。28/32 ⚠️ not-on-infosys（库新发布,InfoSys 公网索引尚未完整）。 |
 | Tc2_MC2_Camming | 6 | ✅ done (6/6) | 凸轮（走 TF5050 别名） |
 | Tc2_MC2_FlyingSaw | 4 | ✅ done (4/4) | 飞剪（走 TF5055 别名） |
 | Tc3_DriveMotionControl | 14 ✅ done (13 FB + 1 GVL, v1.5.5) | ✅ done | 简化伺服（MC_* 单轴运动，无 BufferMode，走 ST_*Options） |

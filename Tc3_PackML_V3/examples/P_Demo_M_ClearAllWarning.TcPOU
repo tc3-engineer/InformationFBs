@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_M_ClearAllWarning" Id="{085ab20d-18ee-54d5-814d-2e5f236edc9c}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_M_ClearAllWarning
+VAR
+    fbAdminAlarm     : FB_PMLAdminAlarm;
+    fbAdminTime      : FB_PMLAdminTime;
+    stPackTagAdmin   : ST_PMLa;
+    stPackTagStatus  : ST_PMLs;
+    stAdminOpt       : ST_PMLAdminTimeOptions;
+
+    stWarn1          : ST_PMLEvent := (Id := 2001, Message := 'Filter 80%', Category := 2);
+    stWarn2          : ST_PMLEvent := (Id := 2002, Message := 'Oil low',    Category := 3);
+
+    bBtnFireAll      : BOOL := FALSE;
+    bBtnClearAll     : BOOL := FALSE;
+    rtrigFire        : R_TRIG;
+    rtrigClear       : R_TRIG;
+    bClearOk         : BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc3_PackML_V3.FB_PMLAdminAlarm.M_ClearAllWarning 演示程序
+// ============================================================
+// 场景：维护人员一次处理完多个 warning（滤芯/油位/温度），按 HMI
+//       "全部清除"按钮一键清空 warning 列表。
+// 价值：V3 新增的批量方法让 HMI 一键操作免去 for 循环。
+// 验证：登录后操作：
+//       1. 写 bBtnFireAll := TRUE → Warning[0..1] 写入两条。
+//       2. 写 bBtnClearAll := TRUE → 两条 Trigger 全置 FALSE
+//          (Id/Message 仍在内存但 HMI 不显示)。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_PackML_V3（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方"验证"指引在线写值观察
+// ============================================================
+
+fbAdminTime(stAdmin := stPackTagAdmin, stStatus := stPackTagStatus, stOptions := stAdminOpt);
+
+rtrigFire(CLK := bBtnFireAll);
+rtrigClear(CLK := bBtnClearAll);
+
+IF rtrigFire.Q THEN
+    fbAdminAlarm.M_SetWarning(stAdmin := stPackTagAdmin, stWarning := stWarn1);
+    fbAdminAlarm.M_SetWarning(stAdmin := stPackTagAdmin, stWarning := stWarn2);
+END_IF
+IF rtrigClear.Q THEN
+    bClearOk := fbAdminAlarm.M_ClearAllWarning(stAdmin := stPackTagAdmin);
+END_IF
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>
