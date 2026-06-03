@@ -73,7 +73,7 @@
 | Tc2_MC2_Camming | 6 | ✅ done (6/6) | 凸轮（走 TF5050 别名） |
 | Tc2_MC2_FlyingSaw | 4 | ✅ done (4/4) | 飞剪（走 TF5055 别名） |
 | Tc3_DriveMotionControl | 14 ✅ done (13 FB + 1 GVL, v1.5.5) | ✅ done | 简化伺服（MC_* 单轴运动，无 BufferMode，走 ST_*Options） |
-| Tc2_NCI | ~30 | ⏳ pending | 插补 / CNC（走 TF5100 别名） |
+| Tc2_NCI | 101 ✅ done (v2.15.1) | ✅ done | 插补 / CNC TF5100（76 FB + 25 FC,分 configuration / nci_pous / blocksearch / retrace / parts_program_generator / compatibility / obsolete） |
 | Tc3_MC2_AdvancedHoming | 1.7.7 | 16 | ✅ done (16/16) | 自定义回零（PLCopen Part 5；收尾 3 + 被动 flying 3 + step 10） |
 | Tc3_Vision | ~80 | ⏳ pending | 机器视觉 TF7xxx（走 TF7000-TF7810 别名） |
 | Tc2_Hydraulic | ~40 | ⏳ pending | 液压闭环（走 TF5810 别名） |

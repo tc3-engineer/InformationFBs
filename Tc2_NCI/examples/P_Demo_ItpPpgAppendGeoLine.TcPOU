@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_ItpPpgAppendGeoLine" Id="{b1d088da-e810-55f9-aef6-7d66f03b87db}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_ItpPpgAppendGeoLine
+VAR
+    fbItpPpgAppendGeoLine                 : ItpPpgAppendGeoLine;  // 被演示 FB 实例
+    rtTrig                                : R_TRIG;  // 边沿触发器，把人工『按一下』转上升沿
+    bDoIt                                 : BOOL := FALSE;  // 在线写 TRUE 触发一次
+    sPathName_in                          : STRING := '';  // 见 §3
+    fTargetXPos_in                        : LREAL := 0.0;
+    fTargetYPos_in                        : LREAL := 0.0;
+    fTargetZPos_in                        : LREAL := 0.0;
+    fPathVelo_in                          : LREAL := 0.0;
+    nBlockNo_in                           : UDINT := 0;
+    tTimeOut_in                           : TIME := T#2S;  // ADS 调用超时
+    bBusy_out                             : BOOL;
+    bErr_out                              : BOOL;
+    nErrId_out                            : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_NCI.ItpPpgAppendGeoLine 演示程序
+// ============================================================
+// 场景：PLC 根据上位机参数动态生成 G-Code（如根据工件尺寸生成成形加工程序），避免依赖 CAM 软件。
+// 价值：免去手拼字符串、格式错误；PPG 内部按段类型拼装确保合法 G-Code。
+// 验证：调本 FB 追加段；最终 ItpPpgCloseMain/CloseSubroutine 后产生 .nc 文件；用 ItpLoadProgEx 加载验证可解释。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_NCI（References → Add library）
+//   3. 在 System Manager 把 NCI 通道接口 Link 给 sNciToPlc_inst / sPlcToNci_inst
+//      （NCTOPLC_NCICHANNEL_REF 给 AT %I*、PLCTONC_NCICHANNEL_REF 给 AT %Q*）
+//   4. 编译 → 登录 → 运行；按上方『验证』指引在线写值观察
+// ============================================================
+
+// 把人工按下的电平转成真正的上升沿；这是 bExecute 系列引脚的标准用法
+rtTrig(CLK := bDoIt);
+
+// 单次完整调用：所有 VAR_INPUT / VAR_IN_OUT / VAR_OUTPUT 引脚显式赋值或绑定
+fbItpPpgAppendGeoLine(
+    bExecute    := rtTrig.Q,
+    sPathName   := sPathName_in,
+    fTargetXPos := fTargetXPos_in,
+    fTargetYPos := fTargetYPos_in,
+    fTargetZPos := fTargetZPos_in,
+    fPathVelo   := fPathVelo_in,
+    nBlockNo    := nBlockNo_in,
+    tTimeOut    := tTimeOut_in,
+    bBusy       => bBusy_out,
+    bErr        => bErr_out,
+    nErrId      => nErrId_out
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

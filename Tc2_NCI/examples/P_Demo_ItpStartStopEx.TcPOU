@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_ItpStartStopEx" Id="{9fae2e77-231f-5b1c-8b2b-1e4f3a530749}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_ItpStartStopEx
+VAR
+    fbItpStartStopEx                      : ItpStartStopEx;  // 被演示 FB 实例
+    rtTrig                                : R_TRIG;  // 边沿触发器，把人工『按一下』转上升沿
+    bDoIt                                 : BOOL := FALSE;  // 在线写 TRUE 触发一次
+    tTimeOut_in                           : TIME := T#2S;  // ADS 调用超时
+    sNciToPlc_inst                        : NCTOPLC_NCICHANNEL_REF;  // VAR_IN_OUT 引用对象
+    bBusy_out                             : BOOL;
+    bErr_out                              : BOOL;
+    nErrId_out                            : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_NCI.ItpStartStopEx 演示程序
+// ============================================================
+// 场景：CNC 操作台『启动』『紧急停车』两个按钮分别接 bStart / bStop 引脚。
+// 价值：标准启停接口；stop 优先级保证 PLC 周期内同时收到两沿时仍然安全（停优先）。
+// 验证：前置：用 ItpLoadProgEx 加载好一个 .nc 程序。在线写 bDoStart := TRUE 触发，观察 fbItpStartStopEx.bBusy → TRUE → FALSE；NCI 通道开始执行段。要停下：写 bDoStop := TRUE 触发；通道立即终止、轴受控停车。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_NCI（References → Add library）
+//   3. 在 System Manager 把 NCI 通道接口 Link 给 sNciToPlc_inst / sPlcToNci_inst
+//      （NCTOPLC_NCICHANNEL_REF 给 AT %I*、PLCTONC_NCICHANNEL_REF 给 AT %Q*）
+//   4. 编译 → 登录 → 运行；按上方『验证』指引在线写值观察
+// ============================================================
+
+// 把人工按下的电平转成真正的上升沿；这是 bExecute 系列引脚的标准用法
+rtTrig(CLK := bDoIt);
+
+// 单次完整调用：所有 VAR_INPUT / VAR_IN_OUT / VAR_OUTPUT 引脚显式赋值或绑定
+fbItpStartStopEx(
+    bStart    := rtTrig.Q,
+    bStop     := FALSE,  // 演示场景：仅触发 Start；停车另写一段
+    tTimeOut  := tTimeOut_in,
+    sNciToPlc := sNciToPlc_inst,
+    bBusy     => bBusy_out,
+    bErr      => bErr_out,
+    nErrId    => nErrId_out
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>
