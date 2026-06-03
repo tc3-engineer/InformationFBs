@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_PN_ReadStateOfDevices" Id="{7a6bdcdb-3e8e-5fb9-9b5f-2e2be119cfb8}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_PN_ReadStateOfDevices
+VAR
+    fbReadState   : FB_PN_ReadStateOfDevices;
+    bReadOverview : BOOL := FALSE;            // 在线上升沿触发一次总览读取
+    bBusy         : BOOL;
+    bErr          : BOOL;
+    nErrId        : UDINT;
+    nCfgDevices   : UINT;                     // 已组态设备数
+    nErrDevices   : UINT;                     // 错误/诊断设备数
+    nDiagDevices  : UINT;                     // 带诊断设备数
+    sDrvVer       : STRING;                   // 控制器驱动版本
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_ProfinetDiag.FB_PN_ReadStateOfDevices 演示程序
+// ============================================================
+// 场景：读全网 PROFINET 健康总览（组态/异常/诊断计数）。
+// 价值：一次拿三计数，免逐台轮询。
+// 验证：登录后 bReadOverview 上升沿，nCfg/nErr/nDiag 填入。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_ProfinetDiag（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』指引在线写值观察
+// ============================================================
+
+// 上升沿触发；读出整网总览计数（需 RT Controller 驱动 v03/V00.21+）
+fbReadState(
+    bExecute := bReadOverview,
+    NETID    := '',
+    bBusy    => bBusy,
+    bError   => bErr,
+    nErrorID => nErrId,
+    nDevices => nCfgDevices,
+    PnIoError => nErrDevices,
+    PnIoDiag => nDiagDevices,
+    sControllerDriverVersion => sDrvVer
+);
+
+// IF nErrDevices > 0 THEN 下钻调用 FB_PN_ReadCompleteInfoOfDevices 查明细
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

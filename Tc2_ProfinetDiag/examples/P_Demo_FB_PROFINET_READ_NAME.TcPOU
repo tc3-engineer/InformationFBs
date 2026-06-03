@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_PROFINET_READ_NAME" Id="{63ffba06-c41a-56cd-bfe0-76f558cb2f9c}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_PROFINET_READ_NAME
+VAR
+    fbReadName    : FB_PROFINET_READ_NAME;
+    bReadReq      : BOOL := FALSE;            // 在线上升沿触发
+    bBusy         : BOOL;
+    bErr          : BOOL;
+    nErrId        : UDINT;
+    sPnName       : STRING(240);              // 设备 PROFINET 名
+    bLocked       : BOOL;                     // TRUE=控制器不能改名
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_ProfinetDiag.FB_PROFINET_READ_NAME 演示程序
+// ============================================================
+// 场景：CCAT/TF6270 读设备名+可改性标志。
+// 价值：改名前先判 bNotChangeable。
+// 验证：登录后 bReadReq 上升沿，sPnName/bLocked 填入。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_ProfinetDiag（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』指引在线写值观察
+// ============================================================
+
+// 上升沿触发；读设备名 + 可改性标志（PORT 默认 0xFFFF）
+fbReadName(
+    bStart := bReadReq,
+    NETID  := '',
+    PORT   := 16#FFFF,
+    bBusy  => bBusy,
+    bError => bErr,
+    nErrorID => nErrId,
+    sProfinetName => sPnName,
+    bNotChangeable => bLocked
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

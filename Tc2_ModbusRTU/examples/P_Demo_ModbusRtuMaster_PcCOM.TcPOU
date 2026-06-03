@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_ModbusRtuMaster_PcCOM" Id="{7fce2545-0234-5634-9dc2-6070825fbbe6}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_ModbusRtuMaster_PcCOM
+VAR
+    fbModbusMaster : ModbusRtuMaster_PcCOM;          // 旧版串口主站（已废弃，仅维护老程序）
+    aHoldingRegs   : ARRAY[0..9] OF WORD;             // 读回的 10 个保持寄存器
+    bReadReq       : BOOL;                             // 在线上升沿：触发一次读
+    bBusy          : BOOL;
+    bError         : BOOL;
+    eErrId         : MODBUS_ERRORS;
+    nBytesRead     : UINT;                             // 监控：读回字节数
+    nReadOkCnt     : UDINT;                            // 监控：累计成功读次数
+    rtDone         : R_TRIG;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：维护一段早期用旧版 ModbusRtuMaster_PcCOM 写成的存量程序——经 PC COM 口
+//       读站地址 1 从站的 10 个保持寄存器（功能码 3）。
+//
+// 价值：演示旧版主站接口（UnitID 为 UINT、无 Aux 参数、无 ReadWriteRegs）的用法，
+//       便于看懂/改动老工程。新工程应改用 ModbusRtuMasterV2_PcCOM。
+//
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs → Add → Existing Item → 选本 .TcPOU
+//   2. References → Add library → Tc2_ModbusRTU；System Manager 把 FB 内置串口数据
+//      结构链接到 COM 口（波特率/校验位与从站一致）
+//   3. 编译 → 登录 → 运行；在线脉冲 bReadReq := TRUE
+//      → bBusy 短暂 TRUE 后落回；从站在线则 bError=FALSE、aHoldingRegs 被填、
+//        nBytesRead=20、nReadOkCnt +1
+//      → 断开从站再脉冲：bError=TRUE、eErrId=MODBUSERROR_NO_RESPONSE
+// =============================================================================
+
+// 读 10 个保持寄存器（Modbus 功能码 3）
+fbModbusMaster.ReadRegs(
+    UnitID      := 1,
+    Quantity    := 10,
+    MBAddr      := 16#0000,
+    cbLength    := SIZEOF(aHoldingRegs),              // 必须 >= Quantity*2 = 20
+    pMemoryAddr := ADR(aHoldingRegs),
+    Execute     := bReadReq,
+    Timeout     := T#1S,
+    BUSY        => bBusy,
+    Error       => bError,
+    ErrorId     => eErrId,
+    cbRead      => nBytesRead
+);
+
+// 一次成功读完成时累加计数
+rtDone(CLK := NOT bBusy AND bReadReq AND NOT bError);
+IF rtDone.Q THEN
+    nReadOkCnt := nReadOkCnt + 1;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

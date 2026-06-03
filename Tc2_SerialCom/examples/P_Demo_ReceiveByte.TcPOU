@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_ReceiveByte" Id="{0afe33e5-f09d-5879-a675-2f43e55370a3}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_ReceiveByte
+VAR
+    fbSerialLine    : SerialLineControl;       // 后台通信，每周期调用填充 bufRx
+    fbReceiveByte   : ReceiveByte;
+    bufRx           : ComBuffer;                // 接收缓冲：被后台填、被本 FB 读
+    bufTx           : ComBuffer;                // 本例只收不发，发送缓冲留空
+    arrComIn        : PcComInData;              // 串口过程映像输入（PC COM 口）
+    arrComOut       : PcComOutData;             // 串口过程映像输出
+    byLastReceived  : BYTE;                     // 监控：最后一个收到的字节
+    nReadCount      : UDINT;                    // 监控：累计读到的字节数
+    bErrLine        : BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：RS232 扫码枪逐字符吐 ASCII 码，PLC 标准任务周期(10ms)慢于串口数据率，
+//       一个周期内缓冲区里会积压多个字符，必须一次读空，否则字符越积越多。
+//
+// 价值：演示 ReceiveByte 的标准纪律——"在 REPEAT 循环里读到 ByteReceived=FALSE
+//       为止"，以及 RxBuffer 必须与后台 SerialLineControl 共用同一实例。
+//
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_SerialCom（References → Add library）
+//   3. 把 arrComIn/arrComOut 链接到实际 COM 口或 KL6/EL6 端子的过程映像
+//   4. 编译 → 登录 → 运行；用串口助手向该口发若干字符
+//      → byLastReceived 显示最后一个字符的 ASCII 码
+//      → nReadCount 按发送字符数递增（验证一周期内多字符也被读空）
+// =============================================================================
+
+// 后台通信：每周期调用，把硬件收到的字节搬进 bufRx
+fbSerialLine(
+    Mode      := ComSerialLineMode_t.SERIALLINEMODE_PC_COM_PORT,
+    pComIn    := ADR(arrComIn),
+    pComOut   := ADR(arrComOut),
+    SizeComIn := SIZEOF(arrComIn),
+    TxBuffer  := bufTx,
+    RxBuffer  := bufRx,
+    Error     => bErrLine
+);
+
+// 一次读空 bufRx：循环到没有更多字节为止
+REPEAT
+    fbReceiveByte(RXBuffer := bufRx);
+    IF fbReceiveByte.ByteReceived THEN
+        byLastReceived := fbReceiveByte.ReceivedByte;
+        nReadCount := nReadCount + 1;
+    END_IF
+UNTIL NOT fbReceiveByte.ByteReceived
+END_REPEAT
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

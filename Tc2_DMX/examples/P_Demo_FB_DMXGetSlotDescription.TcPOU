@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_DMXGetSlotDescription" Id="{833da19f-a32f-5fc7-b622-67e51a2a961f}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_DMXGetSlotDescription
+VAR
+    fbGetSlotDesc     : FB_DMXGetSlotDescription;     // 读槽功能文本
+    stDmxCmdBuffer    : ST_DMXCommandBuffer;          // 与通讯 FB 共用
+    wTargetManufId    : WORD := 16#4241;              // 目标灯具厂商 ID
+    dwTargetDeviceId  : DWORD := 16#12131415;         // 目标灯具设备 ID
+    byTargetPort      : BYTE := 0;                    // 根设备通道 0
+    iSlotOffset       : INT := 0;                     // 第一个槽(偏移 0)
+    bDoRead           : BOOL := FALSE;                // 在线给一次上升沿触发
+    bBusy             : BOOL;
+    bError            : BOOL;
+    udiErrId          : UDINT;
+    sSlotText         : STRING;                       // 槽功能文本描述
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_DMX.FB_DMXGetSlotDescription 演示程序
+// ============================================================
+// 场景：为操作员标注通道功能：读出某灯各槽功能文本(Red/Green/Dimmer…)，HMI 显示功能名而非裸通道号。
+// 价值：把每个 DMX 通道功能名从设备读出，HMI 通道标注自动且准确，免去人工查手册填功能名。
+// 验证：设 iSlotOffset:=0，给 bDoRead 一次上升沿 -> bBusy 短暂 TRUE -> 回 FALSE 后 sSlotText 即该槽功能文本；偏移越界则 bError 且 udiErrId=0x801A。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_DMX；同项目里放一个 FB_EL6851CommunicationEx 实例并共用 stDmxCmdBuffer（非 CycleMode）
+//   3. 编译 → 登录 → 运行；按上方『验证』行在线给上升沿观察
+// ============================================================
+
+fbGetSlotDesc(
+    bStart                     := bDoRead,
+    wDestinationManufacturerId := wTargetManufId,
+    dwDestinationDeviceId      := dwTargetDeviceId,
+    byPortId                   := byTargetPort,
+    iDMX512SlotOffset          := iSlotOffset,
+    dwOptions                  := 0,
+    stCommandBuffer            := stDmxCmdBuffer,
+    bBusy                      => bBusy,
+    bError                     => bError,
+    udiErrorId                 => udiErrId,
+    sSlotDescription           => sSlotText
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

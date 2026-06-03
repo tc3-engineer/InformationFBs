@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_RK512" Id="{9d7d75a1-869b-5050-ba6f-d27aca0231d4}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_RK512
+VAR
+    fbSerialLine : SerialLineControl;           // 底层硬件收发
+    fbRK512      : RK512;                         // RK512 协议功能块
+    bufTx        : ComBuffer;
+    bufRx        : ComBuffer;
+    arrComIn     : PcComInData;
+    arrComOut    : PcComOutData;
+    bLineErr     : BOOL;
+
+    // 本地数据块:既登记给对端被动访问,也用于主动 SEND
+    DB5          : ARRAY[1..64] OF WORD;
+    bInit        : BOOL := TRUE;                 // 上电登记一次 DB5
+
+    bSendReq     : BOOL;                         // 在线置 TRUE 主动发 DB5 给对端
+    rtrigSend    : R_TRIG;
+    bBusy        : BOOL;
+    bSendFetchBusy : BOOL;
+    bSendOk      : BOOL;
+    bErr         : BOOL;
+    eErrId       : RK512_Error_t;
+    bRxBusy      : BOOL;
+    bRecvOk      : BOOL;                          // 被动收到对端数据块
+    byRecvDbNr   : BYTE;
+    bErrRx       : BOOL;
+    eErrIdRx     : RK512_Error_t;
+    stAux        : RK512_Auxiliary_t;
+    nSendOkCnt   : UDINT;                          // 监控:主动发送成功次数
+    nRecvOkCnt   : UDINT;                          // 监控:被动接收成功次数
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景:与西门子 S7 串口侧用 RK512 协议交换数据块。本机既要能被对端按 DB5 号读写
+//       (被动),也要能主动把本地 DB5 发给对端(主动 SEND)。RK512 建立在 3964R 之上。
+//
+// 价值:演示 RK512 完整骨架——被动模式前用 DBconfig() 登记可被访问的数据块;主动
+//       模式用 Send 上升沿发 DB;底层 3964R/硬件由 SerialLineControl 承担。
+//
+// 验证步骤:
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_SerialCom;把 arrComIn/arrComOut 链接到与 RK512 对端相连的 COM 口
+//   3. 编译 → 登录 → 运行
+//      → 对端向本机 DB5 写数据:bRecvOk 闪亮,byRecvDbNr=5,nRecvOkCnt +1,DB5 内容更新
+//      → 在线把 bSendReq 置 TRUE:把 DB5 发给对端 DB5,bSendOk 亮,nSendOkCnt +1
+//      → 若 bErr/bErrRx=TRUE,看 eErrId/eErrIdRx(如 16#14 数据块未登记)与 stAux
+// =============================================================================
+
+// 初始化:登记 DB5 供对端被动访问(被动模式必需;主动 Send/Fetch 不需要)
+IF bInit THEN
+    bInit := FALSE;
+    fbRK512.DBconfig(RemoteDbNr := 5, DbAdr := ADR(DB5), DbSize := SIZEOF(DB5),
+                     TxBuffer := bufTx, RxBuffer := bufRx);
+END_IF;
+
+// 底层硬件收发:每周期搬运字节
+fbSerialLine(
+    Mode      := ComSerialLineMode_t.SERIALLINEMODE_PC_COM_PORT,
+    pComIn    := ADR(arrComIn),
+    pComOut   := ADR(arrComOut),
+    SizeComIn := SIZEOF(arrComIn),
+    TxBuffer  := bufTx,
+    RxBuffer  := bufRx,
+    Error     => bLineErr
+);
+
+// 主动 SEND 请求转上升沿:一次置 TRUE 发一次
+rtrigSend(CLK := bSendReq);
+
+// RK512 主体:每周期调用;被动模式自动进入,主动模式由 Send 驱动
+fbRK512(
+    Send         := rtrigSend.Q,
+    Fetch        := FALSE,                       // 本例只演示 SEND
+    DbAdr        := ADR(DB5),
+    DbSize       := SIZEOF(DB5),
+    RemoteDbNr   := 5,                           // 发往对端 DB5
+    NrOfBytes    := SIZEOF(DB5),
+    ByteOffset   := 0,
+    HighPriority := TRUE,                        // 两端须一高一低
+    SwapWords    := FALSE,                       // 两端字节序一致则 FALSE
+    TREA         := T#15S,                       // 应答超时 ~15s
+    TxBuffer     := bufTx,
+    RxBuffer     := bufRx,
+    Busy             => bBusy,
+    BusySendFetch    => bSendFetchBusy,
+    SendFetchSuccess => bSendOk,
+    Error            => bErr,
+    ErrorId          => eErrId,
+    BusyReceive      => bRxBusy,
+    ReceiveSuccess   => bRecvOk,
+    ReceivedDbNr     => byRecvDbNr,
+    ErrorRx          => bErrRx,
+    ErrorIdRx        => eErrIdRx,
+    Aux              => stAux
+);
+
+// 统计成功收发
+IF bSendOk THEN
+    nSendOkCnt := nSendOkCnt + 1;
+END_IF;
+IF bRecvOk THEN
+    nRecvOkCnt := nRecvOkCnt + 1;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

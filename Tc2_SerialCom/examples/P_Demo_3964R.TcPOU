@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_3964R" Id="{11d5d480-386f-502e-85dd-86227d80f920}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_3964R
+VAR
+    fbSerialLine : SerialLineControl;           // 底层硬件收发(3964R 只管协议层)
+    fb3964R      : 3964R;                        // 3964R 协议功能块
+    txData       : P3964buffer;                  // 应用层发送数据
+    rxData       : P3964buffer;                  // 应用层接收数据
+    bufTx        : ComBuffer;                    // 协议<->硬件 发送缓冲
+    bufRx        : ComBuffer;                    // 协议<->硬件 接收缓冲
+    arrComIn     : PcComInData;
+    arrComOut    : PcComOutData;
+    bLineErr     : BOOL;
+
+    bTxStartReq  : BOOL;                         // 在线置 TRUE 触发一次发送
+    rtrigTx      : R_TRIG;
+    bRxEnable    : BOOL := TRUE;                 // 默认进接收态等对端
+    bTxBusy      : BOOL;
+    bTxReady     : BOOL;
+    bRxBusy      : BOOL;
+    bRxReady     : BOOL;
+    nRxCount     : INT;
+    bProtoError  : BOOL;
+    eErrId       : P3964R_Error_t;
+    sErrState    : STRING(80);
+    nFramesSent  : UDINT;                          // 监控:成功发出帧数
+    nFramesRcvd  : UDINT;                          // 监控:成功收到帧数
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景:与一台用 3964R 协议的西门子 S5/S7 串口侧设备点对点通信。3964R 带 DLE 握手、
+//       BCC 校验和冲突仲裁,比裸串口可靠。本端设为高优先级,平时驻留接收态,按需发送。
+//
+// 价值:演示 3964R 收发双模式骨架——发送写 TXdata+TXcount 后给 TXstart 上升沿;接收
+//       置 RXstart 等 RXready。底层硬件收发必须由 SerialLineControl 每周期搬运。
+//
+// 验证步骤:
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_SerialCom;把 arrComIn/arrComOut 链接到与 3964R 对端相连的 COM 口
+//   3. 编译 → 登录 → 运行
+//      → 对端发 3964R 报文时 bRxReady 闪亮,nRxCount/nFramesRcvd 更新,rxData 见数据
+//      → 在线把 bTxStartReq 置 TRUE 发一帧(4 字节),bTxReady 亮,nFramesSent +1
+//      → 若 bProtoError=TRUE,看 eErrId(如 16#07 BCC 错)与 sErrState(卡在哪步握手)
+// =============================================================================
+
+// 先填一帧示例发送数据(4 字节)
+txData.D[0] := 16#11;
+txData.D[1] := 16#22;
+txData.D[2] := 16#33;
+txData.D[3] := 16#44;
+
+// 底层硬件收发:每周期搬运协议缓冲与硬件之间的字节
+fbSerialLine(
+    Mode      := ComSerialLineMode_t.SERIALLINEMODE_PC_COM_PORT,
+    pComIn    := ADR(arrComIn),
+    pComOut   := ADR(arrComOut),
+    SizeComIn := SIZEOF(arrComIn),
+    TxBuffer  := bufTx,
+    RxBuffer  := bufRx,
+    Error     => bLineErr
+);
+
+// 发送请求转上升沿:一次置 TRUE 发一帧
+rtrigTx(CLK := bTxStartReq);
+
+// 3964R 协议功能块:每周期调用,收发由 TXstart/RXstart 驱动
+fb3964R(
+    TXstart  := rtrigTx.Q,
+    RXstart  := bRxEnable,
+    Priority := TRUE,                           // 本端高优先级(两端须一高一低)
+    TXcount  := 4,                              // 发 4 字节
+    TXdata   := txData,
+    RXdata   := rxData,
+    TxBuffer := bufTx,
+    RxBuffer := bufRx,
+    Busy     => ,
+    TXbusy   => bTxBusy,
+    TXready  => bTxReady,
+    RXbusy   => bRxBusy,
+    RXready  => bRxReady,
+    RXcount  => nRxCount,
+    Error    => bProtoError,
+    ErrorID  => eErrId,
+    ErrorState => sErrState
+);
+
+// 统计成功收发(各自完成沿计数)
+IF bTxReady THEN
+    nFramesSent := nFramesSent + 1;
+END_IF;
+IF bRxReady THEN
+    nFramesRcvd := nFramesRcvd + 1;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

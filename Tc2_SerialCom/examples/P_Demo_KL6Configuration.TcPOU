@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_KL6Configuration" Id="{ad5bc3f9-b5bf-54cb-9e18-0b9ed9bcec31}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_KL6Configuration
+VAR
+    fbKL6Config   : KL6Configuration;
+    arrComIn      : KL6inData5B;                // KL6xxx 5 字节模式过程映像输入
+    arrComOut     : KL6outData5B;               // KL6xxx 5 字节模式过程映像输出
+
+    bDoConfigure  : BOOL := TRUE;               // 上电默认触发一次配置
+    bConfigDone   : BOOL;
+    bConfigBusy   : BOOL;
+    bConfigError  : BOOL;
+    eErrId        : ComError_t;
+    bConfigured   : BOOL;                        // 监控：配置成功标志
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：现场用 KL6031 串口端子(5 字节模式)接一台 9600-8-N-1 的称重仪表。PLC 上电
+//       初始化时必须先把端子配置成 9600/8/无校验/1 停止位/无握手，再开始收发。
+//
+// 价值：演示 KL6Configuration 一次写好 KL6xxx 全部串口参数——配置完成(Done)前
+//       不要让 SerialLineControl 抢着收发；参数必须是端子支持的值否则报错。
+//
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_SerialCom；把 arrComIn/arrComOut 链接到 KL6031 端子过程映像
+//   3. 编译 → 登录 → 运行
+//      → bConfigBusy 短暂为 TRUE，随后 bConfigDone=TRUE、bConfigError=FALSE
+//      → bConfigured 置 TRUE；若 bConfigError=TRUE 看 eErrId(如波特率非法=16#1001)
+// =============================================================================
+
+fbKL6Config(
+    Execute       := bDoConfigure,
+    Mode          := ComSerialLineMode_t.SERIALLINEMODE_KL6_5B_STANDARD,
+    Baudrate      := 9600,
+    NoDatabits    := 8,
+    Parity        := ComParity_t.PARITY_NONE,
+    Stopbits      := 1,
+    Handshake     := ComHandshake_t.HANDSHAKE_NONE,
+    ContinousMode := FALSE,                     // 普通通信无需连续发送模式
+    pComIn        := ADR(arrComIn),
+    pComOut       := ADR(arrComOut),
+    SizeComIn     := SIZEOF(arrComIn),
+    Done          => bConfigDone,
+    Busy          => bConfigBusy,
+    Error         => bConfigError,
+    ErrorID       => eErrId
+);
+
+// 配置成功完成：置标志并撤销 Execute(边沿触发，避免重复配置)
+IF bConfigDone AND NOT bConfigError THEN
+    bConfigured  := TRUE;
+    bDoConfigure := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_P3964RError_TO_TcEventEntry" Id="{6e530c52-b46b-5eef-afe8-704f6516db20}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_P3964RError_TO_TcEventEntry
+VAR
+    fb3964R     : 3964R;                        // 错误来源:3964R 协议功能块
+    txData      : P3964buffer;
+    rxData      : P3964buffer;
+    bufTx       : ComBuffer;
+    bufRx       : ComBuffer;
+
+    bProtoError : BOOL;                         // 3964R 报错标志
+    eErrId      : P3964R_Error_t;               // 3964R 错误码(来源)
+    sErrState   : STRING(80);
+    stEvent     : TcEventEntry;                 // 转换结果(来自 Tc3_EventLogger)
+    bConverted  : BOOL;                         // 监控:转换是否成功
+    nConvCount  : UDINT;                          // 监控:成功转换次数
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景:用 3964R 协议通信时,协议层可能报 BCC 校验错、QVZ 确认超时、NAK 拒收等错误。
+//       要把这些错误接入 TwinCAT 事件日志,让 HMI 显示多语言明文而非裸错误号。
+//
+// 价值:演示 P3964RError_TO_TcEventEntry 把 P3964R_Error_t 错误码转成标准事件定义
+//       (TcEventEntry)——只转换不发送;拿到 stEvent 后交给 Tc3_EventLogger 发送。
+//
+// 验证步骤:
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_SerialCom 和 Tc3_EventLogger(TcEventEntry 来自后者)
+//   3. 编译 → 登录 → 运行;制造一次 3964R 通信错误(如断开物理连接触发超时)
+//      → bProtoError 变 TRUE,eErrId 显示错误码,bConverted 变 TRUE,nConvCount +1
+//      → 实际工程把 stEvent 交给 Tc3_EventLogger 的 FB_TcMessage 发送即可在日志见明文
+// =============================================================================
+
+// 3964R 功能块(此处仅取其错误输出;完整收发骨架见 P_Demo_3964R)
+fb3964R(
+    TXstart  := FALSE,
+    RXstart  := TRUE,                           // 驻留接收态
+    Priority := TRUE,
+    TXcount  := 0,
+    TXdata   := txData,
+    RXdata   := rxData,
+    TxBuffer := bufTx,
+    RxBuffer := bufRx,
+    Error      => bProtoError,
+    ErrorID    => eErrId,
+    ErrorState => sErrState
+);
+
+// 一旦协议报错,把 P3964R_Error_t 错误码转成事件定义
+IF bProtoError THEN
+    bConverted := P3964RError_TO_TcEventEntry(eErrorId := eErrId, stEventEntry := stEvent);
+    IF bConverted THEN
+        nConvCount := nConvCount + 1;
+        // 实际工程:此处把 stEvent 交给 Tc3_EventLogger 发送
+    END_IF;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

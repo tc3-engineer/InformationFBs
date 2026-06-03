@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_PN_READ_PORT_DIAG" Id="{d1a45189-8e45-547e-b8f2-4370f3eeaac7}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_PN_READ_PORT_DIAG
+VAR
+    fbReadDiag    : FB_PN_READ_PORT_DIAG;
+    bReadReq      : BOOL := FALSE;            // 在线上升沿触发
+    bBusy         : BOOL;
+    stPort1       : str_GetPortStatistic;     // 端口1诊断
+    stPort2       : str_GetPortStatistic;     // 端口2诊断
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_ProfinetDiag.FB_PN_READ_PORT_DIAG 演示程序
+// ============================================================
+// 场景：读端口诊断核对 PROFINET 拓扑接线。
+// 价值：诊断进 PLC 自动核对拓扑。
+// 验证：登录后 bReadReq 上升沿，stPort1/2 填入。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_ProfinetDiag（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』指引在线写值观察
+// ============================================================
+
+// 上升沿触发；读两个端口的诊断信息（无错误号输出，按 PDF 类型为 str_GetPortStatistic）
+fbReadDiag(
+    bStart := bReadReq,
+    NETID  := '',
+    PORT   := 16#1001,
+    bBusy  => bBusy,
+    str_RemotePort_1 => stPort1,
+    str_RemotePort_2 => stPort2
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_RESET_PN_TO_FACTORY_SETTINGS" Id="{43f5fd3c-a831-51a2-97e9-f0c2df21a631}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_RESET_PN_TO_FACTORY_SETTINGS
+VAR
+    fbReset       : FB_RESET_PN_TO_FACTORY_SETTINGS;
+    bResetReq     : BOOL := FALSE;            // 在线上升沿触发复位（谨慎！）
+    aTargetMac    : ARRAY [0..5] OF BYTE := [16#00,16#01,16#05,16#0A,16#1B,16#2C];  // 目标设备 MAC
+    bBusy         : BOOL;
+    bErr          : BOOL;
+    nErrId        : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_ProfinetDiag.FB_RESET_PN_TO_FACTORY_SETTINGS 演示程序
+// ============================================================
+// 场景：按 MAC 把设备复位到出厂设置。
+// 价值：远程复位，免现场操作。
+// 验证：登录后确认 aTargetMac，bResetReq 上升沿触发复位（谨慎）。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_ProfinetDiag（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』指引在线写值观察
+// ============================================================
+
+// 上升沿触发；按 MAC 把设备复位到出厂设置（清名称/IP）
+fbReset(
+    bExecute := bResetReq,
+    NETID    := '',
+    MAC_ID   := aTargetMac,
+    bBusy    => bBusy,
+    bError   => bErr,
+    iErrorID => nErrId
+);
+
+// 复位完成后通常再调 FB_SET_PN_NAME 重新命名
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

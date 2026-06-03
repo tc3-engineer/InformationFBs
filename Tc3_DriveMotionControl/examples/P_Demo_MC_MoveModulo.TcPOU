@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_MC_MoveModulo" Id="{96222081-0900-5436-adae-8f4e19e69558}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_MC_MoveModulo
+VAR
+    fbMoveMod       : MC_MoveModulo; // 模数定位 FB 实例
+    axisTurntable   : AXIS_REF;      // 分度转台轴引用；模数因子(如 360°)须在轴参数配好
+    rtIndexReq      : R_TRIG;        // 分度请求转上升沿
+    bIndexRequest   : BOOL := FALSE; // 在线写 TRUE 触发一次分度
+    lrStationAngle  : LREAL := 90.0; // 目标工位角度 (°)；模数位置必须 ≥0
+    eMoveDir        : MC_Direction := MC_Positive_Direction; // 正方向定位
+    bModDone        : BOOL;          // Done：到达目标角度
+    bModBusy        : BOOL;
+    bModAborted     : BOOL;          // CommandAborted：被抢占/被停止
+    bModError       : BOOL;
+    nModErrorID     : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：四工位分度转台(模数轴,模数因子 360°)。每次分度正方向转到下一个 90° 工位。
+//       模数定位让坐标按 360° 折回，关心的是"转到某角度"而非"绝对累计角度"。
+//
+// 价值：1) 不必自己处理"角度折回 360°"的环绕计算
+//       2) 不必自己判正/反向与最短路径，Direction 一个枚举覆盖
+//       3) 从静止可指定 ≥360° 做额外整圈
+//
+// 验证步骤：
+//   1. System Manager 配好 NC 轴，把模数因子(ModuloFactor)设为 360，Link 给 axisTurntable
+//   2. 引用 Tc3_DriveMotionControl 库；先用 MC_Power 给轴使能
+//   3. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   4. 编译登录运行
+//   5. 在线把 bIndexRequest 写 TRUE → bModBusy 置 TRUE，转台正方向转到 90°，
+//      bModDone 置 TRUE，axisTurntable.NcToPlc.ActPos(模数显示)接近 90
+//   6. 把 bIndexRequest 拉回 FALSE 再 TRUE 可再分度一次(验证边沿语义)
+//   7. 若 bModError = TRUE，检查 Position≥0、Velocity>0、是否运动中反向、是否已使能
+// 注意：完整整圈行为对轴复位敏感(见文档§3)；确定性整圈建议改用 MC_MoveAbsolute
+// =============================================================================
+
+// 分度请求转上升沿：MC_MoveModulo 是 Execute 边沿触发
+rtIndexReq(CLK := bIndexRequest);
+
+// 单次调用：Direction 选正方向；Position 必须 ≥0；Axis 是 VAR_IN_OUT 用 :=
+fbMoveMod(
+    Execute        := rtIndexReq.Q,
+    Position       := lrStationAngle,
+    Velocity       := 180.0,
+    Acceleration   := 1000.0,
+    Deceleration   := 1000.0,
+    Direction      := eMoveDir,
+    Axis           := axisTurntable,
+    Done           => bModDone,
+    Busy           => bModBusy,
+    CommandAborted => bModAborted,
+    Error          => bModError,
+    ErrorID        => nModErrorID
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_MC_SetPosition" Id="{77c5efe5-e3a5-5dca-a4cf-2e013746e704}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_MC_SetPosition
+VAR
+    fbSetPos        : MC_SetPosition; // 设置轴位置 FB 实例（重定义坐标，不动轴）
+    axisWebFeed     : AXIS_REF;       // 卷料进给轴轴引用；先在 System Manager 配好
+    rtNewRoll       : R_TRIG;         // 换卷信号转上升沿
+    bNewRollLoaded  : BOOL := FALSE;  // 在线写 TRUE：新卷已装、料头已对到机械参考点
+    lrZeroPosition  : LREAL := 0.0;   // 把料头当前位置重定义为绝对 0 mm
+    bSetDone        : BOOL;           // Done：坐标设置成功
+    bSetBusy        : BOOL;
+    bSetError       : BOOL;
+    nSetErrorID     : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：卷料/收放卷设备。每换一卷新料，操作员把料头手动对到机械参考位后，PLC
+//       要把"当前位置"重定义为坐标 0，这样后续按绝对长度切料/定位才有统一基准。
+//       注意：MC_SetPosition 只改坐标读数，轴本身不动。
+//
+// 价值：1) 不必拼 NC 的 SetActPos 命令、不必自己处理跟随误差保留逻辑
+//       2) 绝对模式一键把当前位置标定为已知坐标；相对模式还能运动中平移坐标系
+//       3) 省去"停轴→改坐标→重启"的繁琐，换卷节拍更快
+//
+// 验证步骤：
+//   1. System Manager 配好 NC 轴并 Link 给 axisWebFeed，引用 Tc3_DriveMotionControl
+//   2. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   3. 编译登录运行；先让 axisWebFeed.NcToPlc.ActPos 处在某非零值（如 137.5）
+//   4. 在线把 bNewRollLoaded 写 TRUE → 应看到 bSetDone 置 TRUE，且
+//      axisWebFeed.NcToPlc.ActPos 立刻跳到 0（坐标被重定义，轴没动）
+//   5. 把 bNewRollLoaded 拉回 FALSE 再 TRUE 可再设一次（验证边沿语义）
+//   6. 若要清跟随误差，需在 Options.ClearPositionLag 置位（本 demo 用默认保留）
+// =============================================================================
+
+// 换卷信号转上升沿：MC_SetPosition 是 Execute 边沿触发
+rtNewRoll(CLK := bNewRollLoaded);
+
+// 单次调用：Mode := FALSE 用绝对模式把当前位置设为 0；Axis 是 VAR_IN_OUT 用 :=
+fbSetPos(
+    Execute  := rtNewRoll.Q,
+    Position := lrZeroPosition,
+    Mode     := FALSE,
+    Axis     := axisWebFeed,
+    Done     => bSetDone,
+    Busy     => bSetBusy,
+    Error    => bSetError,
+    ErrorID  => nSetErrorID
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

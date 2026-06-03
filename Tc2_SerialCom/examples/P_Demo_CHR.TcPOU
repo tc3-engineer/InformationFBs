@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_CHR" Id="{38b72367-a155-5e78-a42e-10990306ca31}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_CHR
+VAR
+    fbSerialLine  : SerialLineControl;          // 后台通信(填充 bufRx)
+    fbReceiveByte : ReceiveByte;
+    bufRx         : ComBuffer;
+    bufTx         : ComBuffer;
+    arrComIn      : PcComInData;
+    arrComOut     : PcComOutData;
+    bLineErr      : BOOL;
+
+    sAssembled    : STRING(80);                  // 逐字节拼出的可读字符串
+    bClear        : BOOL;                        // 在线置 TRUE 清空已拼字符串
+    nCharCount    : UDINT;                          // 监控:已拼入的字符数
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景:某设备逐字节吐 ASCII 字符,PLC 用 ReceiveByte 一个个收,再用 CHR 把字节还原
+//       成字符并 CONCAT 拼成可读字符串,供 HMI 显示或文本解析。
+//
+// 价值:演示 CHR 把字节转字符(ASC 的逆操作)并增量拼串——观察 sAssembled 随收到的
+//       字符增长;提示:整段文本其实直接用 ReceiveString 更省事,本例聚焦演示 CHR。
+//
+// 验证步骤:
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_SerialCom;把 arrComIn/arrComOut 链接到 COM 口过程映像
+//   3. 编译 → 登录 → 运行;用串口助手发文本如 "Hello"
+//      → sAssembled 逐渐变成 'Hello',nCharCount 递增
+//      → 在线把 bClear 置 TRUE 可清空重新拼接
+// =============================================================================
+
+// 后台通信:把硬件字节搬进 bufRx
+fbSerialLine(
+    Mode      := ComSerialLineMode_t.SERIALLINEMODE_PC_COM_PORT,
+    pComIn    := ADR(arrComIn),
+    pComOut   := ADR(arrComOut),
+    SizeComIn := SIZEOF(arrComIn),
+    TxBuffer  := bufTx,
+    RxBuffer  := bufRx,
+    Error     => bLineErr
+);
+
+// 可选:清空已拼字符串
+IF bClear THEN
+    bClear     := FALSE;
+    sAssembled := '';
+    nCharCount := 0;
+END_IF;
+
+// 逐字节收,用 CHR 转成字符拼进 sAssembled
+REPEAT
+    fbReceiveByte(RXBuffer := bufRx);
+    IF fbReceiveByte.ByteReceived THEN
+        // CHR 把收到的字节还原为单字符字符串再拼接
+        sAssembled := CONCAT(sAssembled, CHR(fbReceiveByte.ReceivedByte));
+        nCharCount := nCharCount + 1;
+    END_IF
+UNTIL NOT fbReceiveByte.ByteReceived
+END_REPEAT
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

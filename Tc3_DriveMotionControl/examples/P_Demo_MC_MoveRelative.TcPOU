@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_MC_MoveRelative" Id="{94b634fd-00ea-5d23-a296-5259f3356f87}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_MC_MoveRelative
+VAR
+    fbMoveRel       : MC_MoveRelative; // 相对定位 FB 实例
+    axisFeeder      : AXIS_REF;        // 送料轴轴引用；先在 System Manager 配好
+    rtStepReq       : R_TRIG;          // 步进请求转上升沿
+    bStepRequest    : BOOL := FALSE;   // 在线写 TRUE 触发一次步进
+    lrStepDistance  : LREAL := 50.0;   // 每步相对距离 (mm)，正=前进，负=后退
+    bRelDone        : BOOL;            // Done：到达相对目标位置
+    bRelBusy        : BOOL;
+    bRelAborted     : BOOL;            // CommandAborted：被抢占/被停止
+    bRelError       : BOOL;
+    nRelErrorID     : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：步进送料机构每次相对前进一个料距 50.0 mm(在当前设定位置基础上再走一段)。
+//       相对定位关心"再走多少",起点是当前 NC 设定位置,Distance 的正负代表方向。
+//
+// 价值：1) 不必先读当前位置再算绝对目标坐标,直接给"再走多少"
+//       2) Done/Busy/Error 三态符合 PLCopen 标准
+//       3) Distance 符号即方向,正负切换前进/后退很直观
+//
+// 验证步骤：
+//   1. System Manager 配好 NC 轴并 Link 给 axisFeeder,引用 Tc3_DriveMotionControl
+//   2. 先用 MC_Power 给轴使能
+//   3. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   4. 编译登录运行
+//   5. 在线把 bStepRequest 写 TRUE → bRelBusy 置 TRUE,axisFeeder.NcToPlc.ActPos
+//      在当前值基础上增加约 50,bRelDone 置 TRUE
+//   6. 反复"FALSE→TRUE"触发,位置每次再增 50(注意连续相对定位会累积,长期有漂移)
+//   7. 把 lrStepDistance 改成负值可后退;若 bRelError=TRUE,检查 Velocity>0/是否使能
+// 注意：本库 MC_MoveRelative 无 BufferMode,可选参数走 Options : ST_MoveOptions
+// =============================================================================
+
+// 步进请求转上升沿：MC_MoveRelative 是 Execute 边沿触发
+rtStepReq(CLK := bStepRequest);
+
+// 单次调用：Axis 是 VAR_IN_OUT 用 := 传引用
+fbMoveRel(
+    Execute        := rtStepReq.Q,
+    Distance       := lrStepDistance,
+    Velocity       := 200.0,
+    Acceleration   := 2000.0,
+    Deceleration   := 2000.0,
+    Axis           := axisFeeder,
+    Done           => bRelDone,
+    Busy           => bRelBusy,
+    CommandAborted => bRelAborted,
+    Error          => bRelError,
+    ErrorID        => nRelErrorID
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

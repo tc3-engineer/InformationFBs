@@ -28,7 +28,10 @@ def extract(lib: str, section: str) -> str:
     # Drop TOC region — find first body chapter heading after TOC.
     # TOC entries are recognizable by trailing "...   <page>"; body headings are not.
     # Strategy: take text from second occurrence of the requested section heading.
-    sec_re = re.compile(rf"(?m)^\s*{re.escape(section)}\s+[A-Za-z][^\.\n]{{0,80}}$")
+    # Title may start with a letter, digit or underscore: most POUs start with a
+    # letter, but a few Beckhoff FBs are named with a leading digit (Tc2_SerialCom
+    # §5.1.4.1 "3964R"). Requiring a letter-start dropped those entirely.
+    sec_re = re.compile(rf"(?m)^\s*{re.escape(section)}\s+[A-Za-z0-9_][^\.\n]{{0,80}}$")
     matches = [m.start() for m in sec_re.finditer(full)]
     if not matches:
         # also try with TOC dot leaders stripped
@@ -41,24 +44,25 @@ def extract(lib: str, section: str) -> str:
     # Pick the *last* match — TOC entries come first, body comes later.
     start = matches[-1]
 
-    # Find next heading of same/shallower depth.
+    # Find next heading of same/shallower depth. Title rules differ by depth to
+    # avoid matching prose lines that happen to begin with a number:
+    #   depth-1 chapter ("6 Examples", "8 Support and Service"): title MUST start
+    #     with an uppercase letter. Real Beckhoff chapter titles are always
+    #     capitalized, so this excludes numeric-prose lines like "7 or 8" (a
+    #     parameter-value description that was truncating Tc2_SerialCom
+    #     KL6Configuration before its VAR_OUTPUT block).
+    #   depth>=2 ("5.1.4 3964R + RK512 protocols", "5.4.1 sLiteral_TO_UTF8"):
+    #     title may start with letter/digit/underscore so digit-leading POU names
+    #     ("3964R") and lowercase-first FCs are still recognized as boundaries.
+    # Disallow `:` `,` `.` in the title to avoid matching descriptive lines such
+    # as "100 ms pulse (zero): min: 70 ms, typical: 95 ms".
     depth = section.count(".") + 1
-    parts = section.split(".")
-    # Build regex for any same-or-shallower-depth heading following.
-    depth_alts = []
+    alts = []
     for d in range(1, depth + 1):
-        depth_alts.append(r"\d+" + (r"\.\d+" * (d - 1)))
-    # Also any chapter at depth 1 (e.g. moving from 3.1.1 to 4)
-    # Allow any identifier-like first character (uppercase or lowercase letter,
-    # digit, underscore) — Beckhoff uses some lowercase-first POU names like
-    # "sLiteral_TO_UTF8" and "wsLiteral_TO_UTF8".
-    # Disallow `:` `,` `.` in the title to avoid matching descriptive lines
-    # such as "100 ms pulse (zero): min: 70 ms, typical: 95 ms" inside body
-    # text — real Beckhoff section titles are POU names or short category
-    # phrases without those punctuation marks.
-    next_heading = re.compile(
-        r"(?m)^\s*(?:" + "|".join(depth_alts) + r")\s+[A-Za-z_][^.:,\n]{0,80}$"
-    )
+        num = r"\d+" + (r"\.\d+" * (d - 1))
+        title = r"[A-Z][^.:,\n]{0,80}" if d == 1 else r"[A-Za-z0-9_][^.:,\n]{0,80}"
+        alts.append(num + r"\s+" + title)
+    next_heading = re.compile(r"(?m)^\s*(?:" + "|".join(alts) + r")$")
     after = full[start + 1 :]
     nm = next_heading.search(after)
     end = (start + 1 + nm.start()) if nm else len(full)

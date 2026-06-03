@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_MC_Power" Id="{486bbd0d-066e-563e-88e0-b85cbcbed535}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_MC_Power
+VAR
+    fbPowerAxis     : MC_Power;     // 轴软件使能 FB 实例
+    axisFeed        : AXIS_REF;     // 进给轴轴引用；必须先在 System Manager 配好并 Link
+    bDriveSwEnable  : BOOL := FALSE; // 在线写 TRUE 给软件使能（电平触发，要保持高）
+    bAxisReady      : BOOL;         // Status：轴是否就绪可接收运动命令
+    bPowerBusy      : BOOL;
+    bPowerError     : BOOL;
+    nPowerErrorID   : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：CX 控制器 + 一个 EL72xx 伺服端子驱动的进给轴。设备上电后，PLC 第一步
+//       要给该轴下发软件使能，并等待 Status = TRUE（轴就绪）后才能发运动命令。
+//       这是 Tc3_DriveMotionControl 库里所有运动控制的"总开关"。
+//
+// 价值：1) 不必手动拼 NC 轴控制字里的使能位、不必自己做使能后的状态握手
+//       2) Status 输出直接告诉你"能不能发 Move"，时序判断一目了然
+//       3) 与库内 MC_MoveAbsolute 等运动 FB 配套，PLCopen 标准接口
+//
+// 验证步骤：
+//   1. 在 TwinCAT System Manager 配好 NC 轴并 Link 给 axisFeed
+//   2. 引用 Tc3_DriveMotionControl 库
+//   3. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   4. 把 P_Demo_MC_Power 加进 PlcTask，编译登录运行
+//   5. 在线写 bDriveSwEnable := TRUE → 应看到 bPowerBusy 立刻 TRUE；
+//      若驱动硬件使能也已给出，几个周期后 bAxisReady (Status) 变 TRUE
+//   6. 把 bDriveSwEnable 拉回 FALSE → bAxisReady 应回到 FALSE（软件使能撤销）
+//   7. 若 bPowerError = TRUE，看 nPowerErrorID 并检查硬件使能 / 驱动残留故障
+// =============================================================================
+
+// MC_Power 是电平触发(Enable 型)：必须每周期持续给 Enable，不能像 Execute 那样打脉冲
+// Axis 是 VAR_IN_OUT，用 := 传引用（不是 =>）
+fbPowerAxis(
+    Enable  := bDriveSwEnable,
+    Axis    := axisFeed,
+    Status  => bAxisReady,
+    Busy    => bPowerBusy,
+    Error   => bPowerError,
+    ErrorID => nPowerErrorID
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

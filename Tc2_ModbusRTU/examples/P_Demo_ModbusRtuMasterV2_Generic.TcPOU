@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_ModbusRtuMasterV2_Generic" Id="{2fff0c9b-de77-56d8-8358-c1e7cdb76961}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_ModbusRtuMasterV2_Generic
+VAR
+    fbModbusMaster : ModbusRtuMasterV2_Generic;       // 硬件无关主站
+    stRxBuffer     : ComBuffer;                        // Tc2_SerialCom 收发缓冲（跨周期稳定实例）
+    stTxBuffer     : ComBuffer;
+    aSensorRegs    : ARRAY[0..3] OF WORD;              // 从传感器读回的 4 个寄存器
+    bReadReq       : BOOL;                             // 在线上升沿：触发一次读
+    bBusy          : BOOL;
+    bError         : BOOL;
+    eErrId         : MODBUS_ERRORS;
+    nBytesRead     : UINT;
+    nReadOkCnt     : UDINT;                            // 监控：累计成功读次数
+    rtDone         : R_TRIG;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：被测设备只提供虚拟 COM 口（如 USB 转串口），标准 KL6x/PC COM 主站接不上，
+//       用 Generic 主站经 Tc2_SerialCom 后台串口块读它的 4 个寄存器。
+//
+// 价值：演示硬件无关主站的特殊用法——RxBuffer/TxBuffer 作为 VAR_IN_OUT 传入，
+//       FB 只组帧/解析，物理收发由 Tc2_SerialCom 在后台搬运。这是唯一能走虚拟
+//       COM 口的 Modbus RTU 主站。
+//
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs → Add → Existing Item → 选本 .TcPOU
+//   2. References → Add library → Tc2_ModbusRTU 和 Tc2_SerialCom；需 TF6340 license
+//   3. 另外建立并每周期调用 Tc2_SerialCom 的 SerialLineControl(ADS) 块，把
+//      stRxBuffer/stTxBuffer 与虚拟 COM 口绑定（本 demo 聚焦主站动作，未含该块）
+//   4. 编译 → 登录 → 运行；在线脉冲 bReadReq := TRUE
+//      → 串口块正常时 bBusy 短暂 TRUE 后落回、bError=FALSE、aSensorRegs 被填、
+//        nReadOkCnt +1
+//      → 若漏调串口块：bBusy 一直 TRUE 直到 Timeout，随后 bError=TRUE
+// =============================================================================
+
+// 读 4 个保持寄存器（Modbus 功能码 3）。RxBuffer/TxBuffer 必须作为 in-out 传入，
+// 它们是本 FB 与后台 Tc2_SerialCom 串口块之间交换字节的缓冲。
+fbModbusMaster.ReadRegs(
+    UnitID      := 1,
+    Quantity    := 4,
+    MBAddr      := 16#0000,
+    cbLength    := SIZEOF(aSensorRegs),                // 必须 >= Quantity*2 = 8
+    pMemoryAddr := ADR(aSensorRegs),
+    Execute     := bReadReq,
+    Timeout     := T#1S,
+    RxBuffer    := stRxBuffer,
+    TxBuffer    := stTxBuffer,
+    BUSY        => bBusy,
+    Error       => bError,
+    ErrorId     => eErrId,
+    cbRead      => nBytesRead
+);
+
+// 一次成功读完成时累加计数
+rtDone(CLK := NOT bBusy AND bReadReq AND NOT bError);
+IF rtDone.Q THEN
+    nReadOkCnt := nReadOkCnt + 1;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

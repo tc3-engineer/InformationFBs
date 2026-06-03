@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_PROFINET_READ_IM" Id="{92d69a42-511c-5674-903b-ca25ae9e4d2e}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_PROFINET_READ_IM
+VAR
+    fbReadIM      : FB_PROFINET_READ_IM;
+    bReadReq      : BOOL := FALSE;            // 在线上升沿触发
+    stIuM         : str_IuM_Data;             // I&M 数据结构
+    bBusy         : BOOL;
+    bErr          : BOOL;
+    nErrId        : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_ProfinetDiag.FB_PROFINET_READ_IM 演示程序
+// ============================================================
+// 场景：CCAT/TF6270 设备读自身 I&M 结构。
+// 价值：结构化一次返回。
+// 验证：登录后 bReadReq 上升沿，stIuM 填入。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_ProfinetDiag（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』指引在线写值观察
+// ============================================================
+
+// 上升沿触发；读 CCAT/TF6270 设备的 I&M 数据结构
+fbReadIM(
+    bStart := bReadReq,
+    NETID  := '',
+    PORT   := 16#1001,
+    str_IuM_Data => stIuM,
+    bBusy  => bBusy,
+    bError => bErr,
+    nErrorID => nErrId
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

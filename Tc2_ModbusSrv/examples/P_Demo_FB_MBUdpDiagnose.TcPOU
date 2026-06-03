@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_MBUdpDiagnose" Id="{69ecd665-2155-56e2-b9a6-41654429cdc5}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_MBUdpDiagnose
+VAR
+    fbUdpDiagnose : FB_MBUdpDiagnose;
+    sTargetIp     : STRING(15) := '192.168.1.50';   // 目标 Modbus 设备 IP（按现场改）
+    bTrigger      : BOOL;          // 在线置一次上升沿触发本次访问
+    bBusy         : BOOL;          // 在线 monitor：执行中为 TRUE
+    bError        : BOOL;          // 出错置 TRUE
+    nErrId        : UDINT;         // 出错时的 ADS/Modbus 错误码
+    nDiagReadData : WORD;          // 回读的诊断数据字
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_ModbusSrv.FB_MBUdpDiagnose 演示程序（Modbus TCP 客户端 / 主站）
+// ============================================================
+// 场景：对可疑链路做联机诊断，例如用子功能 0（Return Query Data，回显测试）确认链路通畅，或读取从站的通信计数器/错误状态字排查现场故障。 选用 UDP 版多见于同一控制柜/同网段、对实时性敏感且能容忍偶发丢包的场景，省去 TCP 建链开销。
+// 价值：功能码 8 是 Modbus 标准诊断入口；本 FB 把子功能号 + 写数据封装为一次调用，回读 `nReadData`，无须自拼诊断报文。
+// 验证：登录后在线置 bTrigger := TRUE 触发一次；观察 bBusy 在数个周期后回 FALSE，
+//       bError 应为 FALSE、nErrId 应为 0；若对端不在线则 bError=TRUE 且 nErrId 含超时码。
+//       本例：子功能 0：回显测试（Return Query Data）
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_ModbusSrv（References → Add library），并确保 TF6250 Modbus TCP 已授权运行
+//   3. 把 sTargetIp 改成现场 Modbus 设备 IP；编译 → 登录 → 运行
+//   4. 在线脉冲 bTrigger，按上方『验证』观察输出
+// ============================================================
+
+// 单次完整调用：所有 VAR_INPUT 显式赋值；bExecute 边沿触发一次
+fbUdpDiagnose(
+    sIPAddr    := sTargetIp,
+    nTCPPort   := MODBUS_TCP_PORT,
+    nUnitID    := 16#FF,
+    nSubFnc    := 0,        // 0 = Return Query Data (回显测试)
+    nWriteData := 16#A537,  // 任意测试字, 对端应原样回显
+    bExecute   := bTrigger,
+    tTimeout   := T#5S,
+    bBUSY      => bBusy,
+    bError     => bError,
+    nErrId     => nErrId,
+    nReadData  => nDiagReadData
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

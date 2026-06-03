@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_PN_SCAN" Id="{f40972a6-80b8-5939-90be-a375f2a5603b}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_PN_SCAN
+VAR
+    fbScan        : FB_PN_SCAN;
+    bScanReq      : BOOL := FALSE;            // 在线上升沿触发扫描
+    bBusy         : BOOL;
+    bErr          : BOOL;
+    nErrId        : UDINT;
+    iFound        : INT;                      // 扫描到的设备数
+    aDevices      : ARRAY [1..100] OF str_PN_SCAN;   // 逐台设备信息
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_ProfinetDiag.FB_PN_SCAN 演示程序
+// ============================================================
+// 场景：扫描全网 PROFINET 设备（≤100 台）做发现。
+// 价值：扫到 MAC/名可联动自动命名。
+// 验证：登录后 bScanReq 上升沿，iFound/aDevices 填入。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_ProfinetDiag（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』指引在线写值观察
+// ============================================================
+
+// 上升沿触发；扫描全网（最多 100 台）
+fbScan(
+    bExecute := bScanReq,
+    NETID    := '',
+    iFind_Devices => iFound,
+    ar_PN_DEVICE => aDevices,
+    bBusy    => bBusy,
+    bError   => bErr,
+    iErrorID => nErrId
+);
+
+// 遍历 1..iFound 取 aDevices[i].MacID / PN_NAME，可喂给 FB_SET_PN_NAME
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

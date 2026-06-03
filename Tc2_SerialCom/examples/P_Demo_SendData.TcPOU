@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_SendData" Id="{d4841bfb-fd3d-5ae7-860c-662293e70597}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_SendData
+VAR
+    fbSerialLine : SerialLineControl;           // 后台通信，消费 bufTx
+    fbSendData   : SendData;
+    bufTx        : ComBuffer;
+    bufRx        : ComBuffer;
+    arrComIn     : PcComInData;
+    arrComOut    : PcComOutData;
+    bErrLine     : BOOL;
+
+    // STX 'A' 'B' ETX —— 一个最简协议帧
+    abyCmdFrame  : ARRAY[0..3] OF BYTE := [16#02, 16#41, 16#42, 16#03];
+    bSendFrame   : BOOL;                         // 在线置 TRUE 触发一次发送
+    rtrigSend    : R_TRIG;
+    bSendBusy    : BOOL;
+    eErr         : ComError_t;
+    nFramesSent  : UDINT;                          // 监控：累计发出的帧数
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：向打印机/控制器发送一个 STX...ETX 包裹的二进制命令帧。帧内容固定，
+//       按需触发一次发送。
+//
+// 价值：演示 SendData 一次给"地址 + 长度"即可发整块二进制——以及核心纪律：
+//       Busy=TRUE 期间不得修改 abyCmdFrame，否则对端收到错位数据。
+//
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_SerialCom；把 arrComIn/arrComOut 链接到 COM 口过程映像
+//   3. 编译 → 登录 → 运行；用串口助手(HEX 模式)监视该口
+//      → 每次在线把 bSendFrame 置 TRUE，收到 02 41 42 03 四个字节，nFramesSent +1
+// =============================================================================
+
+// 后台通信：把 bufTx 里的字节发往硬件
+fbSerialLine(
+    Mode      := ComSerialLineMode_t.SERIALLINEMODE_PC_COM_PORT,
+    pComIn    := ADR(arrComIn),
+    pComOut   := ADR(arrComOut),
+    SizeComIn := SIZEOF(arrComIn),
+    TxBuffer  := bufTx,
+    RxBuffer  := bufRx,
+    Error     => bErrLine
+);
+
+// 用上升沿触发单次发送，发送期间(直到 Busy=FALSE)不改 abyCmdFrame
+rtrigSend(CLK := bSendFrame);
+IF rtrigSend.Q THEN
+    fbSendData(
+        pSendData := ADR(abyCmdFrame),
+        Length    := SIZEOF(abyCmdFrame),
+        TxBuffer  := bufTx,
+        Busy      => bSendBusy,
+        Error     => eErr
+    );
+    IF (NOT bSendBusy) AND (eErr = ComError_t.COMERROR_NOERROR) THEN
+        nFramesSent := nFramesSent + 1;
+    END_IF;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_KL6ReadRegisters" Id="{4684b250-787b-5594-81c1-1c5bb68471de}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_KL6ReadRegisters
+VAR
+    fbKL6Read    : KL6ReadRegisters;
+    arrComIn     : KL6inData5B;                 // KL6xxx 5 字节模式过程映像
+    arrComOut    : KL6outData5B;
+    aRegList     : ARRAY[0..63] OF ComRegisterData_t;  // 读结果落点
+
+    bReadRequest : BOOL;                        // 在线置 TRUE 触发一次读取
+    rtrigRead    : R_TRIG;
+    bReadDone    : BOOL;
+    bReadBusy    : BOOL;
+    bReadError   : BOOL;
+    eErrId       : ComError_t;
+    wReg0Value   : WORD;                          // 监控：读回的寄存器 0 值
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：现场怀疑 KL6031 端子配置不对，需要在线读出端子寄存器 0~7 看当前波特率等
+//       设置，做通信故障诊断。
+//
+// 价值：演示 KL6ReadRegisters 连续读模式(FirstRegister=0 + RegisterCount=8)——
+//       读回值进 aRegList 的 Value 字段；Execute 边沿触发，读完再撤。
+//
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_SerialCom；把 arrComIn/arrComOut 链接到 KL6031 端子过程映像
+//   3. 编译 → 登录 → 运行；在线把 bReadRequest 置 TRUE
+//      → bReadBusy 短暂为 TRUE，随后 bReadDone=TRUE、bReadError=FALSE
+//      → 展开 aRegList[0..7] 可看读回的寄存器值；wReg0Value 显示寄存器 0 内容
+// =============================================================================
+
+// R_TRIG 把电平变上升沿：每次置 TRUE 只读一次
+rtrigRead(CLK := bReadRequest);
+
+fbKL6Read(
+    Execute          := rtrigRead.Q,
+    FirstRegister    := 0,                      // 从寄存器 0 开始
+    RegisterCount    := 8,                      // 连续读 8 个
+    Mode             := ComSerialLineMode_t.SERIALLINEMODE_KL6_5B_STANDARD,
+    pComIn           := ADR(arrComIn),
+    pComOut          := ADR(arrComOut),
+    SizeComIn        := SIZEOF(arrComIn),
+    pRegisterList    := ADR(aRegList),
+    SizeRegisterList := SIZEOF(aRegList),
+    Done             => bReadDone,
+    Busy             => bReadBusy,
+    Error            => bReadError,
+    ErrorID          => eErrId
+);
+
+// 读成功后把寄存器 0 的值提出来便于监控
+IF bReadDone AND NOT bReadError THEN
+    wReg0Value := aRegList[0].Value;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

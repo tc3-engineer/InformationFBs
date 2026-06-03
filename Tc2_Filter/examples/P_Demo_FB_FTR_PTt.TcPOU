@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_FTR_PTt" Id="{f9f629cf-080d-5834-ac83-66a2bf9dcd46}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_FTR_PTt
+VAR
+    fbFilter      : FB_FTR_PTt;                  // 被演示的滤波器实例
+    stParams      : ST_FTR_PTt := (fKp := 1, fTt := 0.1, fSamplingRate := 1000, nOversamples := 1, nChannels := 1);
+    // Call() 用指针 + 字节长度传数组；单通道单过采样 → 1x1 数组
+    aIn           : ARRAY [1..1] OF ARRAY [1..1] OF LREAL;  // 输入缓冲
+    aOut          : ARRAY [1..1] OF ARRAY [1..1] OF LREAL;  // 输出缓冲
+    fNoisyIn      : LREAL;                    // 在线 monitor：合成的带噪输入
+    fFilteredOut  : LREAL;                    // 在线 monitor：滤波后输出
+    bInjectSpike  : BOOL := FALSE;            // 在线写 TRUE 注入尖峰扰动
+    bConfigured   : BOOL;                     // 配置状态（应为 TRUE）
+    bCallOk       : BOOL;                     // Call() 返回值
+    nPhase        : UDINT;                    // 正弦相位计数（0..999，每周期 1000 点）
+    fSig          : LREAL;                    // 临时：基波正弦值
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// 场景：皮带秤称重点与执行机构相距一段皮带，物料从称重到落料有固定输送延迟；用 PTt 把称重信号延迟相同时间，使其与下游动作在时间上对齐。
+//   本 demo 用一个合成信号（正弦基波 + 周期性尖峰扰动）喂给 FB_FTR_PTt，
+//   在线观察 fFilteredOut 如何平滑/跟随 fNoisyIn。
+// 价值：把『把信号延迟固定时间』封装成一行配置，自动按采样周期对齐缓冲长度，免去手写移位寄存器。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_Filter（References → Add library），并把本 PROGRAM 加入一个 1ms 任务
+//      （fSamplingRate 取 1000，故任务周期应为 1ms，使采样率与调用频率一致）
+//   3. 编译 → 登录 → 运行
+//   4. 在线 monitor 同时看 fNoisyIn（带噪输入）与 fFilteredOut（滤波输出）：
+//      - bConfigured 在首次循环后应为 TRUE（上升沿调用 Configure 完成配置）
+//      - fFilteredOut 应是 fNoisyIn 的平滑/相位校正版本（尖峰被削弱、毛刺变平）
+//   5. 在线把 bInjectSpike 写 TRUE，给 fNoisyIn 叠加阶跃式尖峰扰动，
+//      观察 fFilteredOut 不会立刻跟随尖峰、而是被滤波器抑制后缓慢响应
+//      （验证『滤波器真的在做事』，而不只是把输入原样透传）
+
+// ---- 1) 合成一个『正弦基波 + 可选尖峰』的测试信号 ----
+// 基波：幅值 10、频率 = fSamplingRate/1000 = 1 Hz（每 1000 个 1ms 周期一圈）
+nPhase := (nPhase + 1) MOD 1000;
+fSig := 10.0 * SIN(6.2831853 * UDINT_TO_LREAL(nPhase) / 1000.0);
+
+// 周期性尖峰扰动：相位 500 处叠加一个大幅值脉冲，模拟野值/噪声
+IF bInjectSpike AND (nPhase = 500) THEN
+    fNoisyIn := fSig + 50.0;          // 突然蹦出的尖峰
+ELSE
+    fNoisyIn := fSig;
+END_IF
+
+// ---- 2) 把带噪输入送入滤波器，取出平滑输出 ----
+// 首次循环触发一次 Configure：把 stParams 灌进 fbFilter.stConfig，使 bConfigured = TRUE。
+// 若 bConfigured 中途被清（如重配失败），下个周期会自动再试一次。
+IF NOT fbFilter.bConfigured THEN
+    fbFilter.Configure(stConfig := stParams);
+END_IF
+
+aIn[1][1]    := fNoisyIn;
+bCallOk      := fbFilter.Call(ADR(aIn), SIZEOF(aIn), ADR(aOut), SIZEOF(aOut));
+fFilteredOut := aOut[1][1];
+
+// 读配置状态（声明时已用 stConfig 配置，正常应为 TRUE）
+bConfigured := fbFilter.bConfigured;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

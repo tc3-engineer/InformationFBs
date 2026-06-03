@@ -199,6 +199,36 @@ def _extract_defaults(section_text: str) -> dict[str, str]:
     return out
 
 
+def _find_section_in_body(lib: str, name: str) -> str | None:
+    """Locate the section number of `name` by scanning the cached PDF body.
+
+    A body heading reads "<sec> <title>" with no trailing dot-leader/page (the
+    dot-leader+page form is a TOC line). We require the title to be exactly the
+    POU name. Returns the deepest/last matching section number (body headings
+    follow any stray TOC echo), or None.
+    """
+    txt = CACHE / f"{lib}.txt"
+    if not txt.exists():
+        return None
+    body = txt.read_text()
+    # Body heading: "<sec> <name>" at line start, where <sec> is 1–5 levels.
+    # The title may carry a suffix after the POU name (Tc2_ModbusSrv prints
+    # "6.2.1 FB_MBReadCoils (Modbus function 1)"), so allow trailing text — but
+    # gate the name with a non-identifier lookahead so searching "FB_MBRead"
+    # can't match "FB_MBReadCoils". TOC echoes (same line + dot-leader + page)
+    # share the section number, so grabbing either is fine; we de-dup by depth.
+    pat = re.compile(
+        rf"(?m)^\s*(\d+(?:\.\d+){{0,4}})\s+{re.escape(name)}(?![A-Za-z0-9_]).*$"
+    )
+    secs = pat.findall(body)
+    if not secs:
+        return None
+    # Prefer the most specific (deepest) section; ties → last occurrence
+    # (body headings follow any stray TOC echo).
+    secs.sort(key=lambda s: s.count("."))
+    return secs[-1]
+
+
 def _read_doc_meta(doc: str) -> dict:
     meta: dict[str, str] = {}
     pat = re.compile(r"\|\s*([A-Za-z _\-]+?)\s*\|\s*(.+?)\s*\|\s*$", re.MULTILINE)
@@ -339,7 +369,28 @@ def verify(doc_path: str) -> tuple[int, list[str]]:
     if entry is None and candidates:
         entry = candidates[0]
     if entry is None:
-        return 2, [f"{name} not found in TOC of {lib}"]
+        # Body-header fallback. TF product manuals (Tc2_SerialCom, Tc2_DMX,
+        # Tc2_ModbusSrv …) frequently don't enumerate every FB/FC in the TOC —
+        # either the TOC is shallow (the real POU name sits one level deeper,
+        # only in the body) or the API lives under a chapter classify_group
+        # doesn't recognize ("Programming", "DMX"). extract_section locates a
+        # section by scanning the BODY for the heading "<sec> <title>", which
+        # works regardless of TOC depth, so we only need the section number.
+        # Find it by matching a body heading line whose title is exactly this
+        # doc's POU name. Deterministic and name-gated, so libraries that parse
+        # cleanly are never affected (entry is already set for them).
+        sec = _find_section_in_body(lib, name)
+        if sec:
+            entry = {
+                "section": sec,
+                "name": name,
+                "type": meta.get("Type") or "FB",
+                "category": parent_dir,
+                "page": 0,
+                "depth": sec.count(".") + 1,
+            }
+    if entry is None:
+        return 2, [f"{name} not found in TOC or body of {lib}"]
 
     section_text = extract_section(lib, entry["section"])
     if not section_text:

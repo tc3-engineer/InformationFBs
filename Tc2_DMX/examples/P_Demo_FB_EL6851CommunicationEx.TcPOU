@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_EL6851CommunicationEx" Id="{49427c4d-8c20-51d1-a4f9-fce55427dbe5}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_EL6851CommunicationEx
+VAR
+    fbEL6851Comm        : FB_EL6851CommunicationEx;      // EL6851 通讯核心（每周期调用）
+    stDmxInData         : ST_EL6851InData;               // 与端子输入过程数据链接
+    stDmxOutData        : ST_EL6851OutData;              // 与端子输出过程数据链接
+    stDmxCmdBuffer      : ST_DMXCommandBuffer;           // 命令缓冲区（每端子一个）
+    arrDmxChannels      : ARRAY [1..512] OF BYTE;        // 512 路 DMX 通道亮度
+    uiDmxFrameLength    : UINT := 512;                   // 一帧发 512 字节
+    bSendCyclicLight    : BOOL := TRUE;                  // 在线置 TRUE：循环发灯光数据
+    // --- 监视输出 ---
+    bCommError          : BOOL;                          // 通讯出错
+    udiCommErrorId      : UDINT;                         // 命令专用错误码
+    bInCycleMode        : BOOL;                          // 当前是否 CycleMode
+    byBufferLoad        : BYTE;                          // 缓冲区当前占用率 %
+    byBufferPeak        : BYTE;                          // 缓冲区峰值占用率 %
+    uiOverflowCount     : UINT;                          // 缓冲区溢出累计
+    bLineBusy           : BOOL;                          // 正在转发命令
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_DMX.FB_EL6851CommunicationEx 演示程序
+// ============================================================
+// 场景：舞台灯光系统用一块 EL6851 驱动 DMX512 总线。PLC 每周期把各灯通道亮度
+//       写进 arrDmxChannels 循环发出（CycleMode）；本例演示循环发送灯光数据的主链路。
+// 价值：所有 RDM 命令功能块都依赖这一个实例做缓冲转发；不用它就得自己处理过程
+//       映像争用与命令排队，且无法监视缓冲区占用 / 溢出。
+// 验证：先把 stDmxInData / stDmxOutData 在 I/O 里链接到 EL6851 过程数据；登录后
+//       bSendCyclicLight := TRUE → bInCycleMode 应为 TRUE；把 arrDmxChannels[1]
+//       从 0 改到 255 → 接在 1 号通道的灯应变亮；byBufferLoad 在纯循环模式下应接近 0。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_DMX（References → Add library），并在 I/O 中链接 EL6851 过程数据
+//   3. 编译 → 登录 → 运行；按上方『验证』行的指示在线写值观察
+// ============================================================
+
+// CycleMode 循环发送灯光数据：bEnableSendingData=TRUE、bSetCycleMode=TRUE、
+// bSendDefaultData=FALSE、uiDataLength=帧长。本功能块必须每周期调用一次。
+fbEL6851Comm(
+    wSourceManufacturerId := 16#42_41,        // Beckhoff 的 ESTA 厂商 ID
+    dwSourceDeviceId      := 16#12_13_14_15,   // 主站设备 ID（可自定）
+    bEnableSendingData    := bSendCyclicLight,
+    bSetCycleMode         := TRUE,             // 循环发数据需 CycleMode
+    bSendDefaultData      := FALSE,
+    uiDataLength          := uiDmxFrameLength,
+    dwOptions             := 0,
+    stEL6851InData        := stDmxInData,
+    stEL6851OutData       := stDmxOutData,
+    stCommandBuffer       := stDmxCmdBuffer,
+    arrProcessData        := arrDmxChannels,
+    bError                => bCommError,
+    udiErrorId            => udiCommErrorId,
+    bCycleMode            => bInCycleMode,
+    byBufferDemandMeter        => byBufferLoad,
+    byBufferMaximumDemandMeter => byBufferPeak,
+    uiBufferOverflowCounter    => uiOverflowCount,
+    bLineIsBusy           => bLineBusy
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

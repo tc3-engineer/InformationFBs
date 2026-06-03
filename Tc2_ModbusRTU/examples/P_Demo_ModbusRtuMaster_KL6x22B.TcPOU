@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_ModbusRtuMaster_KL6x22B" Id="{1788d488-e39b-5c43-927c-b87953c7efec}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_ModbusRtuMaster_KL6x22B
+VAR
+    fbModbusMaster : ModbusRtuMaster_KL6x22B;        // 旧版 KL6031/6041 端子主站（已废弃）
+    aMeterRegs     : ARRAY[0..5] OF WORD;             // 读回的 6 个寄存器
+    bReadReq       : BOOL;                             // 在线上升沿：触发一次读
+    bBusy          : BOOL;
+    bError         : BOOL;
+    eErrId         : MODBUS_ERRORS;
+    nBytesRead     : UINT;
+    nReadOkCnt     : UDINT;                            // 监控：累计成功读次数
+    rtDone         : R_TRIG;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：维护早期用旧版 ModbusRtuMaster_KL6x22B 写成的存量程序——经 KL6041 端子读
+//       站地址 2 电表的 6 个保持寄存器（功能码 3）。
+//
+// 价值：演示旧版 KL6x22B 主站接口（UnitID 为 UINT、无 Aux 参数）的用法，便于改动
+//       老工程。新工程应改用 ModbusRtuMasterV2_KL6x22B。
+//
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs → Add → Existing Item → 选本 .TcPOU
+//   2. References → Add library → Tc2_ModbusRTU；System Manager 把 FB 内置串口数据
+//      结构链接到 KL6041 端子（波特率/校验位与电表一致）
+//   3. 编译 → 登录 → 运行；在线脉冲 bReadReq := TRUE
+//      → bBusy 短暂 TRUE 后落回；电表在线则 bError=FALSE、aMeterRegs 被填、
+//        nBytesRead=12、nReadOkCnt +1
+//      → 拔掉电表通讯线再脉冲：bError=TRUE、eErrId=MODBUSERROR_NO_RESPONSE
+// =============================================================================
+
+// 读 6 个保持寄存器（Modbus 功能码 3）
+fbModbusMaster.ReadRegs(
+    UnitID      := 2,
+    Quantity    := 6,
+    MBAddr      := 16#0000,
+    cbLength    := SIZEOF(aMeterRegs),                // 必须 >= Quantity*2 = 12
+    pMemoryAddr := ADR(aMeterRegs),
+    Execute     := bReadReq,
+    Timeout     := T#1S,
+    BUSY        => bBusy,
+    Error       => bError,
+    ErrorId     => eErrId,
+    cbRead      => nBytesRead
+);
+
+// 一次成功读完成时累加计数
+rtDone(CLK := NOT bBusy AND bReadReq AND NOT bError);
+IF rtDone.Q THEN
+    nReadOkCnt := nReadOkCnt + 1;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

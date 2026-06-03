@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_PN_IM0_READ" Id="{2de35405-9313-5d8a-acb4-d917bcbd4afc}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_PN_IM0_READ
+VAR
+    fbFB_PN_IM0_READ : FB_PN_IM0_READ;        // FB_PN_IM0_READ 实例
+    bReadIM       : BOOL := FALSE;            // 在线上升沿触发一次读取
+    bBusy         : BOOL;
+    bErr          : BOOL;
+    nErrId        : UDINT;
+    stIM0         : str_IM_0xAFF0;            // I&M0 出厂标识结构
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_ProfinetDiag.FB_PN_IM0_READ 演示程序
+// ============================================================
+// 场景：读设备出厂标识（厂商/订货号/序列号）做资产校验。
+// 价值：免手工解析 0xAFF0 帧。
+// 验证：登录后 bReadIM 上升沿，bBusy 一闪后 stIM0 填入设备标识。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_ProfinetDiag（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』指引在线写值观察
+// ============================================================
+
+// 上升沿触发一次 I&M 读取；读到的数据在 bBusy 落沿后有效
+fbFB_PN_IM0_READ(
+    bStart := bReadIM,
+    NETID  := '',
+    PORT   := 16#1001,
+    bBusy  => bBusy,
+    IM_AFF0 => stIM0,
+    bError => bErr,
+    iErrorID => nErrId
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

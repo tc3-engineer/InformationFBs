@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_SendString255" Id="{0e2ad94c-74df-5616-8056-16b3b6651cc0}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_SendString255
+VAR
+    fbSerialLine    : SerialLineControl;        // 后台通信，消费 bufTx
+    fbSendString255 : SendString255;
+    bufTx           : ComBuffer;
+    bufRx           : ComBuffer;
+    arrComIn        : PcComInData;
+    arrComOut       : PcComOutData;
+    bErrLine        : BOOL;
+
+    // 一条较长(>80)的多字段配置命令
+    sLongCommand    : STRING(255) := 'CONFIG:BAUD=9600,PARITY=NONE,STOP=1,FLOW=NONE$R$L';
+    bSendConfig     : BOOL;                       // 在线置 TRUE 发一次
+    rtrigSend       : R_TRIG;
+    bSendBusy       : BOOL;
+    eErr            : ComError_t;
+    nCfgSent        : UDINT;                       // 监控：累计发出的配置命令数
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：上电时向智能仪表下发一条较长的配置命令(超过 80 字符)，含多个参数字段，
+//       以 CR/LF 结尾。必须用 255 字符版本，否则被截断。
+//
+// 价值：演示 SendString255 发送长文本命令——与 SendString 用法一致，仅上限不同；
+//       提醒长命令不要用 80 字符版本以免静默截断。
+//
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_SerialCom；把 arrComIn/arrComOut 链接到 COM 口过程映像
+//   3. 编译 → 登录 → 运行；用串口助手监视该口
+//      → 每次在线把 bSendConfig 置 TRUE，收到完整一行配置命令，nCfgSent +1
+// =============================================================================
+
+// 后台通信：把 bufTx 里的字节发往硬件
+fbSerialLine(
+    Mode      := ComSerialLineMode_t.SERIALLINEMODE_PC_COM_PORT,
+    pComIn    := ADR(arrComIn),
+    pComOut   := ADR(arrComOut),
+    SizeComIn := SIZEOF(arrComIn),
+    TxBuffer  := bufTx,
+    RxBuffer  := bufRx,
+    Error     => bErrLine
+);
+
+// 上升沿触发单次发送
+rtrigSend(CLK := bSendConfig);
+IF rtrigSend.Q THEN
+    fbSendString255(
+        SendString := sLongCommand,
+        TxBuffer   := bufTx,
+        Busy       => bSendBusy,
+        Error      => eErr
+    );
+    IF (NOT bSendBusy) AND (eErr = ComError_t.COMERROR_NOERROR) THEN
+        nCfgSent := nCfgSent + 1;
+    END_IF;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

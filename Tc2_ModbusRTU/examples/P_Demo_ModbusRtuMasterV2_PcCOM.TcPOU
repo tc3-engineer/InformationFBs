@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_ModbusRtuMasterV2_PcCOM" Id="{bfddaa00-758b-5f03-a28c-06e6646b6cc0}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_ModbusRtuMasterV2_PcCOM
+VAR
+    fbModbusMaster : ModbusRtuMasterV2_PcCOM;       // 串口 Modbus RTU 主站
+
+    // ---- 读保持寄存器（功能码 3）所用变量 ----
+    aDriveStatus   : ARRAY[0..9] OF WORD;            // 从变频器读回的 10 个寄存器
+    bReadDriveReq  : BOOL;                            // 在线上升沿：触发一次读
+    bReadBusy      : BOOL;
+    bReadError     : BOOL;
+    eReadErrId     : MODBUS_ERRORS;
+    nReadBytes     : UINT;                            // 监控用：读回字节数
+
+    // ---- 写单个寄存器（功能码 6）所用变量 ----
+    nFreqSetpoint  : WORD := 2500;                    // 要写给变频器的频率给定（如 25.00Hz）
+    bWriteFreqReq  : BOOL;                            // 在线上升沿：触发一次写
+    bWriteBusy     : BOOL;
+    bWriteError    : BOOL;
+    eWriteErrId    : MODBUS_ERRORS;
+
+    nReadOkCnt     : UDINT;                           // 监控：累计成功读次数
+    rtReadDone     : R_TRIG;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：TwinCAT 控制器经板载 RS485 + COM 口轮询站地址 1 的变频器：周期读它的
+//       10 个状态寄存器，并能在线把一个新的频率给定写回去。
+//
+// 价值：演示 MasterV2 的两个核心动作 ReadRegs(3)/WriteSingleRegister(6) 的标准
+//       用法——按动作调用（不是 fb()）、cbLength 用 SIZEOF、靠 BUSY 互锁串行、
+//       靠 Error+ErrorId 判错。不用本 FB 就得自己拼地址+功能码+CRC 收发裸字节。
+//
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs → Add → Existing Item → 选本 .TcPOU
+//   2. References → Add library → Tc2_ModbusRTU；在 System Manager 把 FB 内置的
+//      串口数据结构链接到一个真实 COM 口（波特率/校验位须与从站一致）
+//   3. 编译 → 登录 → 运行
+//   4. 在线脉冲 bReadDriveReq := TRUE
+//      → bReadBusy 短暂为 TRUE 后落回；从站正常时 bReadError=FALSE，
+//        aDriveStatus 被填入读回值，nReadBytes=20，nReadOkCnt 每次 +1
+//      → 把从站断电再脉冲：bReadError=TRUE，eReadErrId=MODBUSERROR_NO_RESPONSE
+//   5. 在线改 nFreqSetpoint 后脉冲 bWriteFreqReq := TRUE，观察变频器频率给定变化
+// =============================================================================
+
+// ---- 动作 1：读 10 个保持寄存器（Modbus 功能码 3） ----
+fbModbusMaster.ReadRegs(
+    UnitID      := 1,                                // 变频器站地址
+    Quantity    := 10,                               // 读 10 个字
+    MBAddr      := 16#0000,                           // 起始数据地址 0
+    cbLength    := SIZEOF(aDriveStatus),              // 必须 >= Quantity*2
+    pMemoryAddr := ADR(aDriveStatus),
+    Execute     := bReadDriveReq,
+    Timeout     := T#1S,                              // 9600bps 读 10 字给足 1s
+    BUSY        => bReadBusy,
+    Error       => bReadError,
+    ErrorId     => eReadErrId,
+    cbRead      => nReadBytes
+);
+
+// 在一次读成功完成的那一周期累加计数（BUSY 下降沿且无错）
+rtReadDone(CLK := NOT bReadBusy AND bReadDriveReq AND NOT bReadError);
+IF rtReadDone.Q THEN
+    nReadOkCnt := nReadOkCnt + 1;
+END_IF;
+
+// ---- 动作 2：写单个寄存器（Modbus 功能码 6），把频率给定发给变频器 ----
+// Quantity=1、cbLength=2（一个 WORD）。BUSY 互锁保证它不会和上面的读同时占线。
+fbModbusMaster.WriteSingleRegister(
+    UnitID      := 1,
+    Quantity    := 1,
+    MBAddr      := 16#0800,                           // 输出区起始偏移示例（见库地址映射）
+    cbLength    := SIZEOF(nFreqSetpoint),
+    pMemoryAddr := ADR(nFreqSetpoint),
+    Execute     := bWriteFreqReq,
+    Timeout     := T#1S,
+    BUSY        => bWriteBusy,
+    Error       => bWriteError,
+    ErrorId     => eWriteErrId
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

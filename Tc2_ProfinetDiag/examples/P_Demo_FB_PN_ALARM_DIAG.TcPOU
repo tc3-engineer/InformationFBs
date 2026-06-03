@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_PN_ALARM_DIAG" Id="{17f225e8-b435-599f-a18e-8db5c4ef959e}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_PN_ALARM_DIAG
+VAR
+    fbAlarmDiag      : FB_PN_ALARM_DIAG;        // 诊断报警读取实例
+    bDiagEnable      : BOOL := FALSE;           // 在线置 TRUE 开始监听本设备报警
+    stDiag           : ST_PN_AlarmDiagData;     // 解析后的可读诊断数据
+    bDiagBusy        : BOOL;
+    bDiagError       : BOOL;
+    nDiagErrId       : UDINT;
+    iAlarmCount      : INT;                      // 本次读出的报警条数
+    // 注：实际工程中 PnIoBoxDiag 由 TwinCAT I/O 映射链接到设备硬件输入，
+    //     无法在纯 ST 例程里赋值，此处仅演示输出端的在线观察。
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_ProfinetDiag.FB_PN_ALARM_DIAG 演示程序
+// ============================================================
+// 场景：读 PROFINET 从站诊断报警，定位故障站/槽。
+// 价值：封装监听+解析+复位，业务侧直接读结构。
+// 验证：登录后写 bDiagEnable:=TRUE；设备有报警时 stDiag/iAlarmCount 更新。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_ProfinetDiag（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』指引在线写值观察
+// ============================================================
+
+// 电平使能型：bDiagEnable 保持 TRUE 期间持续监听并逐条输出报警
+fbAlarmDiag(
+    bEnable := bDiagEnable,
+    NETID   := '',                 // 本机控制器
+    PORT    := 16#1001,            // 示例：Device ID 1 -> 1 + 16#1000
+    bBusy   => bDiagBusy,
+    stAlarmDiagData => stDiag,
+    bError  => bDiagError,
+    iErrorID => nDiagErrId,
+    iNrAlarms => iAlarmCount
+);
+
+// 工程中应在此把 stDiag 拷入报警列表 / 推 HMI（每周期取一条）
+// IF iAlarmCount > 0 THEN ... 记录 stDiag.sNameOfStation / stDiag.ST_Diag.nSlot ...
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

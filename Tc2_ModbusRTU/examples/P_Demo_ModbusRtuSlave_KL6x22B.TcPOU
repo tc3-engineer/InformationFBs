@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_ModbusRtuSlave_KL6x22B" Id="{223f48ed-43b5-5162-9f53-e2663e9013da}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_ModbusRtuSlave_KL6x22B
+VAR
+    fbModbusSlave : ModbusRtuSlave_KL6x22B;          // KL6031/KL6041 端子 Modbus RTU 从站
+    aInputs   : ARRAY[0..7] OF WORD;                  // 输入区（主站只读）偏移 16#0
+    aOutputs  : ARRAY[0..7] OF WORD;                  // 输出区（主站读写）偏移 16#800
+    aMemory   : ARRAY[0..7] OF WORD;                  // 存储区（主站读写）偏移 16#4000
+    eErrId    : MODBUS_ERRORS;
+    nTankLevel : WORD;                                 // 演示：把液位测量暴露给主站读
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：TwinCAT 经 KL6041 串口端子作 Modbus RTU 从站，把一个液位测量值放到输入区
+//       供上位 PLC 周期读取。串口做成端子，省 PC 串口卡。
+//
+// 价值：演示 KL6x22B 从站标准用法——三块数据区 + 每周期一次调用，无 Execute。
+//       与 PcCOM 从站接口完全一致，仅硬件后端换成总线端子。
+//
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs → Add → Existing Item → 选本 .TcPOU
+//   2. References → Add library → Tc2_ModbusRTU；System Manager 把 FB 内置串口数据
+//      结构链接到 KL6041 端子（波特率/校验位与主站一致）
+//   3. 编译 → 登录 → 运行
+//   4. 在线给 nTankLevel 写个值（如 750）；用主站以站地址 2 读输入寄存器、地址 16#0
+//      → 读到 750；eErrId 保持 MODBUSERROR_NO_ERROR
+//   5. 断开端子与主站的接线 → 主站侧报无应答（从站侧 eErrId 反映线路错误）
+// =============================================================================
+
+// 业务侧：把液位测量放进输入区供主站读（这里用一个在线可改的变量代表传感器值）
+aInputs[0] := nTankLevel;
+
+// 每周期调用一次从站
+fbModbusSlave(
+    UnitID          := 2,                            // 本从站站地址
+    AdrInputs       := ADR(aInputs),
+    SizeInputBytes  := SIZEOF(aInputs),
+    AdrOutputs      := ADR(aOutputs),
+    SizeOutputBytes := SIZEOF(aOutputs),
+    AdrMemory       := ADR(aMemory),
+    SizeMemoryBytes := SIZEOF(aMemory),
+    ErrorId         => eErrId
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_DMXGetManufacturerLabel" Id="{3b9f0471-5e3a-5820-912c-a9591c2548a0}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_DMXGetManufacturerLabel
+VAR
+    fbGetManufLabel   : FB_DMXGetManufacturerLabel;   // 读厂商描述
+    stDmxCmdBuffer    : ST_DMXCommandBuffer;          // 与通讯 FB 共用
+    wTargetManufId    : WORD := 16#4241;              // 目标灯具厂商 ID
+    dwTargetDeviceId  : DWORD := 16#12131415;         // 目标灯具设备 ID
+    byTargetPort      : BYTE := 0;                    // 根设备通道 0
+    bDoRead           : BOOL := FALSE;                // 在线给一次上升沿触发
+    bBusy             : BOOL;
+    bError            : BOOL;
+    udiErrId          : UDINT;
+    sManufLabel       : STRING;                       // 厂商描述文本
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_DMX.FB_DMXGetManufacturerLabel 演示程序
+// ============================================================
+// 场景：多品牌混装灯光系统资产盘点：读出每盏灯厂商名，配合型号描述生成完整厂商+型号台账。
+// 价值：把厂商信息以可读文本读出，免去用数字厂商 ID 反查 ESTA 列表。
+// 验证：给 bDoRead 一次上升沿 -> bBusy 短暂 TRUE -> 回 FALSE 后 sManufLabel 即厂商名称文本。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_DMX；同项目里放一个 FB_EL6851CommunicationEx 实例并共用 stDmxCmdBuffer（非 CycleMode）
+//   3. 编译 → 登录 → 运行；按上方『验证』行在线给上升沿观察
+// ============================================================
+
+fbGetManufLabel(
+    bStart                     := bDoRead,
+    wDestinationManufacturerId := wTargetManufId,
+    dwDestinationDeviceId      := dwTargetDeviceId,
+    byPortId                   := byTargetPort,
+    dwOptions                  := 0,
+    stCommandBuffer            := stDmxCmdBuffer,
+    bBusy                      => bBusy,
+    bError                     => bError,
+    udiErrorId                 => udiErrId,
+    sManufacturerLabel         => sManufLabel
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

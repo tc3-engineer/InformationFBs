@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_READ_PROFINET_NAME" Id="{40f88eb0-3124-55eb-be36-1fd1a4a0bac0}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_READ_PROFINET_NAME
+VAR
+    fbReadPnName  : FB_READ_PROFINET_NAME;
+    bReadReq      : BOOL := FALSE;            // 在线上升沿触发
+    bBusy         : BOOL;
+    bErr          : BOOL;
+    nSlaveKind    : BYTE;                     // 0=物理 EL6631 / 1=虚拟
+    aPnNames      : ARRAY [1..2] OF STRING(240);   // [1]=物理 [2]=虚拟 名称
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_ProfinetDiag.FB_READ_PROFINET_NAME 演示程序
+// ============================================================
+// 场景：读 EL6631-0010 的 PROFINET 名（含虚拟设备）。
+// 价值：运行时直接读端子名。
+// 验证：登录后 bReadReq 上升沿，nSlaveKind/aPnNames 填入。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_ProfinetDiag（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』指引在线写值观察
+// ============================================================
+
+// 上升沿触发；读 EL6631-0010 的 PROFINET 名称（无 iErrorID，靠 bError 判错）
+fbReadPnName(
+    bStart := bReadReq,
+    NETID  := '',
+    PORT   := 16#1001,
+    bBusy  => bBusy,
+    bError => bErr,
+    nCntEL6631_Slave => nSlaveKind,
+    arPROFINET_NAME => aPnNames
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

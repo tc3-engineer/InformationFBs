@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_KL6WriteRegisters" Id="{6fccf5cd-ac19-5ee0-81e1-b5798b6a7a6d}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_KL6WriteRegisters
+VAR
+    fbKL6Write    : KL6WriteRegisters;
+    arrComIn      : KL6inData5B;               // KL6xxx 5 字节模式过程映像
+    arrComOut     : KL6outData5B;
+    aRegList      : ARRAY[0..63] OF ComRegisterData_t;  // 待写寄存器号+值
+
+    bInit         : BOOL := TRUE;              // 上电填一次列表
+    bWriteRequest : BOOL;                      // 在线置 TRUE 触发一次写入
+    rtrigWrite    : R_TRIG;
+    bWriteDone    : BOOL;
+    bWriteBusy    : BOOL;
+    bWriteError   : BOOL;
+    eErrId        : ComError_t;
+    nWriteCount   : UDINT;                       // 监控：成功写入次数
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：KL6031 端子需要写一个高级配置寄存器(寄存器 34)来切换特殊数据格式，这超出
+//       KL6Configuration 能设的标准串口参数范围，必须直接写寄存器。
+//
+// 价值：演示 KL6WriteRegisters 的关键纪律——触发前必须先把寄存器号(Register)和
+//       值(Value)填进列表项；写入是 Execute 边沿触发，写错寄存器有风险。
+//
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_SerialCom；把 arrComIn/arrComOut 链接到 KL6031 端子过程映像
+//   3. 编译 → 登录 → 运行；确认 aRegList[0] 已填(Register=34, Value=16#0002)
+//      后在线把 bWriteRequest 置 TRUE
+//      → bWriteBusy 短暂为 TRUE，随后 bWriteDone=TRUE、bWriteError=FALSE，nWriteCount +1
+//      → 可再用 KL6ReadRegisters 读回寄存器 34 确认写入生效
+// =============================================================================
+
+// 触发前一次性填好待写寄存器(此处示范写寄存器 34 = 16#0002)
+IF bInit THEN
+    bInit := FALSE;
+    aRegList[0].Register := 34;
+    aRegList[0].Value    := 16#0002;
+END_IF;
+
+// R_TRIG 把电平变上升沿：每次置 TRUE 只写一次
+rtrigWrite(CLK := bWriteRequest);
+
+fbKL6Write(
+    Execute          := rtrigWrite.Q,
+    Mode             := ComSerialLineMode_t.SERIALLINEMODE_KL6_5B_STANDARD,
+    pComIn           := ADR(arrComIn),
+    pComOut          := ADR(arrComOut),
+    SizeComIn        := SIZEOF(arrComIn),
+    pRegisterList    := ADR(aRegList),
+    SizeRegisterList := SIZEOF(aRegList),
+    Done             => bWriteDone,
+    Busy             => bWriteBusy,
+    Error            => bWriteError,
+    ErrorID          => eErrId
+);
+
+IF bWriteDone AND NOT bWriteError THEN
+    nWriteCount := nWriteCount + 1;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

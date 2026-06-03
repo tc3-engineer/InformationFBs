@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_PN_GET_PORT_STATISTIC" Id="{1fc9488b-dadc-53e3-bf35-cd5fdc20d855}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_PN_GET_PORT_STATISTIC
+VAR
+    fbGetStat     : FB_PN_GET_PORT_STATISTIC;
+    bGetReq       : BOOL := FALSE;            // 在线上升沿触发读取
+    bBusy         : BOOL;
+    stPort1       : str_GetPortStatistic;     // 端口1统计
+    stPort2       : str_GetPortStatistic;     // 端口2统计
+    bP1Link       : BOOL;                     // 端口1有链路
+    bP2Link       : BOOL;                     // 端口2有链路
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_ProfinetDiag.FB_PN_GET_PORT_STATISTIC 演示程序
+// ============================================================
+// 场景：读端口流量统计排查丢包/坏包。
+// 价值：统计进 PLC，可趋势报警。
+// 验证：登录后 bGetReq 上升沿，stPort1/2 与 link 标志填入。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_ProfinetDiag（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』指引在线写值观察
+// ============================================================
+
+// 上升沿触发；读端口统计（先看 bP1/bP2 link，再看坏包/丢帧计数）
+fbGetStat(
+    bStart := bGetReq,
+    NETID  := '',
+    PORT   := 16#1001,
+    bBusy  => bBusy,
+    str_RemotePort_1 => stPort1,
+    str_RemotePort_2 => stPort2,
+    bPort1 => bP1Link,
+    bPort2 => bP2Link
+);
+
+// 趋势监控示例：stPort1.RxBadPackets / stPort1.RxDroppedFrames 持续增长 = 链路质量差
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

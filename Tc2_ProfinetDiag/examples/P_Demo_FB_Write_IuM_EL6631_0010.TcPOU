@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_Write_IuM_EL6631_0010" Id="{b940b3ad-ed50-589c-9a67-816ad9cc6731}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_Write_IuM_EL6631_0010
+VAR
+    fbWriteIuM    : FB_Write_IuM_EL6631_0010;
+    bWriteReq     : BOOL := FALSE;            // 在线上升沿触发
+    bySelect      : BYTE := 2#0000_0001;      // 只写 I&M1（Bit0）
+    sFunc         : STRING := 'PN-Coupler';
+    sLoc          : STRING := 'HallA-Line3';
+    sDate         : STRING := '2026-06-02 08:00';
+    sDesc         : STRING := '';
+    sSig          : STRING := '';
+    bBusy         : BOOL;
+    bErr          : BOOL;
+    nErrId        : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_ProfinetDiag.FB_Write_IuM_EL6631_0010 演示程序
+// ============================================================
+// 场景：EL6631 设备端用位掩码一次写多项 I&M。
+// 价值：byState 合并写，免逐项。
+// 验证：登录后设 bySelect，bWriteReq 上升沿写入。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_ProfinetDiag（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』指引在线写值观察
+// ============================================================
+
+// 上升沿触发；byState=Bit0 表示只写 I&M1（功能/位置标签），iNumber=0 选第一台
+fbWriteIuM(
+    bWrite := bWriteReq,
+    NETID  := '',
+    PORT   := 16#1001,
+    byState := bySelect,
+    iNumber := 0,
+    st_IM_TagFunction := sFunc,
+    st_IM_TagLocation := sLoc,
+    st_IM_Date := sDate,
+    st_IM_Descriptor := sDesc,
+    st_IM_Signature := sSig,
+    bBusy  => bBusy,
+    bError => bErr,
+    iErrorID => nErrId
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

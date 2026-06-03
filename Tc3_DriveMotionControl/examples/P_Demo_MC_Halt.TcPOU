@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_MC_Halt" Id="{6280a5ad-f874-574a-8b49-b288fbfda51d}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_MC_Halt
+VAR
+    fbHalt          : MC_Halt;      // 软停车(不锁轴) FB 实例
+    axisConveyor    : AXIS_REF;     // 传送带轴轴引用；先在 System Manager 配好
+    rtPauseReq      : R_TRIG;       // 暂停请求转上升沿
+    bPauseRequest   : BOOL := FALSE; // 在线写 TRUE 触发一次缓停
+    lrHaltDecel     : LREAL := 500.0; // 停车减速度 (mm/s^2)；≤0 则沿用上条 Move 的减速度
+    bHaltDone       : BOOL;         // Done：已停下且静止(未锁，可立即重启)
+    bHaltBusy       : BOOL;
+    bHaltAborted    : BOOL;         // CommandAborted：被新的 Move 抢占
+    bHaltError      : BOOL;
+    nHaltErrorID    : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：传送带匀速运行中，工艺节拍要求暂停一下(如等下游就位)，之后还要继续运行。
+//       MC_Halt 按指定减速度把轴缓停，且停车后不锁轴——下一条 Move 命令可直接重启，
+//       无需 MC_Reset。这是"正常工艺停车"的首选(与锁轴的 MC_Stop 区分)。
+//
+// 价值：1) 不必拼 NC 停车命令、不必自己维护"停车减速度不弱于当前运动"的安全约束
+//       2) 停后不锁，立即可重启，节拍流畅(MC_Stop 每次都要 Reset)
+//       3) 受控减速停车，机械冲击小(优于直接落使能的自由滑行)
+//
+// 验证步骤：
+//   1. System Manager 配好 NC 轴并 Link 给 axisConveyor，引用 Tc3_DriveMotionControl
+//   2. 先用 MC_Power 使能，并用 MC_MoveVelocity 让传送带匀速运行起来
+//   3. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   4. 编译登录运行
+//   5. 在线把 bPauseRequest 写 TRUE → bHaltBusy 置 TRUE，轴沿减速斜坡停下，
+//      停稳后 bHaltDone 置 TRUE，axisConveyor.NcToPlc.ActVelo 降到 0
+//   6. 此后直接再发一条 Move 命令应能立即重启(验证"不锁轴")
+//   7. 若停车中发了新 Move，bHaltAborted 会 TRUE(被抢占，属正常)
+// =============================================================================
+
+// 暂停请求转上升沿：MC_Halt 是 Execute 边沿触发
+rtPauseReq(CLK := bPauseRequest);
+
+// 单次调用：Axis 是 VAR_IN_OUT 用 := 传引用
+fbHalt(
+    Execute        := rtPauseReq.Q,
+    Deceleration   := lrHaltDecel,
+    Axis           := axisConveyor,
+    Done           => bHaltDone,
+    Busy           => bHaltBusy,
+    CommandAborted => bHaltAborted,
+    Error          => bHaltError,
+    ErrorID        => nHaltErrorID
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

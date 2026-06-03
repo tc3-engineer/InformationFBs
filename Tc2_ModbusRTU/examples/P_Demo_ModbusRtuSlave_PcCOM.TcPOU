@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_ModbusRtuSlave_PcCOM" Id="{b07fb996-bfd0-5f64-8b9d-da7ca7171100}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_ModbusRtuSlave_PcCOM
+VAR
+    fbModbusSlave : ModbusRtuSlave_PcCOM;            // 串口 Modbus RTU 从站
+
+    // ---- 三块 Modbus 数据区（主站按标准偏移访问） ----
+    aInputs   : ARRAY[0..7] OF WORD;                  // 输入区（主站只读）偏移 16#0：放状态/测量值
+    aOutputs  : ARRAY[0..7] OF WORD;                  // 输出区（主站可读写）偏移 16#800：放可远程改写的设定
+    aMemory   : ARRAY[0..7] OF WORD;                  // 存储区（主站读写）偏移 16#4000：放参数
+
+    eErrId    : MODBUS_ERRORS;                         // 通讯错误号，监控用
+
+    // 业务量：把本机产量计数暴露给主站读
+    nPartCount : WORD;
+    bConveyorRun : BOOL;                               // 由主站写 aOutputs 远程启停的标志
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：TwinCAT 作为产线工位控制器，把自己当成现场总线上的一个标准 Modbus RTU
+//       从站：把产量计数放到输入区供上位 SCADA 读，把"远程启停"放到输出区供
+//       SCADA 写。一台 RS485 主站即可巡检整条线的多个工位。
+//
+// 价值：演示从站的标准用法——三块数据区 + 每周期一次调用，无 Execute。SCADA 用
+//       功能码 4 读偏移 16#0 拿产量、用功能码 6 写偏移 16#800 控启停。不用本 FB
+//       就得自己写 Modbus 从站协议栈（帧解析+地址映射+CRC+应答组帧）。
+//
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs → Add → Existing Item → 选本 .TcPOU
+//   2. References → Add library → Tc2_ModbusRTU；在 System Manager 把 FB 内置串口
+//      数据结构链接到 COM 口（波特率/校验位与主站一致）
+//   3. 编译 → 登录 → 运行
+//   4. 用 Modbus 主站（如调试软件）以站地址 1 读输入寄存器、地址 16#0、数量 1
+//      → 读到的值随 nPartCount 递增变化
+//   5. 用主站写单寄存器、地址 16#800、值 1
+//      → aOutputs[0] 变 1，bConveyorRun 变 TRUE；eErrId 保持 MODBUSERROR_NO_ERROR
+//   6. 用主站访问越界地址（如输入区地址 16#9999）→ 主站收到非法地址异常应答
+// =============================================================================
+
+// 业务侧：把产量写进输入区第 0 个字，让主站能读到（演示产量每周期 +1）
+nPartCount := nPartCount + 1;
+aInputs[0] := nPartCount;
+
+// 业务侧：把主站写进输出区第 0 个字的值解释为"输送带启停"
+bConveyorRun := (aOutputs[0] <> 0);
+
+// 每周期调用一次从站；被动应答主站的读写请求
+fbModbusSlave(
+    UnitID          := 1,                            // 本从站站地址
+    AdrInputs       := ADR(aInputs),
+    SizeInputBytes  := SIZEOF(aInputs),
+    AdrOutputs      := ADR(aOutputs),
+    SizeOutputBytes := SIZEOF(aOutputs),
+    AdrMemory       := ADR(aMemory),
+    SizeMemoryBytes := SIZEOF(aMemory),
+    ErrorId         => eErrId
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

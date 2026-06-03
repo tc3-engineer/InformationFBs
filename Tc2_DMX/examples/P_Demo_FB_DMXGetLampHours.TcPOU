@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_DMXGetLampHours" Id="{0b5a4f5e-d26d-57a6-b424-43a2a602ea10}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_DMXGetLampHours
+VAR
+    fbGetLampHours    : FB_DMXGetLampHours;           // 读灯泡点亮小时数
+    stDmxCmdBuffer    : ST_DMXCommandBuffer;          // 与通讯 FB 共用
+    wTargetManufId    : WORD := 16#4241;              // 目标灯具厂商 ID
+    dwTargetDeviceId  : DWORD := 16#12131415;         // 目标灯具设备 ID
+    byTargetPort      : BYTE := 0;                    // 根设备通道 0
+    bDoRead           : BOOL := FALSE;                // 在线给一次上升沿触发
+    bBusy             : BOOL;
+    bError            : BOOL;
+    udiErrId          : UDINT;
+    udiHours          : UDINT;                        // 灯泡累计点亮小时数
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_DMX.FB_DMXGetLampHours 演示程序
+// ============================================================
+// 场景：剧场灯泡寿命管理：定期读每盏灯累计点亮时长，接近寿命时 HMI 提示更换。
+// 价值：把灯泡寿命数据接入 PLC/HMI 实现预测性维护，无需人工逐台记录开灯时间。
+// 验证：给 bDoRead 一次上升沿 -> bBusy 短暂 TRUE -> 回 FALSE 后 udiHours 即灯泡累计小时数；不支持该参数的灯会 bError 且 udiErrId=0x8010。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_DMX；同项目里放一个 FB_EL6851CommunicationEx 实例并共用 stDmxCmdBuffer（非 CycleMode）
+//   3. 编译 → 登录 → 运行；按上方『验证』行在线给上升沿观察
+// ============================================================
+
+fbGetLampHours(
+    bStart                     := bDoRead,
+    wDestinationManufacturerId := wTargetManufId,
+    dwDestinationDeviceId      := dwTargetDeviceId,
+    byPortId                   := byTargetPort,
+    dwOptions                  := 0,
+    stCommandBuffer            := stDmxCmdBuffer,
+    bBusy                      => bBusy,
+    bError                     => bError,
+    udiErrorId                 => udiErrId,
+    udiLampHours               => udiHours
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

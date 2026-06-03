@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_Global_Version" Id="{ba772ff7-0d63-5e4a-80ef-0d031ab8baa4}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_Global_Version
+VAR
+    bInit          : BOOL := TRUE;                    // 仅初始化跑一次
+    bLibVersionOk  : BOOL;                            // 版本达标标志（不达标拒启动）
+    sActualVersion : STRING(23);                      // 实际版本字串，供 HMI 显示
+    nMajor         : INT;                             // 监控：主版本号
+    nMinor         : INT;                             // 监控：副版本号
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：PLC 上电初始化时校验 Tc2_ModbusRTU 库版本是否 >= 1.4.0；不达标就把
+//       bLibVersionOk 置 FALSE，上层据此报警并拒绝进入正常运行。
+//
+// 价值：演示如何读出库版本常量 stLibVersion_Tc2_Modbus_RTU 并做版本门禁。
+//       不做这层校验，升级 TwinCAT 后某 FB 行为变化会导致运行时静默故障且难诊断。
+//
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs → Add → Existing Item → 选本 .TcPOU
+//   2. References → Add library → Tc2_ModbusRTU
+//   3. 编译 → 登录 → 运行
+//   4. 在线 monitor：sActualVersion 应显示形如 '1.4.3.0' 的字串；
+//      nMajor=1、nMinor=4；bLibVersionOk=TRUE（因 1.4.3 >= 1.4.0）
+//   5. 生产代码建议把下面的就地比较换成 Tc2_System 的 F_CmpLibVersion 做完整 4 段比对
+// =============================================================================
+
+IF bInit THEN
+    bInit := FALSE;
+
+    // 读出字串版本便于 HMI 直接显示
+    sActualVersion := stLibVersion_Tc2_Modbus_RTU.sVersion;
+
+    // 取出主/副版本号供监控（注意常量名库部分带下划线 Tc2_Modbus_RTU）
+    nMajor := stLibVersion_Tc2_Modbus_RTU.iMajor;
+    nMinor := stLibVersion_Tc2_Modbus_RTU.iMinor;
+
+    // 就地判断是否 >= 1.4.0（演示用；严谨场合用 F_CmpLibVersion）
+    bLibVersionOk := stLibVersion_Tc2_Modbus_RTU.iMajor > 1
+        OR (stLibVersion_Tc2_Modbus_RTU.iMajor = 1
+            AND stLibVersion_Tc2_Modbus_RTU.iMinor >= 4);
+END_IF
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_DMXDiscUniqueBranch" Id="{357ec525-39b9-5d78-b051-4faf5797c3dc}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_DMXDiscUniqueBranch
+VAR
+    fbUniqueBranch    : FB_DMXDiscUniqueBranch;       // UID 区间查询
+    stDmxCmdBuffer    : ST_DMXCommandBuffer;          // 与通讯 FB 共用
+    byTargetPort      : BYTE := 0;                    // 根设备通道 0
+    wLowManuf         : WORD := 0;                    // 区间下界厂商 ID
+    dwLowDevice       : DWORD := 0;                   // 区间下界设备 ID
+    wUpManuf          : WORD := 16#FFFF;              // 区间上界厂商 ID（全范围）
+    dwUpDevice        : DWORD := 16#FFFFFFFF;         // 区间上界设备 ID（全范围）
+    bDoSearch         : BOOL := FALSE;                // 在线给一次上升沿触发
+    bBusy             : BOOL;
+    bError            : BOOL;
+    udiErrId          : UDINT;
+    wRecvManuf        : WORD;                         // 响应设备厂商 ID
+    dwRecvDevice      : DWORD;                        // 响应设备设备 ID
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_DMX.FB_DMXDiscUniqueBranch 演示程序
+// ============================================================
+// 场景：实现带特殊约束的发现（如只搜某厂商 ID 段灯具），手动控制每次搜索的 UID 区间。
+// 价值：把 RDM 二分发现的单步区间查询暴露出来，配合 Mute/UnMute 可实现任意自定义的设备枚举策略。
+// 验证：设好全范围区间（wLowManuf=0..dwUpDevice=16#FFFFFFFF），给 bDoSearch 一次上升沿 -> bBusy 短暂 TRUE -> 回 FALSE 后若总线只一台未 mute 设备，wRecvManuf/dwRecvDevice 即其 UID；多台时会冲突需二分。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_DMX；同项目里放一个 FB_EL6851CommunicationEx 实例并共用 stDmxCmdBuffer（非 CycleMode）
+//   3. 编译 → 登录 → 运行；按上方『验证』行在线给上升沿观察
+// ============================================================
+
+fbUniqueBranch(
+    bStart                    := bDoSearch,
+    byPortId                  := byTargetPort,
+    wLowerBoundManufacturerId := wLowManuf,
+    dwLowerBoundDeviceId      := dwLowDevice,
+    wUpperBoundManufacturerId := wUpManuf,
+    dwUpperBoundDeviceId      := dwUpDevice,
+    dwOptions                 := 0,
+    stCommandBuffer           := stDmxCmdBuffer,
+    bBusy                     => bBusy,
+    bError                    => bError,
+    udiErrorId                => udiErrId,
+    wReceivedManufacturerId   => wRecvManuf,
+    dwReceivedDeviceId        => dwRecvDevice
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

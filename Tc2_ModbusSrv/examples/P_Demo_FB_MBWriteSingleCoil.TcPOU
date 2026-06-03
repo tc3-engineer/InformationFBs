@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_MBWriteSingleCoil" Id="{4285a79c-9454-5737-aadc-4f19f4d23a79}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_MBWriteSingleCoil
+VAR
+    fbWriteSingleCoil: FB_MBWriteSingleCoil;
+    sTargetIp     : STRING(15) := '192.168.1.50';   // 目标 Modbus 设备 IP（按现场改）
+    bTrigger      : BOOL;          // 在线置一次上升沿触发本次访问
+    bBusy         : BOOL;          // 在线 monitor：执行中为 TRUE
+    bError        : BOOL;          // 出错置 TRUE
+    nErrId        : UDINT;         // 出错时的 ADS/Modbus 错误码
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_ModbusSrv.FB_MBWriteSingleCoil 演示程序（Modbus TCP 客户端 / 主站）
+// ============================================================
+// 场景：远程控制单个继电器/电磁阀，例如令远端 IO 模块的某路输出闭合启动一台风机，或复位一个远程指示灯。
+// 价值：单点写线圈用功能码 5 最轻量；本 FB 一次调用、用 `16#FF00`/`16#0000` 明确 ON/OFF，无须拼包。
+// 验证：登录后在线置 bTrigger := TRUE 触发一次；观察 bBusy 在数个周期后回 FALSE，
+//       bError 应为 FALSE、nErrId 应为 0；若对端不在线则 bError=TRUE 且 nErrId 含超时码。
+//       本例：把远端 4 号线圈置 ON
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_ModbusSrv（References → Add library），并确保 TF6250 Modbus TCP 已授权运行
+//   3. 把 sTargetIp 改成现场 Modbus 设备 IP；编译 → 登录 → 运行
+//   4. 在线脉冲 bTrigger，按上方『验证』观察输出
+// ============================================================
+
+// 单次完整调用：所有 VAR_INPUT 显式赋值；bExecute 边沿触发一次
+fbWriteSingleCoil(
+    sIPAddr  := sTargetIp,
+    nTCPPort := MODBUS_TCP_PORT,
+    nUnitID  := 16#FF,
+    nMBAddr  := 4,
+    nValue   := 16#FF00,   // 16#FF00 = ON, 16#0000 = OFF
+    bExecute := bTrigger,
+    tTimeout := T#5S,
+    bBUSY    => bBusy,
+    bError   => bError,
+    nErrId   => nErrId
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

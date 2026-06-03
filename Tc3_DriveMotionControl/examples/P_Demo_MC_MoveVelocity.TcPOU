@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_MC_MoveVelocity" Id="{42941d42-8335-50d1-96ba-fe4409d26526}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_MC_MoveVelocity
+VAR
+    fbMoveVelo      : MC_MoveVelocity; // 恒速运动 FB 实例
+    axisConveyor    : AXIS_REF;        // 传送带轴轴引用；先在 System Manager 配好
+    rtStartRun      : R_TRIG;          // 启动信号转上升沿
+    bStartRun       : BOOL := FALSE;   // 在线写 TRUE 启动恒速运行
+    lrRunVelocity   : LREAL := 150.0;  // 恒速目标速度 (mm/s)，必须 >0
+    eRunDirection   : MC_Direction := MC_Positive_Direction; // 正方向
+    bInVelocity     : BOOL;            // InVelocity：达到目标速度(本 FB 无 Done)
+    bVeloBusy       : BOOL;
+    bVeloAborted    : BOOL;            // CommandAborted：加速阶段被抢占/停止
+    bVeloError      : BOOL;
+    nVeloErrorID    : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：输送线/传送带启动后以 150 mm/s 恒速正向运行(无终点),直到用 MC_Halt 停下。
+//       MC_MoveVelocity 把轴加速到目标速度即完成任务,之后不再监视运动——这是它和
+//       有终点的 MC_MoveAbsolute 的根本区别。成功信号是 InVelocity 不是 Done。
+//
+// 价值：1) 不必拼 NC 速度模式命令、不必自己判断是否加速到目标速度
+//       2) InVelocity 直接给出"已达目标速度",传送/卷绕类设备很实用
+//       3) 无终点运动语义清晰,配 MC_Halt/MC_Stop 即可停车
+//
+// 验证步骤：
+//   1. System Manager 配好 NC 轴并 Link 给 axisConveyor,引用 Tc3_DriveMotionControl
+//   2. 先用 MC_Power 给轴使能
+//   3. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   4. 编译登录运行
+//   5. 在线把 bStartRun 写 TRUE → bVeloBusy 置 TRUE,axisConveyor.NcToPlc.ActVelo
+//      上升到 ≈150;达到后 bInVelocity 置 TRUE,轴持续匀速跑(位置不断增大)
+//   6. 要停车需另用 MC_Halt/MC_Stop;把 bStartRun 拉回 FALSE 不会停轴
+//   7. 若 bVeloError = TRUE,检查 Velocity>0、轴是否已使能;看 nVeloErrorID
+// 注意：达速后本 FB 不再监视运动(不持续纠偏);运行中调速需 ContinuousUpdate(见文档§3)
+// =============================================================================
+
+// 启动信号转上升沿：MC_MoveVelocity 是 Execute 边沿触发
+rtStartRun(CLK := bStartRun);
+
+// 单次调用：Direction 默认正向;Axis 是 VAR_IN_OUT 用 :=;成功信号是 InVelocity
+fbMoveVelo(
+    Execute        := rtStartRun.Q,
+    Velocity       := lrRunVelocity,
+    Acceleration   := 1000.0,
+    Deceleration   := 1000.0,
+    Direction      := eRunDirection,
+    Axis           := axisConveyor,
+    InVelocity     => bInVelocity,
+    Busy           => bVeloBusy,
+    CommandAborted => bVeloAborted,
+    Error          => bVeloError,
+    ErrorID        => nVeloErrorID
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

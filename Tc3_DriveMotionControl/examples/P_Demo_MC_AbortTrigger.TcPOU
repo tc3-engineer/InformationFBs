@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_MC_AbortTrigger" Id="{db67bdb4-dad9-5be4-8594-9a5cff439c47}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_MC_AbortTrigger
+VAR
+    fbAbortTrigger  : MC_AbortTrigger; // 取消测头采样 FB 实例
+    axisMeasure     : AXIS_REF;        // 测量轴轴引用；先在 System Manager 配好
+    trigInput       : TRIGGER_REF;     // 触发源结构；必须与对应 MC_TouchProbe 同一实例
+    rtAbort         : R_TRIG;          // 取消请求转上升沿
+    bAbortRequest   : BOOL := FALSE;   // 在线写 TRUE：放弃当前采样、释放硬件锁存
+    bAbortDone      : BOOL;            // Done：采样周期成功终止
+    bAbortBusy      : BOOL;
+    bAbortError     : BOOL;
+    nAbortErrorID   : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：检测站用测头(Touch Probe)在线测工件边沿位置。某次采样发出后，触发信号
+//       因工件缺失/传感器遮挡迟迟不来，采样一直挂着占用驱动器硬件锁存，导致无法
+//       发起下一次测量。本程序在超时后主动取消采样、释放锁存，准备重测。
+//
+// 价值：1) 不必去操作驱动器对象字典(0x8030/0x8031)里的锁存使能位
+//       2) 配 TriggerInput 精确指定取消哪一次采样，状态干净
+//       3) 取消后可立即发起新的 MC_TouchProbe，不必重启轴
+//
+// 验证步骤：
+//   1. System Manager 配好支持测头的 NC 轴并 Link 给 axisMeasure
+//   2. 引用 Tc3_DriveMotionControl 库
+//   3. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   4. 编译登录运行；先用 MC_TouchProbe(同一个 trigInput) 发起一次采样且不给触发
+//   5. 在线把 bAbortRequest 写 TRUE → 应看到 bAbortDone 置 TRUE，对应的
+//      MC_TouchProbe 的 CommandAborted 变 TRUE，硬件锁存被释放
+//   6. 把 bAbortRequest 拉回 FALSE 再 TRUE 可再取消一次（验证边沿语义）
+// 注意：MC_AbortTrigger 与被取消的 MC_TouchProbe 必须共用同一个 trigInput 实例
+// =============================================================================
+
+// 取消请求转上升沿：MC_AbortTrigger 是 Execute 边沿触发
+rtAbort(CLK := bAbortRequest);
+
+// 单次调用：Axis 与 TriggerInput 都是 VAR_IN_OUT 用 := 传引用
+fbAbortTrigger(
+    Execute      := rtAbort.Q,
+    Axis         := axisMeasure,
+    TriggerInput := trigInput,
+    Done         => bAbortDone,
+    Busy         => bAbortBusy,
+    Error        => bAbortError,
+    ErrorID      => nAbortErrorID
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

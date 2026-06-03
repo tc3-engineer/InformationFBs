@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_MC_TouchProbe" Id="{98aa3b05-768d-5a78-b4e6-4c50b17b4f01}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_MC_TouchProbe
+VAR
+    fbTouchProbe    : MC_TouchProbe; // 测头采样 FB 实例
+    axisMeasure     : AXIS_REF;      // 测量轴轴引用；先在 System Manager 配好
+    trigInput       : TRIGGER_REF;   // 触发源结构；调用前须参数化，与 Abort 共用同一实例
+    rtStartProbe    : R_TRIG;        // 启动采样请求转上升沿
+    bStartProbe     : BOOL := FALSE; // 在线写 TRUE 启动一次采样
+    bWholeRange     : BOOL := FALSE; // WindowOnly：FALSE=第一个触发即记录（不限窗口）
+    lrEdgePosition  : LREAL;         // RecordedPosition：记录到的边沿位置（结果）
+    bProbeDone      : BOOL;          // Done：成功记录位置
+    bProbeBusy      : BOOL;
+    bProbeAborted   : BOOL;          // CommandAborted：被 MC_AbortTrigger 取消
+    bProbeError     : BOOL;
+    nProbeErrorId   : UDINT;         // 注意 PDF 输出名为 ErrorId（小写 d）
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：检测站用测头(Touch Probe)做在线尺寸测量。轴匀速扫过工件时，工件边沿触发
+//       一个数字信号，驱动器硬件在该瞬间锁存轴位置。本程序启动采样并读出这个高精
+//       度边沿位置，用于尺寸判定（精度与 PLC 循环周期无关，这是测头的核心价值）。
+//
+// 价值：1) 硬件锁存捕获，精度不受毫秒级 PLC 周期限制，高速运动下也准
+//       2) 不必操作驱动器对象字典、不必自己管软件采样误差
+//       3) WindowOnly 可过滤窗口外杂触发；配 MC_AbortTrigger 可取消超时采样
+//
+// 验证步骤：
+//   1. System Manager 配好支持测头的 NC 轴(伺服端子需配 0x8030/0x8031)并 Link
+//   2. 引用 Tc3_DriveMotionControl 库；先对 trigInput 参数化(触发源/边沿)
+//   3. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   4. 编译登录运行；让轴运动经过触发位
+//   5. 在线把 bStartProbe 写 TRUE → bProbeBusy 置 TRUE 等待触发；触发到来后
+//      bProbeDone 置 TRUE，lrEdgePosition 显示触发瞬间的轴位置
+//   6. 若长时间不触发，可用 MC_AbortTrigger(同一 trigInput) 取消 → bProbeAborted TRUE
+//   7. 若 bProbeError = TRUE，看 nProbeErrorId，检查驱动锁存参数与 trigInput 参数化
+// =============================================================================
+
+// 启动请求转上升沿：MC_TouchProbe 是 Execute 边沿触发，激活硬件锁存
+rtStartProbe(CLK := bStartProbe);
+
+// 单次调用：WindowOnly := FALSE 第一个触发即记录；Axis/TriggerInput 是 VAR_IN_OUT 用 :=
+fbTouchProbe(
+    Execute          := rtStartProbe.Q,
+    WindowOnly       := bWholeRange,
+    FirstPosition    := 0.0,
+    LastPosition     := 0.0,
+    Axis             := axisMeasure,
+    TriggerInput     := trigInput,
+    Done             => bProbeDone,
+    Busy             => bProbeBusy,
+    CommandAborted   => bProbeAborted,
+    Error            => bProbeError,
+    ErrorId          => nProbeErrorId,
+    RecordedPosition => lrEdgePosition
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

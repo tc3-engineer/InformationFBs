@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_ClearComBuffer" Id="{ef29cd50-fa97-5478-8889-df95bd3144aa}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_ClearComBuffer
+VAR
+    fbSerialLine     : SerialLineControl;       // 后台通信，持续填充 bufRx
+    fbReceiveByte    : ReceiveByte;
+    fbClearComBuffer : ClearComBuffer;
+    bufRx            : ComBuffer;
+    bufTx            : ComBuffer;
+    arrComIn         : PcComInData;
+    arrComOut        : PcComOutData;
+    bErrLine         : BOOL;
+
+    bStartNewSession : BOOL;                     // 在线置 TRUE 触发清缓冲(开新会话)
+    rtrigClear       : R_TRIG;
+    byLastByte       : BYTE;
+    nReadCount       : UDINT;                     // 监控：读到的字节数
+    nClearCount      : UDINT;                      // 监控：清缓冲次数
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：与一台会主动连续吐数据的仪表通信。每次操作员“开始新一轮采集”前，要把
+//       接收缓冲里上一轮残留的字节丢掉，否则旧字节会被当成新一帧的开头，导致错帧。
+//
+// 价值：演示 ClearComBuffer 在“开新会话上升沿”单次清接收缓冲——这是清 PLC 软件
+//       缓冲(非硬件)；对比可见清缓冲后 nReadCount 不再读到旧残留字节。
+//
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_SerialCom；把 arrComIn/arrComOut 链接到 COM 口过程映像
+//   3. 编译 → 登录 → 运行；让设备先发一串数据(nReadCount 上升)
+//   4. 停止本程序的读取(临时注释 REPEAT 段)让缓冲积压，再在线把 bStartNewSession
+//      置 TRUE → nClearCount +1，缓冲被清空，之后只会读到清空后到达的新字节
+// =============================================================================
+
+// 后台通信：持续把硬件字节搬进 bufRx
+fbSerialLine(
+    Mode      := ComSerialLineMode_t.SERIALLINEMODE_PC_COM_PORT,
+    pComIn    := ADR(arrComIn),
+    pComOut   := ADR(arrComOut),
+    SizeComIn := SIZEOF(arrComIn),
+    TxBuffer  := bufTx,
+    RxBuffer  := bufRx,
+    Error     => bErrLine
+);
+
+// 开新会话：上升沿清一次接收缓冲，丢弃上一轮残留
+rtrigClear(CLK := bStartNewSession);
+IF rtrigClear.Q THEN
+    fbClearComBuffer(Buffer := bufRx);
+    nClearCount := nClearCount + 1;
+END_IF;
+
+// 正常读取：清缓冲之后只会读到新到达的字节
+REPEAT
+    fbReceiveByte(RXBuffer := bufRx);
+    IF fbReceiveByte.ByteReceived THEN
+        byLastByte := fbReceiveByte.ReceivedByte;
+        nReadCount := nReadCount + 1;
+    END_IF
+UNTIL NOT fbReceiveByte.ByteReceived
+END_REPEAT
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

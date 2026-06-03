@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_SendByte" Id="{2b20d8dc-745e-5b69-9f46-be06703b61a3}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_SendByte
+VAR
+    fbSerialLine : SerialLineControl;           // 后台通信，消费 bufTx 发往硬件
+    fbSendByte   : SendByte;
+    bufTx        : ComBuffer;
+    bufRx        : ComBuffer;
+    arrComIn     : PcComInData;
+    arrComOut    : PcComOutData;
+    bErrLine     : BOOL;
+
+    bSendEnq     : BOOL;                         // 在线置 TRUE 触发发一次 ENQ
+    rtrigSend    : R_TRIG;                       // 把电平变沿，避免每周期狂发
+    bSendBusy    : BOOL;
+    eErr         : ComError_t;
+    nSentBytes   : UDINT;                         // 监控：累计发出的字节数
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：与一台需要主站先发 ENQ(16#05) 询问、从站再应答的 RS232 仪表对接。PLC
+//       每次按需发一个 ENQ 字节触发对方回数据。
+//
+// 价值：演示 SendByte 的入队语义——字节写入 TxBuffer 后由后台 SerialLineControl
+//       异步发出；用 R_TRIG 把"在线置 TRUE"变成单次发送，避免每周期重复入队。
+//
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_SerialCom；把 arrComIn/arrComOut 链接到 COM 口过程映像
+//   3. 编译 → 登录 → 运行；用串口助手监视该口
+//      → 每次在线把 bSendEnq 置 TRUE，串口助手收到一个 0x05 字节，nSentBytes +1
+// =============================================================================
+
+// 后台通信：把 bufTx 里的字节发往硬件
+fbSerialLine(
+    Mode      := ComSerialLineMode_t.SERIALLINEMODE_PC_COM_PORT,
+    pComIn    := ADR(arrComIn),
+    pComOut   := ADR(arrComOut),
+    SizeComIn := SIZEOF(arrComIn),
+    TxBuffer  := bufTx,
+    RxBuffer  := bufRx,
+    Error     => bErrLine
+);
+
+// 把电平信号变上升沿：一次置 TRUE 只发一个字节
+rtrigSend(CLK := bSendEnq);
+IF rtrigSend.Q THEN
+    fbSendByte(
+        SendByte := 16#05,                      // ENQ 询问字节
+        TxBuffer := bufTx,
+        Busy     => bSendBusy,
+        Error    => eErr
+    );
+    IF eErr = ComError_t.COMERROR_NOERROR THEN
+        nSentBytes := nSentBytes + 1;
+    END_IF;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_SerialLineControl" Id="{6e9ce882-cd49-5118-891f-2c9c0bc865ea}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_SerialLineControl
+VAR
+    fbSerialLine  : SerialLineControl;          // 后台通信引擎，每周期调用
+    fbSendString  : SendString;                 // 演示：往 TxBuffer 塞数据
+    fbReceiveByte : ReceiveByte;                // 演示：从 RxBuffer 取数据
+    bufTx         : ComBuffer;
+    bufRx         : ComBuffer;
+    arrComIn      : PcComInData;                // PC COM 口过程映像输入
+    arrComOut     : PcComOutData;               // PC COM 口过程映像输出
+    bLineError    : BOOL;
+    eLineErrId    : ComError_t;
+
+    bSendPing     : BOOL;                        // 在线置 TRUE 发一次 "PING\r\n"
+    rtrigSend     : R_TRIG;
+    bSendBusy     : BOOL;
+    byLastRx      : BYTE;
+    nRxCount      : UDINT;                        // 监控：收到的字节数
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：PC IPC 上用一个 COM 口和外部 RS232 设备双向通信。SerialLineControl 是
+//       整个链路的"后台引擎"——必须每周期调用，把硬件收的字节搬进 RxBuffer、把
+//       TxBuffer 待发字节交给硬件。Send/Receive 功能块只跟 ComBuffer 打交道。
+//
+// 价值：演示 SerialLineControl 作为收发桥梁的标准接线——TxBuffer/RxBuffer 必须与
+//       Send*/Receive* 共用同一实例；本例一处发、一处收，验证字节真的走通。
+//
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_SerialCom；把 arrComIn/arrComOut 链接到 COM 口过程映像
+//      （生产中建议把本程序放进 1ms 等快任务以保证实时性）
+//   3. 编译 → 登录 → 运行；用串口助手对接该口并回送数据
+//      → 在线把 bSendPing 置 TRUE，串口助手收到 "PING" + 回车换行
+//      → 串口助手发任意字符，nRxCount 递增，byLastRx 显示最后一个字节
+//      → bLineError 应保持 FALSE；若 TRUE 看 eLineErrId(如模式不支持=16#0101)
+// =============================================================================
+
+// 后台引擎：每周期搬运字节(收/发同时进行)
+fbSerialLine(
+    Mode      := ComSerialLineMode_t.SERIALLINEMODE_PC_COM_PORT,
+    pComIn    := ADR(arrComIn),
+    pComOut   := ADR(arrComOut),
+    SizeComIn := SIZEOF(arrComIn),
+    TxBuffer  := bufTx,
+    RxBuffer  := bufRx,
+    Error     => bLineError,
+    ErrorID   => eLineErrId
+);
+
+// 发送侧：上升沿发一次 PING（往 bufTx 入队，由后台发出）
+rtrigSend(CLK := bSendPing);
+IF rtrigSend.Q THEN
+    fbSendString(
+        SendString := 'PING$R$L',
+        TxBuffer   := bufTx,
+        Busy       => bSendBusy
+    );
+END_IF;
+
+// 接收侧：每周期读空 bufRx
+REPEAT
+    fbReceiveByte(RXBuffer := bufRx);
+    IF fbReceiveByte.ByteReceived THEN
+        byLastRx := fbReceiveByte.ReceivedByte;
+        nRxCount := nRxCount + 1;
+    END_IF
+UNTIL NOT fbReceiveByte.ByteReceived
+END_REPEAT
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

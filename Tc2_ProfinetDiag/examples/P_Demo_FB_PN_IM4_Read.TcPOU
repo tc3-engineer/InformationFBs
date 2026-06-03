@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_PN_IM4_Read" Id="{4e1d756a-f0a7-5247-bcb9-2900b28a281e}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_PN_IM4_Read
+VAR
+    fbFB_PN_IM4_Read : FB_PN_IM4_Read;        // FB_PN_IM4_Read 实例
+    bReadIM       : BOOL := FALSE;            // 在线上升沿触发一次读取
+    bBusy         : BOOL;
+    bErr          : BOOL;
+    nErrId        : UDINT;
+    sSignature    : STRING(54);              // 厂商签名
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_ProfinetDiag.FB_PN_IM4_Read 演示程序
+// ============================================================
+// 场景：读设备 I&M4 厂商签名做完整性校验。
+// 价值：标准签名字段直接读。
+// 验证：登录后 bReadIM 上升沿，sSignature 填入。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_ProfinetDiag（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』指引在线写值观察
+// ============================================================
+
+// 上升沿触发一次 I&M 读取；读到的数据在 bBusy 落沿后有效
+fbFB_PN_IM4_Read(
+    bStart := bReadIM,
+    NETID  := '',
+    PORT   := 16#1001,
+    bBusy  => bBusy,
+    st_IM_Signatur => sSignature,
+    bError => bErr,
+    iErrorID => nErrId
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>
