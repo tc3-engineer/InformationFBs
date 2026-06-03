@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_Rec_RPS_Window_Handle" Id="{bc8e4f62-36ae-513e-bc69-e7e88ecd9d05}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_Rec_RPS_Window_Handle
+VAR
+    fbKL6581           : FB_KL6581;
+    fbBedRoomHandle    : FB_Rec_RPS_Window_Handle;     // 卧室窗把手
+
+    stKL6581Input      AT %I* : KL6581_Input;
+    stKL6581Output     AT %Q* : KL6581_Output;
+    nHandleId          : DWORD := 16#0234CDEF;
+
+    stHandlePos        : AR_EnOceanWindow;             // bUp / bOpen / bClose
+    bConfirmed         : BOOL := FALSE;
+    eHvacMode          : INT;                           // 0=未知 1=制冷 2=新风 3=全关
+    eHvacModeOff       : INT := 3;
+    eHvacModeCool      : INT := 1;
+    eHvacModeFresh     : INT := 2;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：智能办公室单房间空调 + 新风联动。窗把手有三种位置：
+//         下（关）= 空调正常运行（制冷模式）
+//         水平（开）= 关空调 + 关新风（用户在大开窗自然通风）
+//         上（倾斜）= 关空调但开新风（用户在通风换气，节能 + 空气质量）
+//
+// 价值：三态在 FB 内已经解码为 bUp/bOpen/bClose 三位互斥；应用层只写
+//       3 个 IF 即可写联动；比自己解 1 字节 RPS nibble 省 25+ 行。
+//
+// 验证步骤：
+//   1. 跑 P_Demo_FB_KL6581 让 KL6581 初始化
+//   2. 把窗把手 EnOcean ID 写到 nHandleId（学习方法：转动把手 + 用
+//      FB_Rec_Teach_In 抓 ID）
+//   3. 引用 Tc2_EnOcean，编译，登录，运行
+//   4. 把把手扭到"下"位置 -> stHandlePos.bClose = TRUE，bConfirmed = TRUE，
+//      eHvacMode = eHvacModeCool (1)
+//   5. 把把手扭到"水平"位置 -> stHandlePos.bOpen = TRUE，eHvacMode = eHvacModeOff (3)
+//   6. 把把手扭到"上倾斜"位置 -> stHandlePos.bUp = TRUE，eHvacMode = eHvacModeFresh (2)
+//   7. 重新登录模拟上电 -> bConfirmed 暂为 FALSE，eHvacMode = 0 (未知)，
+//      操作把手一次后才有可靠状态
+// =============================================================================
+
+fbKL6581(
+    bInit        := TRUE,
+    nIdx         := 1,
+    stKL6581_in  := stKL6581Input,
+    stKL6581_out := stKL6581Output
+);
+
+fbBedRoomHandle(
+    str_KL6581 := fbKL6581.str_KL6581,
+    byNode     := 0,
+    dw_ID      := nHandleId,
+    ar_Data    => stHandlePos
+);
+
+// 首帧到达后才可信
+IF NOT fbBedRoomHandle.bReceive THEN
+    bConfirmed := TRUE;
+END_IF;
+
+// 三态互斥联动；首帧前所有位都 FALSE 不进任何分支，eHvacMode = 0
+IF bConfirmed THEN
+    IF stHandlePos.bClose THEN
+        eHvacMode := eHvacModeCool;       // 关窗 -> 制冷
+    ELSIF stHandlePos.bOpen THEN
+        eHvacMode := eHvacModeOff;        // 全开 -> 全关 HVAC
+    ELSIF stHandlePos.bUp THEN
+        eHvacMode := eHvacModeFresh;      // 倾开 -> 新风
+    END_IF;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

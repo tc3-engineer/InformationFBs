@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_Send_RPS_SwitchAuto" Id="{c9c08505-eae2-5e91-a8dc-232fb34bafd5}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_Send_RPS_SwitchAuto
+VAR
+    fbKL6581          : FB_KL6581;
+    fbCheckoutAllOff  : FB_Send_RPS_SwitchAuto;        // 一键退房：全灯关
+    fbCheckoutAcOff   : FB_Send_RPS_SwitchAuto;        // 一键退房：关空调
+    fbCheckoutCurtain : FB_Send_RPS_SwitchAuto;        // 一键退房：降帘
+
+    stKL6581Input     AT %I* : KL6581_Input;
+    stKL6581Output    AT %Q* : KL6581_Output;
+
+    // HMI 一键退房按钮（中控台按一下触发整套动作）
+    bHmiCheckoutBtn   : BOOL;
+    rTrigCheckout     : R_TRIG;
+    bDoSeq            : BOOL;
+    eSeqState         : INT := 0;                       // 顺序执行 3 个 FB
+
+    bAllDone          : BOOL;                            // 整套动作完成
+    cntCheckouts      : UDINT;                           // 已退房次数
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：智能酒店中控室"一键退房"。前台按下"客人退房"按钮后，PLC 自动模拟
+//       一组 EnOcean 虚拟按键依次发送：① 关全部灯 ② 关空调 ③ 降窗帘。
+//       本程序展示如何用 FB_Send_RPS_SwitchAuto 串联三个独立 RPS 指令，
+//       每个指令一次触发自动完成"按下 + 200ms + 释放"。
+//
+// 价值：用 SwitchAuto 不必管按下 / 释放时序，HMI 只触发一次即整套完成；
+//       三个 FB 实例顺序触发，每个完成后 bBusy 沿下降切换下一步，逻辑直白。
+//
+// 验证步骤：
+//   1. 跑 P_Demo_FB_KL6581 让主端子初始化
+//   2. 引用 Tc2_EnOcean，编译，登录，运行
+//   3. HMI 端写 bHmiCheckoutBtn := TRUE 一周期 -> rTrigCheckout.Q 沿
+//      触发整套序列，bDoSeq = TRUE
+//   4. eSeqState 顺序经 1 -> 2 -> 3 -> 0，每步触发对应 fb 实例的 bStart
+//   5. 每步完成（fb.bBusy 由 TRUE 回 FALSE）后切下一步
+//   6. 整套完成（eSeqState 回 0）-> bAllDone 沿，cntCheckouts +1
+//   7. 现场 EnOcean 灯控、空调、窗帘接收器分别响应各自指令
+//   8. 故障注入：在中途 nTargetNode 改成无效 -> bSendError -> 序列卡住
+//      （生产代码应加超时保护）
+// =============================================================================
+
+fbKL6581(
+    bInit        := TRUE,
+    nIdx         := 1,
+    stKL6581_in  := stKL6581Input,
+    stKL6581_out := stKL6581Output
+);
+
+rTrigCheckout(CLK := bHmiCheckoutBtn);
+IF rTrigCheckout.Q AND fbKL6581.bReady AND eSeqState = 0 THEN
+    bDoSeq    := TRUE;
+    eSeqState := 1;
+END_IF;
+
+// 三个 SwitchAuto 实例并行声明；状态机选择当前激活的一个发送
+// 关灯（rocker 0 上半）
+fbCheckoutAllOff(
+    bStart        := (eSeqState = 1) AND bDoSeq,
+    bData         := TRUE,
+    by_Node       := 1,
+    t_SwitchDelay := T#200MS,
+    nRockerID     := 0,
+    nEnOceanID    := 10,                                // 虚拟面板偏移 10
+    str_KL6581    := fbKL6581.str_KL6581
+);
+// 关空调（rocker 1 上半）
+fbCheckoutAcOff(
+    bStart        := (eSeqState = 2) AND bDoSeq,
+    bData         := TRUE,
+    by_Node       := 1,
+    t_SwitchDelay := T#200MS,
+    nRockerID     := 1,
+    nEnOceanID    := 10,
+    str_KL6581    := fbKL6581.str_KL6581
+);
+// 降窗帘（rocker 2 下半，bData=FALSE 表下半键）
+fbCheckoutCurtain(
+    bStart        := (eSeqState = 3) AND bDoSeq,
+    bData         := FALSE,
+    by_Node       := 1,
+    t_SwitchDelay := T#200MS,
+    nRockerID     := 2,
+    nEnOceanID    := 10,
+    str_KL6581    := fbKL6581.str_KL6581
+);
+
+// 状态切换：等当前激活的 FB bBusy 回 FALSE
+CASE eSeqState OF
+    1: IF NOT fbCheckoutAllOff.bBusy THEN eSeqState := 2; END_IF;
+    2: IF NOT fbCheckoutAcOff.bBusy  THEN eSeqState := 3; END_IF;
+    3: IF NOT fbCheckoutCurtain.bBusy THEN
+        eSeqState := 0;
+        bDoSeq    := FALSE;
+        bAllDone  := TRUE;
+        cntCheckouts := cntCheckouts + 1;
+        bHmiCheckoutBtn := FALSE;                       // 复位 HMI 触发位
+       END_IF;
+END_CASE;
+
+// 下一次触发前清完成标志
+IF bDoSeq THEN
+    bAllDone := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

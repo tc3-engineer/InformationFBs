@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_EnOceanReceive" Id="{1f5a304c-e3df-545d-bb19-206964fee5ea}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_EnOceanReceive
+VAR
+    fbEnOceanReceive   : FB_EnOceanReceive;              // KL6021-0023 接收根 FB
+
+    // —— 在 System Manager 链到 KL6021-0023 端子的 IO 字节区 ——
+    stEnOceanInData    AT %I* : ST_EnOceanInData;        // KL6021 → PLC（1B 状态 + 11B 数据）
+    stEnOceanOutData   AT %Q* : ST_EnOceanOutData;       // PLC → KL6021（1B 控制 + 11B 数据）
+
+    bEnableEnOceanRecv         : BOOL := TRUE;           // 电平使能；TRUE 启动接收链
+
+    // —— 状态观察（HMI / monitor 用）——
+    bRecvBusError              : BOOL;                   // KL6021 端子层错误
+    nRecvErrId                 : UDINT;                  // 错误号（0/1/2/3/4）
+    nLastTransmitterId         : UDINT;                  // 最近一帧的 transmitter ID（4 字节）
+    bFrameJustArrived          : BOOL;                   // 仅持续一周期，每帧到达时为 TRUE
+    eLastSensorType            : E_EnOceanSensorType;    // PTM / STM1B / STM4B / CTM
+    nLastDataByte0             : BYTE;                   // 最近一帧数据字节 0（按 sensor 含义不同）
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：老式 KL6021-0023 EnOcean 端子接入 PLC。空中有一批 PTM200 按键 /
+//       STM250 窗磁 / STM100 温控等 EnOcean 设备，需要把它们的电报送给
+//       PLC 的应用层（FB_EnOceanPTM*/FB_EnOceanSTM*）解析。本程序是
+//       KL6021-0023 体系的"入口节点"——所有下游解析块都从这里取数据。
+//
+// 价值：把 KL6021-0023 的字节区裸协议（拼帧 + transmitter ID 抽取 +
+//       sensor type 识别 + ACK 回写）封装成一个 FB；下游 PTM/STM 解析块
+//       直接连 stEnOceanReceivedData 就能工作，免去 200+ 行自写协议解析。
+//
+// 验证步骤：
+//   1. 在 System Manager 把 KL6021-0023 端子的输入字节区链到 stEnOceanInData，
+//      输出字节区链到 stEnOceanOutData（缺一个就完全收不到数据）
+//   2. 引用 Tc2_EnOcean 库，编译，登录，运行
+//   3. 把 bEnableEnOceanRecv 置 TRUE（在线写值）
+//   4. 用手边的 EnOcean 按键（PTM200 等）按一下；正常应观察到：
+//      - bRecvBusError 保持 FALSE，nRecvErrId 保持 0
+//      - bFrameJustArrived 出现一个 PLC 周期的 TRUE 脉冲
+//      - nLastTransmitterId 更新为按键的 4 字节 EnOcean ID
+//      - eLastSensorType 显示 eEnOceanSensorTypePTM (=5)
+//   5. 拿一根铜片把 KL6023 收发器天线短接，等几秒应看到
+//      nRecvErrId = 16#0001（Checksum error，受干扰）
+//   6. 把任务周期改成 200 ms 再触发大量电报，可能看到 nRecvErrId =
+//      16#0003（KL6023 buffer overflow，PLC 周期太长来不及取）
+// =============================================================================
+
+// 单次完整调用：bEnable 电平触发，stEnOceanInData/OutData 必须在 SysMgr 链接
+fbEnOceanReceive(
+    bEnable          := bEnableEnOceanRecv,
+    stEnOceanInData  := stEnOceanInData,
+    stEnOceanOutData := stEnOceanOutData
+);
+
+// 状态镜像供 HMI 观察（不要在条件分支里取这些值，否则会丢一周期的脉冲）
+bRecvBusError      := fbEnOceanReceive.bError;
+nRecvErrId         := fbEnOceanReceive.nErrorId;
+bFrameJustArrived  := fbEnOceanReceive.stEnOceanReceivedData.bReceived;
+nLastTransmitterId := fbEnOceanReceive.stEnOceanReceivedData.nTransmitterId;
+eLastSensorType    := fbEnOceanReceive.stEnOceanReceivedData.eEnOceanSensorType;
+nLastDataByte0     := fbEnOceanReceive.stEnOceanReceivedData.nData[0];
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

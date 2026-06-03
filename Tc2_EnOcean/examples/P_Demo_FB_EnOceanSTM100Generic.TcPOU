@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_EnOceanSTM100Generic" Id="{d640e60a-fdbd-5f68-b786-b2770d8d580d}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_EnOceanSTM100Generic
+VAR
+    fbEnOceanReceive : FB_EnOceanReceive;
+    fbCO2Sensor      : FB_EnOceanSTM100Generic;          // 非标 CO2 + 温度复合 STM100
+    stEnOceanInData  AT %I* : ST_EnOceanInData;
+    stEnOceanOutData AT %Q* : ST_EnOceanOutData;
+    nCO2SensorId     : UDINT := 16#0123ABCD;             // 厂家定制 STM100 ID
+
+    abRawBytes       : ARRAY [0..3] OF BYTE;             // 原始 4 字节
+    rRoomTempDegC    : REAL;                              // byte0 → 0..40 °C
+    nCO2PPM          : UINT;                              // byte1+byte2 拼 16-bit CO2
+    bLearnPressed    : BOOL;                              // byte3.bit0
+    bSensorOnline    : BOOL;                              // = NOT bSensorError
+    bSensorError     : BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：会议室空气质量监控。市场上买的 EnOcean STM100 非标变种把 4 字节用
+//       作：byte0=温度，byte1+byte2=CO2 ppm（big-endian 16-bit），byte3=
+//       状态位（含 LRN bit）。Beckhoff 标本 FB_EnOceanSTM100 假设的字段
+//       排布与此不符，必须用 Generic 版自己解码。
+//
+// 价值：用 FB_EnOceanSTM100Generic 一行接出原始 4 字节，配 F_Byte_to_Temp
+//       做温度线性变换，把 byte1+byte2 拼成 CO2 16-bit；用 watchdog 监控
+//       sensor 在线性。这是处理"厂家变种 STM100"的标准做法。
+//
+// 验证步骤：
+//   1. 在 SysMgr 链 KL6021-0023 IO 字节区
+//   2. 把厂家定制 STM100 的 EnOcean ID 写到 nCO2SensorId
+//   3. 引用 Tc2_EnOcean，编译，登录，运行
+//   4. 等待 STM100 周期发送一帧（典型 100-1000 秒）-> abRawBytes 应更新
+//      为 4 个非零字节，rRoomTempDegC 应在 15-30 °C 室温范围
+//   5. 用呼吸对着 sensor 提高 CO2，等几个周期 -> nCO2PPM 应从 ~400 上升
+//      到 1000+
+//   6. 按 sensor 的 LRN 学习按键 -> bLearnPressed 短时 TRUE（一帧内）
+//   7. 拿走 sensor 电池模拟离线，1 小时后 bSensorError = TRUE，
+//      bSensorOnline = FALSE
+// =============================================================================
+
+fbEnOceanReceive(
+    bEnable          := TRUE,
+    stEnOceanInData  := stEnOceanInData,
+    stEnOceanOutData := stEnOceanOutData
+);
+
+fbCO2Sensor(
+    bEnable               := NOT fbEnOceanReceive.bError AND fbEnOceanReceive.bEnable,
+    tWatchdog             := T#1h,                              // STM100 周期发送
+    nTransmitterId        := nCO2SensorId,
+    stEnOceanReceivedData := fbEnOceanReceive.stEnOceanReceivedData,
+    nDataBytes            => abRawBytes,
+    bError                => bSensorError
+);
+
+// 字段解码：以厂家手册为准（此处仅示例）
+rRoomTempDegC := F_Byte_to_Temp(byData := abRawBytes[0], minTemp := 0, maxTemp := 40);
+nCO2PPM       := SHL(BYTE_TO_UINT(abRawBytes[1]), 8) OR BYTE_TO_UINT(abRawBytes[2]);
+bLearnPressed := (abRawBytes[3] AND 16#01) <> 0;
+bSensorOnline := NOT bSensorError;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

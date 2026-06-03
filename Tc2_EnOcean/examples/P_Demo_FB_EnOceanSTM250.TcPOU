@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_EnOceanSTM250" Id="{cc5939a1-939c-5294-9099-79b22d29870d}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_EnOceanSTM250
+VAR
+    fbEnOceanReceive  : FB_EnOceanReceive;
+    fbWarehouseDoor   : FB_EnOceanSTM250;             // 仓库应急后门门磁
+    stEnOceanInData   AT %I* : ST_EnOceanInData;
+    stEnOceanOutData  AT %Q* : ST_EnOceanOutData;
+    nWarehouseDoorId  : UDINT := 16#000008CA;         // 门磁模块 ID
+
+    bDoorReedClosed       : BOOL;                      // STM250 reed 闭合（门关）
+    bLearnButtonInverted  : BOOL;                      // 学习按键 raw（按下时 = FALSE）
+    bLearnButtonPressed   : BOOL;                      // 应用语义：按下时 TRUE
+    fTrigDoorOpened       : F_TRIG;                    // 门"关 → 开"瞬间
+    bSecurityAlarm        : BOOL;                      // 应触发安防报警
+    bDoorStateConfirmed   : BOOL := FALSE;             // 上电后第一次收到帧之前不可信
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：物流仓库后门 24h 监视。门外是应急通道，上班时间允许开但要记录，下班
+//       后任何开门都视为入侵触发安防报警。门磁用 EnOcean STM250 + 一块磁
+//       铁，无电池无墙线，10 年免维护。本程序：① 出"关→开"瞬间触发报警，
+//       ② 处理 STM250 学习按键的反向逻辑，③ 上电后第一帧之前不报警（避免
+//       误报上电瞬间的"门开"假象）。
+//
+// 价值：把"STM250 reed 状态 + 学习按键反相 + 边沿触发报警 + 上电假状态过滤"
+//       一步搞定。比自己读字节 + 反位 + 加沿检测 + 加初始化标志省 30+ 行。
+//
+// 验证步骤：
+//   1. 在 SysMgr 链 KL6021-0023 IO 字节区
+//   2. 把门磁 ID 写到 nWarehouseDoorId（学习方法见 STM250 模块手册：
+//      按学习按键 -> P_Demo_FB_EnOceanReceive 监视 nLastTransmitterId）
+//   3. 引用 Tc2_EnOcean，编译，登录，运行
+//   4. 关门让磁铁靠近 STM250 -> bDoorReedClosed = TRUE，
+//      bDoorStateConfirmed = TRUE
+//   5. 开门让磁铁远离 -> bDoorReedClosed = FALSE，
+//      fTrigDoorOpened.Q 给出一个上升沿，bSecurityAlarm = TRUE
+//   6. 按一下 STM250 学习按键 -> bLearnButtonInverted 短时 FALSE
+//      （STM250 raw 反相），bLearnButtonPressed 短时 TRUE（已纠正）
+//   7. 重新登录 PLC 模拟上电 -> bDoorStateConfirmed 一开始 FALSE，门状态
+//      未知；操作一次门后才置 TRUE，期间不会误报警
+// =============================================================================
+
+fbEnOceanReceive(
+    bEnable          := TRUE,
+    stEnOceanInData  := stEnOceanInData,
+    stEnOceanOutData := stEnOceanOutData
+);
+
+fbWarehouseDoor(
+    bEnable               := NOT fbEnOceanReceive.bError AND fbEnOceanReceive.bEnable,
+    tWatchdog             := T#0s,                              // STM250 仅状态变化时发送，watchdog 不开
+    nTransmitterId        := nWarehouseDoorId,
+    stEnOceanReceivedData := fbEnOceanReceive.stEnOceanReceivedData,
+    bState                => bDoorReedClosed,
+    bLearn                => bLearnButtonInverted
+);
+
+// STM250 学习按键是反相语义（PDF: "becomes FALSE if learn button activated"）
+bLearnButtonPressed := NOT bLearnButtonInverted;
+
+// 首帧到达后才确认门状态；之前任何"看似 FALSE"都不是真"门开"
+IF fbEnOceanReceive.stEnOceanReceivedData.bReceived
+   AND fbEnOceanReceive.stEnOceanReceivedData.nTransmitterId = nWarehouseDoorId THEN
+    bDoorStateConfirmed := TRUE;
+END_IF;
+
+// 关 → 开 瞬间触发报警；只有状态已确认后才认
+fTrigDoorOpened(CLK := bDoorReedClosed);
+IF fTrigDoorOpened.Q AND bDoorStateConfirmed THEN
+    bSecurityAlarm := TRUE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

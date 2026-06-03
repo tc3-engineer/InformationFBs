@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_F_Byte_to_Temp" Id="{1adc8318-7d8a-52bb-933e-e8cdd5563935}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_F_Byte_to_Temp
+VAR
+    // 原始 EnOcean 温度字节（来自 FB_EnOceanSTM100Generic.nDataBytes[0] 或 FB_Rec_Generic.ar_Value[0]）
+    byRawTempFromSensor : BYTE := 153;                   // 153/255 * 40 ≈ 24 °C
+
+    // 应用场景 1：标准房间温控 STM100（量程 0..40 °C）
+    rRoomTempDegC       : REAL;
+
+    // 应用场景 2：工业过程温度 sensor（量程 0..80 °C）
+    byRawIndustrialTemp : BYTE := 192;                   // 192/255 * 80 ≈ 60 °C
+    rIndustrialTempDegC : REAL;
+
+    // 应用场景 3：户外气温 sensor（量程 -40..60 °C）
+    byRawOutdoorTemp    : BYTE := 102;                   // 102/255 * 100 - 40 = 0 °C
+    rOutdoorTempDegC    : REAL;
+
+    // 应用场景 4：反相编码（部分厂家 255 = 低温 / 0 = 高温）
+    byRawInverted       : BYTE := 64;                    // 反相 0..40 量程下 64/255 应是接近 30
+    rInvertedTempDegC   : REAL;
+
+    // 应用场景 5：边界值验证
+    byMinValue          : BYTE := 0;
+    byMaxValue          : BYTE := 255;
+    rExpect0            : REAL;                          // 应为 0
+    rExpect40           : REAL;                          // 应为 40
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：EnOcean 温度数据是 1 byte 0..255 线性编码，对应不同设备厂家定义的
+//       温度量程。同一片 PLC 程序里可能要解码：房间温控（0..40°C）、工业
+//       过程（0..80°C）、户外气温（-40..60°C）甚至厂家自定义反相编码。
+//       本程序逐一演示 F_Byte_to_Temp 在这 5 类场景下的用法。
+//
+// 价值：把厂家手册里的"原始字节 + 量程"用一行函数调用直出 REAL °C；HMI
+//       直接拿 REAL 显示，PID 直接拿 REAL 计算。避免自己写线性变换出错。
+//
+// 验证步骤：
+//   1. 引用 Tc2_EnOcean，编译，登录，运行
+//   2. 观察 rRoomTempDegC：byRawTempFromSensor=153 -> 应为约 24.0 °C
+//      (153/255 * 40 = 24.0)
+//   3. 观察 rIndustrialTempDegC：192 -> 约 60.2 °C (192/255 * 80 = 60.2)
+//   4. 观察 rOutdoorTempDegC：102 -> 接近 0.0 °C (102/255 * 100 - 40 = 0.0)
+//   5. 观察 rInvertedTempDegC：64 + 反相 -> 约 29.96 °C
+//      (64/255 * (0-40) + 40 = 29.96)
+//   6. 观察边界：rExpect0 = 0.0，rExpect40 = 40.0
+//   7. 在线改 byRawTempFromSensor 任意值，rRoomTempDegC 实时跟随变化
+// =============================================================================
+
+// 场景 1：标准房间温控量程 0..40 °C
+rRoomTempDegC := F_Byte_to_Temp(byData := byRawTempFromSensor,
+                                 minTemp := 0,
+                                 maxTemp := 40);
+
+// 场景 2：工业过程量程 0..80 °C
+rIndustrialTempDegC := F_Byte_to_Temp(byData := byRawIndustrialTemp,
+                                       minTemp := 0,
+                                       maxTemp := 80);
+
+// 场景 3：户外气温量程 -40..60 °C
+rOutdoorTempDegC := F_Byte_to_Temp(byData := byRawOutdoorTemp,
+                                    minTemp := -40,
+                                    maxTemp := 60);
+
+// 场景 4：反相编码——传 minTemp > maxTemp 实现"高字节 = 低温"
+rInvertedTempDegC := F_Byte_to_Temp(byData := byRawInverted,
+                                     minTemp := 40,
+                                     maxTemp := 0);
+
+// 场景 5：边界值验证；0 与 255 应分别精确返回 minTemp 与 maxTemp
+rExpect0  := F_Byte_to_Temp(byData := byMinValue, minTemp := 0, maxTemp := 40);
+rExpect40 := F_Byte_to_Temp(byData := byMaxValue, minTemp := 0, maxTemp := 40);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

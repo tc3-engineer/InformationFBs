@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_EnOceanSTM100" Id="{49cf2617-bbfc-54b9-a0c4-37e70aedd632}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_EnOceanSTM100
+VAR
+    fbEnOceanReceive    : FB_EnOceanReceive;
+    fbConfRoomPanel     : FB_EnOceanSTM100;            // 会议室房间面板
+    stEnOceanInData     AT %I* : ST_EnOceanInData;
+    stEnOceanOutData    AT %Q* : ST_EnOceanOutData;
+    nConfRoomPanelId    : UDINT := 16#000000C4;
+
+    // 房间面板输出
+    eRoomMode           : E_EnOceanRotarySwitch;       // Auto/0/1/2/3
+    nRoomTempTenths     : INT;                          // 1/10 °C；850 = 哨兵
+    nUserOffset         : INT;                          // -100..+100 用户偏移
+    bUserPresent        : BOOL;
+    bLearnPressed       : BOOL;
+    bPanelError         : BOOL;
+    nPanelErrId         : UDINT;
+
+    // HVAC 目标控制（演示）
+    rRoomTempDegC       : REAL;                         // 解码后真实温度
+    bTempSensorFailed   : BOOL;                         // 850 哨兵识别
+    rTargetTempDegC     : REAL := 22.0;                 // 基准目标
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：办公楼会议室壁挂 EnOcean STM100 温控面板（一体集成温度传感器 +
+//       设定偏移电位器 + Auto/0/1/2/3 旋钮 + 在场按键 + 学习按键）。本程序
+//       接收面板状态，把温度 1/10 °C 转 REAL，把旋钮档位 0/1/2/3/Auto 映射
+//       到节能 / 舒适 / Boost 等场景；并识别 watchdog 哨兵 850 °C 触发失效安全。
+//
+// 价值：用本 FB 一次取齐温度 + 偏移 + 档位 + 在场 + 学习 5 个字段；不用读
+//       原始 4 字节自己解码；watchdog 直接给可靠的"模块离线"信号。
+//
+// 验证步骤：
+//   1. 在 SysMgr 链 KL6021-0023 IO 字节区
+//   2. 把面板 EnOcean ID 写到 nConfRoomPanelId
+//   3. 引用 Tc2_EnOcean，编译，登录，运行
+//   4. 等待 30-100 秒 STM100 周期发送一帧 -> nRoomTempTenths 应为
+//      150..400 范围（15-40 °C 室温），rRoomTempDegC 应在合理范围
+//   5. 转动面板旋钮 -> eRoomMode 切换 eEnOceanRotarySwitchStep1/Step2/...
+//   6. 转动偏移电位器 -> nUserOffset 在 -100..+100 变化
+//   7. 按下"在场"按键 -> bUserPresent 短时 TRUE
+//   8. 取出 STM100 电池模拟离线 -> 等 1 小时 bPanelError = TRUE，
+//      nPanelErrId = 16#0002，nRoomTempTenths 变 850，
+//      bTempSensorFailed = TRUE 提示 HVAC 切失效安全
+// =============================================================================
+
+fbEnOceanReceive(
+    bEnable          := TRUE,
+    stEnOceanInData  := stEnOceanInData,
+    stEnOceanOutData := stEnOceanOutData
+);
+
+fbConfRoomPanel(
+    bEnable               := NOT fbEnOceanReceive.bError AND fbEnOceanReceive.bEnable,
+    tWatchdog             := T#1h,                              // STM100 周期发送，1h 是合理"还在线"窗口
+    nTransmitterId        := nConfRoomPanelId,
+    stEnOceanReceivedData := fbEnOceanReceive.stEnOceanReceivedData,
+    eEnOceanRotarySwitch  => eRoomMode,
+    nSetpoint             => nUserOffset,
+    nTemperature          => nRoomTempTenths,
+    bPresentSwitch        => bUserPresent,
+    bLearnSwitch          => bLearnPressed,
+    bError                => bPanelError,
+    nErrorId              => nPanelErrId
+);
+
+// 解码温度 + 识别 850 °C 断线哨兵
+rRoomTempDegC     := INT_TO_REAL(nRoomTempTenths) / 10.0;
+bTempSensorFailed := (nRoomTempTenths = 850) OR bPanelError;
+
+// 旋钮档位 -> 目标温度策略（典型映射，各项目可调）
+CASE eRoomMode OF
+    eEnOceanRotarySwitchStep0:  rTargetTempDegC := 16.0; // 防冻 / Off
+    eEnOceanRotarySwitchStep1:  rTargetTempDegC := 19.0; // 节能
+    eEnOceanRotarySwitchStep2:  rTargetTempDegC := 22.0; // 舒适
+    eEnOceanRotarySwitchStep3:  rTargetTempDegC := 24.0; // Boost
+    eEnOceanRotarySwitchAuto:   rTargetTempDegC := 22.0; // Auto 用 BMS 调度
+END_CASE;
+
+// 用户偏移（典型 0.1 °C / 单位）
+rTargetTempDegC := rTargetTempDegC + INT_TO_REAL(nUserOffset) * 0.1;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

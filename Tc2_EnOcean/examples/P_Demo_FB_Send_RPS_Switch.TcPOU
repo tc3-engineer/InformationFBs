@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_Send_RPS_Switch" Id="{2921be99-ce69-570b-831c-20178584222a}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_Send_RPS_Switch
+VAR
+    fbKL6581         : FB_KL6581;
+    fbVirtPanelKey   : FB_Send_RPS_Switch;             // 虚拟 RPS 4 键面板
+
+    stKL6581Input    AT %I* : KL6581_Input;
+    stKL6581Output   AT %Q* : KL6581_Output;
+
+    // HMI 触发"长按 / 短按"序列
+    bHmiShortPress   : BOOL;                            // HMI 上按一下"短按"按钮
+    nKeyIndex        : INT := 0;                        // 模拟按键 0
+    nTargetNode      : BYTE := 1;
+    nVirtIdOffset    : BYTE := 10;                      // 虚拟 ID 偏移
+
+    // 内部时序状态机
+    eState           : INT := 0;                        // 0=空闲, 1=按下已发, 2=等释放间隔, 3=释放已发
+    bSendPress       : BOOL;                            // 给 FB 的 bData
+    bSendTrigger     : BOOL;                            // 给 FB 的 bStart
+    tonReleaseDelay  : TON;                             // 短按按下与释放间 200 ms
+
+    bSendBusy        : BOOL;
+    bSendError       : BOOL;
+    iSendErrId       : E_KL6581_Err;
+    cntCompletedSeqs : UDINT;                           // 完整序列计数
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：保洁人员在中控室 HMI 上点"会议室主灯切换"按钮，PLC 应模拟现场 4 键
+//       EnOcean 面板按一下"键 0 短按"，把指令通过 EnOcean 无线发给会议室
+//       的灯控接收器（接收器会把短按识别为"开 / 关切换"）。本程序实现
+//       "按下 -> 200ms 等待 -> 释放"两帧序列的状态机，每次 HMI 触发完成
+//       一组完整动作。
+//
+// 价值：FB_Send_RPS_Switch 给出按下 / 释放手动控制能力，可以做长按 / 双击 /
+//       序列等高级模拟。比 SwitchAuto 灵活，适合复杂虚拟按键场景。
+//
+// 验证步骤：
+//   1. 跑 P_Demo_FB_KL6581 让主端子初始化
+//   2. 引用 Tc2_EnOcean，编译，登录，运行
+//   3. HMI 上写 bHmiShortPress := TRUE -> 状态机进 1：发"按下"，
+//      bSendPress = TRUE，bSendBusy 短暂 TRUE 后回 FALSE
+//   4. 状态机进 2：等 200ms（tonReleaseDelay 计时）
+//   5. 状态机进 3：发"释放"，bSendPress = FALSE，再发一帧
+//   6. 状态机回 0，cntCompletedSeqs +1，bHmiShortPress 自动复位
+//   7. 现场 EnOcean 会议室灯控器接收 RPS 短按事件，主灯切换
+//   8. 故障注入：把 nTargetNode = 9 -> bSendError = TRUE，iSendErrId = 16#16
+// =============================================================================
+
+fbKL6581(
+    bInit        := TRUE,
+    nIdx         := 1,
+    stKL6581_in  := stKL6581Input,
+    stKL6581_out := stKL6581Output
+);
+
+// 状态机：按下 -> 等 -> 释放
+CASE eState OF
+    0:  // 空闲，等 HMI 触发
+        bSendTrigger := FALSE;
+        IF bHmiShortPress AND fbKL6581.bReady AND NOT bSendBusy THEN
+            bSendPress   := TRUE;
+            bSendTrigger := TRUE;                       // 上升沿触发发"按下"
+            eState       := 1;
+        END_IF;
+    1:  // 已发按下，等 FB busy 回 FALSE
+        bSendTrigger := FALSE;                          // 清触发，准备下次上升沿
+        IF NOT bSendBusy THEN
+            eState := 2;
+        END_IF;
+    2:  // 等 200 ms 间隔
+        tonReleaseDelay(IN := TRUE, PT := T#200MS);
+        IF tonReleaseDelay.Q THEN
+            tonReleaseDelay(IN := FALSE);
+            bSendPress   := FALSE;
+            bSendTrigger := TRUE;                       // 上升沿触发发"释放"
+            eState       := 3;
+        END_IF;
+    3:  // 已发释放，等 FB busy 回 FALSE
+        bSendTrigger := FALSE;
+        IF NOT bSendBusy THEN
+            bHmiShortPress    := FALSE;                 // HMI 触发位自动复位
+            cntCompletedSeqs  := cntCompletedSeqs + 1;
+            eState            := 0;
+        END_IF;
+END_CASE;
+
+fbVirtPanelKey(
+    bStart     := bSendTrigger,
+    by_Node    := nTargetNode,
+    bData      := bSendPress,
+    nRockerID  := nKeyIndex,
+    nEnOceanID := nVirtIdOffset,
+    str_KL6581 := fbKL6581.str_KL6581,
+    bBusy      => bSendBusy,
+    bError     => bSendError,
+    iErrorID   => iSendErrId
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

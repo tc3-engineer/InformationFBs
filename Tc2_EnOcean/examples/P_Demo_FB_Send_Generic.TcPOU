@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_Send_Generic" Id="{8dfc0feb-9450-5ba0-8f5c-e6a5cb5a0de5}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_Send_Generic
+VAR
+    fbKL6581         : FB_KL6581;
+    fbSendCustom     : FB_Send_Generic;                 // 向 EnOcean 灯具发自定义指令
+
+    stKL6581Input    AT %I* : KL6581_Input;
+    stKL6581Output   AT %Q* : KL6581_Output;
+
+    bRequestSendOnce : BOOL := FALSE;                   // 在线触发一次发送
+    abLightCommand   : ARRAY [0..3] OF BYTE := [
+        16#80, 16#01, 16#FF, 16#00];                    // 厂家命令字（示例）
+    eOrgToUse        : E_EnOcean_Org := STM_4BYTE_TELEGRAM;  // 用 4-byte
+    nTargetKL6583    : BYTE := 1;                       // 通过节点 1 发出
+    nVirtualIdOffset : BYTE := 0;                       // 不偏移
+
+    bSendBusy        : BOOL;
+    bSendError       : BOOL;
+    iSendErrId       : E_KL6581_Err;
+    cntSendOk        : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：现场有一台 EnOcean 灯具控制器接受厂家自定义命令字（4 byte，第一字节
+//       是命令码 0x80 = "设置亮度"，第二字节是通道，第三字节是亮度 0-255，
+//       第四字节预留）。用 PLC 替代手按面板远程发指令，HMI 上点"全亮" =
+//       PLC 发 [0x80, 0x01, 0xFF, 0x00] 给灯具。本程序演示用
+//       FB_Send_Generic 发自定义 4 byte 数据帧。
+//
+// 价值：自定义协议无对应专用 FB；用本 FB 拼指针 + 选 ORG + 上升沿触发，
+//       一次发送一帧；HMI 端只需要写 bRequestSendOnce := TRUE 即可。
+//
+// 验证步骤：
+//   1. 跑 P_Demo_FB_KL6581 让 KL6581 初始化（必等 fbKL6581.bReady = TRUE
+//      再触发发送，否则 iSendErrId = 16#14 KL6581_not_ready）
+//   2. 引用 Tc2_EnOcean，编译，登录，运行
+//   3. 把 abLightCommand 调整为你的厂家命令
+//   4. 在线写 bRequestSendOnce := TRUE -> 应观察 bSendBusy 短暂 TRUE，
+//      1-2 秒后回 FALSE；cntSendOk +1；现场 EnOcean 灯具响应（亮起）
+//   5. 在 bSendBusy = TRUE 时再写 bRequestSendOnce -> 上升沿被忽略，
+//      cntSendOk 不变
+//   6. 把 nTargetKL6583 = 9（无效）-> bSendError = TRUE，
+//      iSendErrId = 16#16 KL6581_TransmissionError
+//   7. 在 fbKL6581.bReady = FALSE 时触发 -> iSendErrId = 16#14
+// =============================================================================
+
+fbKL6581(
+    bInit        := TRUE,
+    nIdx         := 1,
+    stKL6581_in  := stKL6581Input,
+    stKL6581_out := stKL6581Output
+);
+
+// 只有主端子 Ready 才允许触发（PDF 限制 + 工程经验）
+fbSendCustom(
+    bStart      := bRequestSendOnce AND fbKL6581.bReady,
+    by_Node     := nTargetKL6583,
+    by_ORG      := eOrgToUse,
+    pt_SendData := ADR(abLightCommand),                  // ADR 取 4 byte 数据地址
+    by_STATE    := 16#0,                                  // 默认 STATE
+    nEnOceanID  := nVirtualIdOffset,
+    str_KL6581  := fbKL6581.str_KL6581,
+    bBusy       => bSendBusy,
+    bError      => bSendError,
+    iErrorID    => iSendErrId
+);
+
+// 完成后自动清触发以备下次（典型工程做法）
+IF NOT bSendBusy AND bRequestSendOnce AND NOT bSendError THEN
+    bRequestSendOnce := FALSE;
+    cntSendOk := cntSendOk + 1;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

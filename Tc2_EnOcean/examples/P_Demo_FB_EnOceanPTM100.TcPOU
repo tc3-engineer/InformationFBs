@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_EnOceanPTM100" Id="{4da2223f-ada0-5156-9d7c-842a6e1aa97a}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_EnOceanPTM100
+VAR
+    fbEnOceanReceive  : FB_EnOceanReceive;             // KL6021-0023 接收根 FB
+    fbCorridorButtons : FB_EnOceanPTM100;              // 走廊 8 键场景面板
+
+    // —— 链到 KL6021-0023 IO ——
+    stEnOceanInData   AT %I* : ST_EnOceanInData;
+    stEnOceanOutData  AT %Q* : ST_EnOceanOutData;
+
+    nCorridorPanelId           : UDINT := 16#000000C4; // 模块铭牌 ID（学习时获取）
+    abCorridorButtonState      : ARRAY [0..7] OF BOOL; // 8 键当前状态
+    rTrigBtnK0                 : R_TRIG;                // 把电平按键整成"按一下亮一次灯"用
+    bCorridorMainLightOn       : BOOL;                  // 用 [0] 控制走廊主灯
+    bPTM100Error               : BOOL;                  // 解析块错误标志
+    nPTM100ErrId               : UDINT;                 // 错误号
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：办公楼走廊照明用 EnOcean PTM100 自发电 8 键场景面板（贴墙、零布线、
+//       零电池维护）。按键 0 控制走廊主灯（按一次切换 on/off），其余 7 键
+//       预留给会议室、影音、消防演练等场景。本例展示 PTM100 接入。
+//
+// 价值：免去自写"识别 transmitter ID + 解码 PTM100 字节 + 维护 watchdog"
+//       ~150 行代码；应用层 abCorridorButtonState[0..7] 数组直接可用。
+//
+// 验证步骤：
+//   1. 在 SysMgr 链 KL6021-0023 IO 字节区到 stEnOceanInData / stEnOceanOutData
+//   2. 把 PTM100 模块 ID 写入 nCorridorPanelId（在线获取方法：先跑
+//      P_Demo_FB_EnOceanReceive 观察 nLastTransmitterId，按一下面板按键
+//      就能看到该模块的 4 字节 ID）
+//   3. 引用 Tc2_EnOcean，编译，登录，运行
+//   4. 按面板按键 0：观察 abCorridorButtonState[0] 出现 TRUE，下个 PLC
+//      周期 rTrigBtnK0.Q 给出一个上升沿脉冲，bCorridorMainLightOn 切换
+//   5. 按按键 3：观察 abCorridorButtonState[3] 变 TRUE，其它位为 FALSE
+//   6. 不按按键 60 秒，因为 tWatchdog = T#0s 不应该报错；如果改成 T#10s
+//      则 10 秒不按 bPTM100Error = TRUE / nPTM100ErrId = 16#0002
+//   7. 离开面板天线覆盖范围按键 -> nPTM100ErrId 可能出现 16#0001 校验错
+// =============================================================================
+
+// 1) 上游 KL6021-0023 接收链
+fbEnOceanReceive(
+    bEnable          := TRUE,
+    stEnOceanInData  := stEnOceanInData,
+    stEnOceanOutData := stEnOceanOutData
+);
+
+// 2) PTM100 解析；bEnable 跟随上游健康度，避免上游错时仍解码
+fbCorridorButtons(
+    bEnable               := NOT fbEnOceanReceive.bError AND fbEnOceanReceive.bEnable,
+    tWatchdog             := T#0s,                              // PTM100 按一下才发；不开看门狗
+    nTransmitterId        := nCorridorPanelId,
+    stEnOceanReceivedData := fbEnOceanReceive.stEnOceanReceivedData,
+    bSwitches             => abCorridorButtonState,
+    bError                => bPTM100Error,
+    nErrorId              => nPTM100ErrId
+);
+
+// 3) PTM100 没有"松开电报"，bSwitches[0] 不一定是真实"按住电平"。
+//    用 R_TRIG 取上升沿做"按一下切灯"的脉冲语义
+rTrigBtnK0(CLK := abCorridorButtonState[0]);
+IF rTrigBtnK0.Q THEN
+    bCorridorMainLightOn := NOT bCorridorMainLightOn;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

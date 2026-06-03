@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_Send_4BS" Id="{29723180-5365-5920-af33-123953f6777f}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_Send_4BS
+VAR
+    fbKL6581         : FB_KL6581;
+    fbVirtualSensor  : FB_Send_4BS;                     // PLC 模拟一台 EnOcean 4byte 传感器
+
+    stKL6581Input    AT %I* : KL6581_Input;
+    stKL6581Output   AT %Q* : KL6581_Output;
+
+    tonBroadcastPeriod : TON;                            // 周期发送（典型 60 秒一帧模拟温度 sensor）
+    rTrigBroadcast     : R_TRIG;
+    bSendNow           : BOOL;
+    nTargetNode        : BYTE := 1;
+    nVirtualIdOffset   : BYTE := 5;                      // base ID + 5 = 一个虚拟 sensor
+
+    // 4 byte payload：byte0 = 室温乘 10、byte1 = 设定值、byte2 = 状态、byte3 = 校验
+    abSensorPayload  : ARRAY [0..3] OF BYTE;
+    rPlcRoomTempDegC : REAL := 23.5;                     // PLC 内部计算 / 外部 PT100 取值
+    nPlcSetpoint     : INT := 22;
+    nPlcStatus       : BYTE := 16#01;                    // 0x01 = 正常运行
+
+    bSendBusy        : BOOL;
+    bSendError       : BOOL;
+    iSendErrId       : E_KL6581_Err;
+    cntSendOk        : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：现场 BMS 用 EnOcean 接收节点收一批 EnOcean 4-byte 温控 sensor。某区
+//       域装的是有线 PT100 + Beckhoff KL3201，温度数据已经在 PLC 里。为了
+//       让 BMS 不必为这个区域额外加 EnOcean → 有线网关，本程序"假装"成
+//       EnOcean 4-byte sensor，每 60 秒广播一次温度 + 设定值 + 状态。
+//       BMS 那边完全用 EnOcean 接收协议处理，不知道发送源是 PLC。
+//
+// 价值：用 PLC + KL6581 + FB_Send_4BS 替代 EnOcean → 有线网关；省一个网关
+//       硬件。配合 nVirtualIdOffset 可以让一个 PLC 模拟多达 128 个虚拟
+//       sensor 节点。
+//
+// 验证步骤：
+//   1. 跑 P_Demo_FB_KL6581 让主端子初始化
+//   2. 引用 Tc2_EnOcean，编译，登录，运行
+//   3. 等待 60 秒：tonBroadcastPeriod 到期 -> rTrigBroadcast.Q 触发 ->
+//      bSendNow 一周期 TRUE，fbVirtualSensor 发出 4-byte 电报，BMS 端
+//      应接收到来自"虚拟 sensor"的温度数据
+//   4. 修改 rPlcRoomTempDegC 在线写值 -> 下次广播的 byte0 应变化
+//   5. 把 nTargetNode = 9 -> bSendError = TRUE，iSendErrId = 16#16
+//   6. cntSendOk 应每 60 秒 +1
+// =============================================================================
+
+fbKL6581(
+    bInit        := TRUE,
+    nIdx         := 1,
+    stKL6581_in  := stKL6581Input,
+    stKL6581_out := stKL6581Output
+);
+
+// 每 60 秒广播一次
+tonBroadcastPeriod(IN := NOT tonBroadcastPeriod.Q, PT := T#60S);
+rTrigBroadcast(CLK := tonBroadcastPeriod.Q);
+bSendNow := rTrigBroadcast.Q;
+
+// 每次广播前打包 4 byte payload（PLC 数据 → EnOcean 字节）
+IF bSendNow THEN
+    abSensorPayload[0] := REAL_TO_BYTE(rPlcRoomTempDegC * 10.0 / 40.0 * 255.0);  // 0..40°C → 0..255
+    abSensorPayload[1] := INT_TO_BYTE(nPlcSetpoint + 100);                       // -100..+100 → 0..200
+    abSensorPayload[2] := nPlcStatus;
+    abSensorPayload[3] := abSensorPayload[0] XOR abSensorPayload[1] XOR abSensorPayload[2]; // 简易校验
+END_IF;
+
+fbVirtualSensor(
+    bStart      := bSendNow AND fbKL6581.bReady,         // 必须主端子 Ready
+    by_Node     := nTargetNode,
+    pt_SendData := ADR(abSensorPayload),                 // ADR 取 4 byte 地址
+    nEnOceanID  := nVirtualIdOffset,                     // base + 5
+    str_KL6581  := fbKL6581.str_KL6581,
+    bBusy       => bSendBusy,
+    bError      => bSendError,
+    iErrorID    => iSendErrId
+);
+
+IF NOT bSendBusy AND NOT bSendError AND bSendNow THEN
+    cntSendOk := cntSendOk + 1;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>
