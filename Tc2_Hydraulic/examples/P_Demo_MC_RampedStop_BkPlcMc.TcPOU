@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_MC_RampedStop_BkPlcMc" Id="{0641e424-d91f-51eb-ac2e-f481f2615a5a}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_MC_RampedStop_BkPlcMc
+VAR
+    fbRampStopRelief   : MC_RampedStop_BkPlcMc;
+    axHydReliefValve   : AXIS_REF_BkPlcMc;
+    rtRampStopTrig     : R_TRIG;
+    bShiftEndShutdown  : BOOL := FALSE;                  // 班末停机请求
+    bRampStopDone      : BOOL;
+    bRampStopBusy      : BOOL;
+    bRampStopActive    : BOOL;
+    bRampStopError     : BOOL;
+    bRampStopAborted   : BOOL;
+    nRampStopErrorID   : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：液压站日常停机卸荷流程。班末或维护前把液压系统的执行器速度
+//       在 3 秒内线性减到 0，配合泵停 + 卸荷阀打开，让残余压力安全
+//       释放（避免液压管路冲击）。不在乎执行器停在哪个具体位置。
+// 价值：相比 MC_Stop_BkPlcMc 需要在内部计算"按减速能到达的下一个位
+//       置"作为目标停位，本 FB 只按时间斜坡走，业务侧不操心"停哪"；
+//       适合卸荷、停泵、班末关机等"按时间停下不要冲击"的场景。
+// 验证：① 前置：让 axHydReliefValve 处于运动状态（先发 MoveVelocity
+//       让阀开度持续变化）；② bShiftEndShutdown := TRUE 触发；
+//       ③ bRampStopBusy 立即变 TRUE；
+//       ④ MC_ReadActualVelocity_BkPlcMc 观察速度应在 3 秒内从当前值
+//       线性减到 0；
+//       ⑤ bRampStopDone := TRUE；
+//       ⑥ 验证"无位置保证"特性：如果起步时离软限位很近，停车过程中
+//       可能越过软限位 — PDF 明确警告这种行为；这是 RampedStop 与
+//       MC_Stop 的本质区别。
+// 注意：RampTime = 3 s 是按参考速度算的；若实际速度只有参考速度一半，
+//       实际刹车时间会缩短到 1.5 s。
+// =============================================================================
+
+rtRampStopTrig(CLK := bShiftEndShutdown);
+
+fbRampStopRelief(
+    Execute  := rtRampStopTrig.Q,
+    RampTime := 3.0,                                       // 3 秒线性减到 0
+    Axis     := axHydReliefValve,
+    Busy     => bRampStopBusy,
+    Done     => bRampStopDone,
+    Error    => bRampStopError,
+    ErrorID  => nRampStopErrorID,
+    Active   => bRampStopActive,
+    CommandAborted => bRampStopAborted
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_BACnet_MI" Id="{eb75a0b2-7123-5c32-babb-02caf1324df4}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_BACnet_MI
+VAR
+    // 空调机组本地控制柜上的 5 档风机模式旋钮,把当前档位暴露给 BMS
+    fbFanModeSwitch : FB_BACnet_MI := (
+        sObjectName := 'FanMode_AHU_3F',
+        sDescription := 'Local fan speed selector (AUTO/Low/Mid/High/Turbo)',
+        aStateText := ['AUTO', 'Low', 'Medium', 'High', 'Turbo'],
+        aAlarmValues := [5],                       // 档位 5 = Turbo 触发报警
+        bEventDetectionEnable := TRUE,
+        nNotificationClass := 13,
+        aEventMessageTextsConfig := ['Turbo mode active', 'Sensor fault', 'Normal']);
+
+    fbAlarmClass    : FB_BACnet_NC := (
+        nObjectInstance := 13,
+        nNotificationClass := 13,
+        sDescription := 'Fan mode alarms',
+        aAckRequired := [TRUE, TRUE, FALSE],
+        aPriority := [10, 11, 12]);
+
+    nFanSelectorPlc : UDINT := 1;                  // 从旋钮端子(3 路 BI 编码)解码得到
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景:空调机组本地控制柜上有一个 5 档旋钮(AUTO/Low/Medium/High/Turbo)切换
+//       风机模式;BMS 需要看到当前档位以便记录运维操作;Turbo 档(超出正常运
+//       行包络)要发报警让运维注意。
+// 价值:用一个 MI 对象代替 "5 个 BI 拼接 + BMS 端码表" 方案,BMS 端直接显示语
+//       义文本(AUTO/Low/...),无需画面里维护额外码表;Alarm_Values 一行配置
+//       就能在 Turbo 时触发标准 BACnet 报警。
+// 验证:1) 在线写 nFanSelectorPlc := 3,BACnet Explorer 读 Present_Value=3,
+//       State_Text[3]='Medium'。2) nFanSelectorPlc := 5,Explorer 应看到
+//       Event_State=OFFNORMAL,NC13 发出 alarm,message text 为 'Turbo mode
+//       active'。3) nFanSelectorPlc := 1,Event_State 回到 normal。
+// =============================================================================
+
+fbFanModeSwitch.nVal := nFanSelectorPlc;
+fbFanModeSwitch();
+fbAlarmClass();
+
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

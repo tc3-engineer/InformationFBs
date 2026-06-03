@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_PMLUnitModeManager" Id="{39cb9e26-c3aa-5f9b-8c07-80ed555af6ef}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_PMLUnitModeManager
+VAR
+    fbStateMachine     : FB_PMLStateMachine;
+    fbModeManager      : FB_PMLUnitModeManager;
+
+    // HMI 模式选择 + 切换按钮
+    nHmiSelectedMode   : DINT := 1;                  // 下拉框选中模式
+    bBtnSwitchMode     : BOOL := FALSE;              // 切换按钮
+    rtrigSwitch        : R_TRIG;                     // 上升沿转脉冲
+
+    // 状态机的命令按钮（用于把机器先停到 Stopped）
+    bBtnReset          : BOOL := FALSE;
+    bBtnStop           : BOOL := FALSE;
+    eCmd               : E_PMLCommand;
+
+    // 状态机 I/O
+    eMode              : DINT := 1;                  // 当前 UnitMode（Production 默认）
+    eState             : E_PMLState;
+    sStateName         : STRING(80);
+    bSmError           : BOOL;
+    nSmErrorId         : UDINT;
+    stSubUnitInfoRef   : ST_PMLSubUnitInfoRef;
+    stOptions          : ST_PMLStateMachineOptions;
+
+    // Manager 输出（在线观察）
+    nCurrentModeNum    : DINT;
+    sCurrentModeName   : STRING(80);
+    bModeSwitchDone    : BOOL;
+    bModeError         : BOOL;
+    bModeErrorId       : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc3_PackML_V3.FB_PMLUnitModeManager 演示程序
+// ============================================================
+// 场景：HMI"模式"下拉框 + "切换"按钮。操作员选 'Maintenance' 后按
+//       按钮——Manager 检查当前状态是否允许切换（如基础模式只在
+//       Stopped 可切）。生产中按下被拒绝并报错"请先停机"。
+// 价值：把模式切换合法性检查集中化——HMI 不需要自己写状态检查；
+//       V3 新增 eModeStatus / sModeStatus 输出让 HMI 显示当前模式
+//       一行绑定，省去 F_PMLUnitModeToString 反查。
+// 验证：登录后顺序操作：
+//       1. 写 bBtnReset := TRUE → 状态机进 Idle (eState=4)。
+//       2. 写 nHmiSelectedMode := 2, bBtnSwitchMode := TRUE → 在 Idle
+//          切到 Maintenance 通常被允许 → 观察 bModeSwitchDone = TRUE,
+//          nCurrentModeNum = 2, sCurrentModeName = 'Maintenance' (或类似)。
+//       3. 写 bBtnStop := FALSE, bBtnReset := TRUE 启动机器 → 进 Execute
+//          (eState=6)。
+//       4. 在 Execute 中尝试 nHmiSelectedMode := 3, bBtnSwitchMode := TRUE
+//          → 切到 Manual 被拒绝（基础模式只能在 Stopped 切）→ 观察
+//          bModeError = TRUE, bModeErrorId 给出原因码。
+//       5. HMI 顶端"当前模式"标签可直接绑 sCurrentModeName。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_PackML_V3（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方"验证"指引在线写值观察
+// ============================================================
+
+(* 命令映射 *)
+IF bBtnReset THEN
+    eCmd := E_PMLCommand.Reset;
+ELSIF bBtnStop THEN
+    eCmd := E_PMLCommand.Stop;
+ELSE
+    eCmd := E_PMLCommand.Undefined;
+END_IF
+
+(* 主状态机周期调用 *)
+fbStateMachine(
+    eMode            := eMode,
+    eCommand         := eCmd,
+    stSubUnitInfoRef := stSubUnitInfoRef,
+    stOptions        := stOptions,
+    eState           => eState,
+    sState           => sStateName,
+    bError           => bSmError,
+    nErrorId         => nSmErrorId
+);
+
+(* Mode Manager：bExecute 用上升沿避免每周期重复请求 *)
+rtrigSwitch(CLK := bBtnSwitchMode);
+fbModeManager(
+    bExecute     := rtrigSwitch.Q,
+    eModeCommand := nHmiSelectedMode,
+    eState       := eState,
+    eModeStatus  => nCurrentModeNum,
+    sModeStatus  => sCurrentModeName,
+    bDone        => bModeSwitchDone,
+    bError       => bModeError,
+    bErrorID     => bModeErrorId
+);
+
+(* 切换成功后把新模式同步给状态机 *)
+IF bModeSwitchDone THEN
+    eMode := nCurrentModeNum;
+END_IF
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

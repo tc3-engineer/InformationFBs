@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_MC_SetOverride_BkPlcMc" Id="{f1aa9a0a-2a47-5f1f-9105-384eda38afbf}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_MC_SetOverride_BkPlcMc
+VAR
+    fbSetClampOverride : MC_SetOverride_BkPlcMc;
+    axHydClampingHead  : AXIS_REF_BkPlcMc;
+    bEnableOverride    : BOOL := TRUE;                   // 倍率功能始终激活
+    lrOverridePercent  : LREAL := 100.0;                 // HMI 输入 0-100 %
+    lrVelocityFactor   : LREAL;                          // 换算到 [0, 1]
+    bOverrideActive    : BOOL;                           // FB Enabled
+    bOverrideError     : BOOL;
+    nOverrideErrorID   : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：注塑机 HMI 速度倍率旋钮（0-100%）。新模具试模时设 50%，运行几
+//       个周期确认轨迹后调到 100% 进入生产；某些工艺常驻 80% 倍率延
+//       长设备寿命。本 FB 将 HMI 旋钮值传给液压轴，所有运动 FB
+//       (MC_MoveAbsolute / MoveRelative / MoveVelocity 等) 实际速度
+//       = 指令速度 × override。
+// 价值：手写需要直接写 pStAxParams^.fOverride 并自己处理 [0,1] 限幅；
+//       本 FB 提供标准 PLCopen 接口，限幅 + 加减速平滑过渡都内置，HMI
+//       端无需关心边界条件。
+// 验证：① 调一个 MC_MoveVelocity_BkPlcMc(Velocity := 500) 让轴持续运
+//       动；② 在线把 lrOverridePercent 从 100 调到 50，观察实际速度
+//       应平滑（不是瞬变）下降到 250 mm/s；③ 调到 0，观察轴不会停
+//       而是减速到 fCreepSpeed（爬行速度）继续走 — 这是设计行为，
+//       要真停轴用 MC_Stop_BkPlcMc。
+// 注意：本 FB 只对 iTcMc_ProfileCtrlBased 配置文件生效；其他 profile
+//       不读 fOverride，调了等于没调。
+// =============================================================================
+
+// HMI 端给的是 0-100 百分比，换算到 [0, 1]
+lrVelocityFactor := lrOverridePercent / 100.0;
+
+fbSetClampOverride(
+    Enable    := bEnableOverride,
+    VelFactor := lrVelocityFactor,
+    Axis      := axHydClampingHead,
+    Enabled   => bOverrideActive,
+    Busy      => ,
+    Error     => bOverrideError,
+    ErrorID   => nOverrideErrorID
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_MC_Stop_BkPlcMc" Id="{967120f3-efb2-5d63-ad2f-c98afec628c7}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_MC_Stop_BkPlcMc
+VAR
+    fbStopClamp        : MC_Stop_BkPlcMc;
+    axHydClampingHead  : AXIS_REF_BkPlcMc;
+    rtStopTrigger      : R_TRIG;
+    bMoldFixtureAlarm  : BOOL := FALSE;                  // 模具夹具异常告警
+    bStopDone          : BOOL;
+    bStopBusy          : BOOL;
+    bStopActive        : BOOL;
+    bStopError         : BOOL;
+    bStopAborted       : BOOL;                           // Stop 期间不能被打断
+    nStopErrorID       : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：注塑机模具夹具异常传感器报警触发安全停车。必须强制停透防止模
+//       具损坏；且操作员不允许在停车期间误触发新动作。停后轴在
+//       Errorstop 状态，必须明确按"恢复"才能重新接受新命令 — 这是
+//       Stop 与 Halt 的核心区别。
+// 价值：相比硬件继电器断电急停，本 FB 软停车带受控减速曲线避免冲击；
+//       相比 Halt，强制性更高，停车期间发新命令会被算法拒绝（防止操
+//       作员或上位机误指令）。
+// 验证：① 前置：轴在运动中（先发 MC_MoveVelocity 让轴持续走）；
+//       ② bMoldFixtureAlarm := TRUE → rtStopTrigger.Q 给上升沿；
+//       ③ bStopBusy 立即变 TRUE；ActVelocity 应按 600 mm/s² 减速到 0；
+//       ④ bStopDone := TRUE（一个周期）后 MC_ReadStatus_BkPlcMc.Errorstop
+//       应为 TRUE（注意是 Errorstop 不是 StandStill）；
+//       ⑤ 验证不可打断性：bStopBusy 期间发任何 MC_Move* → 应观察新
+//       FB 报 NotReady 错误，本 FB 的 bStopAborted 不会变 TRUE；
+//       ⑥ 需要 MC_Reset_BkPlcMc 清错后才能下次运动。
+// 注意：Deceleration = 600 mm/s² 比工艺停车 (Halt 用 800) 略低，因为
+//       Stop 多用于异常场景，更急的减速可能撞击负载；按工程经验调。
+// =============================================================================
+
+rtStopTrigger(CLK := bMoldFixtureAlarm);
+
+fbStopClamp(
+    Execute      := rtStopTrigger.Q,
+    Deceleration := 600.0,                                // 安全停车减速度
+    Jerk         := 0.0,
+    RampTime     := 0.0,
+    BufferMode   := Aborting_BkPlcMc,
+    Axis         := axHydClampingHead,
+    Busy         => bStopBusy,
+    Done         => bStopDone,
+    Error        => bStopError,
+    ErrorID      => nStopErrorID,
+    Active       => bStopActive,
+    CommandAborted => bStopAborted                        // 通常不会 TRUE，Stop 不可被打断
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

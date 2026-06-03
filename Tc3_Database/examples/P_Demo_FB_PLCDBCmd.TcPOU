@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_PLCDBCmd" Id="{4bd8496f-fdc1-5a51-afc8-9febcde6bba2}" SpecialFunc="None">
+    <Declaration><![CDATA[TYPE ST_OldBatchData :
+STRUCT
+    nBatchId       : DINT;
+    sProductType   : STRING(50);
+    nTotalGood     : DINT;
+END_STRUCT
+END_TYPE
+
+PROGRAM P_Demo_FB_PLCDBCmd
+VAR
+    // ⚠️ obsolete —— 新项目用 FB_PLCDBCmdEvt
+    fbCmd              : FB_PLCDBCmd(sNetID := '', tTimeout := T#15S);
+
+    bInsertReq         : BOOL := FALSE;
+    nMesDbId           : UDINT := 1;
+    stBatch            : ST_OldBatchData := (nBatchId := 67890, sProductType := 'PartB', nTotalGood := 320);
+    aParaInfo          : ARRAY[0..2] OF ST_ExpParameter;
+    sInsertSQL         : STRING(500) := 'INSERT INTO tbl_OldBatchResult (batchId, productType, totalGood) VALUES ({nBatchId}, {sProductType}, {nTotalGood})';
+
+    nState             : INT := 0;
+    bExecuteDone       : BOOL;
+    bLastWasError      : BOOL;
+    ipLastTcResult     : Tc3_EventLogger.I_TcResultEvent;
+    sLastErrText       : STRING(255);
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：老 OEM 工程批次结果 INSERT 模块用本 FB 配占位符 SQL。本程序展示老
+//       风格调用，输出走 ipTcResultEvent : I_TcResultEvent。新项目应改用
+//       P_Demo_FB_PLCDBCmdEvt。
+// 价值：保护已部署设备的二进制兼容。
+// 验证步骤：
+//   1. 右键 POUs → Add → Existing Item → 选本 .TcPOU；引用 Tc3_Database 与
+//      Tc3_EventLogger
+//   2. 前置：tbl_OldBatchResult 表存在
+//   3. 编译 → 登录 → 运行
+//   4. 在线写 bInsertReq := TRUE → DB 多 1 行
+// =============================================================================
+
+// 准备参数描述（顺序对应 ST_OldBatchData）
+aParaInfo[0].sParaName := 'nBatchId';
+aParaInfo[0].eParaType := E_ExpParameterType.Int32;
+aParaInfo[0].nParaSize := SIZEOF(stBatch.nBatchId);
+aParaInfo[1].sParaName := 'sProductType';
+aParaInfo[1].eParaType := E_ExpParameterType.STRING_;
+aParaInfo[1].nParaSize := SIZEOF(stBatch.sProductType);
+aParaInfo[2].sParaName := 'nTotalGood';
+aParaInfo[2].eParaType := E_ExpParameterType.Int32;
+aParaInfo[2].nParaSize := SIZEOF(stBatch.nTotalGood);
+
+IF bInsertReq AND nState = 0 THEN
+    bInsertReq := FALSE;
+    nState := 10;
+END_IF
+
+IF nState = 10 THEN
+    bExecuteDone := fbCmd.Execute(
+        hDBID       := nMesDbId,
+        pExpression := ADR(sInsertSQL),
+        cbExpression:= SIZEOF(sInsertSQL),
+        pData       := ADR(stBatch),
+        cbData      := SIZEOF(stBatch),
+        pParameter  := ADR(aParaInfo),
+        cbParameter := SIZEOF(aParaInfo)
+    );
+    IF bExecuteDone THEN
+        IF fbCmd.bError THEN
+            ipLastTcResult := fbCmd.ipTcResultEvent;
+            ipLastTcResult.RequestEventText(1033, ADR(sLastErrText), SIZEOF(sLastErrText));
+            bLastWasError := TRUE;
+        END_IF
+        nState := 0;
+    END_IF
+END_IF
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

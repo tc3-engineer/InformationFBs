@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_BACnetRM_WriteProperty" Id="{c2d7f13b-8775-5778-9609-0c4ae466f6c1}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_BACnetRM_WriteProperty
+VAR
+    fbClient : FB_BACnet_Client := (
+        nDeviceInstance := 42,
+        tWriteCycleTime := T#10S,
+        nMaxParallelRequests := 255);
+    fbDevice : FB_BACnetRM_Device := (Client := fbClient);
+    fbRemoteBO : FB_BACnetRM_BO := (Client := fbClient, nObjectInstance := 0);
+
+    fbWrite : FB_BACnetRM_WriteProperty := (Client := fbClient);
+    bWriteOutOfService : BOOL := FALSE;        // 在线写 TRUE 触发一次写
+    bOutOfServiceVal : BOOL := TRUE;           // 要写的值
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景:运维想暂时把对端 device 42 的 BO:0 置成 Out_Of_Service(仿真模式)做对
+//       端调试 — 调试人员在物理 BO 上做手动测试时不想让 BMS 误以为是真值。
+// 价值:跨厂商远程改属性,标准化无需懂对端品牌的协议细节;一行触发。
+// 验证:1) 等 fbDevice.bOperational=TRUE。2) BACnet Explorer 在 device 42 BO:0
+//       上查 Out_Of_Service 属性=FALSE。3) 在线写 bWriteOutOfService := TRUE
+//       (并预设 bOutOfServiceVal := TRUE),fbWrite 应触发一次 WriteProperty
+//       并 bDone 短暂置位。4) Explorer 应能看到 Out_Of_Service=TRUE。
+// =============================================================================
+
+fbClient();
+fbDevice();
+fbRemoteBO();
+
+fbWrite.bExecute := bWriteOutOfService;
+IF fbWrite.bExecute THEN
+    bWriteOutOfService := FALSE;
+    fbWrite.iObject := fbRemoteBO;
+    fbWrite.ePropID := E_BACnet_PropertyIdentifier.PropOutOfService;
+    fbWrite.pData   := ADR(bOutOfServiceVal);
+    fbWrite.nData   := SIZEOF(bOutOfServiceVal);
+END_IF
+
+fbWrite();
+
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

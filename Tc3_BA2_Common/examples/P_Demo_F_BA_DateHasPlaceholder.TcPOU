@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_F_BA_DateHasPlaceholder" Id="{2a49bcb1-f42c-5bc4-9a24-d330c39e48fc}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_F_BA_DateHasPlaceholder
+VAR
+    argStDate                      : ST_BA_Date                    ; // stDate
+    fnReturn                       : BOOL; // 返回值
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// Tc3_BA2_Common.F_BA_DateHasPlaceholder 演示程序
+// =============================================================================
+// 场景：调度引擎判断一条日历条目是"固定日期"还是"周期性占位"（每个周一执行）。
+//
+// 价值：一行 FC 替代多个 IF 比较各字段 = 16#FF 的繁琐写法。
+//
+// 验证：登录 PLC 后，按例程内变量在线写值；监视输出 / 返回值，结合 §1 功能
+//       简述的预期行为对照（详见配套 .md 文档 §7 业务场景）。
+//
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_BA2_Common（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』指引在线写值观察
+// =============================================================================
+
+fnReturn := F_BA_DateHasPlaceholder(
+    stDate                   := argStDate
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

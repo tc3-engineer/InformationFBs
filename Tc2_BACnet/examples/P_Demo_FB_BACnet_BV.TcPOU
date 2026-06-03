@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_BACnet_BV" Id="{8aded1c7-5e8c-5e39-9105-b74205cd4d31}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_BACnet_BV
+VAR
+    // 空调机组过滤器堵塞汇总报警位:PLC 写,BMS 订阅
+    fbFilterClogged : FB_BACnet_BV := (
+        sObjectName := 'FilterClogged_AHU_3F',
+        sDescription := 'AHU floor 3 filter clogged summary alarm',
+        sInactiveText := 'OK',
+        sActiveText := 'Clogged',
+        bAlarmValue := TRUE,                  // active = 报警态
+        aEventEnable := [TRUE, TRUE, TRUE],
+        bEventDetectionEnable := TRUE,
+        nNotificationClass := 12,
+        aEventMessageTextsConfig := ['Filter clogged', 'Sensor fault', 'Recovered']);
+
+    fbAlarmClass    : FB_BACnet_NC := (
+        nObjectInstance := 12,
+        nNotificationClass := 12,
+        sDescription := 'AHU summary alarms',
+        aAckRequired := [TRUE, TRUE, FALSE],
+        aPriority := [8, 9, 12]);             // OFFNORMAL 走 priority 8(高)
+
+    bFilterAlarmPlc : BOOL := FALSE;          // 从 PLC 内部"压差>500Pa"逻辑算出来
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景:空调机组过滤器堵塞 — PLC 通过压差传感器算出 bFilterAlarmPlc,需要把该位
+//       包装成符合 BACnet 标准的 alarm 对象,让 BMS 订阅 alarm summary 并触发
+//       维护工单。
+// 价值:把 PLC 内部布尔位包装成 BACnet alarm 对象,BMS 直接订阅就行;无需 PLC
+//       自己发邮件/短信。alarm 标准化后跨厂商 BMS 都能识别。
+// 验证:1) BACnet Explorer 读 Present_Value 应为 inactive('OK')。2) 在线写
+//       bFilterAlarmPlc := TRUE,Explorer 应看到 Present_Value=active,Event_State
+//       切到 OFFNORMAL,NC12 触发一条事件给所有 recipient,event message text
+//       为 'Filter clogged'。3) bFilterAlarmPlc := FALSE 后 NC12 触发 normal
+//       事件,event message text 为 'Recovered'。
+// =============================================================================
+
+fbFilterClogged.bEnPgm  := TRUE;              // PLC 始终占 Program 优先级
+fbFilterClogged.bValPgm := bFilterAlarmPlc;
+fbFilterClogged();
+fbAlarmClass();
+
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

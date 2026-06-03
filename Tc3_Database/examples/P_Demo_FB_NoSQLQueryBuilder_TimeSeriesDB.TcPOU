@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_NoSQLQueryBuilder_TimeSeriesDB" Id="{7b6670da-fbfc-51eb-9a65-15900ab66914}" SpecialFunc="None">
+    <Declaration><![CDATA[TYPE ST_SCADAPoint :
+STRUCT
+    rWindSpeed     : REAL;     // 风速 m/s
+    rRotorRPM      : REAL;     // 桨轮转速 rpm
+    rPower_kW      : REAL;     // 输出功率 kW
+END_STRUCT
+END_TYPE
+
+PROGRAM P_Demo_FB_NoSQLQueryBuilder_TimeSeriesDB
+VAR
+    fbBuilder          : FB_NoSQLQueryBuilder_TimeSeriesDB;
+    fbExecutor         : FB_NoSQLQueryEvt(sNetID := '', tTimeout := T#30S);
+
+    // ==== 业务输入 ====
+    bFlushBufferReq    : BOOL := FALSE;        // 在线置 TRUE：把 1000 点缓冲一次性写入
+    nInfluxDbId        : UDINT := 1;
+
+    // ==== 时序数据缓冲（业务程序每 100 ms 填一点，满 1000 点触发 Flush） ====
+    aScadaBuffer       : ARRAY[0..999] OF ST_SCADAPoint;
+
+    // ==== Insert 选项 ====
+    stInsertOpt        : T_QueryOptionTimeSeriesDB_Insert;
+
+    // ==== 状态机 ====
+    nState             : INT := 0;
+    bExecuteDone       : BOOL;
+    bLastWasError      : BOOL;
+    ipLastTcMsg        : Tc3_EventLogger.I_TcMessage;
+    sLastErrText       : STRING(255);
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：风电场每台风机的 SCADA 数据，PLC 端按 100ms 周期采 1000 点存到本地
+//       缓冲 aScadaBuffer。缓冲满时业务触发 bFlushBufferReq，本程序用 TimeSeriesDB
+//       Builder 一次性把 1000 点批量写入 InfluxDB measurement turbine_data，
+//       Server 按 nStartTimestamp + i * nCycleTime 给每点正确时间戳。
+// 价值：批量写入 100-1000 倍提速；时序库按时间范围查询比 SQL 表快 10-100 倍；
+//       时序压缩节省 50-90% 存储；本 Builder 单次调用就让 PLC 周期里无需逐点写。
+// 验证步骤：
+//   1. 右键 POUs → Add → Existing Item → 选本 .TcPOU；引用 Tc3_Database 与
+//      Tc3_EventLogger
+//   2. 前置：TF6420 配置器配 InfluxDB 连接 (hDBID=1)；InfluxDB 实例可达；
+//      measurement turbine_data 可自动建（InfluxDB 不要求预建）
+//   3. 编译 → 登录 → 运行；启动 TF6420 服务
+//   4. 真实工程里 aScadaBuffer 由独立采集任务每 100ms 填 1 点；本演示
+//      预填几条数据
+//   5. 在线写 bFlushBufferReq := TRUE → nState 走 0→10→0；
+//      InfluxDB 多 1000 条记录，时间戳从 nStartTimestamp 起每 1ms 递增
+//   6. 用 Chronograf / Grafana 连 InfluxDB 验证：turbine_data measurement
+//      有 1000 条 rWindSpeed / rRotorRPM / rPower_kW 时间序列
+//   7. 故意把 stInsertOpt.nCycleTime 改成 0 → bLastWasError=TRUE
+// =============================================================================
+
+// ---- 预填演示数据（真实工程里采集任务负责） ----
+aScadaBuffer[0].rWindSpeed := 12.3;
+aScadaBuffer[0].rRotorRPM  := 18.5;
+aScadaBuffer[0].rPower_kW  := 1850.0;
+aScadaBuffer[1].rWindSpeed := 12.5;
+aScadaBuffer[1].rRotorRPM  := 18.7;
+aScadaBuffer[1].rPower_kW  := 1870.0;
+// ... 其余 998 条略
+
+// ---- 业务触发 ----
+IF bFlushBufferReq AND nState = 0 THEN
+    bFlushBufferReq := FALSE;
+
+    // ---- 配置 Builder ----
+    fbBuilder.pQueryOptions  := ADR(stInsertOpt);
+    fbBuilder.cbQueryOptions := SIZEOF(stInsertOpt);
+
+    // ---- 配置 Insert 选项 ----
+    stInsertOpt.sTableName       := 'turbine_data';                  // InfluxDB measurement 名
+    stInsertOpt.sDataType        := 'ST_SCADAPoint';                  // PLC 结构体类型名
+    stInsertOpt.pSymbol          := ADR(aScadaBuffer);
+    stInsertOpt.cbSymbol         := SIZEOF(aScadaBuffer);
+    stInsertOpt.nDataCount       := 1000;                             // 数组长度（与 ARRAY[0..999] 对应）
+    stInsertOpt.nStartTimestamp  := F_GetSystemTime();                // 第一条时间戳 = 当前
+    stInsertOpt.nCycleTime       := 1000;                             // 后续每条 +1ms (1000 µs)
+
+    nState := 10;
+END_IF
+
+// ---- state=10：Executor 发批量写入 ----
+IF nState = 10 THEN
+    bExecuteDone := fbExecutor.Execute(
+        hDBID              := nInfluxDbId,
+        iNoSQLQueryBuilder := fbBuilder
+    );
+    IF bExecuteDone THEN
+        IF fbExecutor.bError THEN
+            ipLastTcMsg := fbExecutor.ipTcResult;
+            ipLastTcMsg.RequestEventText(1033, ADR(sLastErrText), SIZEOF(sLastErrText));
+            bLastWasError := TRUE;
+        ELSE
+            bLastWasError := FALSE;
+            // 业务侧：缓冲已落库，开始下一轮采集（清缓冲、复位 head 指针等）
+        END_IF
+        nState := 0;
+    END_IF
+END_IF
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

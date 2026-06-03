@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_SQLStoredProcedure" Id="{9d6f9d23-4583-5a3a-9247-a35d44cc74a4}" SpecialFunc="None">
+    <Declaration><![CDATA[TYPE ST_OldShiftParams :
+STRUCT
+    nBatchId       : DINT;
+    dtShiftStart   : DT;
+    dtShiftEnd     : DT;
+    nTotalCount    : DINT;        // OUT
+    rQualityIndex  : LREAL;       // OUT
+END_STRUCT
+END_TYPE
+
+PROGRAM P_Demo_FB_SQLStoredProcedure
+VAR
+    // ⚠️ obsolete —— 新项目用 FB_SQLStoredProcedureEvt
+    fbSqlDb            : FB_SQLDatabase(sNetID := '', tTimeout := T#30S);
+    fbSP               : FB_SQLStoredProcedure(sNetID := '', tTimeout := T#30S);
+
+    bInitReq           : BOOL := FALSE;
+    bCloseShiftReq     : BOOL := FALSE;
+    bReleaseReq        : BOOL := FALSE;
+
+    sStoredProcName    : T_MaxString := 'dbo.SP_CloseShift';
+    aSPParams          : ARRAY[0..4] OF ST_SQLSPParameter;
+    stShift            : ST_OldShiftParams := (
+        nBatchId := 20260603,
+        dtShiftStart := DT#2026-06-03-08:00:00,
+        dtShiftEnd := DT#2026-06-03-16:00:00,
+        nTotalCount := 0,
+        rQualityIndex := 0.0
+    );
+
+    nState             : INT := 0;
+    bConnDone          : BOOL;
+    bCreateSPDone      : BOOL;
+    bExecuteDone       : BOOL;
+    bReleaseDone       : BOOL;
+    bSPReady           : BOOL := FALSE;
+
+    ipLastTcResult     : Tc3_EventLogger.I_TcResultEvent;
+    sLastErrText       : STRING(255);
+    bLastWasError      : BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：老 OEM 班次汇总用本 FB 调 DBA 存储过程。新项目改用 P_Demo_FB_SQLStoredProcedureEvt。
+// 价值：保护已部署设备的二进制兼容。
+// 验证步骤：
+//   1. 右键 POUs → Add → Existing Item → 选本 .TcPOU；引用 Tc3_Database 与
+//      Tc3_EventLogger
+//   2. 前置：XML hDBID=1 MS SQL；DB 有 SP_CloseShift 存储过程
+//   3. 编译 → 登录 → 运行
+//   4. 在线写 bInitReq := TRUE → bSPReady=TRUE
+//   5. 写 bCloseShiftReq := TRUE → stShift.nTotalCount 与 .rQualityIndex 被回填
+//   6. 写 bReleaseReq := TRUE 释放参数描述
+// =============================================================================
+
+aSPParams[0].sParameterName := '@batchId';
+aSPParams[0].eParameterType := E_SPParameterType.Input;
+aSPParams[0].eParameterDataType := E_ColumnType.Integer;
+aSPParams[0].nParameterSize := SIZEOF(stShift.nBatchId);
+
+aSPParams[1].sParameterName := '@shiftStart';
+aSPParams[1].eParameterType := E_SPParameterType.Input;
+aSPParams[1].eParameterDataType := E_ColumnType.DateTime;
+aSPParams[1].nParameterSize := SIZEOF(stShift.dtShiftStart);
+
+aSPParams[2].sParameterName := '@shiftEnd';
+aSPParams[2].eParameterType := E_SPParameterType.Input;
+aSPParams[2].eParameterDataType := E_ColumnType.DateTime;
+aSPParams[2].nParameterSize := SIZEOF(stShift.dtShiftEnd);
+
+aSPParams[3].sParameterName := '@totalCount';
+aSPParams[3].eParameterType := E_SPParameterType.Output;
+aSPParams[3].eParameterDataType := E_ColumnType.Integer;
+aSPParams[3].nParameterSize := SIZEOF(stShift.nTotalCount);
+
+aSPParams[4].sParameterName := '@qualityIndex';
+aSPParams[4].eParameterType := E_SPParameterType.Output;
+aSPParams[4].eParameterDataType := E_ColumnType.Float;
+aSPParams[4].nParameterSize := SIZEOF(stShift.rQualityIndex);
+
+IF nState = 0 THEN
+    IF bInitReq THEN
+        bInitReq := FALSE;
+        nState := 10;
+    ELSIF bCloseShiftReq AND bSPReady THEN
+        bCloseShiftReq := FALSE;
+        nState := 30;
+    ELSIF bReleaseReq AND bSPReady THEN
+        bReleaseReq := FALSE;
+        nState := 40;
+    END_IF
+END_IF
+
+IF nState = 10 THEN
+    bConnDone := fbSqlDb.Connect(hDBID := 1);
+    IF bConnDone AND NOT fbSqlDb.bError THEN
+        nState := 20;
+    ELSIF bConnDone THEN
+        bLastWasError := TRUE;
+        nState := 0;
+    END_IF
+END_IF
+
+IF nState = 20 THEN
+    bCreateSPDone := fbSqlDb.CreateSP(
+        sProcedureName  := sStoredProcName,
+        pParameterInfo  := ADR(aSPParams),
+        cbParameterInfo := SIZEOF(aSPParams),
+        pSQLProcedure   := ADR(fbSP)
+    );
+    IF bCreateSPDone THEN
+        IF NOT fbSqlDb.bError THEN
+            bSPReady := TRUE;
+        END_IF
+        nState := 0;
+    END_IF
+END_IF
+
+IF nState = 30 THEN
+    bExecuteDone := fbSP.Execute(
+        pParameterStrc  := ADR(stShift),
+        cbParameterStrc := SIZEOF(stShift)
+    );
+    IF bExecuteDone THEN
+        IF fbSP.bError THEN
+            ipLastTcResult := fbSP.ipTcResultEvent;
+            ipLastTcResult.RequestEventText(1033, ADR(sLastErrText), SIZEOF(sLastErrText));
+            bLastWasError := TRUE;
+        ELSE
+            bLastWasError := FALSE;
+            // stShift.nTotalCount / .rQualityIndex 已被存储过程 OUTPUT 回填
+        END_IF
+        nState := 0;
+    END_IF
+END_IF
+
+IF nState = 40 THEN
+    bReleaseDone := fbSP.Release();
+    IF bReleaseDone THEN
+        IF NOT fbSP.bError THEN
+            bSPReady := FALSE;
+        END_IF
+        nState := 0;
+    END_IF
+END_IF
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

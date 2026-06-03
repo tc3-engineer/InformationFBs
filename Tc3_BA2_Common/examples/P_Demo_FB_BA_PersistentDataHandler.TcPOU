@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_BA_PersistentDataHandler" Id="{4e20c546-8dc2-584e-829d-3eefb2e10ccd}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_BA_PersistentDataHandler
+VAR
+    fbPersistHandler        : FB_BA_PersistentDataHandler;   // 整个 PLC 只一个实例！
+
+    // ---- 持久化数据 demo（实际工程会有大量 PERSISTENT 变量）----
+    nAlarmCounterTotal      : UDINT PERSISTENT;               // 报警计数器
+    fEnergyKWhAccum         : REAL  PERSISTENT;               // 能耗累计 [kWh]
+    sOperatorName           : STRING(80) PERSISTENT;          // 操作员名
+
+    // ---- 触发与配置 ----
+    bManualWriteTrigger     : BOOL := FALSE;                   // HMI 按钮：上升沿手动写盘
+    nStartupDelaySec        : UDINT := 10;                     // 启动延时 10s
+
+    // ---- 5 分钟周期写盘 ----
+    tPeriodicWrite          : TON;                             // IEC 标准定时器
+    bPeriodicWriteTrigger   : BOOL;                            // 由定时器产生
+
+    // ---- 监视输出 ----
+    bWriteBusy              : BOOL;                            // 正在写盘
+    nRemainingInitSec       : UDINT;                           // 启动延时剩余秒
+    bWriteError             : BOOL;                            // 写盘错
+    sLastError              : STRING(255);                     // 错误描述
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// Tc3_BA2_Common.FB_BA_PersistentDataHandler 演示程序
+// =============================================================================
+// 场景：CX 工控机楼控应用：报警计数、能耗累计、操作员配置都是 PERSISTENT。
+//       7x24 运行，市电断电时希望 retain 数据不丢。引入本 FB 主动每 5 分钟
+//       写一次盘 + 维护 .bootdata-old 备份；HMI 上还有"立即保存"按钮触发临时
+//       写盘。比单靠 UPS 关机更可靠（UPS 失效时仍有近期备份）。
+//
+// 价值：相比 Tc2_Utilities.FB_WritePersistentData 手工调用，本 FB 自动维护
+//       双文件备份（.bootdata + .bootdata-old），写盘瞬间断电也能从备份恢复。
+//       启动延时机制避免 PLC 刚启动还没初始化完就被写盘动作打扰。
+//
+// 验证：
+//   ① 登录后：nRemainingInitSec 从 10 倒数到 0（启动期）。期间 bManualWrite-
+//      Trigger 写 TRUE 无效（被忽略）；倒数完成后 FB 自动执行一次写盘
+//      （bWriteBusy 短暂 TRUE）。
+//   ② 启动期完成后写 bManualWriteTrigger := TRUE → 上升沿触发一次写盘
+//      （bWriteBusy 短暂 TRUE）；写回 FALSE 准备下次触发。
+//   ③ 把 nAlarmCounterTotal 在线 += 1，或 fEnergyKWhAccum += 0.5（模拟数据
+//      变化），然后手动触发写盘 → 在工控机的
+//      C:\TwinCAT\3.1\Boot\Plc\Port_851.bootdata 文件大小会更新。
+//   ④ 5 分钟一次的周期：tPeriodicWrite 输出 Q 跳一下，触发写盘。
+//   ⑤ 错误模拟：把目录改为只读 → bWriteError = TRUE，sLastError 给出原因；
+//      2 秒后 FB 自动重试。
+//
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_BA2_Common（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』指引在线写值观察
+//   4. 在 System Manager → PLC → Runtime Settings 中确认 "Clear Invalid
+//      Persistent Data" 选项 *未* 勾选，否则 .bootdata 损坏后不会自动从
+//      .bootdata-old 恢复
+// =============================================================================
+
+// 5 分钟周期写盘脉冲生成
+tPeriodicWrite(IN := NOT tPeriodicWrite.Q, PT := T#5M, Q => bPeriodicWriteTrigger);
+
+// 任一触发源都启动一次写盘（OR 起来再喂 R_TRIG 也行；这里偷懒直接 OR 到 bStt）
+// 注意 bStt 是上升沿触发，所以两个 BOOL OR 后再用 R_TRIG 边沿化，避免持续 TRUE
+// 占住 FB（演示简化，实际工程见下方注释）。
+fbPersistHandler(
+    bStt              := bManualWriteTrigger OR bPeriodicWriteTrigger,
+    nInitSttDly       := nStartupDelaySec,
+    bBusy             => bWriteBusy,
+    nRemTnInitSttDly  => nRemainingInitSec,
+    bErr              => bWriteError,
+    sErrDescr         => sLastError
+);
+
+// 工程提醒：
+// ① 整个 PLC 工程只能有 1 个 FB_BA_PersistentDataHandler 实例（PDF NOTICE）。
+//    多实例会引起文件句柄冲突。
+// ② bStt 是上升沿触发；生产代码常用 R_TRIG 把 bManualWriteTrigger 边沿化后再
+//    喂 bStt，避免按钮按下不松手导致 FB 一直忙。
+// ③ TwinCAT 重启后查询 TwinCAT_SystemInfoVarList._AppInfo.OldBootData：若为
+//    TRUE 说明本次启动从 .bootdata-old 恢复，意味着 SD 卡有问题，应报警。
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

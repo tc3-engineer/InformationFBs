@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_ItpIsEStopEx" Id="{b0344d3f-0fc0-56bc-bd87-0b8d442eb9f2}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_ItpIsEStopEx
+VAR
+    ItpIsEStopEx_ret                      : BOOL;  // FC 返回值
+    sNciToPlc_inst                        : NCTOPLC_NCICHANNEL_REF;  // VAR_IN_OUT 引用对象
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_NCI.ItpIsEStopEx 演示程序
+// ============================================================
+// 场景：CNC 加工日常 NCI 通道操作（启停 / 加载 NC 程序 / Override / 读写 R 参数 / 错误读取）。
+// 价值：把『裸 ADS 调用』包装成有命名的 PLC FB，业务代码可读性高、错误处理显式。
+// 验证：在线写 bDoIt := TRUE 触发一次，观察 fbXxx.bBusy → TRUE → FALSE，bErr 应为 FALSE，输出引脚给出预期值。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_NCI（References → Add library）
+//   3. 在 System Manager 把 NCI 通道接口 Link 给 sNciToPlc_inst / sPlcToNci_inst
+//      （NCTOPLC_NCICHANNEL_REF 给 AT %I*、PLCTONC_NCICHANNEL_REF 给 AT %Q*）
+//   4. 编译 → 登录 → 运行；按上方『验证』指引在线写值观察
+// ============================================================
+
+// 纯函数调用：返回值赋给本地变量做观察
+ItpIsEStopEx_ret := ItpIsEStopEx(sNciToPlc := sNciToPlc_inst);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

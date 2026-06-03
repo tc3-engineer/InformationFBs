@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_ULINT_TO_PMLTime" Id="{421aa7a3-1c19-5bd6-ba74-335f7945d1e8}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_ULINT_TO_PMLTime
+VAR
+    nNanoseconds    : ULINT := ULINT#5_400_000_000_000;   // 演示用：5400 秒 = 90 分钟（纳秒计）
+    stPMLDuration   : ST_PMLDateAndTime;                  // 转换结果（在线观察各字段）
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc3_PackML_V3.ULINT_TO_PMLTime 演示程序
+// ============================================================
+// 场景：把第三方 TcCOM 模块返回的 64-bit 无符号纳秒时长直接转成
+//       PackML ST_PMLDateAndTime 结构体写入 OEE 字段。
+// 价值：标准化 ULINT → PackML 时长结构转换，避开 ULINT↔LTIME 强转隐患。
+//       V3 用结构体返回（V2 用数组）：字段名访问更安全。
+// 验证：登录后看 stPMLDuration 字段：nNanoseconds=5_400_000_000_000 ns
+//       (= 90 分钟) 应得 Hour=1, Minute=30, 其余字段为 0。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_PackML_V3（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方"验证"指引在线写值观察
+// ============================================================
+
+(* 纯函数调用——单行完成 *)
+stPMLDuration := ULINT_TO_PMLTime(Input := nNanoseconds);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

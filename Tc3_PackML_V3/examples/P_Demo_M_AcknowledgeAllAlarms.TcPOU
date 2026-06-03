@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_M_AcknowledgeAllAlarms" Id="{bfdaa097-ecbc-5282-a1ee-236b88e07110}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_M_AcknowledgeAllAlarms
+VAR
+    fbAdminAlarm     : FB_PMLAdminAlarm;
+    fbAdminTime      : FB_PMLAdminTime;
+    stPackTagAdmin   : ST_PMLa;
+    stPackTagStatus  : ST_PMLs;
+    stAdminOpt       : ST_PMLAdminTimeOptions;
+
+    // 三种不同 alarm 模板
+    stAlarm1         : ST_PMLEvent := (Id := 1001, Value := 90, Message := 'High temp', Category := 1);
+    stAlarm2         : ST_PMLEvent := (Id := 1002, Value := 5,  Message := 'Low pressure', Category := 2);
+    stAlarm3         : ST_PMLEvent := (Id := 1003, Value := 0,  Message := 'Safety door open', Category := 1);
+
+    bBtnFireAll      : BOOL := FALSE;     // 一键写入 3 条 alarm
+    bBtnAckAll       : BOOL := FALSE;     // 一键全部确认
+
+    rtrigFire        : R_TRIG;
+    rtrigAck         : R_TRIG;
+
+    bAckOk           : BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc3_PackML_V3.FB_PMLAdminAlarm.M_AcknowledgeAllAlarms 演示程序
+// ============================================================
+// 场景：HMI 上挂了 3 条未确认 alarm，操作员按"全部确认"按钮一键确认。
+//       V3 新增的批量方法让一次调用搞定，不必 for 循环遍历 Alarm[]。
+// 价值：HMI 程序员不需要写 FOR i := 0 TO 9 循环 + 9 次 Ack 调用——
+//       本方法一行做完。V2 用户必须自己写循环，V3 直接 API。
+// 验证：登录后操作：
+//       1. 写 bBtnFireAll := TRUE → 观察 stPackTagAdmin.Alarm[0..2] 都
+//          被填入，三条 Trigger = TRUE。
+//       2. 写 bBtnAckAll := TRUE → 观察 Alarm[0..2] 的 Trigger 全部
+//          变 FALSE、AckDateTime 全填；但 Id 仍是 1001/1002/1003
+//          （Ack 不删除）。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_PackML_V3（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方"验证"指引在线写值观察
+// ============================================================
+
+fbAdminTime(stAdmin := stPackTagAdmin, stStatus := stPackTagStatus, stOptions := stAdminOpt);
+
+rtrigFire(CLK := bBtnFireAll);
+rtrigAck(CLK := bBtnAckAll);
+
+(* 一键写入 3 条不同 alarm *)
+IF rtrigFire.Q THEN
+    fbAdminAlarm.M_SetAlarm(stAdmin := stPackTagAdmin, stAlarm := stAlarm1);
+    fbAdminAlarm.M_SetAlarm(stAdmin := stPackTagAdmin, stAlarm := stAlarm2);
+    fbAdminAlarm.M_SetAlarm(stAdmin := stPackTagAdmin, stAlarm := stAlarm3);
+END_IF
+
+(* 一键全部确认——V3 新方法一行搞定 *)
+IF rtrigAck.Q THEN
+    bAckOk := fbAdminAlarm.M_AcknowledgeAllAlarms(stAdmin := stPackTagAdmin);
+END_IF
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

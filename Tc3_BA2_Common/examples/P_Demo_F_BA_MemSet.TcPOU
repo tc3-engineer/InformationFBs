@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_F_BA_MemSet" Id="{92ccaed2-e271-551d-a72a-8e79c8784d94}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_F_BA_MemSet
+VAR
+    argPDestAddr                   : PVOID                          := 0; // pDestAddr
+    argXValue                      : ANY                           ; // xValue
+    fnReturn                       : UDINT; // 返回值
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// Tc3_BA2_Common.F_BA_MemSet 演示程序
+// =============================================================================
+// 场景：初始化一个 STRUCT 缓冲区，把已经准备好的"默认值 STRUCT"原样写到目标地址。
+//
+// 价值：比 IEC `MEMCPY` 更直接：源是值而不是地址，免去 `ADR(xValue)` 步骤。
+//
+// 验证：登录 PLC 后，按例程内变量在线写值；监视输出 / 返回值，结合 §1 功能
+//       简述的预期行为对照（详见配套 .md 文档 §7 业务场景）。
+//
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_BA2_Common（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』指引在线写值观察
+// =============================================================================
+
+fnReturn := F_BA_MemSet(
+    pDestAddr                := argPDestAddr,
+    xValue                   := argXValue
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

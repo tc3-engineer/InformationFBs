@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_M_ClearAlarm" Id="{86628b6f-4dd2-5580-8b72-4af0f5013399}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_M_ClearAlarm
+VAR
+    fbAdminAlarm     : FB_PMLAdminAlarm;
+    fbAdminTime      : FB_PMLAdminTime;
+    stPackTagAdmin   : ST_PMLa;
+    stPackTagStatus  : ST_PMLs;
+    stAdminOpt       : ST_PMLAdminTimeOptions;
+
+    stHighTempAlarm  : ST_PMLEvent := (Id := 1001, Value := 90, Message := 'Outlet temp > 85C', Category := 1);
+
+    bBtnFire         : BOOL := FALSE;
+    bBtnAck          : BOOL := FALSE;
+    bBtnClear        : BOOL := FALSE;
+
+    rtrigFire        : R_TRIG;
+    rtrigAck         : R_TRIG;
+    rtrigClear       : R_TRIG;
+
+    bClearOk         : BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc3_PackML_V3.FB_PMLAdminAlarm.M_ClearAlarm 演示程序
+// ============================================================
+// 场景：故障处理完成后操作员按 HMI"清除"按钮把 alarm 从主显示区移除。
+//       本方法把 alarm 的 Trigger 置 FALSE，并在该 alarm 已经被 Ack 的
+//       情况下把它搬入 AlarmHistory[]——MES 可用 history 做故障统计。
+// 价值：标准化 alarm 全生命周期（Trigger → Ack → Clear → AlarmHistory），
+//       符合 ISA-18.2 报警标准；故障审计链完整。
+// 验证：登录后顺序操作：
+//       1. 写 bBtnFire := TRUE → 看 Alarm[0].Id=1001, Trigger=TRUE。
+//       2. 写 bBtnAck := TRUE → 看 Alarm[0].Trigger=FALSE, AckDateTime 已填。
+//       3. 写 bBtnClear := TRUE → 看 Alarm[0] 内容被搬入 AlarmHistory[0]
+//          （因为先 Ack 后 Clear，应进 history）。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_PackML_V3（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方"验证"指引在线写值观察
+// ============================================================
+
+fbAdminTime(stAdmin := stPackTagAdmin, stStatus := stPackTagStatus, stOptions := stAdminOpt);
+
+rtrigFire(CLK := bBtnFire);
+rtrigAck(CLK := bBtnAck);
+rtrigClear(CLK := bBtnClear);
+
+IF rtrigFire.Q THEN
+    fbAdminAlarm.M_SetAlarm(stAdmin := stPackTagAdmin, stAlarm := stHighTempAlarm);
+END_IF
+IF rtrigAck.Q THEN
+    fbAdminAlarm.M_AcknowledgeAlarm(stAdmin := stPackTagAdmin, stAlarm := stHighTempAlarm);
+END_IF
+IF rtrigClear.Q THEN
+    bClearOk := fbAdminAlarm.M_ClearAlarm(stAdmin := stPackTagAdmin, stAlarm := stHighTempAlarm);
+END_IF
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

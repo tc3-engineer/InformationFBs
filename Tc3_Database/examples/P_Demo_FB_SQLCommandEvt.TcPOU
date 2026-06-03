@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_SQLCommandEvt" Id="{de265628-b45f-53fc-9fea-7177b58896ee}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_SQLCommandEvt
+VAR
+    // 上游连接（详见 P_Demo_FB_SQLDatabaseEvt 注释）
+    fbSqlDb            : FB_SQLDatabaseEvt(sNetID := '', tTimeout := T#30S);
+    fbSqlCmd           : FB_SQLCommandEvt(sNetID := '', tTimeout := T#15S);
+    fbSqlResult        : FB_SQLResultEvt(sNetID := '', tTimeout := T#15S);
+
+    bInitSeqReq        : BOOL := FALSE;        // 启动：Connect → CreateCmd
+    bExecInsertReq     : BOOL := FALSE;        // 演示：INSERT（不返回数据）
+    bExecSelectReq     : BOOL := FALSE;        // 演示：SELECT（返回 SQLResult）
+
+    sInsertCmd         : STRING(1000) := 'INSERT INTO myTable_Double (Timestamp, Name, Value) VALUES ($'2026-06-03 12:00:00$', $'Temperature$', 21.3)';
+    sSelectCmd         : STRING(1000) := 'SELECT ID, Timestamp, Name, Value FROM myTable_Double ORDER BY ID DESC';
+
+    nState             : INT := 0;             // 0 idle, 10 connect, 20 cmd, 30 insert, 40 select
+    bConnectDone       : BOOL;
+    bCmdInitDone       : BOOL;
+    bExecuteDone       : BOOL;
+    bExecuteReturnDone : BOOL;
+    bConnReady         : BOOL := FALSE;
+    bCmdReady          : BOOL := FALSE;
+
+    ipLastTcMsg        : Tc3_EventLogger.I_TcMessage;
+    sLastErrText       : STRING(255);
+    bLastWasError      : BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：MES 客户端要求 PLC 每秒向 MS SQL 写 100 条采样（高频 INSERT）+ HMI
+//       触发时 SELECT 取最近 N 条。本程序完整演示 SQL Expert mode 链路：
+//       Connect 建常驻连接 → CreateCmd 把连接绑给 fbSqlCmd → 业务循环里反复
+//       Execute（INSERT）或 ExecuteDataReturn（SELECT 配 fbSqlResult 接收）。
+// 价值：高吞吐场景下连接复用让单次 INSERT 从 ~200 ms 降到 ~5-10 ms（吞吐
+//       10-50 倍）；SELECT 结果 Server 端缓存避免一次性大量 ADS 传输；
+//       EventLogger 错误诊断。
+// 验证步骤：
+//   1. 右键 POUs → Add → Existing Item → 选本 .TcPOU；引用 Tc3_Database 与
+//      Tc3_EventLogger
+//   2. 前置：XML 有 hDBID=1 MS SQL 配置；DB 有 myTable_Double 表（ID/Timestamp
+//      /Name/Value 4 列）；TF6420 服务在跑
+//   3. 编译 → 登录 → 运行
+//   4. 在线写 bInitSeqReq := TRUE → nState 走 0→10→20→0；bConnReady =
+//      bCmdReady = TRUE
+//   5. 在线写 bExecInsertReq := TRUE → nState 走 0→30→0；DB 多 1 行
+//   6. 反复触发观察：行数线性增长，每次操作仅 ~10 ms
+//   7. 在线写 bExecSelectReq := TRUE → nState 走 0→40→0；结果集缓存在 Server
+//      端，可用 fbSqlResult.Read(...) 取（详见 P_Demo_FB_SQLResultEvt）
+//   8. 改 sInsertCmd 为语法错 SQL（如缺右括号）→ bLastWasError = TRUE
+// =============================================================================
+
+fbSqlCmd.eTraceLevel := Tc3_EventLogger.TcEventSeverity.Warning;
+
+// ---- 业务请求路由 ----
+IF nState = 0 THEN
+    IF bInitSeqReq THEN
+        bInitSeqReq := FALSE;
+        nState := 10;
+    ELSIF bExecInsertReq AND bCmdReady THEN
+        bExecInsertReq := FALSE;
+        nState := 30;
+    ELSIF bExecSelectReq AND bCmdReady THEN
+        bExecSelectReq := FALSE;
+        nState := 40;
+    END_IF
+END_IF
+
+// ---- state=10：Connect ----
+IF nState = 10 THEN
+    bConnectDone := fbSqlDb.Connect(hDBID := 1);
+    IF bConnectDone THEN
+        IF fbSqlDb.bError THEN
+            ipLastTcMsg := fbSqlDb.ipTcResult;
+            ipLastTcMsg.RequestEventText(1033, ADR(sLastErrText), SIZEOF(sLastErrText));
+            bLastWasError := TRUE;
+            nState := 0;
+        ELSE
+            bConnReady := TRUE;
+            nState := 20;
+        END_IF
+    END_IF
+END_IF
+
+// ---- state=20：CreateCmd 把连接绑给 fbSqlCmd ----
+IF nState = 20 THEN
+    bCmdInitDone := fbSqlDb.CreateCmd(pSQLCommand := ADR(fbSqlCmd));
+    IF bCmdInitDone THEN
+        IF fbSqlDb.bError THEN
+            ipLastTcMsg := fbSqlDb.ipTcResult;
+            ipLastTcMsg.RequestEventText(1033, ADR(sLastErrText), SIZEOF(sLastErrText));
+            bLastWasError := TRUE;
+        ELSE
+            bCmdReady := TRUE;
+        END_IF
+        nState := 0;
+    END_IF
+END_IF
+
+// ---- state=30：执行 INSERT（不返回数据） ----
+IF nState = 30 THEN
+    bExecuteDone := fbSqlCmd.Execute(
+        pSQLCmd  := ADR(sInsertCmd),
+        cbSQLCmd := SIZEOF(sInsertCmd)
+    );
+    IF bExecuteDone THEN
+        IF fbSqlCmd.bError THEN
+            ipLastTcMsg := fbSqlCmd.ipTcResult;
+            ipLastTcMsg.RequestEventText(1033, ADR(sLastErrText), SIZEOF(sLastErrText));
+            bLastWasError := TRUE;
+        ELSE
+            bLastWasError := FALSE;
+        END_IF
+        nState := 0;
+    END_IF
+END_IF
+
+// ---- state=40：执行 SELECT，结果集 Server 端缓存到 fbSqlResult ----
+IF nState = 40 THEN
+    bExecuteReturnDone := fbSqlCmd.ExecuteDataReturn(
+        pSQLCmd      := ADR(sSelectCmd),
+        cbSQLCmd     := SIZEOF(sSelectCmd),
+        pSQLDBResult := ADR(fbSqlResult)
+    );
+    IF bExecuteReturnDone THEN
+        IF fbSqlCmd.bError THEN
+            ipLastTcMsg := fbSqlCmd.ipTcResult;
+            ipLastTcMsg.RequestEventText(1033, ADR(sLastErrText), SIZEOF(sLastErrText));
+            bLastWasError := TRUE;
+        ELSE
+            bLastWasError := FALSE;
+            // 此时 fbSqlResult 已绑好结果集，可调 .Read(...) 取数据
+        END_IF
+        nState := 0;
+    END_IF
+END_IF
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

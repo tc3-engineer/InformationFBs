@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_F_BA_BVal" Id="{faefb9e7-3a92-5872-91b5-ab76395c0314}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_F_BA_BVal
+VAR
+    argBValue                      : BOOL                           := FALSE; // bValue
+    fnReturn                       : U_BA_ClassValue; // 返回值
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// Tc3_BA2_Common.F_BA_BVal 演示程序
+// =============================================================================
+// 场景：楼宇趋势记录系统：所有点位统一用 `ST_BA_ClassValue` 接口，BOOL 类型用本 FC 转，REAL 用 `F_BA_RVal`，INT 用 `F_BA_IVal`。
+//
+// 价值：统一接口让趋势记录 / 数据归档 / SCADA 推送等下游模块不必关心原始类型，FC 帮你把各原始类型规范成 ClassValue 结构。
+//
+// 验证：登录 PLC 后，按例程内变量在线写值；监视输出 / 返回值，结合 §1 功能
+//       简述的预期行为对照（详见配套 .md 文档 §7 业务场景）。
+//
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_BA2_Common（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』指引在线写值观察
+// =============================================================================
+
+fnReturn := F_BA_BVal(
+    bValue                   := argBValue
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

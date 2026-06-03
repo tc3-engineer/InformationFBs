@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_M_ClearWarning" Id="{e56a2607-5472-59e2-810f-f17962d54a78}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_M_ClearWarning
+VAR
+    fbAdminAlarm     : FB_PMLAdminAlarm;
+    fbAdminTime      : FB_PMLAdminTime;
+    stPackTagAdmin   : ST_PMLa;
+    stPackTagStatus  : ST_PMLs;
+    stAdminOpt       : ST_PMLAdminTimeOptions;
+
+    stFilterWarning  : ST_PMLEvent := (Id := 2001, Message := 'Filter at 80% life', Category := 2);
+
+    bBtnFire         : BOOL := FALSE;
+    bBtnClear        : BOOL := FALSE;
+    rtrigFire        : R_TRIG;
+    rtrigClear       : R_TRIG;
+    bClearOk         : BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc3_PackML_V3.FB_PMLAdminAlarm.M_ClearWarning 演示程序
+// ============================================================
+// 场景：维护人员换完滤芯后按 HMI"清除"按钮把 warning 从 HMI 移除。
+//       Warning 没有 history——清除即不再显示。
+// 价值：标准化 warning 清除接口；与 Set/Ack 配合完整生命周期。
+// 验证：登录后操作：
+//       1. 写 bBtnFire := TRUE → Warning[0].Trigger = TRUE, Id = 2001。
+//       2. 写 bBtnClear := TRUE → Warning[0].Trigger = FALSE。
+//          注意：Id/Message 字段仍在内存中（PDF 描述：留到被新 warning
+//          顶出），但 Trigger=FALSE 让 M_HasWarning 返回 FALSE。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_PackML_V3（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方"验证"指引在线写值观察
+// ============================================================
+
+fbAdminTime(stAdmin := stPackTagAdmin, stStatus := stPackTagStatus, stOptions := stAdminOpt);
+
+rtrigFire(CLK := bBtnFire);
+rtrigClear(CLK := bBtnClear);
+
+IF rtrigFire.Q THEN
+    fbAdminAlarm.M_SetWarning(stAdmin := stPackTagAdmin, stWarning := stFilterWarning);
+END_IF
+IF rtrigClear.Q THEN
+    bClearOk := fbAdminAlarm.M_ClearWarning(stAdmin := stPackTagAdmin, stWarning := stFilterWarning);
+END_IF
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

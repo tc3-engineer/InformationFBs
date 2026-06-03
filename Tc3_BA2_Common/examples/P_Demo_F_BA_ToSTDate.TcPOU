@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_F_BA_ToSTDate" Id="{32fcace4-013d-595c-8734-4a52250c8852}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_F_BA_ToSTDate
+VAR
+    argDValue                      : DATE                          ; // dValue
+    fnReturn                       : ST_BA_Date; // 返回值
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// Tc3_BA2_Common.F_BA_ToSTDate 演示程序
+// =============================================================================
+// 场景：从 IEC 标准 DATE 字段恢复成结构化日期，便于按 year/month/day 字段操作。
+//
+// 价值：反向转换，与 `F_BA_ToDate` 配对。
+//
+// 验证：登录 PLC 后，按例程内变量在线写值；监视输出 / 返回值，结合 §1 功能
+//       简述的预期行为对照（详见配套 .md 文档 §7 业务场景）。
+//
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_BA2_Common（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』指引在线写值观察
+// =============================================================================
+
+fnReturn := F_BA_ToSTDate(
+    dValue                   := argDValue
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

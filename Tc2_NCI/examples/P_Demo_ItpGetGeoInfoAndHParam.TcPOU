@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_ItpGetGeoInfoAndHParam" Id="{682c5e12-6ce4-5000-b162-9cfe709132d3}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_ItpGetGeoInfoAndHParam
+VAR
+    fbItpGetGeoInfoAndHParam              : ItpGetGeoInfoAndHParam;  // 被演示 FB 实例
+    sNciToPlc_inst                        : NCTOPLC_NCICHANNEL_REF;  // VAR_IN_OUT 引用对象
+    stTab_out                             : ST_ItpPreViewTabEx;
+    nErrId_out                            : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_NCI.ItpGetGeoInfoAndHParam 演示程序
+// ============================================================
+// 场景：从 TwinCAT 2 移植的 CNC 项目，保持原 FB 接口不动以减少改动风险。
+// 价值：移植成本低、行为与对应 Ex 版本一致。
+// 验证：和对应 Ex 版本相同的验证流程：在线 bDoIt 触发，观察 bBusy/bErr/nErrId。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_NCI（References → Add library）
+//   3. 在 System Manager 把 NCI 通道接口 Link 给 sNciToPlc_inst / sPlcToNci_inst
+//      （NCTOPLC_NCICHANNEL_REF 给 AT %I*、PLCTONC_NCICHANNEL_REF 给 AT %Q*）
+//   4. 编译 → 登录 → 运行；按上方『验证』指引在线写值观察
+// ============================================================
+
+// 单次完整调用：所有 VAR_INPUT / VAR_IN_OUT / VAR_OUTPUT 引脚显式赋值或绑定
+fbItpGetGeoInfoAndHParam(
+    sNciToPlc := sNciToPlc_inst,
+    stTab     => stTab_out,
+    nErrId    => nErrId_out
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

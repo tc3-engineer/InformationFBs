@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_BACnet_MO" Id="{2205d1e4-0033-5340-ad8f-f8e5e4789f62}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_BACnet_MO
+VAR
+    // 小型 AHU 四档运行模式输出:Stop/Cool/Heat/Fan
+    // 用 _5P 变体:PLC 自动 + BMS 手动 + 现场旋钮(ManLocal) 三源覆盖
+    fbModeCmd     : FB_BACnet_MO_5P := (
+        sObjectName := 'ModeCmd_AHU_3F',
+        sDescription := 'AHU mode command (Stop/Cool/Heat/Fan)',
+        aStateText := ['Stop', 'Cool', 'Heat', 'Fan'],
+        nRelinquishDefault := 1);            // 全释放回退到 Stop(安全)
+
+    nAutoModeCmd  : UDINT := 1;              // PLC 根据温差自动算的指令
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景:小型 AHU 四档运行模式输出(Stop/Cool/Heat/Fan),PLC 根据室温与设定点
+//       的偏差自动切换,BMS 可手动覆盖(运维试机时强制开 Fan 测试风机),
+//       现场控制柜旋钮可作为 Manual Local 进一步覆盖。
+// 价值:用一个 MO_5P 代替"4 个 BO + 互斥锁"方案;PLC/BMS/现场旋钮 三源覆盖
+//       自然依靠 BACnet 优先级解耦,无需 PLC 端手写"谁优先"的胶水代码。
+// 验证:1) 在线写 nAutoModeCmd := 2,BACnet Explorer 读 Present_Value=2
+//       (Cool),Priority_Array[15]=2(PLC 占 Program 优先级,因 _5P 默认
+//       Program=15)。2) Explorer 用 priority := 8 写 Present_Value := 4
+//       (Fan),Present_Value 跳到 4(高优先级覆盖)。3) 释放 priority 8,
+//       回到 PLC 控制的 Cool=2。
+// =============================================================================
+
+fbModeCmd.bEnPgm  := TRUE;
+fbModeCmd.nValPgm := nAutoModeCmd;
+fbModeCmd();
+
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_NoSQLObjectId_MongoDB" Id="{610188b5-a913-539f-a276-2ea7d6a3d0c3}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_NoSQLObjectId_MongoDB
+VAR
+    // 模拟从 MongoDB 文档读出的 ObjectId（实际来自 fbResult.ReadAsStruct）
+    // 例：5be15c11 afa6 ec72 b107 dafaf — 标准 MongoDB ObjectId 24-char hex
+    stReadObjectId  : T_ObjectId_MongoDB := (
+        nByte1  := 16#5b, nByte2 := 16#e1, nByte3 := 16#5c, nByte4 := 16#11,    // timestamp
+        nByte5  := 16#af, nByte6 := 16#a6, nByte7 := 16#ec,                     // machine ID (3 bytes)
+        nByte8  := 16#72, nByte9 := 16#b1,                                       // process ID (2 bytes)
+        nByte10 := 16#07, nByte11 := 16#da, nByte12 := 16#fa                    // counter (3 bytes)
+    );
+    fbObjId         : FB_NoSQLObjectId_MongoDB(ObjectId := stReadObjectId);
+
+    bParseReq       : BOOL := FALSE;          // 在线置 TRUE 触发一次解析
+
+    // 解析结果（业务侧 monitor 这几项即可）
+    sFullString     : STRING(36);              // ToString() 风格：'ObjectId("5be...faf")'
+    sHexOnly        : STRING(24);              // ValueOf() 风格：'5be15c11afa6ec72b107dafaf'
+    dtCreated       : DATE_AND_TIME;           // 从 ObjectId 头 4 字节解码出的创建时间
+    nMachineIdNum   : UDINT;                   // 写入主机标识
+    nProcessIdNum   : UINT;                    // 写入进程 ID
+    nCounterNum     : UDINT;                   // 序号
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：MongoDB 存生产工单文档，每条自动带 _id : ObjectId 主键。PLC 从某
+//       文档读出 ObjectId 后用本 FB 立刻拿到：(1) tTimestamp 属性 = 工单
+//       创建时间（无需在文档里额外存 createdAt）；(2) ValueOf() = 24-char
+//       hex 字符串拼 HMI URL 供操作员点击查详细。
+// 价值：MongoDB 文档创建时间「免费」（不占字段）；与 mongoshell 显示风格
+//       一致让运维好对照；纯 PLC 本地计算无 ADS 开销。
+// 验证步骤：
+//   1. 右键 POUs → Add → Existing Item → 选本 .TcPOU；引用 Tc3_Database
+//   2. 编译 → 登录 → 运行
+//   3. 在线写 bParseReq := TRUE
+//   4. monitor 输出：
+//      - sFullString 应为 'ObjectId("5be15c11afa6ec72b107dafaf")'
+//      - sHexOnly 应为 '5be15c11afa6ec72b107dafaf'
+//      - dtCreated 应解码出 ObjectId 头 4 字节对应的时间戳（约 2018-11-06）
+//      - nMachineIdNum / nProcessIdNum / nCounterNum 应非零
+//   5. 改 stReadObjectId 字节值再 monitor：dtCreated 等字段应跟着变
+//   6. 真实工程里替换 stReadObjectId 为 fbResult.ReadAsStruct 取出的真值
+// =============================================================================
+
+IF bParseReq THEN
+    bParseReq := FALSE;
+
+    // 调方法取字符串（同步操作，无 ADS）
+    sFullString := fbObjId.ToString();
+    sHexOnly    := fbObjId.ValueOf();
+
+    // 取属性（PLC 本地计算，<1µs）
+    dtCreated       := fbObjId.tTimestamp;
+    nMachineIdNum   := fbObjId.nMachineId;
+    nProcessIdNum   := fbObjId.nProcessId;
+    nCounterNum     := fbObjId.nId;
+
+    // 业务侧示例：把 dtCreated 转字符串写到 HMI 字段
+    // 或把 sHexOnly 拼接到工单详情页 URL：
+    //   sHmiUrl := CONCAT('http://hmi/order?id=', sHexOnly);
+END_IF
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

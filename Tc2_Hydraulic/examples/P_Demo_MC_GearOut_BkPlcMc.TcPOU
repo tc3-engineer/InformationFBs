@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_MC_GearOut_BkPlcMc" Id="{d92c7b18-11dd-5290-b899-eb7b691fa669}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_MC_GearOut_BkPlcMc
+VAR
+    fbDecouplePushArm  : MC_GearOut_BkPlcMc;
+    fbHaltAfterDecouple: MC_Halt_BkPlcMc;
+    axHydPushArm       : AXIS_REF_BkPlcMc;
+    rtDecoupleTrig     : R_TRIG;
+    bEndOfCycleReq     : BOOL := FALSE;                  // 周期末解耦
+    bDecoupleDone      : BOOL;
+    bDecoupleBusy      : BOOL;
+    bDecoupleError     : BOOL;
+    nDecoupleErrorID   : UDINT;
+    bHaltDone          : BOOL;
+    bHaltBusy          : BOOL;
+    bHaltError         : BOOL;
+    bHaltActive        : BOOL;
+    bHaltAborted       : BOOL;
+    nHaltErrorID       : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：包装机周期末解耦从轴推臂。每周期主滚筒走一圈，推臂耦合推一袋；
+//       周期末必须解耦从轴并把推臂送回起点等下一周期。本例展示解耦 +
+//       Halt 平滑减速的标准搭配（解耦后从轴**不会自动停** — 这是 80%
+//       初学者首次中招的坑）。
+// 价值：解耦操作的标准接口。手写"清算法耦合 bit"会瞬间速度突变冲击；
+//       本 FB 把耦合状态平滑转换为 ContinuousMotion，再接 Halt 减速。
+// 验证：① 前置：先用 MC_GearIn_BkPlcMc 把推臂耦合到主滚筒上，且系统
+//       正在运行（推臂有非零速度）；
+//       ② bEndOfCycleReq := TRUE → rtDecoupleTrig 给上升沿；
+//       ③ bDecoupleBusy 短暂 TRUE → bDecoupleDone := TRUE；
+//       ④ 此时观察 MC_ReadActualVelocity_BkPlcMc(axHydPushArm) 不为 0
+//       —— 推臂在保持当前速度做 ContinuousMotion，与主滚筒已无关；
+//       ⑤ bDecoupleDone 触发 Halt：fbHaltAfterDecouple 开始减速；
+//       ⑥ bHaltDone := TRUE 后推臂速度为 0，进入 StandStill。
+// 关键警告：忘了接 Halt → 推臂保持速度一直走，撞到机械限位才停！
+// =============================================================================
+
+rtDecoupleTrig(CLK := bEndOfCycleReq);
+
+// Step 1: 解耦
+fbDecouplePushArm(
+    Execute := rtDecoupleTrig.Q,
+    Slave   := axHydPushArm,
+    Busy    => bDecoupleBusy,
+    Done    => bDecoupleDone,
+    Error   => bDecoupleError,
+    ErrorID => nDecoupleErrorID
+);
+
+// Step 2: 解耦完成立即 Halt 把从轴停下（这一步绝对不能省）
+fbHaltAfterDecouple(
+    Execute      := bDecoupleDone,                       // Done 一拉 TRUE 立即停
+    Deceleration := 800.0,
+    Jerk         := 0.0,
+    RampTime     := 0.0,
+    BufferMode   := Aborting_BkPlcMc,
+    Axis         := axHydPushArm,
+    Busy         => bHaltBusy,
+    Done         => bHaltDone,
+    Error        => bHaltError,
+    ErrorID      => nHaltErrorID,
+    Active       => bHaltActive,
+    CommandAborted => bHaltAborted
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_ItpIsFeederBackupEnabled" Id="{d4d0818d-c8c9-5303-966c-37f226ed788d}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_ItpIsFeederBackupEnabled
+VAR
+    fbItpIsFeederBackupEnabled            : ItpIsFeederBackupEnabled;  // 被演示 FB 实例
+    rtTrig                                : R_TRIG;  // 边沿触发器，把人工『按一下』转上升沿
+    bDoIt                                 : BOOL := FALSE;  // 在线写 TRUE 触发一次
+    tTimeOut_in                           : TIME := T#2S;  // ADS 调用超时
+    sNciToPlc_inst                        : NCTOPLC_NCICHANNEL_REF;  // VAR_IN_OUT 引用对象
+    bBusy_out                             : BOOL;
+    bEnabled_out                          : BOOL;
+    bErr_out                              : BOOL;
+    nErrId_out                            : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_NCI.ItpIsFeederBackupEnabled 演示程序
+// ============================================================
+// 场景：复杂轮廓加工出错（让刀、毛刺），沿原路退回一段调整后再前进。
+// 价值：Retrace 沿 NCI 段表回放，路径精度高于 PLC 单轴反向。
+// 验证：前置：先 ItpEnableFeederBackup(bEnable := TRUE) 启用路径备份；NC 程序跑起来；触发本 FB 观察 NCI 通道方向变化。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_NCI（References → Add library）
+//   3. 在 System Manager 把 NCI 通道接口 Link 给 sNciToPlc_inst / sPlcToNci_inst
+//      （NCTOPLC_NCICHANNEL_REF 给 AT %I*、PLCTONC_NCICHANNEL_REF 给 AT %Q*）
+//   4. 编译 → 登录 → 运行；按上方『验证』指引在线写值观察
+// ============================================================
+
+// 把人工按下的电平转成真正的上升沿；这是 bExecute 系列引脚的标准用法
+rtTrig(CLK := bDoIt);
+
+// 单次完整调用：所有 VAR_INPUT / VAR_IN_OUT / VAR_OUTPUT 引脚显式赋值或绑定
+fbItpIsFeederBackupEnabled(
+    bExecute  := rtTrig.Q,
+    tTimeOut  := tTimeOut_in,
+    sNciToPlc := sNciToPlc_inst,
+    bBusy     => bBusy_out,
+    bEnabled  => bEnabled_out,
+    bErr      => bErr_out,
+    nErrId    => nErrId_out
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

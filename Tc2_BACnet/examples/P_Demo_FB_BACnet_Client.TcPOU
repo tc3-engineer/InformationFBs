@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_BACnet_Client" Id="{2b7a74d9-7930-5e54-97a1-c0d046ffbe71}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_BACnet_Client
+VAR
+    // 连接到 BACnet device 42(IP 模式,自动选择 RP/RPM/COV)
+    fbClient : FB_BACnet_Client := (
+        nDeviceInstance := 42,
+        tReadCycleTime := T#5S,
+        tWriteCycleTime := T#5S,
+        nMaxParallelRequests := 20,
+        eReadMode := E_BACnet_CommMode.eAutomatic,
+        bAutoResetObjError := TRUE);          // 网络偶断后绑到本 client 的对象自动复位
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景:PLC 作为客户端连接其它楼控厂商的 BACnet 设备(西门子 PXC / 霍尼韦尔
+//       Spyder 等),把对端的传感器读数 / 控制点同步到本机 BMS。
+// 价值:Client 是所有 RM 对象的前提;一个 Client 维护一条到 peer 的会话,
+//       自动选 RP/RPM/COV 取数据,无需 PLC 写 BACnet 协议栈。
+// 验证:1) 上电后等几秒,BACnet Explorer 抓包应看到 Who-Is(目标 device-id=42)。
+//       2) 在线监视 fbClient.bConnected 应在 1-2 秒内变 TRUE,eState=eRunning。
+//       3) m_stDiag 字段应记录最近请求的 roundtrip 时间。4) 断网测试:拔
+//       网线后 fbClient.bConnected 在 30 秒左右(超时阈值)变 FALSE;恢复
+//       后自动重连。
+// =============================================================================
+
+fbClient();
+
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_BACnet_Prog" Id="{5fa38221-bd11-521c-9d9d-1a17b0f8efa1}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_BACnet_Prog
+VAR
+    // PLC 应用程序状态暴露给 BMS,运维可远程 Halt
+    fbAppStatus  : FB_BACnet_Prog := (
+        sObjectName := 'MainApp_Status',
+        sDescription := 'Floor 3 East zone control application',
+        eState := E_BACnet_ProgramState.eLoading);
+
+    bAppInitDone : BOOL := FALSE;            // 在线写 TRUE 模拟 "初始化完成"
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景:大型楼控项目希望在 BMS 上看到每个 PLC 应用程序的运行状态;运维可以
+//       远程 Halt 某个程序(如冬季关停喷淋系统),无需远程登录 PLC 改代码。
+// 价值:Program 是 BACnet 标准的运行时管理对象,BMS 直接显示状态/发请求,代
+//       替"自己写 Modbus 寄存器 + 协议解码"的脏方案。
+// 验证:1) 上电后 BACnet Explorer 读 Program_State=loading。2) 在线写
+//       bAppInitDone := TRUE,Program_State 应切换到 running。3) Explorer 写
+//       Program_Change := halt,Program_State 应切到 halted,Reason_For_Halt
+//       和 Description_Of_Halt 应被填写。
+// 注意:本对象类型 PDF/InfoSys 未给独立示例,具体的 Program_Change 处理逻辑
+//       由 PLC 应用决定;此例只演示标准状态字段的暴露。
+// =============================================================================
+
+// ---- 初始化完成后切到 running ----
+IF bAppInitDone AND fbAppStatus.eState = E_BACnet_ProgramState.eLoading THEN
+    fbAppStatus.eState := E_BACnet_ProgramState.eRunning;
+END_IF
+
+// ---- BMS 请求 halt 时切换状态并清零 ----
+IF fbAppStatus.eChange = E_BACnet_ProgramRequest.eHalt THEN
+    fbAppStatus.eState := E_BACnet_ProgramState.eHalted;
+    fbAppStatus.eReason := E_BACnet_ProgramError.eOther;
+    fbAppStatus.sDescriptionOfHalt := 'Halted by BMS request';
+    fbAppStatus.eChange := E_BACnet_ProgramRequest.eReady;
+END_IF
+
+// ---- BMS 请求 run 时切回 running ----
+IF fbAppStatus.eChange = E_BACnet_ProgramRequest.eRun THEN
+    fbAppStatus.eState := E_BACnet_ProgramState.eRunning;
+    fbAppStatus.eChange := E_BACnet_ProgramRequest.eReady;
+END_IF
+
+fbAppStatus();
+
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

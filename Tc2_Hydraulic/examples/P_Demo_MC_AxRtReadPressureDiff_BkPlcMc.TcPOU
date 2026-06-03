@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_MC_AxRtReadPressureDiff_BkPlcMc" Id="{d337019a-728d-5a7a-a86f-f9c5836af52d}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_MC_AxRtReadPressureDiff_BkPlcMc
+VAR
+    fbReadDiffPress    : MC_AxRtReadPressureDiff_BkPlcMc;
+    axHydDiffCyl       : AXIS_REF_BkPlcMc;               // 差动液压缸
+    nPressureA_Raw     : INT := 0;                       // A 侧 ADC (来自 EL3024 通道 1)
+    nPressureB_Raw     : INT := 0;                       // B 侧 ADC (来自 EL3024 通道 2)
+    lrScaleFactorA     : LREAL := 0.00763;               // 250 bar / 32767
+    lrScaleOffsetA     : LREAL := 0.0;
+    lrScaleFactorB     : LREAL := 0.00763;               // 同型号传感器
+    lrScaleOffsetB     : LREAL := 0.0;
+    bReadError         : BOOL;
+    nReadErrorID       : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：液压差动缸（活塞两侧面积比 2:1）的精密压力测量。A 侧大面积
+//       100 bar、B 侧小面积 50 bar — 实际工作差压 = 50 bar；如果只
+//       用单路传感器看一侧无法知道真实差压。本 FB 读两路传感器值
+//       求差，写入 fActPressure 反映真实工况。
+// 价值：精确控制差动缸压力的关键 — 单路传感器看不到差压，无法做精
+//       确闭环；本 FB 把两侧压力都拿到并求差，与库的其它压力闭环
+//       FB 数据流一致。
+// 验证：① 前置：两路压力传感器分别接 EL3024 通道，IO 映射到
+//       nPressureA_Raw 和 nPressureB_Raw；
+//       ② A/B 侧分别标定：用同一压力源接到 A 或 B 侧，记 ADC 值反
+//       算 ScaleFactor 和 ScaleOffset；
+//       ③ 给缸 A 侧加压（B 侧通油箱）→ fActPressure 应为正；
+//       ④ 给 B 侧加压（A 侧通油箱）→ fActPressure 应为负；
+//       ⑤ 业务侧用 MC_ReadActualTorque_BkPlcMc 读出的 Torque 即为
+//       差压 bar 值，配合 MC_AxCtrlPressure_BkPlcMc 做差压闭环。
+// 注意：必须每周期调，且在压力闭环 / 读出 FB 之前。两侧 ScaleFactor
+//       即使是同型号传感器也建议单独标定，因为零点和满量程都有制
+//       造公差。
+// =============================================================================
+
+fbReadDiffPress(
+    AdcValueA    := nPressureA_Raw,
+    AdcValueB    := nPressureB_Raw,
+    ScaleFactorA := lrScaleFactorA,
+    ScaleOffsetA := lrScaleOffsetA,
+    ScaleFactorB := lrScaleFactorB,
+    ScaleOffsetB := lrScaleOffsetB,
+    ReadingMode  := iTcHydPressureReadingDefault,
+    Axis         := axHydDiffCyl,
+    Error        => bReadError,
+    ErrorID      => nReadErrorID
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

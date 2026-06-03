@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_MC_MoveJoySticked_BkPlcMc" Id="{9e07c642-1546-5949-a395-c4b9acb5d68f}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_MC_MoveJoySticked_BkPlcMc
+VAR
+    fbJoyExcavatorArm  : MC_MoveJoySticked_BkPlcMc;
+    axHydExcavatorArm  : AXIS_REF_BkPlcMc;
+    bJoystickActive    : BOOL := FALSE;                  // Execute 电平
+    lrJoystickRaw      : LREAL := 0.0;                   // 摇杆模拟量原始值
+    lrJoystickFiltered : LREAL;                          // 一阶低通滤波后
+    lrJoystickFilter_K : LREAL := 0.2;                   // 滤波系数（0-1，越小越平滑）
+    bJoyBusy           : BOOL;
+    bJoyAborted        : BOOL;
+    bJoyError          : BOOL;
+    nJoyErrorID        : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：液压挖掘机臂操作员摇杆控制。摇杆推到 +1 时挖斗以最高速度抬升，
+//       回中 0 停，推 -0.3 慢速反向（精细动作）。本 FB 把摇杆模拟量
+//       直接翻译成轴速度，实时调速。
+// 价值：手写需要切换算法状态到 ExtGen、做加减速限幅、处理软限位接近
+//       减速等多个步骤；本 FB 一行调用全包，并内置 fMaxAcc 平滑加减速
+//       避免摇杆突变冲击。
+// 验证：① 前置：axHydExcavatorArm.pStAxParams^.nProfileType 必须是
+//       MC_AxRuntimeCtrlBased_BkPlcMc，否则 NotCompatible 错；
+//       ② bJoystickActive := TRUE；
+//       ③ 在线慢慢把 lrJoystickRaw 从 0 推到 1.0；ActVelocity 应平
+//       滑（受 fMaxAcc 限制）跟随到 fRefVelo；
+//       ④ lrJoystickRaw 回到 0；ActVelocity 应平滑减到 0；
+//       ⑤ bJoystickActive := FALSE；轴应减速停车回 StandStill；
+//       ⑥ 注意本 FB 没有 Done 字段 — 撤 Execute 后判停看
+//       MC_ReadStatus_BkPlcMc.StandStill。
+// 注意：摇杆电位计模拟量本身抖，先用一阶低通滤波再喂给本 FB，否则
+//       fMaxAcc 频繁触发让操作员感觉"顿挫"。
+// =============================================================================
+
+// 一阶低通滤波：lrFiltered = lrFiltered + K × (lrRaw - lrFiltered)
+lrJoystickFiltered := lrJoystickFiltered + lrJoystickFilter_K
+                    * (lrJoystickRaw - lrJoystickFiltered);
+
+fbJoyExcavatorArm(
+    Execute      := bJoystickActive,
+    JoyStick     := lrJoystickFiltered,                    // 归一化 ±1.0
+    Acceleration := 2000.0,
+    Deceleration := 2000.0,
+    Jerk         := 0.0,                                   // 保留
+    Axis         := axHydExcavatorArm,
+    Busy         => bJoyBusy,
+    CommandAborted => bJoyAborted,
+    Error        => bJoyError,
+    ErrorID      => nJoyErrorID
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

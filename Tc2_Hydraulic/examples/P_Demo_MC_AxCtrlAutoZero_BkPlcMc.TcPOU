@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_MC_AxCtrlAutoZero_BkPlcMc" Id="{ed19526c-930c-5883-9c6a-51a90d1bbca3}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_MC_AxCtrlAutoZero_BkPlcMc
+VAR
+    fbAutoZeroComp     : MC_AxCtrlAutoZero_BkPlcMc;
+    axHydClampingHead  : AXIS_REF_BkPlcMc;
+    bAutoZeroEnable    : BOOL := FALSE;                  // 调试时开，正常运行关
+    bAutoZeroOnMoving  : BOOL := FALSE;                  // 默认只静止时补偿
+    lrOffsetLimitV     : LREAL := 0.5;                   // 补偿上限 ±0.5 V
+    lrIntegralTimeS    : LREAL := 120.0;                 // 120 s（PDF 推荐 > 100）
+    lrDoneThresholdV   : LREAL := 0.01;                  // Done 误差阈值
+    lrDoneFilterS      : LREAL := 5.0;                   // Done 滤波时长
+    bCompActive        : BOOL;
+    bCompLimiting      : BOOL;                           // 触底 = 阀有大偏差
+    bCompDone          : BOOL;                           // 学习完成
+    bCompError         : BOOL;
+    nCompErrorID       : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：比例阀控制的液压锁模轴。调试阶段发现位置控制器关闭后缸体每秒
+//       漂移 0.1 mm（阀芯零位与控制零位有 0.3 V 偏差）。开本 FB 让它
+//       在 2-5 分钟内自动学出补偿值（fZeroCompensation），写入轴参数
+//       后位置控制器关掉缸体也不漂。
+// 价值：手写调零需要工程师在调试时拿示波器观察 + 试错调
+//       fZeroCompensation；本 FB 自动闭环学习，且支持运行中"在线补
+//       偿"应对温度变化引起的零位漂移。
+// 验证（仅零遮盖阀！其它阀型不要用）：
+//       ① 前置：必须确认阀类型为零遮盖（zero overlap），且
+//       MC_AxRtFinish_BkPlcMc 必须在本 FB 之后调用；
+//       ② 让轴保持静止状态（无 MoveAbsolute 等命令）；
+//       ③ bAutoZeroEnable := TRUE；
+//       ④ 观察 axHydClampingHead.pStAxParams^.fZeroCompensation 应缓慢
+//       变化（受 lrIntegralTimeS 限制每秒变化量很小）；
+//       ⑤ 当跟随误差稳定在 lrDoneThresholdV 以内持续 lrDoneFilterS
+//       秒后 bCompDone := TRUE；
+//       ⑥ 业务侧调 MC_AxParamSave_BkPlcMc 持久化（否则重启丢失）；
+//       ⑦ 关闭 bAutoZeroEnable，把位置控制器关掉，观察轴不再漂移；
+//       ⑧ 若 bCompLimiting := TRUE 说明硬件偏差超出补偿能力，检查阀
+//       或机械。
+// 注意：本 FB 必须在 MC_AxRtFinish_BkPlcMc 之前调用！否则补偿值不
+//       生效。Tn = 120 s 是 PDF 推荐的保守值；调小会让补偿快但可能
+//       振荡。
+// =============================================================================
+
+fbAutoZeroComp(
+    Enable         := bAutoZeroEnable,
+    EnableOnMoving := bAutoZeroOnMoving,
+    OffsetLimit    := lrOffsetLimitV,
+    Tn             := lrIntegralTimeS,
+    Threshold      := lrDoneThresholdV,
+    Filter         := lrDoneFilterS,
+    Axis           := axHydClampingHead,
+    Error          => bCompError,
+    ErrorID        => nCompErrorID,
+    Active         => bCompActive,
+    Limiting       => bCompLimiting,
+    Done           => bCompDone
+);
+
+// 业务侧：bCompDone 上升沿后建议调 MC_AxParamSave_BkPlcMc 持久化
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

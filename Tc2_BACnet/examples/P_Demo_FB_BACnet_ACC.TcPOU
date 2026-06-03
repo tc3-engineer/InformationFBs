@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_BACnet_ACC" Id="{cd41ea94-7c68-5a9a-8f03-a989190de3df}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_BACnet_ACC
+VAR
+    // 空调机组电度表累计读数,1 脉冲 = 0.001 kWh
+    fbEnergyMeter  : FB_BACnet_ACC := (
+        sObjectName := 'EnergyMeter_AHU_3F',
+        sDescription := 'AHU floor 3 cumulative power consumption',
+        sDeviceType := 'PulseEnergyMeter',
+        eUnit := E_BA_Unit.eEnergy_KilowattHours,
+        fScale := 0.001,                       // 每脉冲 = 0.001 kWh
+        nMaxPresValue := 4294967295);          // UDINT 上界(40 亿,绝对够用)
+
+    // 模拟数据源:实际工程中由 EL1262 计数端子 + R_TRIG 累加得来,此处用模拟器
+    nMeterPulsesPlc : UDINT := 0;
+    fbPulseGen      : TON;
+    bSimPulse       : BOOL := TRUE;            // 在线写 FALSE 暂停模拟
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景:每个空调机组装一只脉冲电度表,运维要在 BMS 上看每个机组累计电量
+//       (kWh)与瞬时功率(kW),做能效分析与峰谷分时计费分摊。
+// 价值:Accumulator 是 BACnet 标准的能源计量对象,BMS / 第三方能源管理软件都
+//       识别;直接喂累计脉冲数 + Scale + Units,BMS 端的瞬时功率由 Pulse_Rate
+//       自动算(由 stack 在两次读请求间求 delta/time)。
+// 验证:1) 上电后 BACnet Explorer 读 Present_Value=0,Scale=0.001,
+//       Units=kilowatt-hours。2) 在线让本程序跑(模拟器每秒+10 脉冲 = 0.01 kWh/s
+//       = 36 kWh/h ≈ 36 kW 功率),Explorer 周期读 Present_Value 应单调递增,
+//       Pulse_Rate ≈ 10 脉冲/秒;3) Explorer 反算的"瞬时功率"≈ 36 kW。
+// =============================================================================
+
+// ---- 模拟一个 10 Hz 脉冲源(实际工程是 EL1262 读出来) ----
+fbPulseGen(IN := bSimPulse AND NOT fbPulseGen.Q, PT := T#100MS);
+IF fbPulseGen.Q THEN
+    nMeterPulsesPlc := nMeterPulsesPlc + 1;     // 累计永不归零(BACnet 语义)
+END_IF
+
+fbEnergyMeter.nVal := nMeterPulsesPlc;
+fbEnergyMeter();
+
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

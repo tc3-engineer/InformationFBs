@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_BA_RampLmt" Id="{c73737f4-efc4-509a-9fa1-90785d93ff69}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_BA_RampLmt
+VAR
+    fbVfdRampLimiter     : FB_BA_RampLmt;     // 变频器频率给定斜率限制
+
+    // ---- 工艺信号 ----
+    bRampEnable          : BOOL := FALSE;      // 总使能；TRUE 启动限速
+    fFreqCommand         : REAL := 20.0;        // 目标频率 [Hz]
+    bManualOverride      : BOOL := FALSE;       // 手动同步触发
+    fManualFreq          : REAL := 35.0;        // 手动同步目标频率
+
+    // ---- 限速参数 ----
+    fHiBound             : REAL := 50.0;        // 上参考点 50 Hz
+    fLoBound             : REAL := 0.0;         // 下参考点 0 Hz
+    nUpTimeSec           : UDINT := 30;         // 0→50 Hz 升 30 秒
+    nDnTimeSec           : UDINT := 60;         // 50→0 Hz 降 60 秒（更慢，避免反电动势）
+
+    // ---- 输出 ----
+    fFreqRamped          : REAL;                // 限速后的频率给定，送变频器
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// Tc3_BA2_Common.FB_BA_RampLmt 演示程序
+// =============================================================================
+// 场景：地下车库通风变频器。白天 20 Hz 低速，CO 报警时升到 50 Hz；夜间归零。
+//       直接给阶跃频率会让变频器跳"过流"保护，要把频率指令做斜率限制：升 30s
+//       0→50 Hz、降 60s 50→0 Hz（下降更慢以缓解反电动势）。
+//
+// 价值：替代手写"按周期递增 + dt + 上下界"约 8 行代码；上下速率独立配置；
+//       bSync 引脚允许手动模式接管时无扰立刻锁定（避免坡道等待）。
+//
+// 验证：
+//   ① 登录后初始：bRampEnable=FALSE → fFreqRamped=0；
+//   ② 写 bRampEnable := TRUE → fFreqRamped 开始按 (50-0)/30 = 1.67 Hz/秒
+//      速率向 fFreqCommand=20 爬，约 12 秒后达到 20 Hz；
+//   ③ 写 fFreqCommand := 50.0 → fFreqRamped 继续以 1.67 Hz/秒 爬到 50 Hz；
+//   ④ 写 fFreqCommand := 0.0 → fFreqRamped 按 (50-0)/60 = 0.83 Hz/秒 速率下降；
+//   ⑤ 手动同步：写 fManualFreq := 35, bManualOverride := TRUE → fFreqRamped
+//      立即跳到 35（跳过坡道）；写回 FALSE 后继续按当前 fFreqCommand 爬;
+//   ⑥ 关闭：写 bRampEnable := FALSE → fFreqRamped 立即归 0（不走坡道）。
+//
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_BA2_Common（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』指引在线写值观察
+// =============================================================================
+
+// 注意：bEn 引脚 PDF 印刷为 REAL 是错误的；编译器实际接受 BOOL（InfoSys 一致）
+fbVfdRampLimiter(
+    bEn    := bRampEnable,        // BOOL（PDF 印刷 REAL 是错误）
+    fIn    := fFreqCommand,
+    bSync  := bManualOverride,
+    fSync  := fManualFreq,
+    fHi    := fHiBound,
+    fLo    := fLoBound,
+    nTiUp  := nUpTimeSec,
+    nTiDwn := nDnTimeSec,
+    fOut   => fFreqRamped
+);
+
+// 工程提醒：fOut 不会被限幅在 [fLo, fHi]——FB 只限速率不限范围。如果还需要
+// 限幅，请在 fFreqRamped 后串接 LIMIT(0, fFreqRamped, 50) 等价处理。
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

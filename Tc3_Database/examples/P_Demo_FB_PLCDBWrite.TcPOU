@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_PLCDBWrite" Id="{cc447544-8436-5350-94a2-5b9a50f84c12}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_PLCDBWrite
+VAR
+    // ⚠️ obsolete —— 新项目用 FB_PLCDBWriteEvt
+    fbWrite            : FB_PLCDBWrite(sNetID := '', tTimeout := T#10S);
+
+    bWriteValueReq     : BOOL := FALSE;
+    nMesDbId           : UDINT := 1;
+    rMachineHealth     : LREAL := 85.5;
+    sHealthSymbolName  : STRING(80) := 'OldMachine1_Health';
+
+    nState             : INT := 0;
+    bWriteDone         : BOOL;
+    bLastWasError      : BOOL;
+    ipLastTcResult     : Tc3_EventLogger.I_TcResultEvent;
+    sLastErrText       : STRING(255);
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：老 OEM 项目把机器健康度用 Update 模式写到「最新值表」让 SCADA 拉取。
+//       本程序展示老风格调用，输出走 ipTcResultEvent : I_TcResultEvent。
+//       新项目应改用 P_Demo_FB_PLCDBWriteEvt。
+// 价值：保护已部署设备的二进制兼容。
+// 验证步骤：
+//   1. 右键 POUs → Add → Existing Item → 选本 .TcPOU；引用 Tc3_Database 与
+//      Tc3_EventLogger；TF6420 服务运行
+//   2. 前置：tbl_HealthLatest 标准 4 列表已建好
+//   3. 编译 → 登录 → 运行
+//   4. 在线写 bWriteValueReq := TRUE → 表里 Name='OldMachine1_Health' 行
+//      Value 列被更新；再触发不增行（Update 模式特征）
+// =============================================================================
+
+IF bWriteValueReq AND nState = 0 THEN
+    bWriteValueReq := FALSE;
+    nState := 10;
+END_IF
+
+IF nState = 10 THEN
+    bWriteDone := fbWrite.Write(
+        hDBID              := nMesDbId,
+        sTableName         := 'tbl_HealthLatest',
+        pValue             := ADR(rMachineHealth),
+        cbValue            := SIZEOF(rMachineHealth),
+        sDBSymbolName      := sHealthSymbolName,
+        eDBWriteMode       := E_WriteMode.eADS_TO_DB_Update,
+        nRingBuffParameter := 0
+    );
+    IF bWriteDone THEN
+        IF fbWrite.bError THEN
+            ipLastTcResult := fbWrite.ipTcResultEvent;
+            ipLastTcResult.RequestEventText(1033, ADR(sLastErrText), SIZEOF(sLastErrText));
+            bLastWasError := TRUE;
+        END_IF
+        nState := 0;
+    END_IF
+END_IF
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

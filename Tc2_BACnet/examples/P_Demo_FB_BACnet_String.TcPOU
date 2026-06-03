@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_BACnet_String" Id="{c8ad8fa3-6801-57d4-8295-a466e68f88c6}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_BACnet_String
+VAR
+    fbLastError : FB_BACnet_String := (
+        sObjectName := 'LastError_3F',
+        sDescription := 'Last error message text on floor 3');
+    sErrTxt     : STRING := 'No error';
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景:把"最后一条错误消息文本"等字符串字段暴露给 BMS,运维 / 调试时方便查看。
+// 价值:Character String Value 是 BACnet 标准的字符串容器,BMS 识别;UTF-8
+//       兼容(配 STRING_TO_UTF8 可支持中文,PDF §9.15 示例)。
+// 验证:1) BACnet Explorer 读 fbLastError.Present_Value='No error'。2) 在线
+//       写 sErrTxt := 'Sensor 3F-E-T01 fault',Explorer 应看到更新。
+// =============================================================================
+
+fbLastError.sValue := sErrTxt;
+fbLastError();
+
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

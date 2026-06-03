@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_SQLResultEvt" Id="{b4b9c5fe-5812-55ea-b0cc-df4be6c283f9}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_SQLResultEvt
+VAR
+    fbSqlDb            : FB_SQLDatabaseEvt(sNetID := '', tTimeout := T#30S);
+    fbSqlCmd           : FB_SQLCommandEvt(sNetID := '', tTimeout := T#15S);
+    fbSqlResult        : FB_SQLResultEvt(sNetID := '', tTimeout := T#15S);
+
+    // ==== 业务输入 ====
+    bInitReq           : BOOL := FALSE;        // 启动建连 + CreateCmd
+    bRunQueryReq       : BOOL := FALSE;        // 发 SELECT 并缓存到 Server
+    bReadPageReq       : BOOL := FALSE;        // 分页：读 100 行
+    bReleaseReq        : BOOL := FALSE;        // 全部读完后释放缓存
+
+    sSelectCmd         : STRING(1000) := 'SELECT TOP 1000 ID, Timestamp, Name, Value FROM myTable_Double ORDER BY ID DESC';
+
+    // ==== 接收缓冲：每次 Read 取 100 行 ====
+    aRowsPerPage       : ARRAY[0..99] OF ST_StandardRecord;
+    nPageStart         : UDINT := 0;           // 累计已读行数，作为下次的 nStartIndex
+
+    // ==== 状态机 ====
+    nState             : INT := 0;             // 0 idle, 10 connect, 20 cmd, 30 select, 40 read, 50 release
+    bConnDone          : BOOL;
+    bCmdInitDone       : BOOL;
+    bSelectDone        : BOOL;
+    bReadDone          : BOOL;
+    bReleaseDone       : BOOL;
+    bCmdReady          : BOOL := FALSE;
+    bResultCached      : BOOL := FALSE;        // SELECT 已发，Server 端缓存就绪
+
+    // ==== EventLogger 诊断 ====
+    ipLastTcMsg        : Tc3_EventLogger.I_TcMessage;
+    sLastErrText       : STRING(255);
+    bLastWasError      : BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：HMI 触发拉「最近 1000 条工艺采样」画趋势曲线。PLC 用 SELECT TOP 1000
+//       让结果缓存到 Server 端；然后用本 FB 分 10 次 Read 各取 100 行避免
+//       单次 ADS 传输几十 KB 导致缓冲溢出；HMI 边收边画；最后 Release 缓存。
+// 价值：大结果集分页是处理百万行级历史数据的唯一可行方案；Server 端缓存
+//       让 PLC 端可按需读 / 按需停；EventLogger 错误诊断。
+// 验证步骤：
+//   1. 右键 POUs → Add → Existing Item → 选本 .TcPOU；引用 Tc3_Database 与
+//      Tc3_EventLogger
+//   2. 前置：XML 有 hDBID=1 的 MS SQL 配置；DB 中 myTable_Double 表至少
+//      有 1000 行（可用 P_Demo_FB_SQLCommandEvt 反复 INSERT 制造）
+//   3. 编译 → 登录 → 运行
+//   4. 在线写 bInitReq := TRUE → nState 走 0→10→20→0；bCmdReady=TRUE
+//   5. 在线写 bRunQueryReq := TRUE → nState 走 0→30→0；bResultCached=TRUE
+//   6. 反复写 bReadPageReq := TRUE 10 次 → 每次 nState 走 0→40→0，
+//      aRowsPerPage 填 100 行，nPageStart += 100；HMI 周期 monitor 数组
+//   7. 全部读完后写 bReleaseReq := TRUE → nState 走 0→50→0；Server 缓存释放
+//   8. 故意把 nPageStart 改成 5000（超出 1000）再 ReadPage → bLastWasError=TRUE
+//      sLastErrText 显示 "Index out of range"
+// =============================================================================
+
+fbSqlResult.eTraceLevel := Tc3_EventLogger.TcEventSeverity.Warning;
+
+IF nState = 0 THEN
+    IF bInitReq THEN
+        bInitReq := FALSE;
+        nState := 10;
+    ELSIF bRunQueryReq AND bCmdReady THEN
+        bRunQueryReq := FALSE;
+        nPageStart := 0;
+        nState := 30;
+    ELSIF bReadPageReq AND bResultCached THEN
+        bReadPageReq := FALSE;
+        nState := 40;
+    ELSIF bReleaseReq AND bResultCached THEN
+        bReleaseReq := FALSE;
+        nState := 50;
+    END_IF
+END_IF
+
+// ---- state=10：Connect ----
+IF nState = 10 THEN
+    bConnDone := fbSqlDb.Connect(hDBID := 1);
+    IF bConnDone THEN
+        IF NOT fbSqlDb.bError THEN
+            nState := 20;
+        ELSE
+            bLastWasError := TRUE;
+            nState := 0;
+        END_IF
+    END_IF
+END_IF
+
+// ---- state=20：CreateCmd ----
+IF nState = 20 THEN
+    bCmdInitDone := fbSqlDb.CreateCmd(pSQLCommand := ADR(fbSqlCmd));
+    IF bCmdInitDone THEN
+        IF NOT fbSqlDb.bError THEN
+            bCmdReady := TRUE;
+        ELSE
+            bLastWasError := TRUE;
+        END_IF
+        nState := 0;
+    END_IF
+END_IF
+
+// ---- state=30：ExecuteDataReturn 发 SELECT，结果缓存到 fbSqlResult ----
+IF nState = 30 THEN
+    bSelectDone := fbSqlCmd.ExecuteDataReturn(
+        pSQLCmd      := ADR(sSelectCmd),
+        cbSQLCmd     := SIZEOF(sSelectCmd),
+        pSQLDBResult := ADR(fbSqlResult)
+    );
+    IF bSelectDone THEN
+        IF fbSqlCmd.bError THEN
+            ipLastTcMsg := fbSqlCmd.ipTcResult;
+            ipLastTcMsg.RequestEventText(1033, ADR(sLastErrText), SIZEOF(sLastErrText));
+            bLastWasError := TRUE;
+        ELSE
+            bResultCached := TRUE;
+        END_IF
+        nState := 0;
+    END_IF
+END_IF
+
+// ---- state=40：Read 一页 100 行 ----
+// 关键点：bDataRelease := FALSE 保留缓存供下次读
+IF nState = 40 THEN
+    bReadDone := fbSqlResult.Read(
+        nStartIndex    := nPageStart,
+        nRecordCount   := 100,
+        pData          := ADR(aRowsPerPage),
+        cbData         := SIZEOF(aRowsPerPage),
+        bWithVerifying := TRUE,                  // 类型自适配，避免静默错值
+        bDataRelease   := FALSE                  // 保留缓存以便下次 Read
+    );
+    IF bReadDone THEN
+        IF fbSqlResult.bError THEN
+            ipLastTcMsg := fbSqlResult.ipTcResult;
+            ipLastTcMsg.RequestEventText(1033, ADR(sLastErrText), SIZEOF(sLastErrText));
+            bLastWasError := TRUE;
+        ELSE
+            bLastWasError := FALSE;
+            nPageStart := nPageStart + 100;       // 下一页起始索引
+        END_IF
+        nState := 0;
+    END_IF
+END_IF
+
+// ---- state=50：显式 Release 释放 Server 端缓存 ----
+IF nState = 50 THEN
+    bReleaseDone := fbSqlResult.Release();
+    IF bReleaseDone THEN
+        IF NOT fbSqlResult.bError THEN
+            bResultCached := FALSE;
+        END_IF
+        nState := 0;
+    END_IF
+END_IF
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

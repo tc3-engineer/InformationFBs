@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_BA_SwiHys2P" Id="{320859ba-5438-588a-9914-f1ad8ad68e4f}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_BA_SwiHys2P
+VAR
+    fbCoolingSwitch    : FB_BA_SwiHys2P;
+
+    // ---- 工艺信号 ----
+    bCoolingEnable     : BOOL := TRUE;          // 制冷系统使能
+    fRoomTempC         : REAL := 21.5;           // 室温（在线写值模拟）
+    fSetpointC         : REAL := 22.0;           // HMI 设定温度
+    fHysteresisWidth   : REAL := 1.0;            // 死区宽度 ±0.5℃
+    fHysteresisOffset  : REAL := 0.0;            // 偏移 0（对称滞回）
+    nDelayOnSec        : UDINT := 30;            // 启动延时 30 秒
+    nDelayOffSec       : UDINT := 180;           // 停机延时 3 分钟
+    bDirectAction      : BOOL := TRUE;           // TRUE = direct = 制冷
+
+    // ---- 输出 ----
+    bCompressorRun     : BOOL;                   // 压缩机运行命令
+    fSwiHighPoint      : REAL;                   // 上切换点（可在 HMI 显示）
+    fSwiLowPoint       : REAL;                   // 下切换点
+    nRemainingOnSec    : UDINT;                  // 启动倒计时
+    nRemainingOffSec   : UDINT;                  // 停机倒计时
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// Tc3_BA2_Common.FB_BA_SwiHys2P 演示程序
+// =============================================================================
+// 场景：会议室温度控制。HMI 用户输入"设定温度"和"温度死区宽度"，系统自动计
+//       算上下切换点。室温升过 fSwiHigh=22.5℃ 启动制冷（延 30s 抗瞬态），
+//       降到 fSwiLow=21.5℃ 停止制冷（延 3 分钟避免压缩机短循环）。
+//
+// 价值：与 FB_BA_Swi2P（两个独立阈值）相比，本 FB 用"中心 + 宽度 + 偏移"
+//       参数表达，更符合 HMI 用户的认知（用户只关心目标温度和精度，不关心
+//       两个具体阈值）。fSp 在线变动时切换点自动跟随，无需重组态。
+//
+// 验证：
+//   ① 登录后初始：fRoomTempC=21.5（恰在下切换点），bCompressorRun=FALSE；
+//      fSwiHighPoint=22.5, fSwiLowPoint=21.5（自动算出）；
+//   ② 在线写 fRoomTempC := 23.0 → nRemainingOnSec=30 开始倒数；30 秒后
+//      bCompressorRun 翻 TRUE；
+//   ③ 启动倒计时未完时把 fRoomTempC := 22.0 拉回 → nRemainingOnSec 清零，
+//      bCompressorRun 保持 FALSE（防瞬态尖刺）；
+//   ④ bCompressorRun=TRUE 时把 fRoomTempC := 21.0 → nRemainingOffSec=180
+//      开始倒数；180 秒后 bCompressorRun 翻 FALSE；
+//   ⑤ HMI 改设定值：在线写 fSetpointC := 25.0 → fSwiHighPoint 立即变 25.5、
+//      fSwiLowPoint 立即变 24.5；如果 fRoomTempC 还在 21℃ 而 bDirectAction=TRUE
+//      则 bCompressorRun 立即 FALSE（已低于下切换点）；
+//   ⑥ 偏移测试：写 fHysteresisOffset := -0.3 → 切换点整体下移 0.3。
+//
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_BA2_Common（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』指引在线写值观察
+// =============================================================================
+
+fbCoolingSwitch(
+    bEn          := bCoolingEnable,
+    fIn          := fRoomTempC,
+    fSp          := fSetpointC,
+    fHys         := fHysteresisWidth,
+    fHysOffs     := fHysteresisOffset,
+    nDlyOn       := nDelayOnSec,
+    nDlyOff      := nDelayOffSec,
+    bActn        := bDirectAction,            // TRUE = direct = cooling
+    bQ           => bCompressorRun,
+    fSwiHi       => fSwiHighPoint,
+    fSwiLow      => fSwiLowPoint,
+    nRemTiDlyOn  => nRemainingOnSec,
+    nRemTiDlyOff => nRemainingOffSec
+);
+
+// 工程提醒：fSp 在线变化时切换点立刻跟随；若希望平滑过渡，可先把 fSp 经
+// FB_BA_RampLmt 限速。
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_MC_ReadAxisError_BkPlcMc" Id="{e3bacf74-7a49-5325-b80a-c4cebeaf8063}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_MC_ReadAxisError_BkPlcMc
+VAR
+    fbReadClampError   : MC_ReadAxisError_BkPlcMc;
+    axHydClampingHead  : AXIS_REF_BkPlcMc;
+    bMonitorAxisError  : BOOL := TRUE;
+    nCurrentAxisError  : UDINT;                           // 轴错误码（0 = 无错）
+    bReadValid         : BOOL;
+    bAxisInErrorState  : BOOL;                            // 业务用：是否需要清错
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：注塑机液压轴诊断面板。HMI 实时显示锁模轴的错误码（不论是不是 0），
+//       业务代码根据 nCurrentAxisError <> 0 判断是否进入"维护模式"禁止
+//       后续运动命令。
+// 价值：标准 PLCopen 接口；直接拿到错误码数值（UDINT），可对照库的全局
+//       常量 dwTcHydErrCd* 系列查含义；HMI 端可做"错误码 → 中文报警
+//       文本"映射表。
+// 验证：① bMonitorAxisError := TRUE，无错时 nCurrentAxisError = 0；
+//       ② 把 axHydClampingHead 设为某错误状态（例如让运动 FB 触发软限位）
+//       → nCurrentAxisError 变非零，bAxisInErrorState := TRUE；
+//       ③ 调 MC_Reset_BkPlcMc 后 nCurrentAxisError 应回到 0。
+// 注意：本 FB 自带的 Error 字段（"FB 自身错"）永远是 FALSE，因为本 FB
+//       不会失败。判"轴出错"用 nCurrentAxisError <> 0，不要看 Error。
+// =============================================================================
+
+fbReadClampError(
+    Enable      := bMonitorAxisError,
+    Axis        := axHydClampingHead,
+    Busy        => ,                                       // 始终 FALSE（PLCopen 兼容）
+    Valid       => bReadValid,
+    Error       => ,                                       // 始终 FALSE（PLCopen 兼容）
+    ErrorID     => ,                                       // 始终 0
+    AxisErrorID => nCurrentAxisError
+);
+
+// 业务判 "轴是否处于错误状态"：用 AxisErrorID 不是 Error
+bAxisInErrorState := bReadValid AND (nCurrentAxisError <> 0);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

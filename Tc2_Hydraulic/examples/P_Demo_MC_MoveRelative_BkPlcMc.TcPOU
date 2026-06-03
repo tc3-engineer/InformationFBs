@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_MC_MoveRelative_BkPlcMc" Id="{c345aaa1-b588-5046-a947-dd084c064bec}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_MC_MoveRelative_BkPlcMc
+VAR
+    fbAdvanceToNextHole : MC_MoveRelative_BkPlcMc;
+    axHydDrillTable     : AXIS_REF_BkPlcMc;
+    rtNextHoleTrig      : R_TRIG;
+    bRequestNextHole    : BOOL := FALSE;
+    lrPitchMm           : LREAL := 100.0;                // 孔间距 100 mm
+    lrFeedVelocityMmS   : LREAL := 150.0;
+    bAdvanceDone        : BOOL;
+    bAdvanceBusy        : BOOL;
+    bAdvanceAborted     : BOOL;
+    bAdvanceError       : BOOL;
+    nAdvanceErrorID     : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：液压钻孔机床。每钻完一孔，工作台往前进给 100 mm 到下一个孔位
+//       （孔间距等距）。操作员按"下一孔"按钮触发，本 FB 把工作台向
+//       前推 100 mm 自动停车。
+// 价值：业务侧不需要维护"当前是第几个孔的绝对坐标"；操作员只关心
+//       "再前进一步"，本 FB 直接对应这种增量语义，相比 MC_MoveAbsolute
+//       需要业务侧累加目标位置简单很多。
+// 验证：① 前置使能：MC_Power_BkPlcMc.Status = TRUE，且轴已 home；
+//       ② bRequestNextHole := TRUE → rtNextHoleTrig.Q 给上升沿；
+//       ③ bAdvanceBusy 立即变 TRUE；
+//       ④ MC_ReadActualPosition_BkPlcMc 观察 Position 应从当前值 P
+//       平滑跑到 P + 100；
+//       ⑤ 到位后 bAdvanceDone 保持一个周期；
+//       ⑥ 反复触发 N 次后，业务可与"100 × N 绝对值"做比较，差值反映
+//       相对定位的累计漂移（典型 µm 级，不影响钻孔但精密装配场景就
+//       要换 MC_MoveAbsolute）。
+// 注意：lrPitchMm 是有符号的 — 负数会让轴反向走。本例假设孔位都在
+//       正方向上等距。
+// =============================================================================
+
+rtNextHoleTrig(CLK := bRequestNextHole);
+
+fbAdvanceToNextHole(
+    Execute      := rtNextHoleTrig.Q,
+    Distance     := lrPitchMm,
+    Velocity     := lrFeedVelocityMmS,
+    Acceleration := 800.0,
+    Deceleration := 800.0,
+    Jerk         := 0.0,                                  // 保留无效
+    BufferMode   := Aborting_BkPlcMc,                     // 保留，给默认
+    Axis         := axHydDrillTable,
+    Busy         => bAdvanceBusy,
+    Done         => bAdvanceDone,
+    CommandAborted => bAdvanceAborted,
+    Error        => bAdvanceError,
+    ErrorID      => nAdvanceErrorID
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

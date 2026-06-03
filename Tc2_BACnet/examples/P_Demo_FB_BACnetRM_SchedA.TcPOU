@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_BACnetRM_SchedA" Id="{c47190d7-6ada-5c9d-a210-fab2e766965b}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_BACnetRM_SchedA
+VAR
+    fbClient        : FB_BACnet_Client := (nDeviceInstance := 42, tReadCycleTime := T#5S);
+    fbDevice        : FB_BACnetRM_Device := (Client := fbClient);
+    fbRemoteSched   : FB_BACnetRM_SchedA := (Client := fbClient, nObjectInstance := 1);
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景:对端 BMS 已经配好了 BACnet Schedule 对象(实例 1),本机 PLC 引用它的
+//       Present_Value 作为业务输入(如对端"楼宇运行时间表"驱动本机 PLC 算法)。
+// 价值:跨设备共享时间表,无需各 PLC 复制一份;对端改表本机自动跟随。
+// 验证:1) 等 fbDevice.bOperational=TRUE。2) BACnet Explorer 在 device 42 上
+//       配 Schedule:1 当前 Present_Value=某个值。3) 等 1 个 tReadCycleTime(5
+//       秒)后 fbRemoteSched.fPresVal 应读到对端值。4) Explorer 改 Present_Value
+//       后,本机 PLC 端 5 秒内自动跟随。
+// 注意:Schedule 是无类型的 — 必须用与对端实际数据类型匹配的 RM 变体(SchedA
+//       = REAL / SchedB = BOOL / SchedM = UDINT,PDF §7.8)。
+// =============================================================================
+
+fbClient();
+fbDevice();
+fbRemoteSched();
+
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

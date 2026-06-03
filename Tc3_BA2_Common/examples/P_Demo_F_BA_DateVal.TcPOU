@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_F_BA_DateVal" Id="{4b6ee3bf-357c-5e2d-82a8-b58e87f41278}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_F_BA_DateVal
+VAR
+    argNYear                       : UINT(1900 .. 2155)             := 4; // nYear
+    argEMonth                      : E_BA_Month                    ; // eMonth
+    argNDay                        : UINT(1 .. 31)                  := 4; // nDay
+    fnReturn                       : U_BA_DateVal; // 返回值
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// Tc3_BA2_Common.F_BA_DateVal 演示程序
+// =============================================================================
+// 场景："固定日期模式：每年 4 月 1 日执行" —— 把单日期打包供调度引擎。
+//
+// 价值：同上：统一接口。
+//
+// 验证：登录 PLC 后，按例程内变量在线写值；监视输出 / 返回值，结合 §1 功能
+//       简述的预期行为对照（详见配套 .md 文档 §7 业务场景）。
+//
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_BA2_Common（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』指引在线写值观察
+// =============================================================================
+
+fnReturn := F_BA_DateVal(
+    nYear                    := argNYear,
+    eMonth                   := argEMonth,
+    nDay                     := argNDay
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

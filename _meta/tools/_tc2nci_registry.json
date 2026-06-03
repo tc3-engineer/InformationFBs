@@ -1,0 +1,158 @@
+{
+  "library": "Tc2_NCI",
+  "version": "2.15.1",
+  "pdf_url": "https://download.beckhoff.com/download/document/automation/twincat3/TF5100_TC3_NC_I_EN.pdf",
+  "infosys_root": "https://infosys.beckhoff.com/content/1033/tf5100_tc3_nc_i/",
+  "categories": {
+    "configuration": {
+      "title": "Configuration",
+      "pdf_section": "7.1.1",
+      "infosys_index": "https://infosys.beckhoff.com/content/1033/tf5100_tc3_nc_i/3282411915.html",
+      "entries": [
+        {"name": "CfgBuild3DGroup",   "section": "7.1.1.1", "infosys": "3282424587.html", "type": "FUNCTION_BLOCK"},
+        {"name": "CfgBuildExt3DGroup","section": "7.1.1.2", "infosys": "3283105291.html", "type": "FUNCTION_BLOCK"},
+        {"name": "CfgAddAxisToGroup", "section": "7.1.1.3", "infosys": "3283145227.html", "type": "FUNCTION_BLOCK"},
+        {"name": "CfgReconfigGroup",  "section": "7.1.1.4", "infosys": "3283175691.html", "type": "FUNCTION_BLOCK"},
+        {"name": "CfgReconfigAxis",   "section": "7.1.1.5", "infosys": "3283217163.html", "type": "FUNCTION_BLOCK"},
+        {"name": "CfgRead3DAxisIds",  "section": "7.1.1.6", "infosys": "3283258635.html", "type": "FUNCTION_BLOCK"},
+        {"name": "CfgReadExt3DAxisIds","section": "7.1.1.7","infosys": "3283313419.html", "type": "FUNCTION_BLOCK"}
+      ]
+    },
+    "nci_pous": {
+      "title": "NCI POUs",
+      "pdf_section": "7.1.2",
+      "infosys_index": "https://infosys.beckhoff.com/content/1033/tf5100_tc3_nc_i/36028800302726027.html",
+      "entries": [
+        {"name": "ItpConfirmHsk",                "section": "7.1.2.1",  "infosys": "3284130955.html", "type": "FUNCTION_BLOCK"},
+        {"name": "ItpDelDtgEx",                  "section": "7.1.2.2",  "infosys": "3284182539.html", "type": "FUNCTION_BLOCK"},
+        {"name": "ItpEnableDefaultGCode",        "section": "7.1.2.3",  "infosys": "3283924619.html", "type": "FUNCTION_BLOCK"},
+        {"name": "ItpEStopEx",                   "section": "7.1.2.4",  "infosys": "3284240907.html", "type": "FUNCTION_BLOCK"},
+        {"name": "ItpGetBlockNumber",            "section": "7.1.2.5",  "infosys": "3283868555.html", "type": "FUNCTION"},
+        {"name": "ItpGetBottleNeckLookAheadEx",  "section": "7.1.2.6",  "infosys": "3284296203.html", "type": "FUNCTION_BLOCK"},
+        {"name": "ItpGetBottleNeckModeEx",       "section": "7.1.2.7",  "infosys": "3284352779.html", "type": "FUNCTION_BLOCK"},
+        {"name": "ItpGetChannelId",              "section": "7.1.2.8",  "infosys": "3284405131.html", "type": "FUNCTION"},
+        {"name": "ItpGetChannelType",            "section": "7.1.2.9",  "infosys": "3283816587.html", "type": "FUNCTION"},
+        {"name": "ItpGetCyclicLrealOffsets",     "section": "7.1.2.10", "infosys": "3284457355.html", "type": "FUNCTION_BLOCK"},
+        {"name": "ItpGetCyclicUDintOffsets",     "section": "7.1.2.11", "infosys": "3284514059.html", "type": "FUNCTION_BLOCK"},
+        {"name": "ItpGetError",                  "section": "7.1.2.12", "infosys": "3284569355.html", "type": "FUNCTION"},
+        {"name": "ItpGetGeoInfoAndHParamEx",     "section": "7.1.2.13", "infosys": "3445645835.html", "type": "FUNCTION_BLOCK"},
+        {"name": "ItpGetGroupAxisIds",           "section": "7.1.2.14", "infosys": "3283774347.html", "type": "FUNCTION"},
+        {"name": "ItpGetGroupId",                "section": "7.1.2.15", "infosys": "3284623115.html", "type": "FUNCTION"},
+        {"name": "ItpGetHParam",                 "section": "7.1.2.16", "infosys": "3284676107.html", "type": "FUNCTION_BLOCK"},
+        {"name": "ItpGetHskMFunc",               "section": "7.1.2.17", "infosys": "3284728331.html", "type": "FUNCTION"},
+        {"name": "ItpGetItfVersion",             "section": "7.1.2.18", "infosys": "3284769035.html", "type": "FUNCTION"},
+        {"name": "ItpGetOverridePercent",        "section": "7.1.2.19", "infosys": "3284818955.html", "type": "FUNCTION_BLOCK"},
+        {"name": "ItpGetSetPathVelocity",        "section": "7.1.2.20", "infosys": "3440387083.html", "type": "FUNCTION"},
+        {"name": "ItpGetSParam",                 "section": "7.1.2.21", "infosys": "3284873739.html", "type": "FUNCTION_BLOCK"},
+        {"name": "ItpGetStateInterpreter",       "section": "7.1.2.22", "infosys": "3284938379.html", "type": "FUNCTION"},
+        {"name": "ItpGetTParam",                 "section": "7.1.2.23", "infosys": "3284991627.html", "type": "FUNCTION_BLOCK"},
+        {"name": "ItpGoAheadEx",                 "section": "7.1.2.24", "infosys": "3285095819.html", "type": "FUNCTION_BLOCK"},
+        {"name": "ItpHasError",                  "section": "7.1.2.25", "infosys": "3285151115.html", "type": "FUNCTION"},
+        {"name": "ItpIsFastMFunc",               "section": "7.1.2.26", "infosys": "3285216139.html", "type": "FUNCTION"},
+        {"name": "ItpIsEStopEx",                 "section": "7.1.2.27", "infosys": "3285269387.html", "type": "FUNCTION"},
+        {"name": "ItpIsHskMFunc",                "section": "7.1.2.28", "infosys": "3285325707.html", "type": "FUNCTION"},
+        {"name": "ItpLoadProgEx",                "section": "7.1.2.29", "infosys": "3285406347.html", "type": "FUNCTION_BLOCK"},
+        {"name": "ItpReadCyclicLRealParam1",     "section": "7.1.2.30", "infosys": "3285457803.html", "type": "FUNCTION"},
+        {"name": "ItpReadCyclicUdintParam1",     "section": "7.1.2.31", "infosys": "3285524875.html", "type": "FUNCTION"},
+        {"name": "ItpReadRParamsEx",             "section": "7.1.2.32", "infosys": "3285593483.html", "type": "FUNCTION_BLOCK"},
+        {"name": "ItpReadToolDescEx",            "section": "7.1.2.33", "infosys": "3285635083.html", "type": "FUNCTION_BLOCK"},
+        {"name": "ItpReadZeroShiftEx",           "section": "7.1.2.34", "infosys": "3285677451.html", "type": "FUNCTION_BLOCK"},
+        {"name": "ItpResetEx2",                  "section": "7.1.2.35", "infosys": "3285721739.html", "type": "FUNCTION_BLOCK"},
+        {"name": "ItpResetFastMFuncEx",          "section": "7.1.2.36", "infosys": "3285780875.html", "type": "FUNCTION_BLOCK"},
+        {"name": "ItpSetBottleNeckLookAheadEx",  "section": "7.1.2.37", "infosys": "3285836939.html", "type": "FUNCTION_BLOCK"},
+        {"name": "ItpSetBottleNeckModeEx",       "section": "7.1.2.38", "infosys": "3285890315.html", "type": "FUNCTION_BLOCK"},
+        {"name": "ItpSetCyclicLrealOffsets",     "section": "7.1.2.39", "infosys": "3285945995.html", "type": "FUNCTION_BLOCK"},
+        {"name": "ItpSetCyclicUDintOffsets",     "section": "7.1.2.40", "infosys": "3286002059.html", "type": "FUNCTION_BLOCK"},
+        {"name": "ItpSetOverridePercent",        "section": "7.1.2.41", "infosys": "3286060043.html", "type": "FUNCTION"},
+        {"name": "ItpSetSubroutinePathEx",       "section": "7.1.2.42", "infosys": "3286111243.html", "type": "FUNCTION_BLOCK"},
+        {"name": "ItpSetToolDescNullEx",         "section": "7.1.2.43", "infosys": "3286166923.html", "type": "FUNCTION_BLOCK"},
+        {"name": "ItpSetZeroShiftNullEx",        "section": "7.1.2.44", "infosys": "5212017163.html", "type": "FUNCTION_BLOCK"},
+        {"name": "ItpSingleBlock",               "section": "7.1.2.45", "infosys": "3286232075.html", "type": "FUNCTION_BLOCK"},
+        {"name": "ItpStartStopEx",               "section": "7.1.2.46", "infosys": "3286293515.html", "type": "FUNCTION_BLOCK"},
+        {"name": "ItpStepOnAfterEStopEx",        "section": "7.1.2.47", "infosys": "3286346507.html", "type": "FUNCTION_BLOCK"},
+        {"name": "ItpWriteRParamsEx",            "section": "7.1.2.48", "infosys": "3286401419.html", "type": "FUNCTION_BLOCK"},
+        {"name": "ItpWriteToolDescEx",           "section": "7.1.2.49", "infosys": "3286468875.html", "type": "FUNCTION_BLOCK"},
+        {"name": "ItpWriteZeroShiftEx",          "section": "7.1.2.50", "infosys": "3286510859.html", "type": "FUNCTION_BLOCK"}
+      ]
+    },
+    "blocksearch": {
+      "title": "Blocksearch",
+      "pdf_section": "7.1.2.51",
+      "infosys_index": "https://infosys.beckhoff.com/content/1033/tf5100_tc3_nc_i/3286563595.html",
+      "entries": [
+        {"name": "ItpBlocksearch",           "section": "7.1.2.51.1", "infosys": "3284021387.html", "type": "FUNCTION_BLOCK"},
+        {"name": "ItpGetBlocksearchData",    "section": "7.1.2.51.2", "infosys": "3284098187.html", "type": "FUNCTION_BLOCK"},
+        {"name": "ItpStepOnAfterBlocksearch","section": "7.1.2.51.3", "infosys": "3284114955.html", "type": "FUNCTION_BLOCK"}
+      ]
+    },
+    "retrace": {
+      "title": "Retrace",
+      "pdf_section": "7.1.2.52",
+      "infosys_index": "https://infosys.beckhoff.com/content/1033/tf5100_tc3_nc_i/3286563595.html",
+      "entries": [
+        {"name": "ItpEnableFeederBackup",    "section": "7.1.2.52.1", "infosys": "3286629899.html", "type": "FUNCTION_BLOCK"},
+        {"name": "ItpIsFeederBackupEnabled", "section": "7.1.2.52.2", "infosys": "3286687883.html", "type": "FUNCTION_BLOCK"},
+        {"name": "ItpIsFeedFromBackupList",  "section": "7.1.2.52.3", "infosys": "3286746251.html", "type": "FUNCTION"},
+        {"name": "ItpIsFirstSegmentReached", "section": "7.1.2.52.4", "infosys": "3286563595.html", "type": "FUNCTION"},
+        {"name": "ItpIsMovingBackwards",     "section": "7.1.2.52.5", "infosys": "3286597515.html", "type": "FUNCTION"},
+        {"name": "ItpRetraceMoveBackward",   "section": "7.1.2.52.6", "infosys": "3286799627.html", "type": "FUNCTION_BLOCK"},
+        {"name": "ItpRetraceMoveForward",    "section": "7.1.2.52.7", "infosys": "3286871307.html", "type": "FUNCTION_BLOCK"}
+      ]
+    },
+    "parts_program_generator": {
+      "title": "Parts program generator",
+      "pdf_section": "7.1.3",
+      "infosys_index": "https://infosys.beckhoff.com/content/1033/tf5100_tc3_nc_i/3283354507.html",
+      "entries": [
+        {"name": "ItpPpgAppendGenericBlock",     "section": "7.1.3.1", "infosys": "3283368843.html", "type": "FUNCTION_BLOCK"},
+        {"name": "ItpPpgAppendGeoCircleByRadius","section": "7.1.3.2", "infosys": "3283425675.html", "type": "FUNCTION_BLOCK"},
+        {"name": "ItpPpgAppendGeoLine",          "section": "7.1.3.3", "infosys": "3283479819.html", "type": "FUNCTION_BLOCK"},
+        {"name": "ItpPpgCloseMain",              "section": "7.1.3.4", "infosys": "3283535499.html", "type": "FUNCTION_BLOCK"},
+        {"name": "ItpPpgCloseSubroutine",        "section": "7.1.3.5", "infosys": "3283590411.html", "type": "FUNCTION_BLOCK"},
+        {"name": "ItpPpgCreateMain",             "section": "7.1.3.6", "infosys": "3283647115.html", "type": "FUNCTION_BLOCK"},
+        {"name": "ItpPpgCreateSubroutine",       "section": "7.1.3.7", "infosys": "3283705355.html", "type": "FUNCTION_BLOCK"}
+      ]
+    },
+    "compatibility": {
+      "title": "Function blocks for compatibility with existing programs",
+      "pdf_section": "7.1.4",
+      "infosys_index": "https://infosys.beckhoff.com/content/1033/tf5100_tc3_nc_i/3286926603.html",
+      "entries": [
+        {"name": "ItpDelDtg",                  "section": "7.1.4.1",  "infosys": "3286938891.html", "type": "FUNCTION_BLOCK"},
+        {"name": "ItpEStop",                   "section": "7.1.4.2",  "infosys": "3286999947.html", "type": "FUNCTION_BLOCK"},
+        {"name": "ItpGetBottleNeckLookAhead",  "section": "7.1.4.3",  "infosys": "3287053323.html", "type": "FUNCTION_BLOCK"},
+        {"name": "ItpGetBottleNeckMode",       "section": "7.1.4.4",  "infosys": "3287107851.html", "type": "FUNCTION_BLOCK"},
+        {"name": "ItpGetGeoInfoAndHParam",     "section": "7.1.4.5",  "infosys": "3446184075.html", "type": "FUNCTION_BLOCK"},
+        {"name": "ItpGoAhead",                 "section": "7.1.4.6",  "infosys": "3287163147.html", "type": "FUNCTION_BLOCK"},
+        {"name": "ItpIsEStop",                 "section": "7.1.4.7",  "infosys": "3287217675.html", "type": "FUNCTION_BLOCK"},
+        {"name": "ItpLoadProg",                "section": "7.1.4.8",  "infosys": "3287271435.html", "type": "FUNCTION_BLOCK"},
+        {"name": "ItpReadRParams",             "section": "7.1.4.9",  "infosys": "3287322123.html", "type": "FUNCTION_BLOCK"},
+        {"name": "ItpReadToolDesc",            "section": "7.1.4.10", "infosys": "3287377803.html", "type": "FUNCTION_BLOCK"},
+        {"name": "ItpReadZeroShift",           "section": "7.1.4.11", "infosys": "3287419403.html", "type": "FUNCTION_BLOCK"},
+        {"name": "ItpReset",                   "section": "7.1.4.12", "infosys": "3287461771.html", "type": "FUNCTION_BLOCK"},
+        {"name": "ItpResetEx",                 "section": "7.1.4.13", "infosys": "3287511691.html", "type": "FUNCTION_BLOCK"},
+        {"name": "ItpResetFastMFunc",          "section": "7.1.4.14", "infosys": "3287565451.html", "type": "FUNCTION_BLOCK"},
+        {"name": "ItpSetBottleNeckLookAhead",  "section": "7.1.4.15", "infosys": "3287619211.html", "type": "FUNCTION_BLOCK"},
+        {"name": "ItpSetBottleNeckMode",       "section": "7.1.4.16", "infosys": "3287671819.html", "type": "FUNCTION_BLOCK"},
+        {"name": "ItpSetSubroutinePath",       "section": "7.1.4.17", "infosys": "3287726731.html", "type": "FUNCTION_BLOCK"},
+        {"name": "ItpSetToolDescNull",         "section": "7.1.4.18", "infosys": "3287780875.html", "type": "FUNCTION_BLOCK"},
+        {"name": "ItpSetZeroShiftNull",        "section": "7.1.4.19", "infosys": "3287847947.html", "type": "FUNCTION_BLOCK"},
+        {"name": "ItpStartStop",               "section": "7.1.4.20", "infosys": "3287913867.html", "type": "FUNCTION_BLOCK"},
+        {"name": "ItpStepOnAfterEStop",        "section": "7.1.4.21", "infosys": "3287964555.html", "type": "FUNCTION_BLOCK"},
+        {"name": "ItpWriteRParams",            "section": "7.1.4.22", "infosys": "3288019467.html", "type": "FUNCTION_BLOCK"},
+        {"name": "ItpWriteToolDesc",           "section": "7.1.4.23", "infosys": "3288086923.html", "type": "FUNCTION_BLOCK"},
+        {"name": "ItpWriteZeroShift",          "section": "7.1.4.24", "infosys": "3288127371.html", "type": "FUNCTION_BLOCK"}
+      ]
+    },
+    "obsolete": {
+      "title": "Obsolete",
+      "pdf_section": "7.1.5",
+      "infosys_index": "https://infosys.beckhoff.com/content/1033/tf5100_tc3_nc_i/3436178827.html",
+      "entries": [
+        {"name": "F_GetVersionTcNciUtilities", "section": "7.1.5.1", "infosys": "3437905931.html", "type": "FUNCTION"},
+        {"name": "Get_TcNcCfg_Version",        "section": "7.1.5.2", "infosys": "3438162827.html", "type": "FUNCTION"},
+        {"name": "ItpGetVersion",              "section": "7.1.5.3", "infosys": "3285044107.html", "type": "FUNCTION"}
+      ]
+    }
+  }
+}

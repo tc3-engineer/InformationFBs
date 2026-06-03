@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_MC_AxCtrlPressure_BkPlcMc" Id="{03fce136-fa5e-5cdf-98a5-ef80dd911ba2}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_MC_AxCtrlPressure_BkPlcMc
+VAR
+    fbReadPress    : MC_AxRtReadPressureSingle_BkPlcMc;
+    fbPressCtrl    : MC_AxCtrlPressure_BkPlcMc;
+    axHydInjPiston : AXIS_REF_BkPlcMc;
+    bHoldPhaseReq  : BOOL := FALSE;                      // 保压段激活
+    bCtrlReset     : BOOL := TRUE;                       // 复位（默认 TRUE 才安全）
+    lrSetPressBar  : LREAL := 100.0;                     // 保压目标压力 bar
+    bCtrlError     : BOOL;
+    nCtrlErrorID   : UDINT;
+    nCtrlInWindup  : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：注塑机锁模到位后切换到"保压"控制段。模具内塑料压力必须稳定
+//       在 100 bar 维持几秒（保压时间）等塑料凝固。本 FB 把比例阀输
+//       出从位置控制切到压力闭环：业务侧写 fSetPressure := 100.0，
+//       PI 控制器自动调阀开度让 fActPressure 收敛到 100 bar 稳定。
+// 价值：手写 PI 控制器需自己处理 dt 计算、积分饱和、与位置控制器切
+//       换的输出跳变；本 FB 集成液压库的"控制值生成器"接口与位置
+//       控制器协同切换无冲突。
+// 验证：① 前置：axHydInjPiston 已 Power On，且压力传感器接好（fActPressure
+//       会被 fbReadPress 周期性更新）；
+//       ② 业务侧把目标压力写入轴 runtime：
+//          axHydInjPiston.pStAxRtData^.fSetPressure := lrSetPressBar;
+//       ③ bCtrlReset := FALSE 准备启用；
+//       ④ bHoldPhaseReq := TRUE 触发；MC_ReadActualTorque_BkPlcMc 应
+//       观察 Torque（实际压力）从当前值平滑收敛到 100；
+//       ⑤ 调整 kP/Tn 参数：kP 大 → 响应快但振荡；Tn 小 → 积分快但
+//       超调；典型液压保压 kP ≈ 0.001-0.01，Tn ≈ 0.5-2 s（经验）；
+//       ⑥ 长时间运行观察 nCtrlInWindup — 若一直 TRUE 说明 WindupLimit
+//       太小或被控量无法达到设定值，要增大 WindupLimit 或检查液压系统。
+// 注意：调用顺序极关键 — fbReadPress 必须在 fbPressCtrl 之前调用，
+//       否则 fActPressure 是上一周期的值，差一个周期影响闭环稳定性。
+// =============================================================================
+
+// Step 1: 先读实际压力（更新 fActPressure 到当前值）
+fbReadPress(
+    Enable    := TRUE,
+    Axis      := axHydInjPiston
+    // 其它输入端略，详见 MC_AxRtReadPressureSingle_BkPlcMc 文档
+);
+
+// Step 2: 业务侧把保压目标值写入轴运行时
+axHydInjPiston.pStAxRtData^.fSetPressure := lrSetPressBar;
+
+// Step 3: 调压力闭环 PI 控制器
+fbPressCtrl(
+    Enable           := bHoldPhaseReq,
+    Reset            := bCtrlReset,
+    FirstAuxParamIdx := 0,                                 // 不用 customer data 接口
+    kP               := 0.005,                             // 经验值
+    Tn               := 1.0,                               // s
+    ReadingMode      := iTcHydPressureReadingDefault,      // 控 fActPressure
+    PreSet           := 0.0,                               // I 初值
+    WindupLimit      := 10.0,                              // I 部分饱和限
+    Axis             := axHydInjPiston,
+    Error            => bCtrlError,
+    ErrorID          => nCtrlErrorID,
+    InWindup         => nCtrlInWindup                      // 类型是 UDINT 但当 BOOL 用
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

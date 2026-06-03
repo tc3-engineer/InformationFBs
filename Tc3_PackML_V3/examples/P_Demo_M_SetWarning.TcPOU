@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_M_SetWarning" Id="{8846dd8f-3c13-596d-b173-19f00d811419}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_M_SetWarning
+VAR
+    fbAdminAlarm       : FB_PMLAdminAlarm;
+    fbAdminTime        : FB_PMLAdminTime;
+    stPackTagAdmin     : ST_PMLa;
+    stPackTagStatus    : ST_PMLs;
+    stAdminOpt         : ST_PMLAdminTimeOptions;
+
+    nFilterLifePercent : INT := 50;        // 在线写值模拟滤芯寿命
+    bWarnCondition     : BOOL;
+    rtrigWarn          : R_TRIG;
+
+    stFilterWarning    : ST_PMLEvent := (Id := 2001, Value := 80, Message := 'Filter at 80% of life', Category := 2);
+
+    bSetOk             : BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc3_PackML_V3.FB_PMLAdminAlarm.M_SetWarning 演示程序
+// ============================================================
+// 场景：滤芯寿命到 80% 时提醒维护人员准备更换——不停机也不上报警，
+//       只是 warning。本方法在条件上升沿写入一条 warning。
+// 价值：警告类事件与故障类 alarm 分类，HMI 显示色不同；MES 可用作
+//       维护计划输入。Warning 没有 history（清除即丢失），与 Alarm
+//       严格区分。
+// 验证：登录后操作：
+//       1. 写 nFilterLifePercent := 85 → 条件上升沿触发 → 观察
+//          stPackTagAdmin.Warning[0].Trigger = TRUE, Id = 2001,
+//          Message = 'Filter at 80% of life', DateTime 已填。
+//       2. 写 nFilterLifePercent := 50 → 条件回落 → warning 还在
+//          数组里（需要调 M_ClearWarning 或被新 warning 顶出）。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_PackML_V3（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方"验证"指引在线写值观察
+// ============================================================
+
+fbAdminTime(stAdmin := stPackTagAdmin, stStatus := stPackTagStatus, stOptions := stAdminOpt);
+
+(* 上升沿触发，避免每周期重复填数组 *)
+bWarnCondition := nFilterLifePercent >= 80;
+rtrigWarn(CLK := bWarnCondition);
+
+IF rtrigWarn.Q THEN
+    bSetOk := fbAdminAlarm.M_SetWarning(stAdmin := stPackTagAdmin, stWarning := stFilterWarning);
+END_IF
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

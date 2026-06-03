@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_BAComn_EnumDE" Id="{0f7a6a6d-716e-5338-bef1-e693fe07840e}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_BAComn_EnumDE
+VAR
+    eUnit               : E_BA_Unit := E_BA_Unit.eTemperature_DegreesCelsius;
+    sUnitName           : STRING(80);  // 英文名
+    sUnitShortcut       : STRING(80);  // 短码
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// Tc3_BA2_Common.BAComn_EnumDE 演示程序
+// =============================================================================
+// 场景：HMI 显示测量值时按 `eUnit` 查 `BAComn_EnumDE.aUnits[eUnit].sShortcut` 拿到 `"m²"` / `"℃"` / `"kPa"` 等符号显示。
+//
+// 价值：统一单位字符串源，HMI 切换语言时改 GVL 一处即可；避免散落硬编码。
+//
+// 验证：登录 PLC 后，按例程内变量在线写值；监视输出 / 返回值，结合 §1 功能
+//       简述的预期行为对照（详见配套 .md 文档 §7 业务场景）。
+//
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_BA2_Common（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』指引在线写值观察
+// =============================================================================
+
+// 按选定的 eUnit 查 BAComn_EnumDE.aUnits 表，得到英文名与短码（HMI 可显示）
+sUnitName     := BAComn_EnumDE.aUnits[eUnit].sName;       // 例如 "Degrees Celsius"
+sUnitShortcut := BAComn_EnumDE.aUnits[eUnit].sShortcut;   // 例如 "℃"
+
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

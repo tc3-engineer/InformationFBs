@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_M_ClearStopReason" Id="{fc256a3c-d62a-5eba-bb36-5a8b084e24b0}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_M_ClearStopReason
+VAR
+    fbAdminAlarm     : FB_PMLAdminAlarm;
+    fbAdminTime      : FB_PMLAdminTime;
+    stPackTagAdmin   : ST_PMLa;
+    stPackTagStatus  : ST_PMLs;
+    stAdminOpt       : ST_PMLAdminTimeOptions;
+
+    stFaultReason    : ST_PMLEvent := (Id := 3, Message := 'Critical fault', Category := 1);
+
+    bBtnSet          : BOOL := FALSE;
+    bBtnAck          : BOOL := FALSE;
+    bBtnClear        : BOOL := FALSE;
+    rtrigSet         : R_TRIG;
+    rtrigAck         : R_TRIG;
+    rtrigClear       : R_TRIG;
+
+    bClearOk         : BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc3_PackML_V3.FB_PMLAdminAlarm.M_ClearStopReason 演示程序
+// ============================================================
+// 场景：故障已处理完毕，操作员按 HMI"清除"按钮——StopReason 标记
+//       为已清除（Trigger=FALSE），MES 拉 StopReason.Trigger 看到
+//       FALSE 知道当前没有停机原因。
+// 价值：标准化 OEE 停机原因生命周期；与 Set/Ack 共同形成完整状态机。
+//       V3 单值语义：Clear 不需要传匹配参数。
+// 验证：登录后顺序操作：
+//       1. 写 bBtnSet := TRUE → StopReason.Trigger = TRUE, Id = 3。
+//       2. 写 bBtnAck := TRUE → Trigger = FALSE, AckDateTime 已填。
+//       3. 写 bBtnClear := TRUE → Trigger = FALSE（已经是 FALSE），
+//          但 bClearOk = TRUE。注意：Id/Message 等字段仍在
+//          （PDF 描述：留到被新 StopReason 覆盖）。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_PackML_V3（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方"验证"指引在线写值观察
+// ============================================================
+
+fbAdminTime(stAdmin := stPackTagAdmin, stStatus := stPackTagStatus, stOptions := stAdminOpt);
+
+rtrigSet(CLK := bBtnSet);
+rtrigAck(CLK := bBtnAck);
+rtrigClear(CLK := bBtnClear);
+
+IF rtrigSet.Q THEN
+    fbAdminAlarm.M_SetStopReason(stAdmin := stPackTagAdmin, stStopReason := stFaultReason);
+END_IF
+IF rtrigAck.Q THEN
+    fbAdminAlarm.M_AcknowledgeStopReason(stAdmin := stPackTagAdmin);
+END_IF
+IF rtrigClear.Q THEN
+    bClearOk := fbAdminAlarm.M_ClearStopReason(stAdmin := stPackTagAdmin);
+END_IF
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

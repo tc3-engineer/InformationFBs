@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_DT_TO_PMLTime" Id="{773e22bc-aa7d-545d-8dcd-813cc3ab6799}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_DT_TO_PMLTime
+VAR
+    dtLastMaintenance : DATE_AND_TIME := DT#2026-05-15-10:00:00;  // 演示用：上次维护时间
+    stPMLTimestamp    : ST_PMLDateAndTime;                        // 转换结果（在线观察各字段）
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc3_PackML_V3.DT_TO_PMLTime 演示程序
+// ============================================================
+// 场景：HMI 用 IEC DT 类型存储"上次维护时间"，要写入 PackTags
+//       的 PackML ST_PMLDateAndTime 字段供 MES 消费。
+// 价值：IEC DT 是工艺工程师习惯的日历时间类型；PackML 用结构体表示
+//       时间。本函数把两者标准转换，避免手写日历分量拆解。
+// 验证：登录后看 stPMLTimestamp 字段：dtLastMaintenance=DT#2026-05-15-10:00:00
+//       应得 Year=2026, Month=5, Day=15, Hour=10, Minute=0, Second=0, mSec=0。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_PackML_V3（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方"验证"指引在线写值观察
+// ============================================================
+
+(* 纯函数调用——单行完成 *)
+stPMLTimestamp := DT_TO_PMLTime(Input := dtLastMaintenance);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

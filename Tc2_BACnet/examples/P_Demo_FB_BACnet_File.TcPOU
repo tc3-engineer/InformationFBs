@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_BACnet_File" Id="{79d39148-b096-5f37-8451-be9eb55f2bd2}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_BACnet_File
+VAR
+    // 把 PLC 上的 config.json 暴露给 BMS 下载 / 修改后上传
+    fbConfigFile : FB_BACnet_File := (
+        sObjectName := 'ConfigFile',
+        sDescription := 'Plant configuration JSON (read+write)',
+        sFileName := 'C:\TwinCAT\3.1\Boot\config.json',
+        eFileAccessMethod := E_BACnet_FileAccessMethod.eStream,
+        bReadOnly := FALSE);                  // 允许 BMS 上传修改后的文件
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景:运维想从 BMS 直接下载 PLC 上的 config.json(包含温度设定点表、报警阈值
+//       表),改完后再上传;无需远程登录 PLC。
+// 价值:BACnet File 是标准服务,跨厂商 BMS 都支持;免去 FTP / SCP / 远程桌面
+//       等额外协议;PLC 不必维护额外的文件服务程序。
+// 验证:1) BACnet Explorer 连本机 → File 对象列表,应能看到 ConfigFile,
+//       File_Size 与本地真实文件大小一致。2) Explorer 用 AtomicReadFile 拉
+//       全文件,应能保存到本地一个相同的 config.json。3) 修改后用
+//       AtomicWriteFile 上传,本地文件应被替换。
+// 注意:本对象类型 PDF/InfoSys 未给独立示例,本例基于 BACnet 标准 File 对象语义
+//       推导;bReadOnly := FALSE 时 BMS 任何修改会落到 PLC 本地文件,生产环境
+//       务必先确认权限控制。
+// =============================================================================
+
+fbConfigFile();
+
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

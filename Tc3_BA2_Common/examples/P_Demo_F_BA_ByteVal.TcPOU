@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_F_BA_ByteVal" Id="{99933353-b0f6-5fee-ac15-3d82053d3764}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_F_BA_ByteVal
+VAR
+    argNByte1                      : BYTE                           := 0; // nByte1
+    argNByte2                      : BYTE                           := 0; // nByte2
+    argNByte3                      : BYTE                           := 0; // nByte3
+    argNByte4                      : BYTE                           := 0; // nByte4
+    fnReturn                       : U_BA_ClassValue; // 返回值
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// Tc3_BA2_Common.F_BA_ByteVal 演示程序
+// =============================================================================
+// 场景：楼宇枚举型状态（如阀门状态 0=Closed/1=Opening/2=Open）作为字节值统一上传到趋势系统。
+//
+// 价值：同 `F_BA_BVal`，针对 BYTE 类型。
+//
+// 验证：登录 PLC 后，按例程内变量在线写值；监视输出 / 返回值，结合 §1 功能
+//       简述的预期行为对照（详见配套 .md 文档 §7 业务场景）。
+//
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_BA2_Common（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』指引在线写值观察
+// =============================================================================
+
+fnReturn := F_BA_ByteVal(
+    nByte1                   := argNByte1,
+    nByte2                   := argNByte2,
+    nByte3                   := argNByte3,
+    nByte4                   := argNByte4
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

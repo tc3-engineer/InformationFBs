@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_ItpSetToolDescNullEx" Id="{25bed0f2-f860-52d3-a16b-d90b4f59e03a}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_ItpSetToolDescNullEx
+VAR
+    fbItpSetToolDescNullEx                : ItpSetToolDescNullEx;  // 被演示 FB 实例
+    rtTrig                                : R_TRIG;  // 边沿触发器，把人工『按一下』转上升沿
+    bDoIt                                 : BOOL := FALSE;  // 在线写 TRUE 触发一次
+    tTimeOut_in                           : TIME := T#2S;  // ADS 调用超时
+    sNciToPlc_inst                        : NCTOPLC_NCICHANNEL_REF;  // VAR_IN_OUT 引用对象
+    bBusy_out                             : BOOL;
+    bErr_out                              : BOOL;
+    nErrId_out                            : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_NCI.ItpSetToolDescNullEx 演示程序
+// ============================================================
+// 场景：CNC 加工日常 NCI 通道操作（启停 / 加载 NC 程序 / Override / 读写 R 参数 / 错误读取）。
+// 价值：把『裸 ADS 调用』包装成有命名的 PLC FB，业务代码可读性高、错误处理显式。
+// 验证：在线写 bDoIt := TRUE 触发一次，观察 fbXxx.bBusy → TRUE → FALSE，bErr 应为 FALSE，输出引脚给出预期值。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_NCI（References → Add library）
+//   3. 在 System Manager 把 NCI 通道接口 Link 给 sNciToPlc_inst / sPlcToNci_inst
+//      （NCTOPLC_NCICHANNEL_REF 给 AT %I*、PLCTONC_NCICHANNEL_REF 给 AT %Q*）
+//   4. 编译 → 登录 → 运行；按上方『验证』指引在线写值观察
+// ============================================================
+
+// 把人工按下的电平转成真正的上升沿；这是 bExecute 系列引脚的标准用法
+rtTrig(CLK := bDoIt);
+
+// 单次完整调用：所有 VAR_INPUT / VAR_IN_OUT / VAR_OUTPUT 引脚显式赋值或绑定
+fbItpSetToolDescNullEx(
+    bExecute  := rtTrig.Q,
+    tTimeOut  := tTimeOut_in,
+    sNciToPlc := sNciToPlc_inst,
+    bBusy     => bBusy_out,
+    bErr      => bErr_out,
+    nErrId    => nErrId_out
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

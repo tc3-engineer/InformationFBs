@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_ConfigTcDBSrvEvt" Id="{15b9a359-9706-54c8-98bf-fd053a552b68}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_ConfigTcDBSrvEvt
+VAR
+    fbCfgDBSrv         : FB_ConfigTcDBSrvEvt(sNetID := '', tTimeout := T#5S);
+
+    // ==== 业务输入：HMI 让技师填的 SQL Server 连接信息 ====
+    bAddConnectionReq  : BOOL := FALSE;                  // 在线置 TRUE 触发一次 Create
+    bReadAllConfigsReq : BOOL := FALSE;                  // 在线置 TRUE 触发一次 Read
+    sUserSqlServerIp   : STRING(80) := '10.0.0.50';      // 工艺工程师在 HMI 上填的车间 SQL Server IP
+    sUserSqlDatabase   : STRING(80) := 'WorkshopMES';    // 目标数据库
+    sUserSqlLogin      : STRING(80) := 'mes_writer';
+    sUserSqlPassword   : STRING(80) := 'ChangeMe!2026';
+    bMakePersistent    : BOOL := TRUE;                   // TRUE = 写 XML 文件，重启后还在
+
+    // ==== Create 用：把 HMI 输入打包成 MS SQL 配置结构 ====
+    stMsSqlConfig      : T_DBConfig_MsSQL;               // 详见 PDF §6.1.2.1.8.5
+    hNewDbId           : UDINT;                          // Create 成功后返回的 hDBID（后续 Connect 用）
+
+    // ==== Read 用：取回所有现有配置 ====
+    aDbConfigs         : ARRAY[1..MAX_CONFIGURATIONS] OF ST_ConfigDB;
+    aAutoLogConfigs    : ARRAY[1..MAX_CONFIGURATIONS] OF ST_ConfigAutoLogGrp;
+    nDbConfigCount     : UDINT;
+    nAutoLogCount      : UDINT;
+
+    // ==== 状态机 ====
+    nState             : INT := 0;                       // 0 = idle, 10 = creating, 20 = reading
+    bCreateDone        : BOOL;
+    bReadDone          : BOOL;
+    bLastWasError      : BOOL;
+
+    // ==== Event 接口诊断（出错时取本地化错误文本） ====
+    ipLastTcMsg        : Tc3_EventLogger.I_TcMessage;
+    sLastErrText       : STRING(255);
+    bGotErrText        : BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：注塑机 OEM 量产线，每台机器在不同车间，SQL Server IP 各不相同。
+//       开机后用本 FB 把技师在 HMI 填的 IP/用户名/密码动态写入 XML
+//       Database Server 配置，下次重启就自带这条连接，省掉手工编辑 XML 的麻烦。
+//       同时演示 Read 方法列出所有已配的连接、Tc3 EventLogger 错误本地化。
+// 价值：替代「人工编辑 TcDbSrv.xml 后重启 TwinCAT」的手工部署模式；通过
+//       Tc3 EventLogger 把错误流送到 HMI 操作员可见的事件列表；调试期与生
+//       产期共用一份代码（eTraceLevel 一行切换）。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_Database 与 Tc3_EventLogger 库；确保 TwinCAT Functions 下
+//      TF6420 Database Server 服务正在运行
+//   3. 编译 → 登录 → 运行
+//   4. 在线把 sUserSqlServerIp / sUserSqlDatabase / sUserSqlLogin /
+//      sUserSqlPassword 改成你测试环境的真实值
+//   5. 在线写 bAddConnectionReq := TRUE → 观察 nState 走 0→10→0；
+//      bCreateDone 短暂 TRUE，hNewDbId 应得到一个 ≥ 1 的整数
+//   6. 在线写 bReadAllConfigsReq := TRUE → 观察 nDbConfigCount 增 1；
+//      aDbConfigs[hNewDbId] 应填上刚才创建的连接信息
+//   7. 故意写错 IP（如 192.0.2.99 RFC5737 黑洞地址）再试 Create，应得
+//      bLastWasError = TRUE，sLastErrText 显示英文错误描述
+// =============================================================================
+
+// ---- 0. 把事件分级阈值设到 Warning，避免开发期的 Verbose 日志风暴 ----
+// （生产环境可调到 Error；调试时改成 Verbose 取全量）
+fbCfgDBSrv.eTraceLevel := Tc3_EventLogger.TcEventSeverity.Warning;
+
+// ---- 1. Add Connection 请求：上升沿触发，进入 state=10 ----
+IF bAddConnectionReq AND nState = 0 THEN
+    bAddConnectionReq := FALSE;          // 清掉触发标志，避免重复进入
+
+    // 把 HMI 输入打包到 MS SQL 配置结构（PDF §6.1.2.1.8.5）
+    stMsSqlConfig.sServer         := sUserSqlServerIp;
+    stMsSqlConfig.sDatabase       := sUserSqlDatabase;
+    stMsSqlConfig.bAuthentification := TRUE;       // 启用用户名/密码认证
+    stMsSqlConfig.sUserName       := sUserSqlLogin;
+    stMsSqlConfig.sPassword       := sUserSqlPassword;
+
+    nState := 10;
+END_IF
+
+// ---- 1a. state=10：周期调用 Create 直到方法返回 TRUE ----
+IF nState = 10 THEN
+    bCreateDone := fbCfgDBSrv.Create(
+        pTcDBSrvConfig   := ADR(stMsSqlConfig),
+        cbTcDBSrvConfig  := SIZEOF(stMsSqlConfig),
+        bTemporary       := NOT bMakePersistent,   // TRUE = 不落盘；本例反向取 HMI 选择
+        pConfigID        := ADR(hNewDbId)
+    );
+    IF bCreateDone THEN
+        IF fbCfgDBSrv.bError THEN
+            // 取 Tc3 EventLogger 英文事件文本（1033 = en-US，1031 = de-DE，2052 = zh-CN）
+            ipLastTcMsg := fbCfgDBSrv.ipTcResult;
+            bGotErrText := ipLastTcMsg.RequestEventText(
+                                nLangId := 1033,
+                                pBuffer := ADR(sLastErrText),
+                                nBufferSize := SIZEOF(sLastErrText));
+            bLastWasError := TRUE;
+        ELSE
+            bLastWasError := FALSE;
+        END_IF
+        nState := 0;                              // 回 idle
+    END_IF
+END_IF
+
+// ---- 2. Read 请求：列出所有现有数据库与 AutoLog 配置 ----
+IF bReadAllConfigsReq AND nState = 0 THEN
+    bReadAllConfigsReq := FALSE;
+    nState := 20;
+END_IF
+
+// ---- 2a. state=20：周期调用 Read 直到方法返回 TRUE ----
+IF nState = 20 THEN
+    bReadDone := fbCfgDBSrv.Read(
+        pDBConfig            := ADR(aDbConfigs),
+        cbDBConfig           := SIZEOF(aDbConfigs),
+        pAutoLogGrpConfig    := ADR(aAutoLogConfigs),
+        cbAutoLogGrpConfig   := SIZEOF(aAutoLogConfigs),
+        pDBCount             := ADR(nDbConfigCount),
+        pAutoLogGrpCount     := ADR(nAutoLogCount)
+    );
+    IF bReadDone THEN
+        IF fbCfgDBSrv.bError THEN
+            ipLastTcMsg := fbCfgDBSrv.ipTcResult;
+            bGotErrText := ipLastTcMsg.RequestEventText(1033, ADR(sLastErrText), SIZEOF(sLastErrText));
+            bLastWasError := TRUE;
+        ELSE
+            bLastWasError := FALSE;
+            // 此时 nDbConfigCount 是真实条目数；aDbConfigs[1..nDbConfigCount] 可遍历
+        END_IF
+        nState := 0;
+    END_IF
+END_IF
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

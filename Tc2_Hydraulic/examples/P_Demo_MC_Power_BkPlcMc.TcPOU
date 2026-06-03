@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_MC_Power_BkPlcMc" Id="{5507cf3b-f58b-50bd-bada-4d5705e3654f}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_MC_Power_BkPlcMc
+VAR
+    fbHydPower         : MC_Power_BkPlcMc;
+    axHydClampingHead  : AXIS_REF_BkPlcMc;             // 注塑机锁模液压轴
+    bMainEnableReq     : BOOL := FALSE;                // 上位机 / 操作员主使能
+    bAllowForwardMove  : BOOL := TRUE;                 // 合模方向允许
+    bAllowBackwardMove : BOOL := TRUE;                 // 开模方向允许
+    bDriveStatusOk     : BOOL;                         // 输出: 外部硬件就绪
+    bPowerError        : BOOL;
+    nPowerErrorID      : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：注塑机液压锁模轴上电使能。比例阀输出级、KL2531 步进端子或 AX 系列伺服
+//       都通过本 FB 统一打开"主使能 + 双向使能 + 错误监视"，等 Status = TRUE
+//       才允许下发合模/开模运动命令。急停时撤 bAllowForwardMove 锁住合模方
+//       向，再用 MC_Stop_BkPlcMc 减速。
+// 价值：手写需要根据 nDrive_Type 在 AX / KL2531 / 其他 三种分支分别写
+//       nDeCtrlDWord 的 dwTcHydDcDwCtrlEnable / dwTcHydDcDwFdPosEna /
+//       dwTcHydDcDwFdNegEna 三个 bit；本 FB 把硬件分支封装好，业务侧
+//       3 个 BOOL 即可，硬件换型只改 nDrive_Type 不动 PLC。
+// 验证：上电后把 bMainEnableReq := TRUE，bDriveStatusOk 应在 1-2 个 PLC
+//       周期后变 TRUE（在线 monitor 直接看）；撤 bAllowForwardMove 后
+//       后续 MC_MoveAbsolute(Position := 350) 应立即报 "no positive enable"
+//       类错误（具体码见库全局常量 dwTcHydErrCd... 系列）。
+// 注意：本 FB 是电平触发，每周期都要调用一次；漏调一帧就失能。建议放在
+//       MC_AxStandardBody_BkPlcMc 之前。
+// =============================================================================
+
+// 每周期调用 — 电平触发不是边沿触发
+fbHydPower(
+    Enable          := bMainEnableReq,
+    Enable_Positive := bAllowForwardMove,
+    Enable_Negative := bAllowBackwardMove,
+    BufferMode      := Aborting_BkPlcMc,            // 当前版本仅允许此默认值
+    Axis            := axHydClampingHead,
+    Busy            => ,                            // 始终 FALSE（PLCopen 兼容性保留）
+    Status          => bDriveStatusOk,
+    Error           => bPowerError,
+    ErrorID         => nPowerErrorID
+);
+
+// 业务侧 gate：只有 Status = TRUE 且无错才放行后续运动命令
+// IF bDriveStatusOk AND NOT bPowerError THEN ... 调 MC_MoveAbsolute_BkPlcMc ...
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

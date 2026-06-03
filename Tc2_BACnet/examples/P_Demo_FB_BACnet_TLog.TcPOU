@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_BACnet_TLog" Id="{ee42c245-eed0-5beb-8c7e-0836a42d4ee8}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_BACnet_TLog
+VAR
+    // 数据源:房间温度 AI
+    fbRoomTemp     : FB_BACnet_AI := (
+        sObjectName := 'RoomTemp_3F_East',
+        sDescription := 'Floor 3 East PT1000',
+        eUnit := E_BA_Unit.eTemperature_DegreesCelsius);
+
+    // 周期型 TLog:每 3 秒采一次
+    fbRoomTempTLog : FB_BACnet_TLog := (
+        sObjectName := 'RoomTemp_3F_East_TLog',
+        sDescription := 'Trend log for floor 3 east temperature',
+        eLoggingType := E_BA_LoggingType.ePolled,
+        nLogInterval := 300,                        // 1/100 秒,300 = 3 秒
+        bLogEnable := TRUE,
+        stStartTime := F_BA_ToSTDateTime(DT#2026-01-01-00:00),
+        stObjectPropertyReference :=
+            F_BACnet_Reference(fbRoomTemp, PropPresentValue));
+
+    fSensorValPlc : REAL := 22.0;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景:运维想在 BMS 上看每个房间温度的过去 7 天趋势,做空调系统舒适度审计,
+//       无需在 PLC 上额外装 SQL 数据库。
+// 价值:BACnet 标准的 ReadRange 服务跨厂商通用,BMS 直接拉数据做趋势图,通信
+//       效率高;TLog 缓冲在 router memory,断电不丢(若启用 persistence)。
+// 验证:1) 上电后 BACnet Explorer 读 Total_Record_Count 应每 3 秒 +1。
+//       2) Explorer 用 ReadRange 服务读最近 10 条,应能看到时间戳 + temperature
+//       值序列。3) 在线写 fSensorValPlc := 25.0,3 秒后下一条记录的 fVal 应是 25.0。
+// =============================================================================
+
+fbRoomTemp.fVal := fSensorValPlc;
+fbRoomTemp();
+fbRoomTempTLog();
+
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

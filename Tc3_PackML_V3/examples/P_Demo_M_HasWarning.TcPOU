@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_M_HasWarning" Id="{cdb4b378-1750-5b3d-b751-9902806bb747}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_M_HasWarning
+VAR
+    fbAdminAlarm     : FB_PMLAdminAlarm;
+    fbAdminTime      : FB_PMLAdminTime;
+    stPackTagAdmin   : ST_PMLa;
+    stPackTagStatus  : ST_PMLs;
+    stAdminOpt       : ST_PMLAdminTimeOptions;
+
+    stWarning        : ST_PMLEvent := (Id := 2001, Message := 'Filter 80%', Category := 2);
+
+    bBtnFire         : BOOL := FALSE;
+    bBtnAck          : BOOL := FALSE;
+    rtrigFire        : R_TRIG;
+    rtrigAck         : R_TRIG;
+
+    bHmiWarnLightOn  : BOOL;        // 在线观察：HMI 黄色提醒指示灯
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc3_PackML_V3.FB_PMLAdminAlarm.M_HasWarning 演示程序
+// ============================================================
+// 场景：HMI 黄色"提醒"指示灯——有未确认 warning 时亮起。本方法每周期
+//       返回 BOOL 直接驱动指示灯。
+// 价值：V3 新增方法把"是否有未确认 warning"封装好，代码简洁。和
+//       M_HasAlarm / M_HasStopReason 配合可一次判机器"所有事件清空"。
+// 验证：登录后操作：
+//       1. 默认 bHmiWarnLightOn = FALSE。
+//       2. 写 bBtnFire := TRUE → bHmiWarnLightOn 变 TRUE。
+//       3. 写 bBtnAck := TRUE → bHmiWarnLightOn 变 FALSE（Ack 把
+//          Trigger 置 FALSE，本方法不再返回 TRUE）。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_PackML_V3（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方"验证"指引在线写值观察
+// ============================================================
+
+fbAdminTime(stAdmin := stPackTagAdmin, stStatus := stPackTagStatus, stOptions := stAdminOpt);
+
+rtrigFire(CLK := bBtnFire);
+rtrigAck(CLK := bBtnAck);
+
+IF rtrigFire.Q THEN
+    fbAdminAlarm.M_SetWarning(stAdmin := stPackTagAdmin, stWarning := stWarning);
+END_IF
+IF rtrigAck.Q THEN
+    fbAdminAlarm.M_AcknowledgeWarning(stAdmin := stPackTagAdmin, stWarning := stWarning);
+END_IF
+
+(* 每周期查询，驱动 HMI 提醒灯 *)
+bHmiWarnLightOn := fbAdminAlarm.M_HasWarning(stAdmin := stPackTagAdmin);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

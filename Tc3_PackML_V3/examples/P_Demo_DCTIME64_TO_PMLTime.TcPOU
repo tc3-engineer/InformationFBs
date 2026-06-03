@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_DCTIME64_TO_PMLTime" Id="{2bd53329-08dd-52db-81f5-aa221398b377}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_DCTIME64_TO_PMLTime
+VAR
+    tDcTime         : T_DCTIME64;                 // 演示用：在线写入一个 EtherCAT DC 时间戳
+    stPMLTimestamp  : ST_PMLDateAndTime;          // 转换结果（在线观察各字段）
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc3_PackML_V3.DCTIME64_TO_PMLTime 演示程序
+// ============================================================
+// 场景：EtherCAT 主站分发的分布式时钟（DC）64 位纳秒时间戳转成
+//       PackML ST_PMLDateAndTime 结构体，多机时间戳全对齐。
+// 价值：用 EtherCAT DC（亚微秒级硬件同步）作为统一时间源，把所有
+//       PLC 的 PackTags.Admin.PlcDateTime 对齐到同一时刻。MES 收到
+//       的报警时间戳序列化分析时准确无误。
+// 验证：登录后从 EtherCAT 主站调用 F_GetCurDcTaskTime64() 把返回值
+//       写入 tDcTime，观察 stPMLTimestamp 各字段（Year、Month 等）
+//       应等于当前 UTC 时间的日历分解；或手工写 tDcTime 一个已知值
+//       验证转换结果。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_PackML_V3（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方"验证"指引在线写值观察
+// ============================================================
+
+(* 纯函数调用——单行完成 *)
+stPMLTimestamp := DCTIME64_TO_PMLTime(Input := tDcTime);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

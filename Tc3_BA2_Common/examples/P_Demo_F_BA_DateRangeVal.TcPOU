@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_F_BA_DateRangeVal" Id="{29c8c142-3ad2-55a5-a736-5c8949d6c5e7}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_F_BA_DateRangeVal
+VAR
+    argNFromYear                   : UINT(1900 .. 2155)             := 4; // nFromYear
+    argEFromMonth                  : E_BA_Month                    ; // eFromMonth
+    argNFromDay                    : UINT(1 .. 31)                  := 4; // nFromDay
+    argNToYear                     : UINT(1900 .. 2155)             := 4; // nToYear
+    argEToMonth                    : E_BA_Month                    ; // eToMonth
+    argNToDay                      : UINT(1 .. 31)                  := 4; // nToDay
+    fnReturn                       : U_BA_DateVal; // 返回值
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// Tc3_BA2_Common.F_BA_DateRangeVal 演示程序
+// =============================================================================
+// 场景：楼宇调度："假期模式：12 月 24 日到 1 月 2 日之间执行节能策略" —— 把日期范围打包供调度引擎查找。
+//
+// 价值：把 ST_BA_DateRange + eChoice 一次封装为统一的 U_BA_DateVal，调度引擎只需要解析 U_BA_DateVal 一种类型。
+//
+// 验证：登录 PLC 后，按例程内变量在线写值；监视输出 / 返回值，结合 §1 功能
+//       简述的预期行为对照（详见配套 .md 文档 §7 业务场景）。
+//
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_BA2_Common（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』指引在线写值观察
+// =============================================================================
+
+fnReturn := F_BA_DateRangeVal(
+    nFromYear                := argNFromYear,
+    eFromMonth               := argEFromMonth,
+    nFromDay                 := argNFromDay,
+    nToYear                  := argNToYear,
+    eToMonth                 := argEToMonth,
+    nToDay                   := argNToDay
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

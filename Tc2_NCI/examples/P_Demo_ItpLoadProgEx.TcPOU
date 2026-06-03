@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_ItpLoadProgEx" Id="{897eb7d7-a1a3-5b61-9380-26f66c3f7eb5}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_ItpLoadProgEx
+VAR
+    fbItpLoadProgEx                       : ItpLoadProgEx;  // 被演示 FB 实例
+    rtTrig                                : R_TRIG;  // 边沿触发器，把人工『按一下』转上升沿
+    bDoIt                                 : BOOL := FALSE;  // 在线写 TRUE 触发一次
+    sPrg_in                               : STRING(255) := '';  // 见 §3
+    nLength_in                            : UDINT := 0;
+    tTimeOut_in                           : TIME := T#2S;  // ADS 调用超时
+    sNciToPlc_inst                        : NCTOPLC_NCICHANNEL_REF;  // VAR_IN_OUT 引用对象
+    bBusy_out                             : BOOL;
+    bErr_out                              : BOOL;
+    nErrId_out                            : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_NCI.ItpLoadProgEx 演示程序
+// ============================================================
+// 场景：贴片机/雕刻机 PLC 根据上位机选择的工件号加载对应 G-Code 文件。把 part_001.nc 放在默认目录 C:\ProgramData\Beckhoff\TwinCAT\Mc\Nci 下，本 FB 调用即加载到 NCI 解释器。
+// 价值：加工程序文件管理与 PLC 工程解耦；上位机选工件 → PLC 切换文件名 → 即时加载，不用重新部署 PLC。
+// 验证：先把 'part_001.nc' 文本（ANSI 或 UTF-8 无 BOM）放到 C:\ProgramData\Beckhoff\TwinCAT\Mc\Nci\。在线写 sPrg_in := 'part_001.nc'、nLength_in := LEN(sPrg_in)、bDoIt := TRUE。观察 fbItpLoadProgEx.bBusy → TRUE → FALSE，bErr = FALSE 说明加载成功。bErr = TRUE 时看 nErrId（典型：文件不存在、UTF-8 BOM 残留）。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_NCI（References → Add library）
+//   3. 在 System Manager 把 NCI 通道接口 Link 给 sNciToPlc_inst / sPlcToNci_inst
+//      （NCTOPLC_NCICHANNEL_REF 给 AT %I*、PLCTONC_NCICHANNEL_REF 给 AT %Q*）
+//   4. 编译 → 登录 → 运行；按上方『验证』指引在线写值观察
+// ============================================================
+
+// 把人工按下的电平转成真正的上升沿；这是 bExecute 系列引脚的标准用法
+rtTrig(CLK := bDoIt);
+
+// 单次完整调用：所有 VAR_INPUT / VAR_IN_OUT / VAR_OUTPUT 引脚显式赋值或绑定
+fbItpLoadProgEx(
+    bExecute  := rtTrig.Q,
+    sPrg      := sPrg_in,
+    nLength   := nLength_in,
+    tTimeOut  := tTimeOut_in,
+    sNciToPlc := sNciToPlc_inst,
+    bBusy     => bBusy_out,
+    bErr      => bErr_out,
+    nErrId    => nErrId_out
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

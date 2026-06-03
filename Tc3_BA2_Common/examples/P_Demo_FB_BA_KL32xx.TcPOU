@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_BA_KL32xx" Id="{c6df799c-521a-5f15-b1eb-c38e3b9e8f63}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_BA_KL32xx
+VAR
+    fbCh1Pt100        : FB_BA_KL32xx;       // 通道 1 的配置 FB（每通道独立实例）
+
+    // ---- 配置触发（上升沿）----
+    bDoConfigureCh1   : BOOL := FALSE;       // 在线写 TRUE 触发一次配置；写完会通过 R_TRIG 自动复位
+    bDoReadConfigCh1  : BOOL := FALSE;       // 在线写 TRUE 读回当前配置
+    eSensorCh1        : E_BA_MeasuringElement := E_BA_MeasuringElement.ePt100; // Pt100 二线制
+
+    // ---- 端子原始过程数据 IN_OUT；正式工程必须在 System Manager 里 link 到端子 ----
+    // ★ 调试期未 link 时也能编译运行；link 后 fValCh1 会显示真实温度 ★
+    nRawStateCh1      : USINT;               // %I*: KL3208 通道 1 状态字节
+    nRawDataInCh1     : INT;                 // %I*: KL3208 通道 1 原始 ADC 字
+    nRawCtrlCh1       : USINT;               // %Q*: KL3208 通道 1 控制字节
+    nRawDataOutCh1    : INT;                 // %Q*: KL3208 通道 1 数据输出字
+
+    // ---- 监视输出 ----
+    nStateCh1         : USINT;               // 端子状态字节
+    nDataCh1          : INT;                 // 原始数据
+    fValCh1           : REAL;                // 工程量（℃）
+    bErrCh1           : BOOL;                // 配置出错
+    bWireBreakCh1     : BOOL;                // 断线
+    bShortCircuitCh1  : BOOL;                // 短路
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// Tc3_BA2_Common.FB_BA_KL32xx 演示程序
+// =============================================================================
+// 场景：商用建筑暖通系统，每层用一块 KL3208-0010（8 通道电阻输入）接 Pt100 温度
+//       传感器。本例程演示其中一个通道 (Ch1) 的配置流程：上电时一次性把 Pt100
+//       配置写入端子寄存器，之后每周期循环调用读温度+断线/短路诊断。
+//
+// 价值：相比直接读端子寄存器手算 Pt100 阻温曲线（约 50 行 ST），本 FB 一行调用
+//       自动给出 ℃ 工程量 + 独立的断线/短路布尔位。多通道时只需多 N 个 FB 实例
+//       而不是 N 倍代码。
+//
+// 验证：
+//   ① 正式部署：在 System Manager 中把 nRawStateCh1 / nRawDataInCh1 link 到
+//      KL3208 Ch1 的状态字节 + 数据字（%I*），nRawCtrlCh1 / nRawDataOutCh1 link
+//      到对应的 %Q* 输出。
+//   ② 调试无端子时：手动写 nRawStateCh1 := 0, nRawDataInCh1 := 25000 模拟一个
+//      ADC 原始值，观察 fValCh1 是否给出合理 ℃ 值。
+//   ③ 触发配置：在线写 bDoConfigureCh1 := TRUE → 1-2 周期后 R_TRIG 触发；
+//      之后写回 FALSE。bErrCh1 应保持 FALSE。
+//   ④ 断线模拟：在线写 nRawStateCh1 := 16#01（端子上报 wire break 位置 1）→
+//      bWireBreakCh1 立即变 TRUE。
+//
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_BA2_Common（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』指引在线写值观察
+// =============================================================================
+
+// 通道 1 的完整调用：配置触发位 + 传感器枚举 + 4 个 IN_OUT 端子链接
+fbCh1Pt100(
+    bConfigurate    := bDoConfigureCh1,
+    bReadConfig     := bDoReadConfigCh1,
+    eSensor         := eSensorCh1,
+    nRawState       := nRawStateCh1,
+    nRawDataIn      := nRawDataInCh1,
+    nRawCtrl        := nRawCtrlCh1,
+    nRawDataOut     := nRawDataOutCh1,
+    nState          => nStateCh1,
+    nData           => nDataCh1,
+    fVal            => fValCh1,
+    bErr            => bErrCh1,
+    bWireBreak      => bWireBreakCh1,
+    bShortCircuit   => bShortCircuitCh1
+);
+
+// 工程提醒：多通道时复制本块、每通道一个 FB_BA_KL32xx 实例 + 4 个独立 IN_OUT
+// 链接。KL3208 有 8 通道 → 需要 8 个 FB 实例。共用一个实例会出错。
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

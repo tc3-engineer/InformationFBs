@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_MC_EmergencyStop_BkPlcMc" Id="{a2bec23a-d5e9-5861-9c34-3281cfd76dfe}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_MC_EmergencyStop_BkPlcMc
+VAR
+    fbEStopOnDoorOpen  : MC_EmergencyStop_BkPlcMc;
+    axHydClampingHead  : AXIS_REF_BkPlcMc;
+    bSafetyDoorOpen    : BOOL := FALSE;                  // 安全门打开 (PNP 高有效)
+    bEStopDone         : BOOL;
+    bEStopBusy         : BOOL;
+    bEStopActive       : BOOL;
+    bEStopError        : BOOL;
+    bEStopAborted      : BOOL;
+    nEStopErrorID      : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：注塑机安全门打开传感器触发的软急停。要求：① 门一开立即停车
+//       带急停斜坡（500 ms 内减到 0）；② 期间所有阀输出强制为 0
+//       （电压抑制）防止漂动；③ 门关上后允许重新启动循环。
+// 价值：相比 MC_Stop_BkPlcMc + 业务侧手动抑制阀输出，本 FB 内置电
+//       压抑制；相比硬件继电器急停，软件实现可由 PLC 任意条件触发
+//       不依赖固定接线 — 作为硬件急停回路的冗余补充使用。
+// 验证：① 前置：让轴在 MoveVelocity 运动中；
+//       ② bSafetyDoorOpen := TRUE → bEStopBusy 立即变 TRUE；
+//       ③ MC_ReadActualVelocity_BkPlcMc 观察速度在 500 ms 内减到 0；
+//       ④ bEStopDone := TRUE 后维持 bSafetyDoorOpen := TRUE，观察
+//       axHydClampingHead.pStAxRtData^.nDeCtrlDWord 中的 ctrl 字段 = 0
+//       （电压抑制持续生效）；
+//       ⑤ bSafetyDoorOpen := FALSE 撤销抑制；
+//       ⑥ 此时轴可能仍在内部 Stop 留下的 Errorstop 状态，需要
+//       MC_Reset_BkPlcMc 才能再发新命令。
+// 注意：本 FB 是电平触发（与 Halt/Stop 边沿触发不同）；持续高才维持
+//       电压抑制。RampTime = 0.5 s 是急停经验值，比正常停车更激进。
+// 警告：本 FB 是软件急停 — 不替代 SIL 认证的硬件急停回路！高安全等
+//       级场景必须用硬件 24V 继电器或液压源断电。
+// =============================================================================
+
+fbEStopOnDoorOpen(
+    Execute  := bSafetyDoorOpen,                          // 电平触发
+    RampTime := 0.5,                                      // 500 ms 急停
+    Axis     := axHydClampingHead,
+    Busy     => bEStopBusy,
+    Done     => bEStopDone,
+    Error    => bEStopError,
+    ErrorID  => nEStopErrorID,
+    Active   => bEStopActive,
+    CommandAborted => bEStopAborted
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_TIME_TO_PMLTime" Id="{76f677f1-de18-5640-975f-bcd088fcdee1}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_TIME_TO_PMLTime
+VAR
+    tInput          : TIME := T#2H15M30S;         // 演示用：2 小时 15 分 30 秒时长
+    stPMLDuration   : ST_PMLDateAndTime;          // 转换结果（在线观察各字段）
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc3_PackML_V3.TIME_TO_PMLTime 演示程序
+// ============================================================
+// 场景：把 IEC TIME 类型的累计定时器时长转成 PackML ST_PMLDateAndTime
+//       结构体写入 OEE 时间字段。
+// 价值：标准化 TIME → PackML 时长结构转换，避免手写时长拆解。V3 用结构体
+//       返回（V2 用数组）：字段名访问更安全、可读性更好。
+// 验证：登录后看 stPMLDuration 字段：tInput=T#2H15M30S 应得
+//       Hour=2, Minute=15, Second=30, 其余字段为 0。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_PackML_V3（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方"验证"指引在线写值观察
+// ============================================================
+
+(* 纯函数调用——单行完成 *)
+stPMLDuration := TIME_TO_PMLTime(Input := tInput);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

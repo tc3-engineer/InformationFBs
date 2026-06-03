@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_ItpIsFeedFromBackupList" Id="{64119381-f5d2-527e-8819-397fce5e888c}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_ItpIsFeedFromBackupList
+VAR
+    sNciToPlc_inst                        : NCTOPLC_NCICHANNEL_REF;  // VAR_IN_OUT 引用对象
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_NCI.ItpIsFeedFromBackupList 演示程序
+// ============================================================
+// 场景：复杂轮廓加工出错（让刀、毛刺），沿原路退回一段调整后再前进。
+// 价值：Retrace 沿 NCI 段表回放，路径精度高于 PLC 单轴反向。
+// 验证：前置：先 ItpEnableFeederBackup(bEnable := TRUE) 启用路径备份；NC 程序跑起来；触发本 FB 观察 NCI 通道方向变化。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_NCI（References → Add library）
+//   3. 在 System Manager 把 NCI 通道接口 Link 给 sNciToPlc_inst / sPlcToNci_inst
+//      （NCTOPLC_NCICHANNEL_REF 给 AT %I*、PLCTONC_NCICHANNEL_REF 给 AT %Q*）
+//   4. 编译 → 登录 → 运行；按上方『验证』指引在线写值观察
+// ============================================================
+
+// 纯函数调用：返回值赋给本地变量做观察
+ItpIsFeedFromBackupList_ret := ItpIsFeedFromBackupList(sNciToPlc := sNciToPlc_inst);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

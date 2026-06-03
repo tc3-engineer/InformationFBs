@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_BACnet_ELog" Id="{8563998f-fbd2-569f-825d-b0d48c852094}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_BACnet_ELog
+VAR
+    fbAlarmNC42  : FB_BACnet_NC := (
+        nObjectInstance := 42,
+        nNotificationClass := 42,
+        sObjectName := 'NC42_Alarms',
+        sDescription := 'Floor 3 east zone alarms',
+        aAckRequired := [TRUE, TRUE, TRUE],
+        aPriority := [10, 11, 12]);
+
+    fbAlarmELog  : FB_BACnet_ELogBuf := (
+        sObjectName := 'AlarmHistory_NC42',
+        sDescription := 'Local event log for NC42 alarms (network-loss tolerant)',
+        nObjectInstance := 42,                 // 必须与 NC 同号才能自动收集事件
+        bLogEnable := TRUE);
+
+    fbTestAlarmAv : FB_BACnet_AV := (
+        sObjectName := 'TestAlarmSrc',
+        bEnPgm := TRUE,
+        bEventDetectionEnable := TRUE,
+        nNotificationClass := 42,
+        fHighLimit := 8.0,
+        bHighLimitEnable := TRUE);
+
+    fAlarmTriggerVal : REAL := 5.0;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景:楼控项目网络偶尔故障,故障期间 NC42 路由不出去的报警必须本地存档,网络
+//       恢复后让 BMS 一次拉走,确保零丢失。
+// 价值:BACnet 标准的事件日志,BMS 直接 ReadRange 拉历史;ELog 与 NC 按实例号
+//       自动配对,无需 PLC 写复制事件到本地的胶水代码。
+// 验证:1) 在线写 fAlarmTriggerVal := 10.0,触发报警进 NC42 路由 + 写入 ELog
+//       缓冲。2) BACnet Explorer 读 fbAlarmELog 的 Total_Record_Count 应为 1。
+//       3) ReadRange 拉最新一条,应包含时间戳 + NC priority + 报警内容。
+//       4) fAlarmTriggerVal := 5.0 恢复后再读应有第 2 条 NORMAL 事件。
+// =============================================================================
+
+fbTestAlarmAv.fValPgm := fAlarmTriggerVal;
+fbTestAlarmAv();
+fbAlarmNC42();
+fbAlarmELog();
+
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

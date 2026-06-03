@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_MC_AxRtReadForceDiff_BkPlcMc" Id="{eb27934a-4037-5554-b429-08b278fbf306}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_MC_AxRtReadForceDiff_BkPlcMc
+VAR
+    fbReadDiffForce    : MC_AxRtReadForceDiff_BkPlcMc;
+    axHydInjPiston     : AXIS_REF_BkPlcMc;               // 压铸机注射缸（差动）
+    nPressureA_Raw     : INT := 0;                       // A 侧大面积压力 ADC
+    nPressureB_Raw     : INT := 0;                       // B 侧小面积压力 ADC
+    lrScaleFactorA_N   : LREAL := 7.63;                  // 含 A 侧活塞面积转换：N/ADC
+    lrScaleOffsetA_N   : LREAL := 0.0;
+    lrScaleFactorB_N   : LREAL := 3.82;                  // B 侧 (面积一半)
+    lrScaleOffsetB_N   : LREAL := 0.0;
+    lrFrictionN        : LREAL := 500.0;                 // 压铸机注射缸摩擦较大 500 N
+    bReadError         : BOOL;
+    nReadErrorID       : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：液压压铸机注射缸（差动结构，活塞两侧面积比 2:1）。注射时活塞
+//       两侧压力都会变化（A 侧推油 100 bar、B 侧反油 30 bar），真实
+//       推力 = A 侧力 - B 侧力 - 摩擦。本 FB 算出真实推力（N）写入
+//       fActPressure 字段（液压库命名遗留，实际是 N）供注射段力闭环
+//       和过载报警使用。
+// 价值：差动缸力测量必备 — 单路 ReadForceSingle 看不到对侧压力变化
+//       导致的力变化；ReadPressureDiff + 自算力又要自己做面积换算和
+//       摩擦补偿。本 FB 一行调用搞定全套力差计算 + 摩擦扣除。
+// 验证：① 前置：两路压力传感器分别接 EL3024 通道，IO 映射到
+//       nPressureA_Raw / nPressureB_Raw；
+//       ② 标定：A/B 侧分别加压到已知值（例如系统压力 100 bar）记
+//       录 ADC，反算 lrScaleFactor_N（含活塞面积换算 N = bar × A_mm²
+//       × 0.1）；
+//       ③ 用 MC_ReadActualTorque_BkPlcMc(axHydInjPiston) 读 Torque
+//       字段即为 N 单位的真实推力（已扣除摩擦）；
+//       ④ 空载推（活塞自由滑动）→ 读出的力应接近 0（摩擦补偿生效）；
+//       ⑤ 真实工件下读出力应与外部测力计读数接近。
+// 注意：与 ReadPressureDiff 不同 — 本 FB 输出的是力（N）不是压力
+//       （bar）；HMI 上显示单位别搞错。
+// =============================================================================
+
+fbReadDiffForce(
+    AdcValueA      := nPressureA_Raw,
+    AdcValueB      := nPressureB_Raw,
+    ScaleFactorA   := lrScaleFactorA_N,
+    ScaleOffsetA   := lrScaleOffsetA_N,
+    ScaleFactorB   := lrScaleFactorB_N,
+    ScaleOffsetB   := lrScaleOffsetB_N,
+    SlippingOffset := lrFrictionN,
+    ReadingMode    := iTcHydPressureReadingDefault,
+    Axis           := axHydInjPiston,
+    Error          => bReadError,
+    ErrorID        => nReadErrorID
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

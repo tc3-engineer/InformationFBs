@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_BA_PIDCtrl" Id="{ce14d7a2-8ca7-500f-941d-86f2c4722a0f}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_BA_PIDCtrl
+VAR
+    // ---- 被演示 FB 实例 ----
+    fbPID                  : FB_BA_PIDCtrl;       // 楼宇通用 PID 控制器（带死区、anti-reset windup、同步）
+
+    // ---- 工艺信号：办公楼 VAV 终端温控 ----
+    bControllerEnable      : BOOL := FALSE;       // 总使能；在线写 TRUE 启动
+    fRoomTempSetpoint      : REAL := 22.0;        // 设定温度 [℃]（HMI 给）
+    fRoomTempActual        : REAL := 19.0;        // 室温实际值 [℃]（来自传感器）
+
+    // ---- 参数（VAR_INPUT CONSTANT PERSISTENT，调试期间手填，正常运行从 retain 加载）----
+    nCallEveryNCycles      : UDINT := 5;          // PID 计算频率：5 个 PLC 周期一次（10ms*5 = 50ms）
+    fKp                    : REAL  := 5.0;        // 比例增益（暖通典型 2-10）
+    tIntegral              : TIME  := T#180S;     // 积分时间（暖通典型 1-5 分钟）
+    tDerivative            : TIME  := T#0MS;      // 微分时间 0 = 禁用 D（暖通通常不用 D）
+    tDamping               : TIME  := T#5S;       // D 阻尼（D 禁用时不起作用）
+    fDeadband              : REAL  := 0.5;        // 死区 0.5%（阀位变化 < 0.25% 时保持上次值）
+
+    // ---- 强制同步：手动模式切换时用 ----
+    bSyncManual            : BOOL  := FALSE;      // R_TRIG 上升沿触发一次同步
+    fSyncValue             : REAL  := 30.0;       // 想强制阀位到的位置 [%]
+
+    // ---- 输出（在线 monitor 观察）----
+    fValveOpening          : REAL;                // 阀门开度 [%]（0..100，给 0-10V 模拟量输出）
+    fControlError          : REAL;                // 当前偏差（设定 - 实际，单位 ℃）
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// Tc3_BA2_Common.FB_BA_PIDCtrl 演示程序
+// =============================================================================
+// 场景：办公楼 VAV 终端温控。一个房间有：① Pt100 温度传感器（fRoomTempActual）；
+//       ② HMI 设定值（fRoomTempSetpoint，默认 22 ℃）；③ 0-100% 开度的水阀（受
+//       fValveOpening 控制，通过 0-10V 模拟输出驱动）。目标：稳态温度误差
+//       < ±0.5 ℃，避免阀门频繁微动（保护执行器寿命）。
+//
+// 价值：本 FB 一次性提供 PID 计算 + 限幅 + 死区抑制微动 + anti-reset windup
+//       + 反向控制（eReverse 加热 / eDirect 制冷）+ 运行中同步（bSync 平滑过渡
+//       手动→自动）。对比自写 PID：少写约 80 行代码，无积分饱和坑，模式切换
+//       不会冲击执行器。
+//
+// 验证：① 登录后在线写 bControllerEnable := TRUE → 观察 fControlError 立刻变
+//       = fRoomTempSetpoint - fRoomTempActual = 22-19 = 3.0；
+//       ② 5 个 PLC 周期内 fValveOpening 开始从 0 上爬（因为 fE > 0、eReverse
+//       默认）；
+//       ③ 在线改 fRoomTempActual := 23.0（模拟超温），fControlError 变为 -1.0，
+//       fValveOpening 下降；
+//       ④ 死区验证：当 fRoomTempActual 在 21.8..22.2 范围（fE 接近 0）抖动时，
+//       fValveOpening 应基本不动（这就是 fDeadband 的作用）；
+//       ⑤ 同步验证：写 fSyncValue := 50.0、bSyncManual := TRUE 一次，然后回 FALSE
+//       再 TRUE → fValveOpening 应跳到 50.0（仅上升沿评估）。
+//
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_BA2_Common（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』指引在线写值观察
+// =============================================================================
+
+// 单次调用形式：所有 VAR_INPUT 显式赋值；CONSTANT PERSISTENT 引脚也允许调用时赋
+// 值（编译器允许，调试方便；正式工程通常通过 HMI 写 retain 值后不再外部赋值）。
+// 注意：编译器接受的参数名是 tIntegralTime（小写 t）—— PDF 印刷为大写
+// TIntegralTime 是错的，下方按编译器实际接受的名字。
+fbPID(
+    bEn                   := bControllerEnable,
+    fW                    := fRoomTempSetpoint,
+    fX                    := fRoomTempActual,
+    eActn                 := E_BA_Action.eReverse,  // 加热模式
+    fYMax                 := 100.0,                  // 阀门最大开度
+    fYMin                 := 0.0,                    // 阀门最小开度
+    bSync                 := bSyncManual,            // 手动同步触发
+    fSync                 := fSyncValue,             // 同步目标值
+    nCycleCall            := nCallEveryNCycles,
+    eOperationMode        := E_BA_PIDMode.eP1ID,    // P 上游 + ID 并联（暖通常用结构）
+    fProportionalConstant := fKp,
+    tIntegralTime         := tIntegral,              // 注意：编译器实际名小写 t
+    tDerivativeTime       := tDerivative,
+    tDampingTime          := tDamping,
+    fNeutralZone          := fDeadband,
+    fY                    => fValveOpening,
+    fE                    => fControlError
+);
+
+// 工程提醒：fY 的值是 0..100 [%]，需要在外部映射到 0..32767 (INT 全量程) 才能
+// 驱动 EL3174 / KL4408 等 0-10V 模拟输出端子。本例程只演示 PID 本体，外部映射
+// 请按自己工程的端子规则做线性缩放。
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

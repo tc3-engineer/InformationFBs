@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_PLCDBWriteEvt" Id="{8a9f6701-4204-58fc-9779-7ef76eee19fe}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_PLCDBWriteEvt
+TYPE ST_CycleRecord :
+STRUCT
+    nID            : LINT;             // 主键（DB 端 IDENTITY 自增；本侧填 0 即可）
+    dtTimestamp    : DATE_AND_TIME;
+    rTemperature   : LREAL;
+    rPressure      : LREAL;
+    tCycleTime     : TIME;
+END_STRUCT
+END_TYPE
+
+PROGRAM P_Demo_FB_PLCDBWriteEvt
+VAR
+    fbWrite            : FB_PLCDBWriteEvt(sNetID := '', tTimeout := T#10S);
+
+    // ==== 业务输入 ====
+    bWriteRecipeReq    : BOOL := FALSE;       // 在线置 TRUE：周期结束写一条记录
+    bUpdateHealthReq   : BOOL := FALSE;       // 在线置 TRUE：用 Update 模式刷新机器健康度
+    nMesDbId           : UDINT := 1;          // 目标数据库 ID
+
+    // ==== 自定义结构表数据 ====
+    stCycleRecord      : ST_CycleRecord;
+    aColumnNames       : ARRAY[0..4] OF STRING(50);
+    fbGetSysTime       : FB_LocalSystemTime;
+
+    // ==== 标准 4 列表数据（健康度，Update 模式，写到「最新值表」） ====
+    rMachineHealth     : LREAL := 85.5;       // 机器健康度 0-100
+    sHealthSymbolName  : STRING(80) := 'Machine1_Health';
+
+    // ==== 状态机 ====
+    nState             : INT := 0;
+    bWriteStructDone   : BOOL;
+    bWriteDone         : BOOL;
+    bLastWasError      : BOOL;
+
+    // ==== EventLogger 诊断 ====
+    ipLastTcMsg        : Tc3_EventLogger.I_TcMessage;
+    sLastErrText       : STRING(255);
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：注塑机每周期结束写一条「工艺参数记录」到 tbl_CycleHistory 自定义表
+//       （ID/Timestamp/Temp/Pressure/CycleTime，5 列）用于历史曲线；同时把
+//       「机器健康度」实时值用 Update 模式写到「最新值表」让 SCADA 周期拉取
+//       仅 1 行即可。
+// 价值：单 FB 同时演示 WriteStruct（任意表结构）与 Write（标准表 + Update
+//       模式）；3 种 E_WriteMode 覆盖了大部分工业日志场景；EventLogger 错
+//       误诊断便于生产环境排错。
+// 验证步骤：
+//   1. 右键 POUs → Add → Existing Item → 选本 .TcPOU；引用 Tc3_Database 与
+//      Tc3_EventLogger
+//   2. 前置：在目标 DB 里先建好 tbl_CycleHistory（5 列同结构）与 tbl_HealthLatest
+//      （标准 4 列）；可用 FB_PLCDBCreateEvt.Table 提前建
+//   3. 编译 → 登录 → 运行；启动 TF6420 服务
+//   4. 在线写 bWriteRecipeReq := TRUE → 观察 nState 走 0→10→0；
+//      DB tbl_CycleHistory 多 1 行带当前时间戳
+//   5. 在线写 bUpdateHealthReq := TRUE → nState 走 0→20→0；tbl_HealthLatest
+//      里 Name='Machine1_Health' 的行 Value 列被更新为 rMachineHealth；
+//      再触发应只更新不新增（Update 模式特征）
+//   6. 修改 rMachineHealth = 60.0 再触发 Update → 同行 Value 列变 60.0
+//      （行数不变）—— 这就是 Update 模式与 Append 模式的关键区别
+// =============================================================================
+
+fbWrite.eTraceLevel := Tc3_EventLogger.TcEventSeverity.Warning;
+
+// ---- 0. 准备数据 ----
+fbGetSysTime(sNetID := '', bEnable := TRUE);   // 取本地时间填到 dtTimestamp
+
+aColumnNames[0] := 'nID';
+aColumnNames[1] := 'dtTimestamp';
+aColumnNames[2] := 'rTemperature';
+aColumnNames[3] := 'rPressure';
+aColumnNames[4] := 'tCycleTime';
+
+// ---- 1. 业务请求路由 ----
+IF nState = 0 THEN
+    IF bWriteRecipeReq THEN
+        bWriteRecipeReq := FALSE;
+        stCycleRecord.nID          := 0;                 // IDENTITY 自增由 DB 填
+        stCycleRecord.dtTimestamp  := fbGetSysTime.systemTime; // 取整点时间——演示用，正式工程用 DATE_AND_TIME 直接表达
+        stCycleRecord.rTemperature := 235.6;             // 例：注塑机料筒温度
+        stCycleRecord.rPressure    := 145.2;             // 例：注射压力
+        stCycleRecord.tCycleTime   := T#28S500MS;
+        nState := 10;
+    ELSIF bUpdateHealthReq THEN
+        bUpdateHealthReq := FALSE;
+        nState := 20;
+    END_IF
+END_IF
+
+// ---- 2a. state=10：WriteStruct 写自定义表 ----
+IF nState = 10 THEN
+    bWriteStructDone := fbWrite.WriteStruct(
+        hDBID         := nMesDbId,
+        sTableName    := 'tbl_CycleHistory',
+        pRecord       := ADR(stCycleRecord),
+        cbRecord      := SIZEOF(stCycleRecord),
+        pColumnNames  := ADR(aColumnNames),
+        cbColumnNames := SIZEOF(aColumnNames)
+    );
+    IF bWriteStructDone THEN
+        IF fbWrite.bError THEN
+            ipLastTcMsg := fbWrite.ipTcResult;
+            ipLastTcMsg.RequestEventText(1033, ADR(sLastErrText), SIZEOF(sLastErrText));
+            bLastWasError := TRUE;
+        ELSE
+            bLastWasError := FALSE;
+        END_IF
+        nState := 0;
+    END_IF
+END_IF
+
+// ---- 2b. state=20：Write 用 Update 模式刷新健康度（行不增长） ----
+IF nState = 20 THEN
+    bWriteDone := fbWrite.Write(
+        hDBID              := nMesDbId,
+        sTableName         := 'tbl_HealthLatest',
+        pValue             := ADR(rMachineHealth),
+        cbValue            := SIZEOF(rMachineHealth),
+        sDBSymbolName      := sHealthSymbolName,
+        eDBWriteMode       := E_WriteMode.eADS_TO_DB_Update, // 关键：Update 而非 Append
+        nRingBuffParameter := 0                                // Update 模式不用该参数
+    );
+    IF bWriteDone THEN
+        IF fbWrite.bError THEN
+            ipLastTcMsg := fbWrite.ipTcResult;
+            ipLastTcMsg.RequestEventText(1033, ADR(sLastErrText), SIZEOF(sLastErrText));
+            bLastWasError := TRUE;
+        ELSE
+            bLastWasError := FALSE;
+        END_IF
+        nState := 0;
+    END_IF
+END_IF
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

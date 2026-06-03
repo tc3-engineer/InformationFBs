@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_BACnet_BO" Id="{ed77d1ca-afb6-5797-8872-82a902e31fa3}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_BACnet_BO
+VAR
+    // 走廊灯继电器:PLC 自动(光照+人体感应) + BMS 手动覆盖
+    fbHallLight    : FB_BACnet_BO := (
+        sObjectName := 'HallLight_3F_East',
+        sDescription := 'Floor 3 East hallway light relay',
+        sInactiveText := 'Off',
+        sActiveText := 'On',
+        ePolarity := E_BACnet_Polarity.eNormal,
+        nMinimumOnTime := 10,            // 灯亮至少 10 秒
+        nMinimumOffTime := 10);
+
+    bAutoModeOn    : BOOL := TRUE;       // 在线写 FALSE 释放 PLC 控制,让 BMS 接管
+    bAutoLightOn   : BOOL := FALSE;      // PLC 内部算出来的指令(光照 + 人感联合)
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景:楼控走廊灯继电器,PLC 根据光照传感器 + 人体感应器自动开关;运维人员
+//       在 BMS 上可手动覆盖(强制开 / 强制关)。灯具继电器最短保持 10 秒避免
+//       抖动损坏触点。
+// 价值:Min_On / Min_Off 保护是 BACnet 标准成熟机制,本 FB 一行配置;手写要管
+//       时间戳 + 状态机至少 100 行。命令优先级让 PLC 自动 + BMS 手动天然解耦。
+// 验证:1) 在线写 bAutoModeOn := TRUE,bAutoLightOn := TRUE,1 秒内
+//       BACnet Explorer 看 Present_Value=active(灯亮);bAutoLightOn := FALSE
+//       后 10 秒内 Present_Value 保持 active(Min_On 保护),10 秒后才落到 inactive。
+//       2) Explorer 用 priority := 8 写 Present_Value=inactive 也要等 Min_On 满足
+//       才生效。3) bAutoModeOn := FALSE 释放 Program 优先级,Explorer 写值
+//       立刻生效(因为 PLC 不再竞争)。
+// =============================================================================
+
+fbHallLight.bEnPgm  := bAutoModeOn;
+fbHallLight.bValPgm := bAutoLightOn;
+fbHallLight();
+
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

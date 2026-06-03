@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_ConfigTcDBSrv" Id="{ea4cee79-562c-5620-9afb-8c021d954b01}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_ConfigTcDBSrv
+VAR
+    // ⚠️ obsolete FB —— 新项目用 FB_ConfigTcDBSrvEvt
+    fbCfgDBSrv         : FB_ConfigTcDBSrv(sNetID := '', tTimeout := T#5S);
+
+    bAddConnReq        : BOOL := FALSE;
+    sUserSqlServerIp   : STRING(80) := '10.0.0.50';
+
+    stMsSqlConfig      : T_DBConfig_MsSQL;
+    hNewDbId           : UDINT;
+
+    nState             : INT := 0;
+    bCreateDone        : BOOL;
+    bLastWasError      : BOOL;
+    // 旧接口 I_TcResultEvent，而非新版的 I_TcMessage
+    ipLastTcResult     : Tc3_EventLogger.I_TcResultEvent;
+    sLastErrText       : STRING(255);
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：兼容老 OEM 项目（2018 年 TF6420 v1.8 写的代码）。本 FB 已 obsolete，
+//       本程序展示老风格调用，输出走 ipTcResultEvent : I_TcResultEvent（旧接口）。
+//       新项目应改用 P_Demo_FB_ConfigTcDBSrvEvt（输出走 ipTcResult : I_TcMessage）。
+// 价值：保护已部署设备的二进制兼容。新代码不要用本 FB。
+// 验证步骤：
+//   1. 右键 POUs → Add → Existing Item → 选本 .TcPOU；引用 Tc3_Database 与
+//      Tc3_EventLogger
+//   2. 编译 → 登录 → 运行；启动 TF6420 服务
+//   3. 在线写 bAddConnReq := TRUE → nState 走 0→10→0；hNewDbId 应得到值
+//   4. 对比 P_Demo_FB_ConfigTcDBSrvEvt.TcPOU 看新旧风格差异（仅 ipTcResult* 字段名 + 接口类型）
+// =============================================================================
+
+IF bAddConnReq AND nState = 0 THEN
+    bAddConnReq := FALSE;
+    stMsSqlConfig.sServer := sUserSqlServerIp;
+    stMsSqlConfig.sDatabase := 'WorkshopMES';
+    stMsSqlConfig.bAuthentification := TRUE;
+    stMsSqlConfig.sUserName := 'mes_writer';
+    stMsSqlConfig.sPassword := 'ChangeMe!2026';
+    nState := 10;
+END_IF
+
+IF nState = 10 THEN
+    bCreateDone := fbCfgDBSrv.Create(
+        pTcDBSrvConfig   := ADR(stMsSqlConfig),
+        cbTcDBSrvConfig  := SIZEOF(stMsSqlConfig),
+        bTemporary       := FALSE,
+        pConfigID        := ADR(hNewDbId)
+    );
+    IF bCreateDone THEN
+        IF fbCfgDBSrv.bError THEN
+            // 注意：本 obsolete FB 输出走 ipTcResultEvent（旧接口名）
+            ipLastTcResult := fbCfgDBSrv.ipTcResultEvent;
+            // 旧 I_TcResultEvent 也提供 RequestEventText（新 I_TcMessage 是其等效升级）
+            ipLastTcResult.RequestEventText(1033, ADR(sLastErrText), SIZEOF(sLastErrText));
+            bLastWasError := TRUE;
+        ELSE
+            bLastWasError := FALSE;
+        END_IF
+        nState := 0;
+    END_IF
+END_IF
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

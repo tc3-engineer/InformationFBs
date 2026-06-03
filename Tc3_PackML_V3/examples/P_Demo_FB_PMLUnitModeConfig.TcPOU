@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_PMLUnitModeConfig" Id="{416c7272-1430-5eb8-ba98-f39cffa37be8}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_PMLUnitModeConfig
+VAR
+    fbCleaningModeConfig : FB_PMLUnitModeConfig;
+    bConfigDone          : BOOL := FALSE;            // latch：一次性注册
+
+    bError               : BOOL;
+    nErrorID             : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc3_PackML_V3.FB_PMLUnitModeConfig 演示程序
+// ============================================================
+// 场景：制药灌装机增加 "Cleaning"（CIP 清洗）模式：禁用 Holding/Held/
+//       Unholding（清洗必须连续完成），允许在 Stopped/Idle 切换模式。
+// 价值：标准 PackML 只给 3 种模式，本 FB 把上限扩展到 31 种且共享
+//       FB_PMLStateMachine 转移规则保护。V1.0.5.0+ 还能配 HMI 颜色，
+//       省去自己写状态色映射。
+// 验证：登录后操作：
+//       1. 默认 bConfigDone = FALSE → 程序第一次扫描调用本 FB 注册
+//          Cleaning 模式（eMode=4）。
+//       2. 观察 stPMLUnitModeConfiguration[4] 结构体被填好：
+//          - bActive = TRUE
+//          - sName = 'Cleaning'
+//          - aStateDisabled[10] (Holding), [11] (Held), [12] (Unholding)
+//            应为 TRUE
+//          - aModeChangeValid[2] (Stopped), [4] (Idle) 应为 TRUE
+//       3. 后续 FB_PMLStateMachine 切到 eMode=4 即按本配置工作。
+//       4. 不需要再调本 FB（重复调会触发 bError），bConfigDone latch
+//          阻止再次进入。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_PackML_V3（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方"验证"指引在线写值观察
+// ============================================================
+
+(* 一次性注册自定义 "Cleaning" 模式；latch 阻止重复调用 *)
+IF NOT bConfigDone THEN
+    fbCleaningModeConfig(
+        eMode                         := 4,                  // 新模式编号
+        sName                         := 'Cleaning',         // HMI 显示名
+        bDisableClearing              := FALSE,
+        bDisableStarting              := FALSE,
+        bDisableSuspended             := TRUE,               // 清洗不允许暂停
+        bDisableStopping              := FALSE,
+        bDisableAborting              := FALSE,
+        bDisableHolding               := TRUE,               // 清洗必须连续
+        bDisableHeld                  := TRUE,
+        bDisableUnholding             := TRUE,
+        bDisableSuspending            := TRUE,
+        bDisableUnsuspending          := TRUE,
+        bDisableResetting             := FALSE,
+        bDisableIdle                  := FALSE,
+        bDisableCompleting            := FALSE,
+        bDisableComplete              := FALSE,
+        bEnableUnitModeChangeStopped  := TRUE,               // 在 Stopped 可切模式
+        bEnableUnitModeChangeIdle     := TRUE,               // 在 Idle 可切
+        bEnableUnitModeChangeSuspended:= FALSE,
+        bEnableUnitModeChangeExecute  := FALSE,
+        bEnableUnitModeChangeAborted  := FALSE,
+        bEnableUnitModeChangeHeld     := FALSE,
+        bEnableUnitModeChangeComplete := FALSE,
+        // aStateFlashing / aStateColor / aStateTextColor 不传——用默认值
+        bError                        => bError,
+        nErrorID                      => nErrorID
+    );
+    bConfigDone := NOT bError;        // 成功才 latch；失败下周期再试
+END_IF
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

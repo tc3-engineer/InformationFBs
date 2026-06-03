@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_BACnet_LAV" Id="{598c8985-88e7-52fd-8758-d97f23a91874}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_BACnet_LAV
+VAR
+    fbRunHours : FB_BACnet_LAV := (
+        sObjectName := 'RunHours_AHU_3F',
+        sDescription := 'AHU floor 3 cumulative run hours (LREAL precision)',
+        eUnit := E_BA_Unit.eTime_Hours);
+    fHoursPlc  : LREAL := 12345.678;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景:累计运行小时数 — REAL 精度只够 7 位有效数,运行 10000 小时后小数部分
+//       丢失;Large Analog Value 用 LREAL(双精度,15 位有效数)解决。
+// 价值:Large Analog Value 是 BACnet 标准的高精度浮点容器,BMS 识别;无需自己
+//       实现 INT64 拼接。
+// 验证:1) BACnet Explorer 读 fbRunHours.Present_Value=12345.678 应为 LREAL,
+//       精度 ≥ 7 位有效数。2) 在线写 fHoursPlc := 99999.999999,Explorer 应
+//       完整保留 6 位小数。
+// =============================================================================
+
+fbRunHours.fValue := fHoursPlc;
+fbRunHours();
+
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_F_PMLStateCommandToString" Id="{f8dc80b5-8466-5506-832b-90a125cae610}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_F_PMLStateCommandToString
+VAR
+    eOperatorCmd     : E_PMLCommand := E_PMLCommand.Start;   // 演示用：操作员发出的命令
+    sCommandName     : STRING;                                // 转换后的可读名称（在线观察）
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc3_PackML_V3.F_PMLStateCommandToString 演示程序
+// ============================================================
+// 场景：HMI 报警/事件日志要记录操作员命令——直接显示数字不可读，
+//       需要把 E_PMLCommand 转成 'Start' / 'Stop' / 'Abort' 这种文本名。
+// 价值：标准化的枚举→字符串映射，避免每个模块自己写 CASE 语句导致
+//       拼写不一致（"Start" vs "start" vs "STARTING"）；跟随库版本
+//       更新自动同步新枚举值（V3 新增 Complete）。
+// 验证：登录后改 eOperatorCmd 为不同枚举值（如 E_PMLCommand.Abort），
+//       观察 sCommandName 字符串变化（应为 'Abort'）。注意：具体
+//       字面值大小写以 PLC 实测为准（PDF 未列样本）。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_PackML_V3（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方"验证"指引在线写值观察
+// ============================================================
+
+(* 纯函数调用——单行完成 *)
+sCommandName := F_PMLStateCommandToString(eStateCommand := eOperatorCmd);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

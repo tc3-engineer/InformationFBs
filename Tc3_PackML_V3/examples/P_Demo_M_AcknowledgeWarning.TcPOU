@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_M_AcknowledgeWarning" Id="{837373af-0d86-59fd-be8e-e5be5223cb19}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_M_AcknowledgeWarning
+VAR
+    fbAdminAlarm     : FB_PMLAdminAlarm;
+    fbAdminTime      : FB_PMLAdminTime;
+    stPackTagAdmin   : ST_PMLa;
+    stPackTagStatus  : ST_PMLs;
+    stAdminOpt       : ST_PMLAdminTimeOptions;
+
+    stFilterWarning  : ST_PMLEvent := (Id := 2001, Message := 'Filter at 80% life', Category := 2);
+
+    bBtnFire         : BOOL := FALSE;
+    bBtnAck          : BOOL := FALSE;
+    rtrigFire        : R_TRIG;
+    rtrigAck         : R_TRIG;
+    bAckOk           : BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc3_PackML_V3.FB_PMLAdminAlarm.M_AcknowledgeWarning 演示程序
+// ============================================================
+// 场景：维护人员看到 HMI 上"滤芯寿命 80%"提醒后按"确认"——告诉系统
+//       "我已收到提醒"。Trigger=FALSE 但 warning 仍在数组（HMI 仍
+//       提醒"已确认未处理"），直到被新 warning 顶出或调 ClearWarning。
+// 价值：标准化 warning 生命周期；和 alarm Ack 行为类似但 warning
+//       没有 history（"警告轻于报警"语义）。
+// 验证：登录后操作：
+//       1. 写 bBtnFire := TRUE → 看 Warning[0].Trigger = TRUE, Id = 2001。
+//       2. 写 bBtnAck := TRUE → 看 Warning[0].Trigger = FALSE,
+//          AckDateTime 已填, 但 Id 仍是 2001 (Ack 不删除)。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_PackML_V3（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方"验证"指引在线写值观察
+// ============================================================
+
+fbAdminTime(stAdmin := stPackTagAdmin, stStatus := stPackTagStatus, stOptions := stAdminOpt);
+
+rtrigFire(CLK := bBtnFire);
+rtrigAck(CLK := bBtnAck);
+
+IF rtrigFire.Q THEN
+    fbAdminAlarm.M_SetWarning(stAdmin := stPackTagAdmin, stWarning := stFilterWarning);
+END_IF
+IF rtrigAck.Q THEN
+    bAckOk := fbAdminAlarm.M_AcknowledgeWarning(stAdmin := stPackTagAdmin, stWarning := stFilterWarning);
+END_IF
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

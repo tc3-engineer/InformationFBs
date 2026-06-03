@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_ItpLoadProg" Id="{7fd9901a-6191-50e8-b308-98eec2242770}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_ItpLoadProg
+VAR
+    fbItpLoadProg                         : ItpLoadProg;  // 被演示 FB 实例
+    rtTrig                                : R_TRIG;  // 边沿触发器，把人工『按一下』转上升沿
+    bDoIt                                 : BOOL := FALSE;  // 在线写 TRUE 触发一次
+    nChnId_in                             : UDINT := 0;
+    sPrg_in                               : STRING := '';  // 见 §3
+    nLength_in                            : UDINT := 0;
+    tTimeOut_in                           : TIME := T#2S;  // ADS 调用超时
+    bBusy_out                             : BOOL;
+    bErr_out                              : BOOL;
+    nErrId_out                            : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_NCI.ItpLoadProg 演示程序
+// ============================================================
+// 场景：从 TwinCAT 2 移植的 CNC 项目，保持原 FB 接口不动以减少改动风险。
+// 价值：移植成本低、行为与对应 Ex 版本一致。
+// 验证：和对应 Ex 版本相同的验证流程：在线 bDoIt 触发，观察 bBusy/bErr/nErrId。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_NCI（References → Add library）
+//   3. 在 System Manager 把 NCI 通道接口 Link 给 sNciToPlc_inst / sPlcToNci_inst
+//      （NCTOPLC_NCICHANNEL_REF 给 AT %I*、PLCTONC_NCICHANNEL_REF 给 AT %Q*）
+//   4. 编译 → 登录 → 运行；按上方『验证』指引在线写值观察
+// ============================================================
+
+// 把人工按下的电平转成真正的上升沿；这是 bExecute 系列引脚的标准用法
+rtTrig(CLK := bDoIt);
+
+// 单次完整调用：所有 VAR_INPUT / VAR_IN_OUT / VAR_OUTPUT 引脚显式赋值或绑定
+fbItpLoadProg(
+    bExecute := rtTrig.Q,
+    nChnId   := nChnId_in,
+    sPrg     := sPrg_in,
+    nLength  := nLength_in,
+    tTimeOut := tTimeOut_in,
+    bBusy    => bBusy_out,
+    bErr     => bErr_out,
+    nErrId   => nErrId_out
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

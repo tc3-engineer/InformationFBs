@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_F_BA_LogMessage" Id="{429b90a7-90a6-5e63-a202-cb6add5177ea}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_F_BA_LogMessage
+VAR
+    argNLogType                    : DWORD                          := 0; // nLogType
+    argSLogCode                    : STRING                         := ''; // sLogCode
+    argSLogText                    : T_MaxString                    := ''; // sLogText
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// Tc3_BA2_Common.F_BA_LogMessage 演示程序
+// =============================================================================
+// 场景：调试期把关键事件（参数变化、模式切换）写入 ADS Log 便于事后排查。
+//
+// 价值：一行 FC 替代手工调用 `ADSLOGSTR` + 拼接前缀的多步骤。
+//
+// 验证：登录 PLC 后，按例程内变量在线写值；监视输出 / 返回值，结合 §1 功能
+//       简述的预期行为对照（详见配套 .md 文档 §7 业务场景）。
+//
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_BA2_Common（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』指引在线写值观察
+// =============================================================================
+
+fnReturn := F_BA_LogMessage(
+    nLogType                 := argNLogType,
+    sLogCode                 := argSLogCode,
+    sLogText                 := argSLogText
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

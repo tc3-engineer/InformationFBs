@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_PLCDBReadEvt" Id="{78d1f92c-a2f3-5d24-b080-fbba4eb63bbb}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_PLCDBReadEvt
+VAR
+    fbRead             : FB_PLCDBReadEvt(sNetID := '', tTimeout := T#15S);
+
+    // ==== 业务输入 ====
+    bShowHistoryReq    : BOOL := FALSE;       // 在线置 TRUE：HMI 点「历史曲线」
+    nReqDbId           : UDINT := 1;          // 目标数据库 ID
+    sReqTableName      : STRING(80) := 'tbl_TempHistory';
+    sReqSymbolFilter   : STRING(80) := 'Reactor1_Temp';
+    nReqRowCount       : UDINT := 10;         // 取最近 N 条
+
+    // ==== Read 用：取 Beckhoff 标准 4 列表 ====
+    aHistoryBuffer     : ARRAY[0..99] OF ST_StandardRecord;  // 上限 100 行
+    bReadDone          : BOOL;
+
+    // ==== nRecords 监控（DB 中匹配总行数，用于 HMI 分页） ====
+    nTotalMatching     : UDINT;
+
+    // ==== EventLogger 诊断 ====
+    ipLastTcMsg        : Tc3_EventLogger.I_TcMessage;
+    sLastErrText       : STRING(255);
+    bLastWasError      : BOOL;
+
+    // ==== 状态机 ====
+    nState             : INT := 0;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：HMI 上「最近 10 次温度采样曲线」按钮。点击后 PLC 从 MS SQL 的
+//       tbl_TempHistory 标准 4 列表（ID/Timestamp/Name/Value）里按 Name 过
+//       滤、ID 降序取最近 10 行回填到本地数组，HMI 直接画曲线。
+// 价值：HMI 历史曲线无需第三方 SQL 客户端组件——PLC 直读后送数据；
+//       nRecords 属性让 HMI 知道总匹配行数可显示页码；分页控制内存上限。
+// 验证步骤：
+//   1. 右键 POUs → Add → Existing Item → 选本 .TcPOU
+//   2. 引用 Tc3_Database、Tc3_EventLogger；启动 TF6420 服务；前置：tbl_TempHistory
+//      表存在并含若干 Name='Reactor1_Temp' 的行（可先用 FB_PLCDBWriteEvt.Write
+//      模拟写入几条）
+//   3. 编译 → 登录 → 运行
+//   4. 在线写 bShowHistoryReq := TRUE → 观察 nState 走 0→10→0；
+//      aHistoryBuffer[0..9] 应填上数据，nTotalMatching 等于 DB 中该信号总条数
+//   5. 改 sReqSymbolFilter 为不存在的名（如 'Reactor99_Temp'）→ bReadDone 仍为
+//      TRUE 但 nTotalMatching = 0，bLastWasError = FALSE
+//   6. 故意把 sReqTableName 改成不存在的表 → bLastWasError = TRUE，
+//      sLastErrText 显示 "Table not found" 类描述
+// =============================================================================
+
+fbRead.eTraceLevel := Tc3_EventLogger.TcEventSeverity.Warning;
+
+// ---- 1. 业务触发 ----
+IF bShowHistoryReq AND nState = 0 THEN
+    bShowHistoryReq := FALSE;
+    nState := 10;
+END_IF
+
+// ---- 2. state=10：按 ID 降序取最近 N 条 ----
+IF nState = 10 THEN
+    bReadDone := fbRead.Read(
+        hDBID         := nReqDbId,
+        sTableName    := sReqTableName,
+        sDBSymbolName := sReqSymbolFilter,            // 按 Name 过滤
+        eOrderBy      := E_OrderColumn.eColumnID,     // 按 ID 排序
+        eOrderType    := E_OrderType.eOrder_DESC,     // 降序 = 最新在前
+        nStartIndex   := 0,                            // 0 基索引：从第 1 条开始
+        nRecordCount  := nReqRowCount,                 // 取 N 条
+        pData         := ADR(aHistoryBuffer),
+        cbData        := SIZEOF(aHistoryBuffer)
+    );
+    IF bReadDone THEN
+        IF fbRead.bError THEN
+            ipLastTcMsg := fbRead.ipTcResult;
+            ipLastTcMsg.RequestEventText(1033, ADR(sLastErrText), SIZEOF(sLastErrText));
+            bLastWasError := TRUE;
+        ELSE
+            bLastWasError := FALSE;
+            nTotalMatching := fbRead.nRecords;         // DB 中符合过滤条件的总行数（分页用）
+        END_IF
+        nState := 0;
+    END_IF
+END_IF
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_M_AcknowledgeAlarm" Id="{a96af590-9ff1-5175-b49f-556cc2856e29}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_M_AcknowledgeAlarm
+VAR
+    fbAdminAlarm     : FB_PMLAdminAlarm;
+    fbAdminTime      : FB_PMLAdminTime;             // 必须周期调用以填 PlcDateTime
+    stPackTagAdmin   : ST_PMLa;
+    stPackTagStatus  : ST_PMLs;
+    stAdminOpt       : ST_PMLAdminTimeOptions;
+
+    // alarm 模板：高温故障
+    stHighTempAlarm  : ST_PMLEvent := (Id := 1001, Value := 90, Message := 'Outlet temp > 85C', Category := 1);
+
+    // HMI 按钮
+    bBtnFire         : BOOL := FALSE;     // 触发 alarm
+    bBtnAck          : BOOL := FALSE;     // 操作员确认
+
+    rtrigFire        : R_TRIG;
+    rtrigAck         : R_TRIG;
+
+    bSetOk           : BOOL;
+    bAckOk           : BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc3_PackML_V3.FB_PMLAdminAlarm.M_AcknowledgeAlarm 演示程序
+// ============================================================
+// 场景：HMI"确认"按钮被操作员按下——告诉系统"我看到了"。本方法把
+//       数组里对应 alarm 的 Trigger 置 FALSE 并填 AckDateTime，但
+//       不删除 alarm（仍占 HMI 显示行，直到 M_ClearAlarm 调用）。
+// 价值：标准化的两阶段（Ack → Clear）报警生命周期，符合 ISA-18.2 标准。
+//       HMI 上"已确认未清除"状态自然由 Trigger=FALSE + AckDateTime!=0 表示。
+// 验证：登录后操作：
+//       1. 写 bBtnFire := TRUE → 观察 stPackTagAdmin.Alarm[0].Trigger = TRUE、
+//          DateTime 已填、Message = 'Outlet temp > 85C'。
+//       2. 写 bBtnAck := TRUE → 观察 Alarm[0].Trigger = FALSE、
+//          AckDateTime 已填（区别于零值即可，无需精确）；
+//          但 Alarm[0].Id 仍然是 1001（没被删除）。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_PackML_V3（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方"验证"指引在线写值观察
+// ============================================================
+
+(* AdminTime 必须周期调用以填 PlcDateTime *)
+fbAdminTime(stAdmin := stPackTagAdmin, stStatus := stPackTagStatus, stOptions := stAdminOpt);
+
+(* 上升沿避免每周期重复触发 *)
+rtrigFire(CLK := bBtnFire);
+rtrigAck(CLK := bBtnAck);
+
+IF rtrigFire.Q THEN
+    bSetOk := fbAdminAlarm.M_SetAlarm(stAdmin := stPackTagAdmin, stAlarm := stHighTempAlarm);
+END_IF
+
+(* 单条确认：传入同样 Id 的 stAlarm 模板做匹配 *)
+IF rtrigAck.Q THEN
+    bAckOk := fbAdminAlarm.M_AcknowledgeAlarm(stAdmin := stPackTagAdmin, stAlarm := stHighTempAlarm);
+END_IF
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

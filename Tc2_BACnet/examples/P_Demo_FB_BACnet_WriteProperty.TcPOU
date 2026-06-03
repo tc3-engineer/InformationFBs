@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_BACnet_WriteProperty" Id="{f105137d-ec0e-5f09-b219-6d6bfcd6d0a4}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_BACnet_WriteProperty
+VAR
+    fbLocalAv : FB_BACnet_AV := (
+        sObjectName := 'LocalAv',
+        fHighLimit := 90.0,
+        bHighLimitEnable := TRUE);
+
+    fbWrite : FB_BACnet_WriteProperty;
+    bTrigger : BOOL := FALSE;
+    fNewHighLimit : REAL := 95.0;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景:PLC 程序需要模拟"外部 BACnet 客户端"修改本机 fbLocalAv 的 HighLimit
+//       到 95.0,触发完整 stack 钩子(COV 通知 / updateCounter 等)。直接写
+//       fbLocalAv.fHighLimit 也行,但可能漏掉某些 BACnet 钩子。
+// 价值:本 FB 保证 BACnet 标准行为一致性;BACnet Explorer 端能像收到外部 Write
+//       一样响应。
+// 验证:1) BACnet Explorer 订阅 fbLocalAv 的 HighLimit COV。2) 在线写 bTrigger
+//       := TRUE,fbWrite 应触发一次本机写,Explorer 应能收到 COV 通知,
+//       HighLimit 值变 95.0。
+// 注意:本对象类型 PDF 未给独立示例,基于 §6.1.1 命名规则推导。
+// =============================================================================
+
+fbLocalAv();
+
+fbWrite.bExecute := bTrigger;
+IF fbWrite.bExecute THEN
+    bTrigger := FALSE;
+    fbWrite.iObject := fbLocalAv;
+    fbWrite.ePropID := E_BACnet_PropertyIdentifier.PropHighLimit;
+    fbWrite.pData   := ADR(fNewHighLimit);
+    fbWrite.nData   := SIZEOF(fNewHighLimit);
+END_IF
+
+fbWrite();
+
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

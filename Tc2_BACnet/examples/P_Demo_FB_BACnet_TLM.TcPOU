@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_BACnet_TLM" Id="{ee61ca6e-f6f1-5593-a466-910cb409efd7}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_BACnet_TLM
+VAR
+    fbDebugAv : FB_BACnet_AV := (
+        sObjectName := 'AlarmDebugSrc',
+        bEnPgm := TRUE,
+        bEventDetectionEnable := TRUE,
+        nNotificationClass := 14,
+        fHighLimit := 8.0,
+        bHighLimitEnable := TRUE,
+        nTimeDelay := 2);
+
+    fbDebugTLM : FB_BACnet_TLM := (
+        sObjectName := 'AlarmDebug_TLM',
+        sDescription := 'Multi-channel trend log for alarm timing audit',
+        eLoggingType := E_BA_LoggingType.ePolled,
+        nLogInterval := 50,                        // 0.5 秒采一次
+        bLogEnable := TRUE,
+        aObjectPropertyReferences := [
+            (iObject := fbDebugAv, ePropertyId := PropPresentValue),
+            (iObject := fbDebugAv, ePropertyId := PropStatusFlags),
+            (iObject := fbDebugAv, ePropertyId := PropEventState)
+        ]);
+
+    fSourceValPlc : REAL := 5.0;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景:排查报警没准时触发问题 — 需要同时记 Present_Value + Status_Flags +
+//       Event_State 在同一时间戳的关联,做事后分析(为什么 2 秒延时变成 3 秒)。
+// 价值:TLM 一次性记多通道,无需 BMS 端把多个 TLog 按时间戳合并;高频 0.5 秒
+//       能捕获瞬态状态切换。
+// 验证:1) 在线写 fSourceValPlc := 10.0(超过 fHighLimit=8),2 秒后 fbDebugAv
+//       应进入 OFFNORMAL。2) 用 BACnet Explorer ReadRange 读 fbDebugTLM 最近
+//       10 条,应看到 Present_Value 跳到 10 后,Event_State 在 2 秒后切到
+//       OFFNORMAL,Status_Flags.InAlarm bit 同时置位。
+// =============================================================================
+
+fbDebugAv.fValPgm := fSourceValPlc;
+fbDebugAv();
+fbDebugTLM();
+
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

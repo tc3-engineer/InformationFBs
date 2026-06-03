@@ -58,7 +58,7 @@
 |---|---|---|---|---|
 | Tc3_JsonXml | 1.14.2 | ~50 | ⏳ pending | JSON/XML SAX+DOM |
 | Tc2_DataExchange | 1.2.2 | 3 | ✅ done (3/3) | 跨 PLC watchdog 数据交换 |
-| Tc3_Database | 现行 | ~30 | ⏳ pending | 数据库访问（走 TF6420 别名） |
+| Tc3_Database | 27 ✅ done (v1.14.1) | ✅ done | TF6420 现代数据库访问（16 主 FB + 10 obsolete + 1 GVL）。覆盖 Configure/PLC-Expert/SQL-Expert/NoSQL 四种 mode + Mongo/DocDB/TimeSeries 适配。 |
 | Tc2_Database | 26 ✅ done (v1.2) | ✅ done | 旧版数据库 TS6420（19 FB + 5 obsolete + 1 FC + 1 GVL）。InfoSys 走 TF6420 TC3 兼容路径。 |
 | Tc2_Filter | 1.8.0 | 15 | ✅ done (15/15) | 数字滤波 FB（PT1/PT2/Notch/LeadLag/Median/Gaussian 等；TF3680；无 GVL/FC，用 EventLogger 报错） |
 | Tc2_SUPS | 1.5.2 | 7 | ✅ done (7/7) | 1-second UPS 控制（多硬件平台） |
@@ -69,21 +69,21 @@
 |---|---|---|---|
 | Tc3_OPCUA / Tc3_IotBase | ~50 | ⏳ pending | 对外 IT 集成 |
 | Tc3_PackML_V2 | 25 ✅ done (v1.2.4) | ✅ done | OMAC PackML 包装机械（3 接口 + 5 FB + 9 PML_AdminAlarm 方法 + 8 转换 FC） |
-| Tc3_PackML_V3 | ~30 | ⏳ pending | OMAC PackML V3 升级版 |
+| Tc3_PackML_V3 | 32 ✅ done (v1.0.0, 2025-08-25) | ✅ done | OMAC PackML V3 升级版（2 接口 + 5 FB + 17 PMLAdminAlarm 方法 + 8 转换 FC）。FB_PML* 命名前缀；Alarm 方法 9→17 扩展；StopReason 容器从数组改单值。28/32 ⚠️ not-on-infosys（库新发布,InfoSys 公网索引尚未完整）。 |
 | Tc2_MC2_Camming | 6 | ✅ done (6/6) | 凸轮（走 TF5050 别名） |
 | Tc2_MC2_FlyingSaw | 4 | ✅ done (4/4) | 飞剪（走 TF5055 别名） |
 | Tc3_DriveMotionControl | 14 ✅ done (13 FB + 1 GVL, v1.5.5) | ✅ done | 简化伺服（MC_* 单轴运动，无 BufferMode，走 ST_*Options） |
-| Tc2_NCI | ~30 | ⏳ pending | 插补 / CNC（走 TF5100 别名） |
+| Tc2_NCI | 101 ✅ done (v2.15.1) | ✅ done | 插补 / CNC TF5100（76 FB + 25 FC,分 configuration / nci_pous / blocksearch / retrace / parts_program_generator / compatibility / obsolete） |
 | Tc3_MC2_AdvancedHoming | 1.7.7 | 16 | ✅ done (16/16) | 自定义回零（PLCopen Part 5；收尾 3 + 被动 flying 3 + step 10） |
 | Tc3_Vision | ~80 | ⏳ pending | 机器视觉 TF7xxx（走 TF7000-TF7810 别名） |
-| Tc2_Hydraulic | ~40 | ⏳ pending | 液压闭环（走 TF5810 别名） |
-| Tc2_BACnet | 7 ✅ infra (v1.1.2 / 真实库名 Tc3_BACnetRev14) | 🚧 partial | TF8020；7 个基础架构 FB/GVL 完成（Adapter/Server/Device/DynObjectManager + 3 GVL）。~60 个 BACnet 对象 FB（AI/AO/AV/BI/BO/BV/MI/MV/NC/Cal/Sched/TLog/EE/Loop/View 等 ×{无后缀,_IO,_ECAT,_Raw,_5P,_IO5P,_RAW5P} 变体）PDF/InfoSys 不按"每 FB 一节"展开而是按对象类型综述 + 命名规则统一描述，留 Wave-3 按对象类型分批生成。 |
+| Tc2_Hydraulic | 33 ✅ done user-facing (v1.8.3) | ✅ done | 液压闭环 TF5810；33 个用户面 FB(管理/单轴运动/多轴/归零/控制器/压力力反馈)。PDF 另含 ~67 个 _BkPlcMc internal-use FB（StandardBody/Generator/AdsCommServer 等模板内部调用），按 PDF 自身"internal use only/not recommended"标注未单独成篇 |
+| Tc2_BACnet | 53 ✅ done (v1.1.2 / Tc3_BACnetRev14) | ✅ done | TF8020；7 基础架构 FB/GVL（Wave-2）+ 24 对象 FB 类（objects/）+ 6 Primitive Value 类 + 14 Client/RM FB + 2 服务端 RP/WP（Wave-3）。对象类型每篇覆盖该类型全部后缀变体（_IO/_ECAT/_Raw/_5P 等）。41 篇 `chapter-overview-only` + 5 篇 `infer-from-naming-convention`（PDF 不按"每 FB 一节"展开,verify_doc 走合规旁路）。 |
 | Tc2_DALI | ~30 | ⏳ pending | 照明总线 |
 | Tc2_DMX | 34 ✅ done (34 FB, v1.8.1) | ✅ done | 舞台灯光 DMX512/RDM（主站/发现/RDM 参数/状态/EL6851；含 1 outdated FB） |
 | Tc2_KNXLib | ~30 | ❌ unavailable | KNX/EIB（PDF 404） |
 | Tc2_EIB | 48 ✅ done (v1.16.1) | ✅ done | EIB（旧 KNX）— KL6301 耦合器接入 + 15 个 receive FB + 29 个 send FB + 2 个地址转换 FC |
 | Tc2_EnOcean | 20 ✅ done (v1.7.1) | ✅ done | 无线传感（KL6021-0023 / KL6581 终端 + receive/send/teach-in + 字节转换 FC） |
-| Tc3_BA2 | ~200 | ⏳ pending | Building Automation 2.0（走 Tc3_BA2_Common 别名） |
+| Tc3_BA2_Common | 80 ✅ done (v1.0.2) | ✅ done | Building Automation 2.0 公用底座（9 FB + 68 FC + 3 GVL）。控制器/IO/触发/斜坡滤波/迟滞/持久化/比较/内存/枚举/时间/调度/趋势/日志 等 19 类 |
 | Tc2_HVAC | ~50 | ⏳ pending | 暖通（走 TF8000 别名） |
 | Tc2_Lighting | ~30 | ⏳ pending | 照明控制（走 TF8050 别名） |
 | Tc2_Coupler | 7 | ✅ done (7/7) | 老式 BK 耦合器（含 1 个 obsolete FC） |

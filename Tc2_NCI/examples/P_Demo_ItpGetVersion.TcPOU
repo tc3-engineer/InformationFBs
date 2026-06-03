@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_ItpGetVersion" Id="{6ab98849-e833-56ca-b334-cf0d1828aeb6}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_ItpGetVersion
+VAR
+    ItpGetVersion_ret                     : String(20);  // FC 返回值
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_NCI.ItpGetVersion 演示程序
+// ============================================================
+// 场景：旧项目代码里查询 TwinCAT 2 PLC 库版本号。
+// 价值：兼容性而已；新项目应该用 stLibVersion_Tc2_NCI 全局常量。
+// 验证：调用一次观察 _ret 给出版本号字符串/整数。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_NCI（References → Add library）
+//   3. 在 System Manager 把 NCI 通道接口 Link 给 sNciToPlc_inst / sPlcToNci_inst
+//      （NCTOPLC_NCICHANNEL_REF 给 AT %I*、PLCTONC_NCICHANNEL_REF 给 AT %Q*）
+//   4. 编译 → 登录 → 运行；按上方『验证』指引在线写值观察
+// ============================================================
+
+// 纯函数调用：返回值赋给本地变量做观察
+ItpGetVersion_ret := ItpGetVersion();
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

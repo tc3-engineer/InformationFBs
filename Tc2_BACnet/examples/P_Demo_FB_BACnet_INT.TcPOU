@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_BACnet_INT" Id="{346cb7cf-1ddf-59bf-9a7c-f9648673198d}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_BACnet_INT
+VAR
+    fbAlarmCnt : FB_BACnet_INT := (
+        sObjectName := 'AlarmCount_3F',
+        sDescription := 'Floor 3 alarm count today');
+    nLocalCnt  : INT := 0;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景:把"今日报警次数"等简单 INT 字段暴露给 BMS,用 Primitive Value 而不是 AV
+//       (AV 还有 Status_Flags / 报警限等属性 BMS 用不上)。
+// 价值:Primitive Value 是 BACnet 标准的轻量容器,占 router memory 少,BMS 端
+//       识别为标准 BACnet 对象。
+// 验证:1) BACnet Explorer 读 fbAlarmCnt.Present_Value=0。2) 在线写 nLocalCnt
+//       := 7,Explorer 应看到 Present_Value=7。
+// =============================================================================
+
+fbAlarmCnt.nValue := nLocalCnt;
+fbAlarmCnt();
+
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_F_BA_MemSetEx" Id="{4977acc9-09f2-5b7f-8ce2-3d92dcd6446a}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_F_BA_MemSetEx
+VAR
+    argPDestAddr                   : PVOID                          := 0; // pDestAddr
+    argNDestSize                   : UDINT                          := 0; // nDestSize
+    argXValue                      : ANY                           ; // xValue
+    fnReturn                       : UDINT; // 返回值
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// Tc3_BA2_Common.F_BA_MemSetEx 演示程序
+// =============================================================================
+// 场景：把一段 INT 数组全部初始化为 -1（每个 INT 2 字节，重复 N 次填满）。
+//
+// 价值：比手写 FOR 循环填充更高效（FB 内部调 MEMCPY，可能向量化）；自带尺寸校验。
+//
+// 验证：登录 PLC 后，按例程内变量在线写值；监视输出 / 返回值，结合 §1 功能
+//       简述的预期行为对照（详见配套 .md 文档 §7 业务场景）。
+//
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_BA2_Common（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』指引在线写值观察
+// =============================================================================
+
+fnReturn := F_BA_MemSetEx(
+    pDestAddr                := argPDestAddr,
+    nDestSize                := argNDestSize,
+    xValue                   := argXValue
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

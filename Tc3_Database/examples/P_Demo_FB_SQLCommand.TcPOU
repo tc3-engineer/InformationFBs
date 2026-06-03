@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_SQLCommand" Id="{0630a777-3c43-5f8f-b3bd-1a4add1d8805}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_SQLCommand
+VAR
+    // ⚠️ obsolete —— 新项目用 FB_SQLCommandEvt
+    fbSqlDb            : FB_SQLDatabase(sNetID := '', tTimeout := T#30S);
+    fbSqlCmd           : FB_SQLCommand(sNetID := '', tTimeout := T#15S);
+    fbSqlResult        : FB_SQLResult(sNetID := '', tTimeout := T#15S);
+
+    bInitReq           : BOOL := FALSE;
+    bExecInsertReq     : BOOL := FALSE;
+    bExecSelectReq     : BOOL := FALSE;
+
+    sInsertCmd         : STRING(500) := 'INSERT INTO myTable_Double (Timestamp, Name, Value) VALUES ($'2026-06-03 12:00:00$', $'OldTemp$', 21.3)';
+    sSelectCmd         : STRING(500) := 'SELECT ID, Timestamp, Name, Value FROM myTable_Double';
+
+    nState             : INT := 0;
+    bConnDone          : BOOL;
+    bCmdInitDone       : BOOL;
+    bExecDone          : BOOL;
+    bExecDataDone      : BOOL;
+    bCmdReady          : BOOL := FALSE;
+
+    ipLastTcResult     : Tc3_EventLogger.I_TcResultEvent;
+    sLastErrText       : STRING(255);
+    bLastWasError      : BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：老 OEM 高吞吐 SQL 写入模块用 obsolete FB_SQLDatabase + FB_SQLCommand
+//       + FB_SQLResult 三件套。本程序展示老风格 SQL Expert mode 完整链路。
+//       新项目应改用 P_Demo_FB_SQLCommandEvt（配 FB_SQLDatabaseEvt + FB_SQLResultEvt）。
+// 价值：保护已部署设备的二进制兼容。
+// 验证步骤：
+//   1. 右键 POUs → Add → Existing Item → 选本 .TcPOU；引用 Tc3_Database 与
+//      Tc3_EventLogger
+//   2. 前置：XML hDBID=1 MS SQL；myTable_Double 表存在
+//   3. 编译 → 登录 → 运行
+//   4. 在线写 bInitReq := TRUE → nState 走 0→10→20→0；bCmdReady=TRUE
+//   5. 写 bExecInsertReq := TRUE → DB 多 1 行
+//   6. 写 bExecSelectReq := TRUE → 结果缓存到 fbSqlResult
+// =============================================================================
+
+IF nState = 0 THEN
+    IF bInitReq THEN
+        bInitReq := FALSE;
+        nState := 10;
+    ELSIF bExecInsertReq AND bCmdReady THEN
+        bExecInsertReq := FALSE;
+        nState := 30;
+    ELSIF bExecSelectReq AND bCmdReady THEN
+        bExecSelectReq := FALSE;
+        nState := 40;
+    END_IF
+END_IF
+
+IF nState = 10 THEN
+    bConnDone := fbSqlDb.Connect(hDBID := 1);
+    IF bConnDone THEN
+        IF NOT fbSqlDb.bError THEN
+            nState := 20;
+        ELSE
+            bLastWasError := TRUE;
+            nState := 0;
+        END_IF
+    END_IF
+END_IF
+
+IF nState = 20 THEN
+    bCmdInitDone := fbSqlDb.CreateCmd(pSQLCommand := ADR(fbSqlCmd));
+    IF bCmdInitDone THEN
+        IF NOT fbSqlDb.bError THEN
+            bCmdReady := TRUE;
+        END_IF
+        nState := 0;
+    END_IF
+END_IF
+
+IF nState = 30 THEN
+    bExecDone := fbSqlCmd.Execute(pSQLCmd := ADR(sInsertCmd), cbSQLCmd := SIZEOF(sInsertCmd));
+    IF bExecDone THEN
+        IF fbSqlCmd.bError THEN
+            ipLastTcResult := fbSqlCmd.ipTcResultEvent;
+            ipLastTcResult.RequestEventText(1033, ADR(sLastErrText), SIZEOF(sLastErrText));
+            bLastWasError := TRUE;
+        END_IF
+        nState := 0;
+    END_IF
+END_IF
+
+IF nState = 40 THEN
+    bExecDataDone := fbSqlCmd.ExecuteDataReturn(
+        pSQLCmd      := ADR(sSelectCmd),
+        cbSQLCmd     := SIZEOF(sSelectCmd),
+        pSQLDBResult := ADR(fbSqlResult)
+    );
+    IF bExecDataDone THEN
+        IF NOT fbSqlCmd.bError THEN
+            // fbSqlResult 已绑结果，调 .Read 取数据
+            ;
+        END_IF
+        nState := 0;
+    END_IF
+END_IF
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

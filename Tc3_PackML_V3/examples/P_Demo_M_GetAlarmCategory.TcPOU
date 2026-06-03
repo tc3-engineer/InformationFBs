@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_M_GetAlarmCategory" Id="{179f289f-739b-5ced-9460-b07e3bc92b42}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_M_GetAlarmCategory
+VAR
+    fbAdminAlarm     : FB_PMLAdminAlarm;
+    fbAdminTime      : FB_PMLAdminTime;
+    stPackTagAdmin   : ST_PMLa;
+    stPackTagStatus  : ST_PMLs;
+    stAdminOpt       : ST_PMLAdminTimeOptions;
+
+    // 不同优先级 alarm（Category 越小越严重）
+    stCriticalAlarm  : ST_PMLEvent := (Id := 1001, Message := 'Safety door open',  Category := 1);  // Critical
+    stMajorAlarm     : ST_PMLEvent := (Id := 1002, Message := 'Low oil',           Category := 2);  // Major
+    stMinorAlarm     : ST_PMLEvent := (Id := 1003, Message := 'Filter dirty',      Category := 3);  // Minor
+
+    bBtnFireMinor    : BOOL := FALSE;
+    bBtnFireMajor    : BOOL := FALSE;
+    bBtnFireCritical : BOOL := FALSE;
+
+    rtrigMinor       : R_TRIG;
+    rtrigMajor       : R_TRIG;
+    rtrigCritical    : R_TRIG;
+
+    // 查询结果（在线观察）；PDF 头部声明 BOOL 但功能返回 DINT，按 DINT 接收
+    nHighestPriority : DINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc3_PackML_V3.FB_PMLAdminAlarm.M_GetAlarmCategory 演示程序
+// ============================================================
+// 场景：HMI 顶端状态灯（红/橙/黄/绿）实时反映当前最严重 alarm 的等级。
+//       本方法每周期调用，根据 Category 决定灯色（按 ISA-18.2 惯例
+//       Category=1 最严重）。
+// 价值：V3 新增方法把"找最高优先级 alarm 等级"封装好，HMI 不必自己
+//       遍历 Alarm[] 数组取 MIN。
+// 验证：登录后顺序操作：
+//       1. 先写 bBtnFireMinor := TRUE → 观察 nHighestPriority = 3（Minor）。
+//       2. 再写 bBtnFireMajor := TRUE → 观察 nHighestPriority = 2（Major）。
+//       3. 再写 bBtnFireCritical := TRUE → 观察 nHighestPriority = 1
+//          （Critical，最严重）。
+//       说明：返回值始终是当前活跃 alarm 中 Category 最小值。
+//       注意：PDF 头部 METHOD 声明返回 BOOL 但实际是 DINT——若编译报错
+//       请把 nHighestPriority 改成 BOOL（按 PDF 文字描述）。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_PackML_V3（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方"验证"指引在线写值观察
+// ============================================================
+
+fbAdminTime(stAdmin := stPackTagAdmin, stStatus := stPackTagStatus, stOptions := stAdminOpt);
+
+rtrigMinor(CLK := bBtnFireMinor);
+rtrigMajor(CLK := bBtnFireMajor);
+rtrigCritical(CLK := bBtnFireCritical);
+
+IF rtrigMinor.Q THEN
+    fbAdminAlarm.M_SetAlarm(stAdmin := stPackTagAdmin, stAlarm := stMinorAlarm);
+END_IF
+IF rtrigMajor.Q THEN
+    fbAdminAlarm.M_SetAlarm(stAdmin := stPackTagAdmin, stAlarm := stMajorAlarm);
+END_IF
+IF rtrigCritical.Q THEN
+    fbAdminAlarm.M_SetAlarm(stAdmin := stPackTagAdmin, stAlarm := stCriticalAlarm);
+END_IF
+
+(* 每周期查询当前最高优先级；PDF 头部 BOOL 与文字描述 DINT 矛盾——按 DINT 接收 *)
+nHighestPriority := DINT_TO_DINT(fbAdminAlarm.M_GetAlarmCategory(stAdmin := stPackTagAdmin));
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

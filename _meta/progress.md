@@ -1072,3 +1072,322 @@
 2026-06-03T00:00:00Z | Tc2_EtherCAT   | state_machine                           | FB_EcReqSlaveState                       | verified | PDF + InfoSys cross-verified
 2026-06-03T00:00:00Z | Tc2_EtherCAT   | state_machine                           | FB_EcSetMasterState                      | verified | PDF + InfoSys cross-verified
 2026-06-03T00:00:00Z | Tc2_EtherCAT   | state_machine                           | FB_EcSetSlaveState                       | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_NCI        | blocksearch                             | ItpBlocksearch                           | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_NCI        | blocksearch                             | ItpGetBlocksearchData                    | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_NCI        | blocksearch                             | ItpStepOnAfterBlocksearch                | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_NCI        | compatibility                           | ItpDelDtg                                | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_NCI        | compatibility                           | ItpEStop                                 | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_NCI        | compatibility                           | ItpGetBottleNeckLookAhead                | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_NCI        | compatibility                           | ItpGetBottleNeckMode                     | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_NCI        | compatibility                           | ItpGetGeoInfoAndHParam                   | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_NCI        | compatibility                           | ItpGoAhead                               | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_NCI        | compatibility                           | ItpIsEStop                               | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_NCI        | compatibility                           | ItpLoadProg                              | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_NCI        | compatibility                           | ItpReadRParams                           | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_NCI        | compatibility                           | ItpReadToolDesc                          | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_NCI        | compatibility                           | ItpReadZeroShift                         | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_NCI        | compatibility                           | ItpReset                                 | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_NCI        | compatibility                           | ItpResetEx                               | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_NCI        | compatibility                           | ItpResetFastMFunc                        | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_NCI        | compatibility                           | ItpSetBottleNeckLookAhead                | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_NCI        | compatibility                           | ItpSetBottleNeckMode                     | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_NCI        | compatibility                           | ItpSetSubroutinePath                     | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_NCI        | compatibility                           | ItpSetToolDescNull                       | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_NCI        | compatibility                           | ItpSetZeroShiftNull                      | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_NCI        | compatibility                           | ItpStartStop                             | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_NCI        | compatibility                           | ItpStepOnAfterEStop                      | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_NCI        | compatibility                           | ItpWriteRParams                          | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_NCI        | compatibility                           | ItpWriteToolDesc                         | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_NCI        | compatibility                           | ItpWriteZeroShift                        | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_NCI        | configuration                           | CfgAddAxisToGroup                        | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_NCI        | configuration                           | CfgBuild3DGroup                          | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_NCI        | configuration                           | CfgBuildExt3DGroup                       | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_NCI        | configuration                           | CfgRead3DAxisIds                         | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_NCI        | configuration                           | CfgReadExt3DAxisIds                      | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_NCI        | configuration                           | CfgReconfigAxis                          | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_NCI        | configuration                           | CfgReconfigGroup                         | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_NCI        | nci_pous                                | ItpConfirmHsk                            | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_NCI        | nci_pous                                | ItpDelDtgEx                              | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_NCI        | nci_pous                                | ItpEStopEx                               | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_NCI        | nci_pous                                | ItpEnableDefaultGCode                    | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_NCI        | nci_pous                                | ItpGetBlockNumber                        | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_NCI        | nci_pous                                | ItpGetBottleNeckLookAheadEx              | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_NCI        | nci_pous                                | ItpGetBottleNeckModeEx                   | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_NCI        | nci_pous                                | ItpGetChannelId                          | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_NCI        | nci_pous                                | ItpGetChannelType                        | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_NCI        | nci_pous                                | ItpGetCyclicLrealOffsets                 | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_NCI        | nci_pous                                | ItpGetCyclicUDintOffsets                 | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_NCI        | nci_pous                                | ItpGetError                              | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_NCI        | nci_pous                                | ItpGetGeoInfoAndHParamEx                 | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_NCI        | nci_pous                                | ItpGetGroupAxisIds                       | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_NCI        | nci_pous                                | ItpGetGroupId                            | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_NCI        | nci_pous                                | ItpGetHParam                             | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_NCI        | nci_pous                                | ItpGetHskMFunc                           | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_NCI        | nci_pous                                | ItpGetItfVersion                         | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_NCI        | nci_pous                                | ItpGetOverridePercent                    | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_NCI        | nci_pous                                | ItpGetSParam                             | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_NCI        | nci_pous                                | ItpGetSetPathVelocity                    | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_NCI        | nci_pous                                | ItpGetStateInterpreter                   | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_NCI        | nci_pous                                | ItpGetTParam                             | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_NCI        | nci_pous                                | ItpGoAheadEx                             | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_NCI        | nci_pous                                | ItpHasError                              | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_NCI        | nci_pous                                | ItpIsEStopEx                             | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_NCI        | nci_pous                                | ItpIsFastMFunc                           | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_NCI        | nci_pous                                | ItpIsHskMFunc                            | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_NCI        | nci_pous                                | ItpLoadProgEx                            | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_NCI        | nci_pous                                | ItpReadCyclicLRealParam1                 | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_NCI        | nci_pous                                | ItpReadCyclicUdintParam1                 | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_NCI        | nci_pous                                | ItpReadRParamsEx                         | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_NCI        | nci_pous                                | ItpReadToolDescEx                        | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_NCI        | nci_pous                                | ItpReadZeroShiftEx                       | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_NCI        | nci_pous                                | ItpResetEx2                              | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_NCI        | nci_pous                                | ItpResetFastMFuncEx                      | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_NCI        | nci_pous                                | ItpSetBottleNeckLookAheadEx              | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_NCI        | nci_pous                                | ItpSetBottleNeckModeEx                   | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_NCI        | nci_pous                                | ItpSetCyclicLrealOffsets                 | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_NCI        | nci_pous                                | ItpSetCyclicUDintOffsets                 | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_NCI        | nci_pous                                | ItpSetOverridePercent                    | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_NCI        | nci_pous                                | ItpSetSubroutinePathEx                   | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_NCI        | nci_pous                                | ItpSetToolDescNullEx                     | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_NCI        | nci_pous                                | ItpSetZeroShiftNullEx                    | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_NCI        | nci_pous                                | ItpSingleBlock                           | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_NCI        | nci_pous                                | ItpStartStopEx                           | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_NCI        | nci_pous                                | ItpStepOnAfterEStopEx                    | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_NCI        | nci_pous                                | ItpWriteRParamsEx                        | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_NCI        | nci_pous                                | ItpWriteToolDescEx                       | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_NCI        | nci_pous                                | ItpWriteZeroShiftEx                      | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_NCI        | obsolete                                | F_GetVersionTcNciUtilities               | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_NCI        | obsolete                                | Get_TcNcCfg_Version                      | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_NCI        | obsolete                                | ItpGetVersion                            | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_NCI        | parts_program_generator                 | ItpPpgAppendGenericBlock                 | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_NCI        | parts_program_generator                 | ItpPpgAppendGeoCircleByRadius            | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_NCI        | parts_program_generator                 | ItpPpgAppendGeoLine                      | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_NCI        | parts_program_generator                 | ItpPpgCloseMain                          | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_NCI        | parts_program_generator                 | ItpPpgCloseSubroutine                    | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_NCI        | parts_program_generator                 | ItpPpgCreateMain                         | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_NCI        | parts_program_generator                 | ItpPpgCreateSubroutine                   | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_NCI        | retrace                                 | ItpEnableFeederBackup                    | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_NCI        | retrace                                 | ItpIsFeedFromBackupList                  | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_NCI        | retrace                                 | ItpIsFeederBackupEnabled                 | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_NCI        | retrace                                 | ItpIsFirstSegmentReached                 | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_NCI        | retrace                                 | ItpIsMovingBackwards                     | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_NCI        | retrace                                 | ItpRetraceMoveBackward                   | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_NCI        | retrace                                 | ItpRetraceMoveForward                    | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_Hydraulic  | administrative                          | MC_Power_BkPlcMc                         | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_Hydraulic  | administrative                          | MC_ReadActualPosition_BkPlcMc            | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_Hydraulic  | administrative                          | MC_ReadActualTorque_BkPlcMc              | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_Hydraulic  | administrative                          | MC_ReadActualVelocity_BkPlcMc            | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_Hydraulic  | administrative                          | MC_ReadAxisError_BkPlcMc                 | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_Hydraulic  | administrative                          | MC_ReadStatus_BkPlcMc                    | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_Hydraulic  | administrative                          | MC_ResetAndStop_BkPlcMc                  | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_Hydraulic  | administrative                          | MC_Reset_BkPlcMc                         | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_Hydraulic  | administrative                          | MC_SetOverride_BkPlcMc                   | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_Hydraulic  | administrative                          | MC_SetPosition_BkPlcMc                   | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_Hydraulic  | administrative                          | MC_SetReferenceFlag_BkPlcMc              | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_Hydraulic  | controllers                             | MC_AxCtrlAutoZero_BkPlcMc                | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_Hydraulic  | controllers                             | MC_AxCtrlPressure_BkPlcMc                | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_Hydraulic  | controllers                             | MC_AxCtrlSlowDownOnPressure_BkPlcMc      | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_Hydraulic  | homing                                  | MC_Home_BkPlcMc                          | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_Hydraulic  | motion_multiple_axis                    | MC_CamIn_BkPlcMc                         | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_Hydraulic  | motion_multiple_axis                    | MC_CamOut_BkPlcMc                        | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_Hydraulic  | motion_multiple_axis                    | MC_GearInPos_BkPlcMc                     | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_Hydraulic  | motion_multiple_axis                    | MC_GearIn_BkPlcMc                        | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_Hydraulic  | motion_multiple_axis                    | MC_GearOut_BkPlcMc                       | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_Hydraulic  | motion_single_axis                      | MC_EmergencyStop_BkPlcMc                 | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_Hydraulic  | motion_single_axis                      | MC_Halt_BkPlcMc                          | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_Hydraulic  | motion_single_axis                      | MC_ImediateStop_BkPlcMc                  | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_Hydraulic  | motion_single_axis                      | MC_MoveAbsolute_BkPlcMc                  | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_Hydraulic  | motion_single_axis                      | MC_MoveJoySticked_BkPlcMc                | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_Hydraulic  | motion_single_axis                      | MC_MoveRelative_BkPlcMc                  | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_Hydraulic  | motion_single_axis                      | MC_MoveVelocity_BkPlcMc                  | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_Hydraulic  | motion_single_axis                      | MC_RampedStop_BkPlcMc                    | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_Hydraulic  | motion_single_axis                      | MC_Stop_BkPlcMc                          | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_Hydraulic  | pressure_force_sensing                  | MC_AxRtReadForceDiff_BkPlcMc             | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_Hydraulic  | pressure_force_sensing                  | MC_AxRtReadForceSingle_BkPlcMc           | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_Hydraulic  | pressure_force_sensing                  | MC_AxRtReadPressureDiff_BkPlcMc          | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_Hydraulic  | pressure_force_sensing                  | MC_AxRtReadPressureSingle_BkPlcMc        | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_PackML_V3  | conversion                              | DCTIME64_TO_PMLTime                      | verified | PDF single-source (not-on-infosys, V3 new)
+2026-06-03T00:00:00Z | Tc3_PackML_V3  | conversion                              | DT_TO_PMLTime                            | verified | PDF single-source (not-on-infosys, V3 new)
+2026-06-03T00:00:00Z | Tc3_PackML_V3  | conversion                              | F_PMLStateCommandToString                | verified | PDF single-source (not-on-infosys, V3 new)
+2026-06-03T00:00:00Z | Tc3_PackML_V3  | conversion                              | F_PMLUnitModeToString                    | verified | PDF single-source (not-on-infosys, V3 new)
+2026-06-03T00:00:00Z | Tc3_PackML_V3  | conversion                              | LTIME_TO_PMLTime                         | verified | PDF single-source (not-on-infosys, V3 new)
+2026-06-03T00:00:00Z | Tc3_PackML_V3  | conversion                              | TIMESTRUCT_TO_PMLTime                    | verified | PDF single-source (not-on-infosys, V3 new)
+2026-06-03T00:00:00Z | Tc3_PackML_V3  | conversion                              | TIME_TO_PMLTime                          | verified | PDF single-source (not-on-infosys, V3 new)
+2026-06-03T00:00:00Z | Tc3_PackML_V3  | conversion                              | ULINT_TO_PMLTime                         | verified | PDF single-source (not-on-infosys, V3 new)
+2026-06-03T00:00:00Z | Tc3_PackML_V3  | general                                 | FB_PMLAdminAlarm                         | verified | PDF single-source (not-on-infosys, V3 new)
+2026-06-03T00:00:00Z | Tc3_PackML_V3  | general                                 | FB_PMLAdminTime                          | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_PackML_V3  | general                                 | M_AcknowledgeAlarm                       | verified | PDF single-source (not-on-infosys, V3 new)
+2026-06-03T00:00:00Z | Tc3_PackML_V3  | general                                 | M_AcknowledgeAllAlarms                   | verified | PDF single-source (not-on-infosys, V3 new)
+2026-06-03T00:00:00Z | Tc3_PackML_V3  | general                                 | M_AcknowledgeAllWarning                  | verified | PDF single-source (not-on-infosys, V3 new)
+2026-06-03T00:00:00Z | Tc3_PackML_V3  | general                                 | M_AcknowledgeStopReason                  | verified | PDF single-source (not-on-infosys, V3 new)
+2026-06-03T00:00:00Z | Tc3_PackML_V3  | general                                 | M_AcknowledgeWarning                     | verified | PDF single-source (not-on-infosys, V3 new)
+2026-06-03T00:00:00Z | Tc3_PackML_V3  | general                                 | M_ClearAlarm                             | verified | PDF single-source (not-on-infosys, V3 new)
+2026-06-03T00:00:00Z | Tc3_PackML_V3  | general                                 | M_ClearAllAlarms                         | verified | PDF single-source (not-on-infosys, V3 new)
+2026-06-03T00:00:00Z | Tc3_PackML_V3  | general                                 | M_ClearAllWarning                        | verified | PDF single-source (not-on-infosys, V3 new)
+2026-06-03T00:00:00Z | Tc3_PackML_V3  | general                                 | M_ClearStopReason                        | verified | PDF single-source (not-on-infosys, V3 new)
+2026-06-03T00:00:00Z | Tc3_PackML_V3  | general                                 | M_ClearWarning                           | verified | PDF single-source (not-on-infosys, V3 new)
+2026-06-03T00:00:00Z | Tc3_PackML_V3  | general                                 | M_GetAlarmCategory                       | verified | PDF single-source (not-on-infosys, V3 new)
+2026-06-03T00:00:00Z | Tc3_PackML_V3  | general                                 | M_HasAlarm                               | verified | PDF single-source (not-on-infosys, V3 new)
+2026-06-03T00:00:00Z | Tc3_PackML_V3  | general                                 | M_HasStopReason                          | verified | PDF single-source (not-on-infosys, V3 new)
+2026-06-03T00:00:00Z | Tc3_PackML_V3  | general                                 | M_HasWarning                             | verified | PDF single-source (not-on-infosys, V3 new)
+2026-06-03T00:00:00Z | Tc3_PackML_V3  | general                                 | M_SetAlarm                               | verified | PDF single-source (not-on-infosys, V3 new)
+2026-06-03T00:00:00Z | Tc3_PackML_V3  | general                                 | M_SetStopReason                          | verified | PDF single-source (not-on-infosys, V3 new)
+2026-06-03T00:00:00Z | Tc3_PackML_V3  | general                                 | M_SetWarning                             | verified | PDF single-source (not-on-infosys, V3 new)
+2026-06-03T00:00:00Z | Tc3_PackML_V3  | interfaces                              | I_PMLUnitStateActing                     | verified | PDF single-source (not-on-infosys, V3 new)
+2026-06-03T00:00:00Z | Tc3_PackML_V3  | interfaces                              | I_PMLUnitStateWaiting                    | verified | PDF single-source (not-on-infosys, V3 new)
+2026-06-03T00:00:00Z | Tc3_PackML_V3  | packaging_machine_state                 | FB_PMLStateMachine                       | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_PackML_V3  | packaging_machine_state                 | FB_PMLUnitModeConfig                     | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_PackML_V3  | packaging_machine_state                 | FB_PMLUnitModeManager                    | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_BACnet     | client                                  | FB_BACnetRM_AI                           | verified | PDF chapter-overview (chapter-overview-only)
+2026-06-03T00:00:00Z | Tc2_BACnet     | client                                  | FB_BACnetRM_AV                           | verified | PDF chapter-overview (chapter-overview-only)
+2026-06-03T00:00:00Z | Tc2_BACnet     | client                                  | FB_BACnetRM_BO                           | verified | PDF chapter-overview (chapter-overview-only)
+2026-06-03T00:00:00Z | Tc2_BACnet     | client                                  | FB_BACnetRM_Device                       | verified | PDF chapter-overview (chapter-overview-only)
+2026-06-03T00:00:00Z | Tc2_BACnet     | client                                  | FB_BACnetRM_MI                           | verified | PDF chapter-overview (chapter-overview-only)
+2026-06-03T00:00:00Z | Tc2_BACnet     | client                                  | FB_BACnetRM_MV                           | verified | PDF chapter-overview (chapter-overview-only)
+2026-06-03T00:00:00Z | Tc2_BACnet     | client                                  | FB_BACnetRM_ReadProperty                 | verified | PDF chapter-overview (chapter-overview-only)
+2026-06-03T00:00:00Z | Tc2_BACnet     | client                                  | FB_BACnetRM_ReadPropertyEx               | verified | PDF chapter-overview (chapter-overview-only)
+2026-06-03T00:00:00Z | Tc2_BACnet     | client                                  | FB_BACnetRM_SchedA                       | verified | PDF chapter-overview (chapter-overview-only)
+2026-06-03T00:00:00Z | Tc2_BACnet     | client                                  | FB_BACnetRM_SchedB                       | verified | PDF chapter-overview (chapter-overview-only)
+2026-06-03T00:00:00Z | Tc2_BACnet     | client                                  | FB_BACnetRM_SchedM                       | verified | PDF chapter-overview (chapter-overview-only)
+2026-06-03T00:00:00Z | Tc2_BACnet     | client                                  | FB_BACnetRM_WriteProperty                | verified | PDF chapter-overview (chapter-overview-only)
+2026-06-03T00:00:00Z | Tc2_BACnet     | client                                  | FB_BACnetRM_WritePropertyEx              | verified | PDF chapter-overview (chapter-overview-only)
+2026-06-03T00:00:00Z | Tc2_BACnet     | client                                  | FB_BACnet_Client                         | verified | PDF chapter-overview (chapter-overview-only)
+2026-06-03T00:00:00Z | Tc2_BACnet     | objects                                 | FB_BACnet_ACC                            | verified | PDF chapter-overview (chapter-overview-only)
+2026-06-03T00:00:00Z | Tc2_BACnet     | objects                                 | FB_BACnet_AI                             | verified | PDF chapter-overview (chapter-overview-only)
+2026-06-03T00:00:00Z | Tc2_BACnet     | objects                                 | FB_BACnet_AO                             | verified | PDF chapter-overview (chapter-overview-only)
+2026-06-03T00:00:00Z | Tc2_BACnet     | objects                                 | FB_BACnet_AV                             | verified | PDF chapter-overview (chapter-overview-only)
+2026-06-03T00:00:00Z | Tc2_BACnet     | objects                                 | FB_BACnet_BI                             | verified | PDF chapter-overview (chapter-overview-only)
+2026-06-03T00:00:00Z | Tc2_BACnet     | objects                                 | FB_BACnet_BO                             | verified | PDF chapter-overview (chapter-overview-only)
+2026-06-03T00:00:00Z | Tc2_BACnet     | objects                                 | FB_BACnet_BV                             | verified | PDF chapter-overview (chapter-overview-only)
+2026-06-03T00:00:00Z | Tc2_BACnet     | objects                                 | FB_BACnet_Cal                            | verified | PDF chapter-overview (chapter-overview-only)
+2026-06-03T00:00:00Z | Tc2_BACnet     | objects                                 | FB_BACnet_EE                             | verified | PDF chapter-overview (chapter-overview-only)
+2026-06-03T00:00:00Z | Tc2_BACnet     | objects                                 | FB_BACnet_ELog                           | verified | PDF chapter-overview (chapter-overview-only)
+2026-06-03T00:00:00Z | Tc2_BACnet     | objects                                 | FB_BACnet_File                           | verified | PDF chapter-overview (infer-from-naming-convention)
+2026-06-03T00:00:00Z | Tc2_BACnet     | objects                                 | FB_BACnet_Loop                           | verified | PDF chapter-overview (chapter-overview-only)
+2026-06-03T00:00:00Z | Tc2_BACnet     | objects                                 | FB_BACnet_MI                             | verified | PDF chapter-overview (chapter-overview-only)
+2026-06-03T00:00:00Z | Tc2_BACnet     | objects                                 | FB_BACnet_MO                             | verified | PDF chapter-overview (chapter-overview-only)
+2026-06-03T00:00:00Z | Tc2_BACnet     | objects                                 | FB_BACnet_MV                             | verified | PDF chapter-overview (chapter-overview-only)
+2026-06-03T00:00:00Z | Tc2_BACnet     | objects                                 | FB_BACnet_NC                             | verified | PDF chapter-overview (chapter-overview-only)
+2026-06-03T00:00:00Z | Tc2_BACnet     | objects                                 | FB_BACnet_PC                             | verified | PDF chapter-overview (infer-from-naming-convention)
+2026-06-03T00:00:00Z | Tc2_BACnet     | objects                                 | FB_BACnet_Prog                           | verified | PDF chapter-overview (infer-from-naming-convention)
+2026-06-03T00:00:00Z | Tc2_BACnet     | objects                                 | FB_BACnet_SchedA                         | verified | PDF chapter-overview (chapter-overview-only)
+2026-06-03T00:00:00Z | Tc2_BACnet     | objects                                 | FB_BACnet_SchedB                         | verified | PDF chapter-overview (chapter-overview-only)
+2026-06-03T00:00:00Z | Tc2_BACnet     | objects                                 | FB_BACnet_SchedM                         | verified | PDF chapter-overview (chapter-overview-only)
+2026-06-03T00:00:00Z | Tc2_BACnet     | objects                                 | FB_BACnet_TLM                            | verified | PDF chapter-overview (chapter-overview-only)
+2026-06-03T00:00:00Z | Tc2_BACnet     | objects                                 | FB_BACnet_TLog                           | verified | PDF chapter-overview (chapter-overview-only)
+2026-06-03T00:00:00Z | Tc2_BACnet     | objects                                 | FB_BACnet_View                           | verified | PDF chapter-overview (chapter-overview-only)
+2026-06-03T00:00:00Z | Tc2_BACnet     | primitive_values                        | FB_BACnet_Date                           | verified | PDF chapter-overview (chapter-overview-only)
+2026-06-03T00:00:00Z | Tc2_BACnet     | primitive_values                        | FB_BACnet_DateTime                       | verified | PDF chapter-overview (chapter-overview-only)
+2026-06-03T00:00:00Z | Tc2_BACnet     | primitive_values                        | FB_BACnet_INT                            | verified | PDF chapter-overview (chapter-overview-only)
+2026-06-03T00:00:00Z | Tc2_BACnet     | primitive_values                        | FB_BACnet_LAV                            | verified | PDF chapter-overview (chapter-overview-only)
+2026-06-03T00:00:00Z | Tc2_BACnet     | primitive_values                        | FB_BACnet_String                         | verified | PDF chapter-overview (chapter-overview-only)
+2026-06-03T00:00:00Z | Tc2_BACnet     | primitive_values                        | FB_BACnet_Time                           | verified | PDF chapter-overview (chapter-overview-only)
+2026-06-03T00:00:00Z | Tc2_BACnet     | server                                  | FB_BACnet_ReadProperty                   | verified | PDF chapter-overview (infer-from-naming-convention)
+2026-06-03T00:00:00Z | Tc2_BACnet     | server                                  | FB_BACnet_WriteProperty                  | verified | PDF chapter-overview (infer-from-naming-convention)
+2026-06-03T00:00:00Z | Tc3_Database   | function_blocks                         | FB_ConfigTcDBSrvEvt                      | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_Database   | function_blocks                         | FB_NoSQLObjectId_MongoDB                 | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_Database   | function_blocks                         | FB_NoSQLQueryBuilder_DocumentDB          | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_Database   | function_blocks                         | FB_NoSQLQueryBuilder_TimeSeriesDB        | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_Database   | function_blocks                         | FB_NoSQLQueryEvt                         | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_Database   | function_blocks                         | FB_NoSQLResultEvt                        | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_Database   | function_blocks                         | FB_NoSQLValidationEvt                    | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_Database   | function_blocks                         | FB_PLCDBAutoLogEvt                       | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_Database   | function_blocks                         | FB_PLCDBCmdEvt                           | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_Database   | function_blocks                         | FB_PLCDBCreateEvt                        | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_Database   | function_blocks                         | FB_PLCDBReadEvt                          | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_Database   | function_blocks                         | FB_PLCDBWriteEvt                         | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_Database   | function_blocks                         | FB_SQLCommandEvt                         | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_Database   | function_blocks                         | FB_SQLDatabaseEvt                        | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_Database   | function_blocks                         | FB_SQLResultEvt                          | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_Database   | function_blocks                         | FB_SQLStoredProcedureEvt                 | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_Database   | global_constants                        | Constants                                | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_Database   | obsolete                                | FB_ConfigTcDBSrv                         | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_Database   | obsolete                                | FB_PLCDBAutoLog                          | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_Database   | obsolete                                | FB_PLCDBCmd                              | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_Database   | obsolete                                | FB_PLCDBCreate                           | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_Database   | obsolete                                | FB_PLCDBRead                             | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_Database   | obsolete                                | FB_PLCDBWrite                            | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_Database   | obsolete                                | FB_SQLCommand                            | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_Database   | obsolete                                | FB_SQLDatabase                           | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_Database   | obsolete                                | FB_SQLResult                             | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_Database   | obsolete                                | FB_SQLStoredProcedure                    | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_BA2_Common | auxiliary_calc                          | F_BA_RemMsTof                            | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_BA2_Common | auxiliary_calc                          | F_BA_RemMsTon                            | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_BA2_Common | auxiliary_calc                          | F_BA_RemMsTp                             | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_BA2_Common | auxiliary_calc                          | F_BA_RemSecsTof                          | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_BA2_Common | auxiliary_calc                          | F_BA_RemSecsTone                         | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_BA2_Common | auxiliary_calc                          | F_BA_RemSecsTp                           | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_BA2_Common | check_enum                              | F_BA_CheckEnum                           | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_BA2_Common | class_value                             | F_BA_BVal                                | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_BA2_Common | class_value                             | F_BA_ByteVal                             | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_BA2_Common | class_value                             | F_BA_IVal                                | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_BA2_Common | class_value                             | F_BA_RVal                                | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_BA2_Common | class_value                             | F_BA_UDIVal                              | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_BA2_Common | compare                                 | F_BA_CompareVersion                      | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_BA2_Common | controllers                             | FB_BA_PIDCtrl                            | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_BA2_Common | date_check                              | F_BA_DateHasPlaceholder                  | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_BA2_Common | date_check                              | F_BA_DateUnspecified                     | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_BA2_Common | date_check                              | F_BA_IsLeapYear                          | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_BA2_Common | date_check                              | F_BA_TimeHasPlaceholder                  | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_BA2_Common | date_check                              | F_BA_TimeUnspecified                     | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_BA2_Common | date_convert                            | F_BA_TimeStruct_TO_DateTime              | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_BA2_Common | date_convert                            | F_BA_TimeStruct_TO_Time                  | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_BA2_Common | date_convert                            | F_BA_To100msDate                         | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_BA2_Common | date_convert                            | F_BA_To100msTime                         | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_BA2_Common | date_convert                            | F_BA_ToDT                                | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_BA2_Common | date_convert                            | F_BA_ToDate                              | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_BA2_Common | date_convert                            | F_BA_ToSTDate                            | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_BA2_Common | date_convert                            | F_BA_ToSTDateTime                        | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_BA2_Common | date_convert                            | F_BA_ToSTTime                            | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_BA2_Common | date_convert                            | F_BA_ToTime                              | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_BA2_Common | date_time                               | F_BA_CountLeapYears                      | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_BA2_Common | date_time                               | F_BA_DateMerge                           | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_BA2_Common | date_time                               | F_BA_DateTimeString                      | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_BA2_Common | date_time                               | F_BA_DayOfWeek                           | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_BA2_Common | date_time                               | F_BA_DaysInMonth                         | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_BA2_Common | date_time                               | F_BA_GetDT                               | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_BA2_Common | date_time                               | F_BA_GetDateTime                         | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_BA2_Common | date_time                               | F_BA_TimeMerge                           | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_BA2_Common | date_time                               | F_BA_TimeString                          | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_BA2_Common | date_value                              | F_BA_DateRangeVal                        | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_BA2_Common | date_value                              | F_BA_DateVal                             | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_BA2_Common | date_value                              | F_BA_WeekNDayVal                         | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_BA2_Common | gvls                                    | BAComn_EnumDE                            | verified | chapter-overview (large GVL)
+2026-06-03T00:00:00Z | Tc3_BA2_Common | gvls                                    | BAComn_Global                            | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_BA2_Common | gvls                                    | BAComn_Param                             | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_BA2_Common | hysteresis_2p                           | FB_BA_Swi2P                              | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_BA2_Common | hysteresis_2p                           | FB_BA_SwiHys2P                           | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_BA2_Common | io_terminals                            | FB_BA_KL32xx                             | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_BA2_Common | memory                                  | F_BA_ByteCmp                             | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_BA2_Common | memory                                  | F_BA_Cmp                                 | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_BA2_Common | memory                                  | F_BA_DiffPtr                             | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_BA2_Common | memory                                  | F_BA_GetUsedEntryCount                   | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_BA2_Common | memory                                  | F_BA_MemSet                              | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_BA2_Common | memory                                  | F_BA_MemSetEx                            | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_BA2_Common | memory                                  | F_BA_OffsetPtr                           | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_BA2_Common | persistent_data                         | FB_BA_PersistentDataHandler              | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_BA2_Common | ramps_filters                           | FB_BA_FltrPT1                            | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_BA2_Common | ramps_filters                           | FB_BA_RampLmt                            | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_BA2_Common | scheduler                               | F_BA_SetSchedulerEntry                   | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_BA2_Common | tc_log                                  | F_BA_LogMessage                          | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_BA2_Common | tc_log                                  | F_BA_LogMessage1                         | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_BA2_Common | tc_log                                  | F_BA_LogMessage10                        | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_BA2_Common | tc_log                                  | F_BA_LogMessage2                         | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_BA2_Common | tc_log                                  | F_BA_LogMessage3                         | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_BA2_Common | tc_log                                  | F_BA_LogMessage4                         | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_BA2_Common | tc_log                                  | F_BA_LogMessage5                         | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_BA2_Common | tc_log                                  | F_BA_LogMessage6                         | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_BA2_Common | tc_log                                  | F_BA_LogMessage7                         | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_BA2_Common | tc_log                                  | F_BA_LogMessage8                         | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_BA2_Common | tc_log                                  | F_BA_LogMessage9                         | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_BA2_Common | trend                                   | F_BA_IsDisturbed                         | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_BA2_Common | trend                                   | F_BA_TrendBufferSize                     | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_BA2_Common | trigger                                 | FB_BA_ATrigCOV                           | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_BA2_Common | trigger                                 | FB_BA_RFTrig                             | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_BA2_Common | validation                              | F_BA_IsDataClassValid                    | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_BA2_Common | validation                              | F_BA_IsDataTypeValid                     | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_BA2_Common | validation                              | F_BA_IsDateValChoiceValid                | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_BA2_Common | validation                              | F_BA_IsLoggingTypeValid                  | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_BA2_Common | validation                              | F_BA_IsMeasuringElementValid             | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_BA2_Common | validation                              | F_BA_IsUnitValid                         | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_BA2_Common | validation                              | F_BA_IsWeekdayValid                      | verified | PDF + InfoSys cross-verified

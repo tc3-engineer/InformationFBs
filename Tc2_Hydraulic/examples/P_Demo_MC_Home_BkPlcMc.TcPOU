@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_MC_Home_BkPlcMc" Id="{ff873d94-ada2-5fb9-a73a-c94af7c45bad}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_MC_Home_BkPlcMc
+VAR
+    fbHomeClampingHead : MC_Home_BkPlcMc;
+    axHydClampingHead  : AXIS_REF_BkPlcMc;
+    rtHomeTrigger      : R_TRIG;
+    bStartupHomeReq    : BOOL := FALSE;                  // 开机归零请求
+    lrHomeReferenceMm  : LREAL := 0.0;                   // 参考位置 = 0 mm
+    bCamSwitchInput    : BOOL := FALSE;                  // 参考凸轮直接输入
+    bHomeDone          : BOOL;
+    bHomeBusy          : BOOL;
+    bHomeAborted       : BOOL;
+    bHomeError         : BOOL;
+    nHomeErrorID       : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：注塑机开机后必须归零锁模轴。本例使用 DefaultHomingMode（由轴
+//       参数 nEnc_HomingType 决定具体策略）：典型为 AbsSwitch — 轴
+//       沿 fEnc_RefIndexVelo 方向慢速去找参考凸轮（接近开关接到
+//       bCamSwitchInput 或硬件 IO 终端），找到后退出凸轮区把那点定
+//       义为 lrHomeReferenceMm（0 mm）。
+// 价值：手写需要 MoveVelocity → 监视凸轮 → Stop → 反向 MoveVelocity →
+//       监视脱离 → Stop → SetPosition 共 50+ 行代码；本 FB 一行调用
+//       全部封装，并自动处理各模式（撞死点 / 找凸轮 / 找零脉冲 / 直接置位）。
+// 验证：① 前置：MC_Power_BkPlcMc 已使能 + 轴静止 + 无错；
+//       ② 轴参数里设置 fEnc_RefIndexVelo、fEnc_RefSyncVelo、
+//       bEnc_RefIndexPositive 等参数；
+//       ③ bStartupHomeReq := TRUE 触发；
+//       ④ bHomeBusy 立即变 TRUE；MC_ReadActualPosition_BkPlcMc 应观
+//       察轴沿正方向慢速运动；
+//       ⑤ 手动触发 bCamSwitchInput := TRUE（或物理凸轮被压下）；
+//       ⑥ 轴停下反向慢速退出，bCamSwitchInput 变 FALSE 瞬间位置被
+//       置为 0，bHomeDone := TRUE；
+//       ⑦ 之后 MC_ReadStatus_BkPlcMc 看到的位置应为 0；
+//       ⑧ 业务侧建议调 MC_AxParamSave_BkPlcMc 持久化。
+// 注意：实际工程中 bCamSwitchInput 通常接物理接近开关或 EtherCAT 输入
+//       字段；本例用 BOOL 仅为演示。
+// =============================================================================
+
+rtHomeTrigger(CLK := bStartupHomeReq);
+
+fbHomeClampingHead(
+    Execute        := rtHomeTrigger.Q,
+    Position       := lrHomeReferenceMm,
+    HomingMode     := MC_DefaultHomingMode_BkPlcMc,        // 由 nEnc_HomingType 决定
+    CalibrationCam := bCamSwitchInput,                     // 凸轮直接输入
+    BufferMode     := Aborting_BkPlcMc,
+    Axis           := axHydClampingHead,
+    Busy           => bHomeBusy,
+    Done           => bHomeDone,
+    CommandAborted => bHomeAborted,
+    Error          => bHomeError,
+    ErrorID        => nHomeErrorID
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

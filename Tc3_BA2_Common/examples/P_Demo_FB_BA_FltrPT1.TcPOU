@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_BA_FltrPT1" Id="{671e3765-a024-51d9-98b4-9091cbe8d9ac}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_BA_FltrPT1
+VAR
+    fbDuctTempFilter   : FB_BA_FltrPT1;          // 风管温度滤波器
+
+    // ---- 工艺信号 ----
+    fRawDuctTempC      : REAL := 18.0;            // 风管温度原始值（含噪声）
+    nFilterTimeConst   : UDINT := 10;             // PT1 时间常数 = 10 秒
+    bForceResync       : BOOL := FALSE;           // 上升沿：无扰同步 fOut := fIn
+
+    // ---- 输出（在线 monitor 观察）----
+    fFilteredDuctTempC : REAL;                    // 滤波后温度，供 PID 用
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// Tc3_BA2_Common.FB_BA_FltrPT1 演示程序
+// =============================================================================
+// 场景：风管温度测量噪声大（Pt100 + 长线缆 + 风扰）：原始信号秒级抖动 ±0.5℃。
+//       控制环只关心 ±0.1℃ 精度。给原始信号加 PT1 (τ=10s) 后输出 fFiltered…
+//       供 PID 作为 PV 使用。
+//
+// 价值：替代手写"低通滤波 + 历史值 buffer + 首周期初值"约 5 行代码，并保证首
+//       次调用 fOut := fIn 没有冷启动假阶跃；bSetActl 在线脉冲可在工艺模式切
+//       换时无扰复位，避免下游 PID 响应一次假阶跃。
+//
+// 验证：
+//   ① 登录后首周期：fFilteredDuctTempC 立即等于 18.0（fIn 的初值）。无 0 → 18 的
+//      缓慢上爬（这正是 PT1 首周期自动同步的价值）。
+//   ② 在线写 fRawDuctTempC := 25.0（阶跃 7℃）→ 观察 fFilteredDuctTempC 在 ~10
+//      秒内从 18 缓慢爬到 25 附近：第 10 秒约 ~22.4（63.2% × 7 + 18），第 30 秒
+//      约 24.6 (95%)，第 50 秒接近 25 (99%)。
+//   ③ 在线写 bForceResync := TRUE → 立即 fFilteredDuctTempC := fRawDuctTempC，
+//      跳过滤波延时；写回 FALSE 即可（仅上升沿）。
+//   ④ 把 nFilterTimeConst 设为 0 → fFilteredDuctTempC = fRawDuctTempC 透传无滤波。
+//
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_BA2_Common（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方『验证』指引在线写值观察
+// =============================================================================
+
+fbDuctTempFilter(
+    fIn        := fRawDuctTempC,
+    nDampConst := nFilterTimeConst,
+    bSetActl   := bForceResync,
+    fOut       => fFilteredDuctTempC
+);
+
+// 工程提醒：多路 PV 需要多个独立 FB_BA_FltrPT1 实例；不要共用一个实例
+// 滤波多路信号——内部状态会被互相覆盖。
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

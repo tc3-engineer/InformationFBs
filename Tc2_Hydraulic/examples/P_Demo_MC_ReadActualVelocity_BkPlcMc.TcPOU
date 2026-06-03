@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_MC_ReadActualVelocity_BkPlcMc" Id="{d47250e9-81a1-577b-8c98-eeb81570d717}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_MC_ReadActualVelocity_BkPlcMc
+VAR
+    fbReadClampVelocity : MC_ReadActualVelocity_BkPlcMc;
+    axHydClampingHead   : AXIS_REF_BkPlcMc;
+    bMonitorVelocity    : BOOL := TRUE;
+    lrActualVelMmS      : LREAL;                          // 实际速度 mm/s（含符号）
+    bVelocityValid      : BOOL;
+    bReadError          : BOOL;
+    nReadErrorID        : UDINT;
+    bAxisAtStandstill   : BOOL;                           // ABS(v) < 0.5 mm/s
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：注塑机合模过程实时显示锁模头速度做 HMI 图表；合模到位前必须确认
+//       "真的停下来"再切换到保压段，避免压力突变冲击模具。
+// 价值：相比直接读 axHydClampingHead.pStAxRtData^.fActVelocity，本 FB
+//       自带编码器故障屏蔽（编码器断线时 bVelocityValid := FALSE，避免
+//       误读上次的旧速度值），与其它 Read* FB 接口一致。
+// 验证：① bMonitorVelocity := TRUE → lrActualVelMmS 跟随实际速度变化
+//       （注意可能噪声大，需要在轴参数里启用 fVelo_Filter）；
+//       ② 轴静止时 bAxisAtStandstill 应稳定为 TRUE（阈值 0.5 mm/s
+//       覆盖典型液压编码器噪声）；
+//       ③ 反向运动时 lrActualVelMmS 应为负数（带符号）。
+// 注意：阈值 0.5 mm/s 是典型液压编码器经验值，需要根据你的传感器分辨率
+//       和滤波器系数调整。
+// =============================================================================
+
+fbReadClampVelocity(
+    Enable   := bMonitorVelocity,
+    Axis     := axHydClampingHead,
+    Valid    => bVelocityValid,
+    Busy     => ,                                          // 始终 FALSE
+    Error    => bReadError,
+    ErrorID  => nReadErrorID,
+    Velocity => lrActualVelMmS
+);
+
+// "轴已停"判定：用阈值而非 = 0；只在 Valid 下判断
+bAxisAtStandstill := bVelocityValid AND (ABS(lrActualVelMmS) < 0.5);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

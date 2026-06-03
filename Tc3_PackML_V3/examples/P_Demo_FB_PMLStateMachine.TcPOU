@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_PMLStateMachine" Id="{7b18f5bd-5a07-595b-a521-dbc33018058d}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_PMLStateMachine
+VAR
+    fbStateMachine    : FB_PMLStateMachine;
+
+    // HMI 按钮——在线置 TRUE→FALSE 模拟按下
+    bBtnReset         : BOOL := FALSE;
+    bBtnStart         : BOOL := FALSE;
+    bBtnStop          : BOOL := FALSE;
+    bBtnHold          : BOOL := FALSE;
+    bBtnAbort         : BOOL := FALSE;
+    bBtnComplete      : BOOL := FALSE;             // V3 新增 Complete 命令
+
+    // 状态机 IO
+    eCmd              : E_PMLCommand;              // 当前下发命令
+    eState            : E_PMLState;                // 当前状态枚举（在线观察）
+    sStateName        : STRING(80);                // V3 新增：当前状态字符串
+    bError            : BOOL;
+    nErrorId          : UDINT;
+
+    eMode             : DINT := 1;                 // 当前 UnitMode（1 = Production）
+    stSubUnitInfoRef  : ST_PMLSubUnitInfoRef;      // 子单元状态汇总（本例无子单元，传零）
+    stOptions         : ST_PMLStateMachineOptions; // 选项（PDF V1.0.0 标 "Not used at present"）
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc3_PackML_V3.FB_PMLStateMachine 演示程序
+// ============================================================
+// 场景：在 HMI 上模拟 Reset / Start / Stop / Hold / Abort / Complete 按钮
+//       驱动状态机；状态机按 PackML V3 标准规则做状态切换、拒绝非法命令。
+// 价值：不用本 FB 需要手写 18×11 = 198 个分支判断；用本 FB 一次实例化
+//       全搞定，且非法命令自动报错避免状态跑飞。V3 新增的 sState 字符串
+//       输出让 HMI 显示当前状态名更简洁（不用 F_PMLStateCommandToString
+//       反查）。V3 新增的 Complete 命令支持 PackML V3 收工流程。
+// 验证：登录后顺序操作：
+//       1. 写 bBtnReset := TRUE → 观察 eState 从 0(Undefined) 切到
+//          15(Resetting) → 4(Idle)；sStateName 显示 'Idle'。
+//       2. 写 bBtnStart := TRUE → 观察 eState 经 3(Starting) → 6(Execute)。
+//       3. 写 bBtnComplete := TRUE → V3 新流程：eState 切到 16(Completing)
+//          → 17(Completed)；sStateName 显示 'Completed'。
+//       4. 写 bBtnAbort := TRUE → 验证 eState 立刻切到 8(Aborting) →
+//          9(Aborted)（任意态都可被 Abort 打断）。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_PackML_V3（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方"验证"指引在线写值观察
+// ============================================================
+
+(* 把按钮事件按优先级（Abort 最高）映射到命令枚举——电平触发 *)
+IF bBtnAbort THEN
+    eCmd := E_PMLCommand.Abort;
+ELSIF bBtnReset THEN
+    eCmd := E_PMLCommand.Reset;
+ELSIF bBtnStart THEN
+    eCmd := E_PMLCommand.Start;
+ELSIF bBtnStop THEN
+    eCmd := E_PMLCommand.Stop;
+ELSIF bBtnHold THEN
+    eCmd := E_PMLCommand.Hold;
+ELSIF bBtnComplete THEN
+    eCmd := E_PMLCommand.Complete;          // V3 新命令
+ELSE
+    eCmd := E_PMLCommand.Undefined;
+END_IF
+
+(* 单次完整调用形式：所有 VAR_INPUT 显式赋值；所有 VAR_OUTPUT 接出 *)
+fbStateMachine(
+    eMode            := eMode,
+    eCommand         := eCmd,
+    stSubUnitInfoRef := stSubUnitInfoRef,
+    stOptions        := stOptions,
+    eState           => eState,
+    sState           => sStateName,
+    bError           => bError,
+    nErrorId         => nErrorId
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_MC_CamOut_BkPlcMc" Id="{cb058b4d-5253-5169-84a3-fc44c2753d40}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_MC_CamOut_BkPlcMc
+VAR
+    fbDecoupleCam     : MC_CamOut_BkPlcMc;
+    fbHaltSlaveAfter  : MC_Halt_BkPlcMc;
+    axHydInjectionHead: AXIS_REF_BkPlcMc;
+    rtCamDecoupleTrig : R_TRIG;
+    bRequestCamUncoup : BOOL := FALSE;
+    bCamUncoupleDone  : BOOL;
+    nCamUncoupleErrID : UDINT;
+    bCamUncoupleError : BOOL;
+    bHaltBusy         : BOOL;
+    bHaltDone         : BOOL;
+    bHaltError        : BOOL;
+    bHaltActive       : BOOL;
+    bHaltAborted      : BOOL;
+    nHaltErrorID      : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：注塑机凸轮耦合周期末，主锁模轴到末位停下，需要解耦注射头并把
+//       它送回起点等下一周期。本 FB 把凸轮表耦合释放为 ContinuousMotion
+//       状态，然后立即 Halt 把从轴减速停。
+// 价值：凸轮表解耦的标准接口；与 MC_CamIn_BkPlcMc 配套形成"凸轮耦合
+//       周期" 闭环。手写"清算法耦合 bit" 会瞬间速度突变冲击注射头。
+// 验证：① 前置：先用 MC_CamIn_BkPlcMc 建立凸轮耦合，且系统在运行中
+//       （从轴有非零速度）；
+//       ② bRequestCamUncoup := TRUE → rtCamDecoupleTrig 给上升沿；
+//       ③ bCamUncoupleDone := TRUE（本 FB Busy 永远 FALSE 所以
+//       Done 一周期内出来）；
+//       ④ 此时 axHydInjectionHead 速度不为 0 — 在做 ContinuousMotion；
+//       ⑤ Halt 把从轴减速到 0 进入 StandStill；
+//       ⑥ 业务侧后续可发 MC_MoveAbsolute_BkPlcMc 把注射头送回起点。
+// 关键警告：与 MC_GearOut 同 — 解耦不自动停轴！必须接 Halt/Stop。
+// =============================================================================
+
+rtCamDecoupleTrig(CLK := bRequestCamUncoup);
+
+fbDecoupleCam(
+    Execute := rtCamDecoupleTrig.Q,
+    Slave   := axHydInjectionHead,
+    Busy    => ,                                          // 永远 FALSE
+    Done    => bCamUncoupleDone,
+    Error   => bCamUncoupleError,
+    ErrorID => nCamUncoupleErrID
+);
+
+// 解耦完成立即 Halt
+fbHaltSlaveAfter(
+    Execute      := bCamUncoupleDone,
+    Deceleration := 1000.0,
+    Jerk         := 0.0,
+    RampTime     := 0.0,
+    BufferMode   := Aborting_BkPlcMc,
+    Axis         := axHydInjectionHead,
+    Busy         => bHaltBusy,
+    Done         => bHaltDone,
+    Error        => bHaltError,
+    ErrorID      => nHaltErrorID,
+    Active       => bHaltActive,
+    CommandAborted => bHaltAborted
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

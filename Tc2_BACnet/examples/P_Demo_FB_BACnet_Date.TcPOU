@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_BACnet_Date" Id="{e8a69966-8a04-5550-9168-e1ae0c18ff8f}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_BACnet_Date
+VAR
+    fbBatchStartDate : FB_BACnet_Date := (
+        sObjectName := 'BatchStartDate',
+        sDescription := 'Date the current batch started');
+    // 2026-06-03 是周三(eWednesday),nYear 从 1900 起算 → 2026 - 1900 = 126
+    stToday : ST_BA_Date := (
+        nYear := 126, eMonth := E_BA_MONTH.eJune,
+        nDay := E_BA_DAY.eDay03, eDayOfWeek := E_BA_WEEKDAY.eWednesday);
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景:把"当前生产批次的批次日期"暴露给 BMS,无需用 DateTime 包含多余的时刻
+//       字段。
+// 价值:Date 是 BACnet 标准的轻量日期容器,BMS 识别;比字符串 '2026-06-03'
+//       节省解析、自带 nYear / eMonth / nDay / eDayOfWeek 结构化字段。
+// 验证:1) BACnet Explorer 读 fbBatchStartDate.Present_Value 应显示
+//       2026-06-03 Wednesday(nYear=126 + 1900 = 2026)。2) 把 stToday.nDay
+//       临时改成 04,Explorer 应跟随更新(注意 eDayOfWeek 必须匹配新日期,
+//       否则 stack 拒绝)。
+// 注意:nYear 字段按 BACnet 标准从 1900 起算,nYear := 126 表示 2026 年。
+// =============================================================================
+
+fbBatchStartDate.stValue := stToday;
+fbBatchStartDate();
+
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

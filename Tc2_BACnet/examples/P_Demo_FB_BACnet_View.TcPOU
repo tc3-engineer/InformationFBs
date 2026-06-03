@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_BACnet_View" Id="{3c20b367-7efd-5c67-924b-9d79dfa9fcae}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_BACnet_View
+VAR
+    fbBuilding : FB_BACnet_View := (
+        eNodeType := E_BACnet_NodeType.eOrganizational,
+        sObjectName := 'BuildingA',
+        sDescription := 'Office building A');
+
+    fbFloor3   : FB_BACnet_View := (
+        iParent := fbBuilding,
+        eNodeType := E_BACnet_NodeType.eArea,
+        sObjectName := '\/Floor3',                    // BuildingA.Floor3
+        sDescription := '\/Floor 3 office area');
+
+    fbZoneEast : FB_BACnet_View := (
+        iParent := fbFloor3,
+        eNodeType := E_BACnet_NodeType.eCollection,
+        sObjectName := '\/East',                      // BuildingA.Floor3.East
+        sDescription := '\/East zone');
+
+    fbTempEast : FB_BACnet_AI := (
+        iParent := fbZoneEast,
+        sObjectName := '\/Temp',                      // BuildingA.Floor3.East.Temp
+        sDescription := '\/Temperature',
+        eUnit := E_BA_Unit.eTemperature_DegreesCelsius);
+
+    fSensor    : REAL := 22.0;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景:楼控项目有 2000+ BACnet 对象,运维在 BMS 上要按 楼宇 → 楼层 → 区域 →
+//       房间 → 传感器 层级浏览,而不是看 2000 行扁平列表。
+// 价值:Structured View 是 BACnet 标准,跨 BMS 通用;一行 iParent := fbParent
+//       就建好层级,无需手动配 BMS 树;\/ 拼接让 ObjectName 自动带上完整路径。
+// 验证:1) BACnet Explorer 连本机切换到树形视图,应看到 BuildingA / Floor3
+//       / East / Temp 三层嵌套。2) 读 fbTempEast.Object_Name 应为
+//       'BuildingA.Floor3.East.Temp'(由 \/ 拼接而成,分隔符在 BACnet_Param 配)。
+//       3) 在线写 fSensor := 25.0,Temp 节点的 Present_Value 应跟随。
+// =============================================================================
+
+fbBuilding();
+fbFloor3();
+fbZoneEast();
+
+fbTempEast.fVal := fSensor;
+fbTempEast();
+
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

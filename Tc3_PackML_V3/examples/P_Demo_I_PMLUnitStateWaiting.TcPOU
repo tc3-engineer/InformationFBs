@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_I_PMLUnitStateWaiting" Id="{5f0858e7-3472-5984-8eef-fbe24c9325b2}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_I_PMLUnitStateWaiting
+VAR
+    ipKeeper         : I_PMLUnitStateWaiting;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc3_PackML_V3.I_PMLUnitStateWaiting 演示程序
+// ============================================================
+// 场景：本示例演示如何通过 INTERFACE 引用调用应用 FB 实现的稳态维持
+//       方法。真实工程把 ipKeeper 指向某个 IMPLEMENTS I_PMLUnitStateWaiting
+//       的应用 FB（如 FB_LabelKeeper），状态机处于 Stopped 时每周期调
+//       ipKeeper.M_Stopped()，FB 内部维持运动输出关闭、安全继电器锁存等。
+// 价值：稳态维持代码（"机器停着的时候是什么样"）和过渡动作代码（"如何
+//       从一个态切到另一个"）分离，代码审阅和故障诊断更简单。
+// 验证：本示例只演示接口调用语法，不能直接编译运行（ipKeeper 需要先
+//       指向具体实现 FB）。实际项目应：
+//       1. 创建一个新 FB（如 FB_LabelKeeper）；
+//       2. 在该 FB 头部 IMPLEMENTS I_PMLUnitStateWaiting；
+//       3. 实现全部 7 个方法（M_Aborted, M_Completed, M_Held, M_Idle,
+//          M_Stopped, M_Suspended, M_Undefined）；
+//       4. 在 P_MAIN 中：ipKeeper := fbLabelKeeper;
+//          状态机切到 Stopped → 调 ipKeeper.M_Stopped()。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_PackML_V3（References → Add library）
+//   3. 编译可能因 ipKeeper 未指向实例而报错——这是接口示例的正常情况；
+//      把本程序作为接口契约的参考。
+// ============================================================
+
+(* 模拟调用接口方法——实际项目中 ipKeeper 由具体 FB 实例赋值 *)
+IF ipKeeper <> 0 THEN
+    ipKeeper.M_Stopped();
+END_IF
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>
