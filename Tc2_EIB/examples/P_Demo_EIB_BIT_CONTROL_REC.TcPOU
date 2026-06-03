@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_EIB_BIT_CONTROL_REC" Id="{c04a25ee-7a40-5e64-9733-93490d94d1f6}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_EIB_BIT_CONTROL_REC
+VAR
+    fbReceiveCtl     : EIB_BIT_CONTROL_REC;
+    stEibRec         : EIB_REC;
+    stGroupLamp      : EIB_GROUP_ADDR := (MAIN := 1, SUB_MAIN := 1, NUMBER := 30);
+    bIsForced        : BOOL;       // bControl = TRUE
+    bRequestedOn     : BOOL;       // bValue
+    bGotNewSample    : BOOL;
+    rTrigSample      : R_TRIG;
+    bLampShouldBeOn  : BOOL;
+    bForceOff        : BOOL;       // 强制关灯标志
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_EIB.EIB_BIT_CONTROL_REC 演示程序
+// ============================================================
+// 场景：DPT 2.001 安全应急：普通灯光开关 + 应急关灯按钮共用组地址 1/1/30。本 demo 接收 2-bit telegram，按 `bControl` 决定是否强制覆盖。
+// 价值：替代手写位拆 + 优先级判断；与 DPT 2.xxx 语义直接对应
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_EIB（References → Add library）
+//   3. 编译 → 登录 → 运行；按下方在线写值步骤操作
+// 验证：推 (`bControl=FALSE, bValue=TRUE`) → `bLampShouldBeOn = TRUE`；推 (`bControl=TRUE, bValue=FALSE`) → `bForceOff = TRUE`，`bLampShouldBeOn` 被强制覆盖。
+// ============================================================
+
+fbReceiveCtl(
+    Group_Address := stGroupLamp,
+    strData_Rec   := stEibRec,
+    bDataReceive  => bGotNewSample,
+    bControl      => bIsForced,
+    bValue        => bRequestedOn
+);
+
+rTrigSample(CLK := bGotNewSample);
+IF rTrigSample.Q THEN
+    IF bIsForced THEN
+        // 强制命令：直接覆盖
+        bLampShouldBeOn := bRequestedOn;
+        bForceOff       := NOT bRequestedOn;
+    ELSE
+        // 普通命令：只有非强制状态下才生效
+        IF NOT bForceOff THEN
+            bLampShouldBeOn := bRequestedOn;
+        END_IF;
+    END_IF;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

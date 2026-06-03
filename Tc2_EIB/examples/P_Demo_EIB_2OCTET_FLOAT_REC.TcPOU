@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_EIB_2OCTET_FLOAT_REC" Id="{78c0a982-35c9-5a18-bfff-16102ed5603c}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_EIB_2OCTET_FLOAT_REC
+VAR
+    fbReceiveTemp        : EIB_2OCTET_FLOAT_REC;
+    stEibRec             : EIB_REC;          // 实际项目里链 KL6301.str_Data_Rec
+    stGroupOutdoorTemp   : EIB_GROUP_ADDR := (MAIN := 1, SUB_MAIN := 4, NUMBER := 1);
+    rTemperatureC        : REAL;             // 当前温度
+    bGotNewSample        : BOOL;             // 单周期脉冲：刚刚收到新温度
+    rTrigSample          : R_TRIG;
+    bOutOfRange          : BOOL;             // 温度超出 [-10, 40] 报警
+    nSampleCount         : DINT;             // 自启动以来收到的样本数
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_EIB.EIB_2OCTET_FLOAT_REC 演示程序
+// ============================================================
+// 场景：楼宇 BMS：DPT 9.001 室外温度传感器组地址 1/4/1 周期推送当前温度。本 demo 接收温度值，超出 [-10°C, 40°C] 报警。
+// 价值：把「半精度浮点解码 + 字节序还原 + 单周期脉冲变化检测」封装为单调用；业务代码 1 行拿到温度浮点值
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_EIB（References → Add library）
+//   3. 编译 → 登录 → 运行；按下方在线写值步骤操作
+// 验证：现场调试员用 ETS 模拟器把 23.5 推到 1/4/1 → 观察 `rTemperatureC` 应等于 23.5（±0.01），`bGotNewSample` 在该 PLC 周期为 TRUE，下个周期回 FALSE。
+// ============================================================
+
+// 每周期调用：库会检查 stEibRec 内 group 1/4/1 是否有新帧
+fbReceiveTemp(
+    Group_Address := stGroupOutdoorTemp,
+    strData_Rec   := stEibRec,
+    bDataReceive  => bGotNewSample,
+    rData         => rTemperatureC
+);
+
+// 单周期脉冲，必须用 R_TRIG 转上升沿才能数样本
+rTrigSample(CLK := bGotNewSample);
+IF rTrigSample.Q THEN
+    nSampleCount := nSampleCount + 1;
+    bOutOfRange  := (rTemperatureC &lt; -10.0) OR (rTemperatureC &gt; 40.0);
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

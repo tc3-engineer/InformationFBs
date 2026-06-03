@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_DBRecordArraySelect" Id="{4cf6727f-d4ce-5401-b83e-5f601f9fdf42}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_DBRecordArraySelect
+TYPE ST_LogRecord :
+STRUCT
+    ID        : ULINT;          // 映射 SQL bigint（TC3 用 ULINT，TC2 用 T_ULARGE_INTEGER）
+    Timestamp : DT;             // 映射 SQL datetime
+    Name      : STRING(80);     // 映射 SQL nvarchar(80)
+    Value     : LREAL;          // 映射 SQL float
+END_STRUCT
+END_TYPE
+
+VAR
+    fbArraySelect     : FB_DBRecordArraySelect;
+    arrRecords        : ARRAY[0..19] OF ST_LogRecord;            // 一次拉 20 条
+    sSelectSql        : STRING(10000) := 'SELECT TOP 20 ID, Timestamp, Name, Value FROM tProcessLog ORDER BY Timestamp DESC';
+    bUserQuery        : BOOL;                                    // HMI"刷新报表"按钮
+    rEdgeQuery        : R_TRIG;
+    hLocalDbId        : UDINT := 1;
+    bArrBusy          : BOOL;
+    bArrErr           : BOOL;
+    nArrErr           : UDINT;
+    sArrSqlState      : ST_DBSQLError;
+    nReturnedRecords  : UDINT;                                   // 实际返回条数
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：HMI"班次报表"页要展示最近 20 条工艺日志（按 Timestamp 倒序）。本 FB
+//       一次性把 20 条读到 PLC 端 ARRAY[0..19] OF ST_LogRecord，HMI 直接绑
+//       这个数组到 Repeater 控件。
+// 价值：相比循环调 obsolete 的 FB_DBRecordSelect（每次读一条）——批量调节省
+//       19 次 ADS 来回，性能高 10 倍以上；HMI 报表刷新无感。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_Database；确保 hDBID = 1 数据库的 tProcessLog 表里至少有 20
+//      条 ID/Timestamp/Name/Value 4 列记录（前置：FB_DBTableCreate 建表 +
+//      FB_DBWrite 写若干条）
+//   3. 编译 → 登录 → 运行
+//   4. 在线写 bUserQuery := TRUE → bArrBusy 短暂 TRUE → 观察 arrRecords[0..19]
+//      被填上数据，nReturnedRecords 应为 20（或表中实际条数）
+//   5. 如果在 CX9 / CX2030 等 ARM CX 上跑，需按 PDF §7.1.17 改 ST_LogRecord
+//      字段顺序（Value 在 Name 前 + Dummy:BYTE）防止读到错位数据
+// =============================================================================
+
+rEdgeQuery(CLK := bUserQuery);
+
+// 触发前清空目标数组（避免上次残留）
+IF rEdgeQuery.Q THEN
+    MEMSET(destAddr := ADR(arrRecords), fillByte := 0, n := SIZEOF(arrRecords));
+END_IF
+
+// 单次完整调用
+fbArraySelect(
+    sNetID            := '',
+    hDBID             := hLocalDbId,
+    cbCmdSize         := SIZEOF(sSelectSql),
+    pCmdAddr          := ADR(sSelectSql),
+    nStartIndex       := 0,
+    nRecordCount      := 20,                              // 数组容量
+    cbRecordArraySize := SIZEOF(arrRecords),
+    pDestAddr         := ADR(arrRecords),
+    bExecute          := rEdgeQuery.Q,
+    tTimeout          := T#60S,                           // 大查询留足
+    bBusy             => bArrBusy,
+    bError            => bArrErr,
+    nErrID            => nArrErr,
+    sSQLState         => sArrSqlState,
+    nRecords          => nReturnedRecords
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

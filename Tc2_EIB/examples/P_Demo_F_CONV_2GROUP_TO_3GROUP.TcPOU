@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_F_CONV_2GROUP_TO_3GROUP" Id="{501879cb-8b9c-5ac7-a724-13af9a4d1cc9}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_F_CONV_2GROUP_TO_3GROUP
+VAR
+    st2GroupAddr : EIB_GROUP_ADDR_2GROUP := (MAIN := 1, SUB_MAIN := 256);
+    st3GroupAddr : EIB_GROUP_ADDR;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_EIB.F_CONV_2GROUP_TO_3GROUP 演示程序
+// ============================================================
+// 场景：工厂 BMS 系统升级——原老式 EIB 设备发 2 级组地址 `1/100`，新系统统一用 3 级。本 demo 把每条收到的 2 级地址转成 3 级以便统一处理。
+// 价值：迁移工具：1 行调用替代手写位运算的地址转换
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_EIB（References → Add library）
+//   3. 编译 → 登录 → 运行；按下方在线写值步骤操作
+// 验证：改 `st2GroupAddr.MAIN := 1, .SUB_MAIN := 256` → `st3GroupAddr` 输出应是 (MAIN=1, SUB_MAIN=1, NUMBER=0)。
+// ============================================================
+
+// 纯函数调用——无需 KL6301 / EIB_REC，直接转换
+st3GroupAddr := F_CONV_2GROUP_TO_3GROUP(IN := st2GroupAddr);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

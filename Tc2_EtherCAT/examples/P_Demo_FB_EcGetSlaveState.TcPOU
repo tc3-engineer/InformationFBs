@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_EcGetSlaveState" Id="{6022dbbd-ceeb-5d73-9cca-963c6d0dd214}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_EcGetSlaveState
+VAR
+    fbReadSlaveState        : FB_EcGetSlaveState;
+    bRequestReadOnce        : BOOL := FALSE;
+    nTempSensorSlaveAddr    : UINT := 1001;        // 温度采集 EL3008 固定地址
+    stSlaveState            : ST_EcSlaveState;
+    bSensorReadyForData     : BOOL;                // = deviceState OP
+    bReadBusy               : BOOL;
+    bReadError              : BOOL;
+    nLastAdsErr             : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// Tc2_EtherCAT.FB_EcGetSlaveState 演示程序
+// =============================================================================
+// 场景：某 EL3008 是温度采集关键件。业务每次取温度前先调本 FB 判其是否
+//       在 OP；非 OP 则跳过本次采集并报警，避免读到 PDO 双缓冲中的陈旧
+//       数据触发误判。
+//
+// 价值：把"传感器健康度"做成业务前置；比直接读 PDO 数据更安全。
+//
+// 验证步骤：
+//   1. Import 本文件，编译 → 登录
+//   2. nTempSensorSlaveAddr 设为现场 EL3008 地址（用 FB_EcGetAllSlaveAddr 查）
+//   3. 在线置 bRequestReadOnce := TRUE
+//        - bReadBusy 一两个周期后落回
+//        - stSlaveState.deviceState 正常应为 16#0008 (OP)
+//        - bSensorReadyForData 应为 TRUE
+//   4. 拔掉该从站再触发：deviceState 应非 OP，bSensorReadyForData = FALSE
+// =============================================================================
+
+fbReadSlaveState(
+    sNetId     := '',
+    nSlaveAddr := nTempSensorSlaveAddr,
+    bExecute   := bRequestReadOnce,
+    tTimeout   := DEFAULT_ADS_TIMEOUT,
+    bBusy      => bReadBusy,
+    bError     => bReadError,
+    nErrId     => nLastAdsErr,
+    state      => stSlaveState
+);
+
+bSensorReadyForData := (stSlaveState.deviceState = EC_DEVICE_STATE_OP) AND NOT bReadError;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

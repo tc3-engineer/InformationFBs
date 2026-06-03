@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_Rec_Teach_In_Ex" Id="{54aa3233-fdca-56ab-853b-85634431cb0b}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_Rec_Teach_In_Ex
+VAR
+    fbKL6581           : FB_KL6581;
+    fbLearnEEP         : FB_Rec_Teach_In_Ex;
+
+    stKL6581Input      AT %I* : KL6581_Input;
+    stKL6581Output     AT %Q* : KL6581_Output;
+
+    bLearnModeOn       : BOOL := TRUE;
+
+    bEEPValid          : BOOL;                          // 是否 EEP 4byte teach-in
+    nLearnNode         : BYTE;
+    nLastLearnedId     : DWORD;
+    stEEPInfo          : STR_Teach;                     // manufacturer + type + func
+    rTrigLearn         : R_TRIG;
+    bLearnPulse        : BOOL;
+
+    // EEP 类型反查（简化版字典）
+    eDetectedDeviceType: INT;                           // 0=未识别 1=4 键开关 2=门磁 3=温控
+    bAutoBindDone      : BOOL;                          // 是否已为该 ID 自动绑定 FB
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：高端楼宇项目里接入 EnOcean Alliance 认证设备（按 EEP 标准）。工程师
+//       按一只设备的 LRN 学习按键，PLC 不仅得到 ID 还得到"这个设备的
+//       EEP profile = 几键开关 / 门磁 / 温控"。PLC 再据 EEP 自动决定
+//       "把这个 ID 绑定到哪类接收 FB"，调试效率提升一大截。
+//
+// 价值：FB_Rec_Teach_In_Ex 自带 EEP 4byte 格式检查，避免误把非 EEP 设备的
+//       teach-in 当 EEP 字段用；输出 STR_Teach 含 manufacturer/type/func
+//       三字段，配合 EEP 字典可写出"自动设备识别"逻辑。
+//
+// 验证步骤：
+//   1. 跑 P_Demo_FB_KL6581 让主端子初始化
+//   2. 引用 Tc2_EnOcean，编译，登录，运行
+//   3. 在线设 bLearnModeOn := TRUE
+//   4. 现场按一只 EnOcean Alliance 认证 4 键开关的 LRN 学习按键
+//      -> bEEPValid = TRUE（电报是 EEP 格式），bLearnPulse 一周期 TRUE
+//      -> stEEPInfo.nManufacturerID / nTYPE / nFunc 含可用值
+//      -> 简化字典识别为 eDetectedDeviceType = 1 (4 键开关)
+//   5. 现场按一只老式厂家定制 1BS 门磁的 LRN -> bEEPValid = FALSE
+//      （电报非 EEP 格式），stEEPInfo 字段为 0，无法自动识别类型
+//   6. 按门磁（EEP 认证版）的 LRN -> bEEPValid = TRUE，
+//      eDetectedDeviceType = 2 (门磁)
+//   7. 完成后 bLearnModeOn := FALSE
+// =============================================================================
+
+fbKL6581(
+    bInit        := TRUE,
+    nIdx         := 1,
+    stKL6581_in  := stKL6581Input,
+    stKL6581_out := stKL6581Output
+);
+
+fbLearnEEP(
+    bStart       := bLearnModeOn,
+    byNode       := 0,
+    str_KL6581   := fbKL6581.str_KL6581,
+    bLearnType   => bEEPValid,
+    by_Node      => nLearnNode,
+    dw_ID        => nLastLearnedId,
+    str_Teach_In => stEEPInfo
+);
+
+rTrigLearn(CLK := NOT fbLearnEEP.bReceive);
+bLearnPulse := rTrigLearn.Q;
+
+// EEP 反查（简化字典）。完整字典见 EnOcean Alliance EEP profile 表
+IF bLearnPulse AND bEEPValid THEN
+    CASE stEEPInfo.nFunc OF
+        16#02: eDetectedDeviceType := 1;   // F2 = Rocker Switch
+        16#06: eDetectedDeviceType := 2;   // F6 = Contact/Switch (含门磁)
+        16#10: eDetectedDeviceType := 3;   // 10 = Room Operating Panel (温控)
+    ELSE
+        eDetectedDeviceType := 0;
+    END_CASE;
+    bAutoBindDone := TRUE;                 // 应用层据此自动 spawn 对应接收 FB 实例
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_PML_StateMachine" Id="{9c6ab738-eb9c-5a42-97cd-7475b6fc57c8}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_PML_StateMachine
+VAR
+    fbStateMachine    : PML_StateMachine;
+    bBtnReset         : BOOL := FALSE;             // HMI Reset 按钮（在线置 TRUE→FALSE）
+    bBtnStart         : BOOL := FALSE;             // HMI Start 按钮
+    bBtnStop          : BOOL := FALSE;             // HMI Stop 按钮
+    bBtnHold          : BOOL := FALSE;             // HMI Hold 按钮
+    bBtnAbort         : BOOL := FALSE;             // HMI Abort 按钮（急停）
+    eCmd              : E_PMLCommand;              // 当前下发命令
+    eState            : E_PMLState;                // 状态机当前状态（在线观察）
+    bError            : BOOL;                      // 状态机错误标志
+    nErrorId          : UDINT;                     // 错误号
+    eMode             : DINT := 1;                 // 当前 UnitMode（1 = Production）
+    stSubUnitInfoRef  : ST_PMLSubUnitInfoRef;      // 子单元状态汇总（本例无子单元）
+    stOptions         : ST_PMLStateMachineOptions; // 选项（PDF V1.2.4 标 "Not used at present"）
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc3_PackML_V2.PML_StateMachine 演示程序
+// ============================================================
+// 场景：在 HMI 上模拟 Start / Stop / Hold / Abort 按钮驱动状态机；
+//       状态机按 PackML V3 标准规则做状态切换、拒绝非法命令。
+// 价值：不用本 FB 需要手写 17×9 = 153 个分支判断；用本 FB 一次实例化全搞定，
+//       且非法命令自动报错避免状态跑飞。
+// 验证：登录后顺序写 bBtnReset := TRUE→FALSE → bBtnStart := TRUE→FALSE，
+//        观察 eState 从 0(Undefined) → 15(Resetting) → 4(Idle) → 3(Starting) → 6(Execute)。
+//        再写 bBtnAbort := TRUE→FALSE，验证 eState 立刻切到 8(Aborting) → 9(Aborted)。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_PackML_V2（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方"验证"指引在线写值观察
+// ============================================================
+
+(* 把按钮事件按优先级（Abort 最高）映射到命令枚举——电平触发 *)
+IF bBtnAbort THEN
+    eCmd := E_PMLCommand.ePMLCommand_Abort;
+ELSIF bBtnReset THEN
+    eCmd := E_PMLCommand.ePMLCommand_Reset;
+ELSIF bBtnStart THEN
+    eCmd := E_PMLCommand.ePMLCommand_Start;
+ELSIF bBtnStop THEN
+    eCmd := E_PMLCommand.ePMLCommand_Stop;
+ELSIF bBtnHold THEN
+    eCmd := E_PMLCommand.ePMLCommand_Hold;
+ELSE
+    eCmd := E_PMLCommand.ePMLCommand_Undefined;
+END_IF
+
+(* 单次完整调用形式：所有 VAR_INPUT 显式赋值 *)
+fbStateMachine(
+    eMode            := eMode,
+    eCommand         := eCmd,
+    stSubUnitInfoRef := stSubUnitInfoRef,
+    stOptions        := stOptions,
+    eState           => eState,
+    bError           => bError,
+    nErrorId         => nErrorId
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

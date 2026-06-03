@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_EcMasterObjectID" Id="{1e13e2ea-aee3-5d24-90bc-9d65b84f63a2}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_EcMasterObjectID
+VAR
+    fbReadMasterOid     : FB_EcMasterObjectID;
+    bRequestReadOnce    : BOOL := FALSE;
+    nLocalMasterOid     : OTCID;          // 用作后续 F_EcGetMailboxGatewayAddr 等的输入
+    bReadBusy           : BOOL;
+    bReadError          : BOOL;
+    nLastAdsErr         : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// Tc2_EtherCAT.FB_EcMasterObjectID 演示程序
+// =============================================================================
+// 场景：HMI 需要显示主站对应网卡的 IP / MAC（Mailbox Gateway 用）。先调
+//       本 FB 把 AMS NetID 翻译成 OTCID，再调 F_EcGetMailboxGatewayAddr
+//       拿地址。是从 NetID 切到 OTCID 引用层的桥梁。
+//
+// 价值：把 NetID（AMS 路由层）与 OTCID（TwinCAT 对象层）打通；许多 FC
+//       只接受 OTCID，本 FB 是必经步骤。
+//
+// 验证步骤：
+//   1. Import 本文件，编译 → 登录；TwinCAT v3.1.4024.56+，Tc2_EtherCAT 3.7.1.0+
+//   2. 在线置 bRequestReadOnce := TRUE
+//        - bReadBusy 一两个周期后落回
+//        - nLocalMasterOid 应为非 0 OTCID
+//   3. 后续可把 nLocalMasterOid 传给 F_EcGetMailboxGatewayAddr 拿 IP / MAC
+// =============================================================================
+
+fbReadMasterOid(
+    sNetId      := '',
+    bExecute    := bRequestReadOnce,
+    tTimeout    := DEFAULT_ADS_TIMEOUT,
+    bBusy       => bReadBusy,
+    bError      => bReadError,
+    nErrId      => nLastAdsErr,
+    oidEcMaster => nLocalMasterOid
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

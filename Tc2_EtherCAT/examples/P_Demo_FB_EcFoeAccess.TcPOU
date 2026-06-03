@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_EcFoeAccess" Id="{286fac8c-3211-506a-b57f-fc084ebda7bb}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_EcFoeAccess
+VAR
+    fbFoeAccess         : FB_EcFoeAccess;
+    bRequestReadChunk   : BOOL := FALSE;
+    hOpenedFoeHandle    : T_HFoe;             // 先用 FB_EcFoeOpen 拿
+    arrChunkBuffer      : ARRAY[0..1023] OF BYTE;
+    bIsEndOfFile        : BOOL;
+    cbBytesRead         : UDINT;
+    bAccessBusy         : BOOL;
+    bAccessError        : BOOL;
+    nLastAdsErr         : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// Tc2_EtherCAT.FB_EcFoeAccess 演示程序
+// =============================================================================
+// 场景：从 EL 模块读 1 GB 日志文件，PLC 内存有限。用本 FB 每次读 1 KB
+//       数据块（arrChunkBuffer），循环直到 bEOF。本块处理完（如写硬盘）
+//       再读下一块。流式处理内存友好。
+//
+// 价值：流式处理超大文件，避免一次性 load 进 PLC 内存爆。
+//
+// 验证步骤：
+//   1. Import 本文件，编译 → 登录
+//   2. 用 FB_EcFoeOpen 先打开 FoE 端口拿 hOpenedFoeHandle（在另一程序中）
+//   3. 把 hOpenedFoeHandle 赋值给本程序
+//   4. 在线脉冲 bRequestReadChunk := TRUE 触发一块读：
+//        - bAccessBusy 一两个周期后落回
+//        - cbBytesRead 应为读到的字节数（≤ 1024）
+//        - bIsEndOfFile 在最后一块时为 TRUE
+//   5. 业务侧外面循环触发直到 bIsEndOfFile，最后调 FB_EcFoeClose 关闭
+// =============================================================================
+
+fbFoeAccess(
+    hFoe     := hOpenedFoeHandle,
+    pBuffer  := ADR(arrChunkBuffer),
+    cbBuffer := SIZEOF(arrChunkBuffer),
+    bExecute := bRequestReadChunk,
+    tTimeout := DEFAULT_ADS_TIMEOUT,
+    bBusy    => bAccessBusy,
+    bError   => bAccessError,
+    nErrId   => nLastAdsErr,
+    cbDone   => cbBytesRead,
+    bEOF     => bIsEndOfFile
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

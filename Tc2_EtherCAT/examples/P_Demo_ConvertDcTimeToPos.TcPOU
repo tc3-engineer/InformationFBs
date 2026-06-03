@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_ConvertDcTimeToPos" Id="{de16349c-c046-5501-a4db-f920f0f2eea8}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_ConvertDcTimeToPos
+VAR
+    fbConvert           : ConvertDcTimeToPos;     // FB 内部含 NC 接口
+    dcTimePredicted     : T_DCTIME32;             // 0.5 秒后预测的 DC 时间
+    lrAxisPosAt500ms    : LREAL;                   // 该时刻轴应到的位置
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// Tc2_EtherCAT.ConvertDcTimeToPos 演示程序
+// =============================================================================
+// 场景：飞剪应用 —— 上游编码器输出"产品 0.5 秒后到切割点"。PLC 调本 FB
+//       预测 0.5 秒后切割轴应到的位置，提前发位置指令让切割与产品到点同
+//       步精确。
+//
+// 价值："时间预测"转化为"位置预测"，飞剪同步精确。
+//
+// 验证步骤：
+//   1. Import 本文件，编译 → 登录
+//   2. NC 配置含 DC 同步的目标轴
+//   3. 在线把 dcTimePredicted 设为目标时间点（典型 F_GetActualDcTime + 500ms）
+//   4. 调本 FB（具体调用接口参考 §11.1.1），lrAxisPosAt500ms 应为预测位置
+// =============================================================================
+
+// 详细 NC 接口调用请参考 PDF §11.1.1 与 InfoSys topic 57090443
+// 本演示仅展示 FB 实例化；完整调用需要 NC Drive Reference + DC 配置
+// 用户在实际工程中根据 NC 配置实例化对应的 ConvertDcTimeToPos 方法
+;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

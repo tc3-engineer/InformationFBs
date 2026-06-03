@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_DBReloadConfig" Id="{4008f8e3-0fb7-5bdf-86eb-8c1a072d568b}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_DBReloadConfig
+VAR
+    fbReload         : FB_DBReloadConfig;     // 重载 XML 配置的 FB
+    bUserReloadReq   : BOOL;                  // HMI 上"重载配置"按钮，上升沿触发
+    rEdgeBtn         : R_TRIG;                // 把电平按钮转成单脉冲
+    bReloadBusy      : BOOL;                  // ADS 处理中
+    bReloadDone      : BOOL;                  // 上次成功重载
+    bReloadFailed    : BOOL;                  // 上次失败
+    nReloadErr       : UDINT;                 // 错误号（0x6 / 0x70D / 0x745 等）
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：运维通过 XML Configuration File Editor 修改 TwinCAT Database Server 的
+//       配置文件（例如增加一个新的 MS SQL 远端数据库连接），保存后必须让运行
+//       中的 Database Server 重新读取 XML。HMI 上提供一个"重载配置"按钮，运维
+//       点一下就触发一次本 FB；PLC 不需要重启。
+// 价值：相比"重启 Database Server 服务"或"重启 TwinCAT 系统"——本 FB 是热重
+//       载（hot reload），其它 PLC 任务、IO 扫描完全不受影响，只是 DB 连接重
+//       建一次。改完即生效，运维体验好。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_Database（References → Add library）
+//   3. 编译 → 登录 → 运行；确保 TwinCAT Database Server 服务在跑
+//   4. 在线写 bUserReloadReq := TRUE → 观察 bReloadBusy 短暂为 TRUE，然后
+//      bReloadDone 翻为 TRUE，nReloadErr = 0；释放 bUserReloadReq := FALSE
+//   5. 故意把 C:\TwinCAT\TcDatabaseSrv\Config\TcDbSrv.xml 拷出来用记事本删一
+//      个 </Database> 闭标签让它语法错误 → 再次触发 → nReloadErr 应为 16#70D
+//      （syntax error），bReloadFailed = TRUE
+// =============================================================================
+
+// 把 HMI 的电平按钮转换为单脉冲，避免用户长按导致重复触发
+rEdgeBtn(CLK := bUserReloadReq);
+
+// 单次完整调用形式；空 sNetID 表示本机 Database Server
+fbReload(
+    sNetID    := '',
+    bExecute  := rEdgeBtn.Q,
+    tTimeout  := T#30S,        // 大 XML 文件加大超时
+    bBusy     => bReloadBusy,
+    bError    => bReloadFailed,
+    nErrID    => nReloadErr
+);
+
+// 业务侧：bBusy 落沿且未错 = 重载成功
+// （在线 monitor bReloadDone 一闪即过，需用 trace 或 latch 捕获）
+bReloadDone := (NOT bReloadBusy) AND (NOT bReloadFailed) AND (nReloadErr = 0) AND rEdgeBtn.Q;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

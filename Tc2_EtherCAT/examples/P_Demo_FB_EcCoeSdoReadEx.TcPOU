@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_EcCoeSdoReadEx" Id="{4dc01b8f-c002-5f6d-86c8-5614c2819dcb}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_EcCoeSdoReadEx
+VAR
+    fbReadIdentity      : FB_EcCoeSdoReadEx;
+    bRequestReadOnce    : BOOL := FALSE;
+    nTargetSlaveAddr    : UINT := 1001;
+    wIdentityIndex      : WORD := 16#1018;       // Identity Object
+    stIdentityRaw       : ST_EcSlaveIdentity;     // 4 个 UDINT 共 16 字节
+    cbActualRead        : UDINT;
+    bReadBusy           : BOOL;
+    bReadError          : BOOL;
+    nLastAdsErr         : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// Tc2_EtherCAT.FB_EcCoeSdoReadEx 演示程序
+// =============================================================================
+// 场景：诊断工具一次读出某 EL7411 完整 Identity Object（vendor/product/
+//       revision/serial 4 个 UDINT 共 16 字节）。比单子项 FB_EcCoeSdoRead
+//       调 4 次更快、ADS 负载更轻。
+//
+// 价值：一次邮箱往返拿整对象，减 75% ADS 负载。是读 PDO 映射、Identity
+//       等"整体"对象的标准方式。
+//
+// 验证步骤：
+//   1. Import 本文件，编译 → 登录
+//   2. nTargetSlaveAddr 设为现场 Beckhoff 从站地址
+//   3. 在线置 bRequestReadOnce := TRUE
+//        - bReadBusy 短暂为 TRUE 后落回
+//        - cbActualRead 应为 16（typical Identity 长度）
+//        - 展开 stIdentityRaw 应看到 vendorId / productCode / revisionNumber / serialNumber
+// =============================================================================
+
+fbReadIdentity(
+    sNetId          := '',
+    nSlaveAddr      := nTargetSlaveAddr,
+    nSubIndex       := 0,                  // CompleteAccess 时通常 0
+    nIndex          := wIdentityIndex,
+    pDstBuf         := ADR(stIdentityRaw),
+    cbBufLen        := SIZEOF(stIdentityRaw),
+    bExecute        := bRequestReadOnce,
+    tTimeout        := DEFAULT_ADS_TIMEOUT,
+    bCompleteAccess := TRUE,                // 关键：一次拿整对象
+    bBusy           => bReadBusy,
+    bError          => bReadError,
+    nErrId          => nLastAdsErr,
+    cbRead          => cbActualRead
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

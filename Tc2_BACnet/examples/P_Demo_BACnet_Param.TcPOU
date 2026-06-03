@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_BACnet_Param" Id="{03b85390-73d6-5838-8043-5f571a6b64fe}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_BACnet_Param
+VAR
+    // 这是一个"说明型"演示：BACnet_Param 的参数不能在 PLC 程序里改
+    //（VAR_GLOBAL CONSTANT），只能在 XAE 的 Parameter dialog 中改。
+    // 本 POU 把 BACnet_Param 当前生效的几个关键参数读出来给 HMI 显示，
+    // 帮助维护人员核对"我们这套配置激活的池容量 / 文本长度等"是否正确。
+
+    nMultistateTextLen : UDINT;                  // 当前生效的 state-text 最大长度
+    nAvPoolSize        : UDINT;                  // 当前生效的 AV 预分配池容量
+
+    sReadme            : STRING := 'BACnet_Param 在 XAE 调整：右键 Tc3_BACnetRev14 实例 → Parameter dialog → 改 Value (Editable) → Activate Configuration 后生效。';
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：交付现场维护要确认控制器上当前生效的 BACnet 库参数到底是不是工程
+//       要求的那一套（譬如设计要求 AV 池预分配 100、state-text 60 字符）。
+//       直接在 HMI 弹一个"当前参数"页让运维人员核对，避免每次都要打开 XAE
+//       看 Parameter dialog。
+// 价值：把 BACnet_Param 的几个关键参数从"工程模式才能查"变成"任何 HMI 都
+//       能查"，降低运维人员对 XAE 的依赖。
+// 验证：登录后看 nMultistateTextLen / nAvPoolSize 两个变量的值；这应当等于
+//       工程交付时记录的 BACnet_Param 参数（默认分别是 40 / 0）。如果不符
+//       说明现场不知道何时改了参数，需要追溯。
+//   说明：本 POU 并不写参数（VAR_GLOBAL CONSTANT 编译期只读），只读出来。
+//       要"在线改"必须打开 XAE 改 Parameter dialog → Activate Configuration。
+// =============================================================================
+
+// 把库 BACnet_Param 的几个关键参数读出来（成员名以 XAE 中 Parameter
+// dialog 显示的为准；下两行是最常被改的）
+nMultistateTextLen := BACnet_Param.nMultistateTextLength;
+nAvPoolSize        := BACnet_Param.nPoolAV;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

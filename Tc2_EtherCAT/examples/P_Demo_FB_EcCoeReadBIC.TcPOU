@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_EcCoeReadBIC" Id="{dd81a7cb-b1f7-5ffd-ad43-760cf088dd0d}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_EcCoeReadBIC
+VAR
+    fbCoeReadBic        : FB_EcCoeReadBIC;
+    bRequestReadOnce    : BOOL := FALSE;
+    nTargetSlaveAddr    : UINT := 1001;
+    sBicRaw             : STRING(1023);
+    stBicSplit          : ST_SplittedBIC;
+    bReadBusy           : BOOL;
+    bReadError          : BOOL;
+    nLastAdsErr         : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// Tc2_EtherCAT.FB_EcCoeReadBIC 演示程序
+// =============================================================================
+// 场景：MES 集成场景，运行时定期采集所有从站 BIC（Beckhoff Identification
+//       Code）写入 MES 溯源表。每个从站已在 OP，CoE 邮箱可用 —— 本 FB
+//       是首选（FB_EcReadBIC 走 ADS 直读 EEPROM，仅 INIT 维护态推荐）。
+//
+// 价值：运行态 CoE 路径采集 BIC，与日常诊断流量共用邮箱协议。
+//
+// 验证步骤：
+//   1. Import 本文件，编译 → 登录
+//   2. nTargetSlaveAddr 设为支持 BIC 对象 0x10E2 的从站地址（多数新 EL 模块）
+//   3. 在线置 bRequestReadOnce := TRUE
+//        - bReadBusy 短暂 TRUE 后落回
+//        - sBicRaw 应为 BIC 字符串
+//        - stBicSplit 拆解后子字段应可见 sItemNo / sBTN 等
+//   4. 若 nLastAdsErr = CoE Abort 0x06020000，说明该从站不支持 BIC，改用其他识别
+// =============================================================================
+
+fbCoeReadBic(
+    sNetId     := '',
+    nSlaveAddr := nTargetSlaveAddr,
+    bExecute   := bRequestReadOnce,
+    tTimeout   := T#5S,
+    bBusy      => bReadBusy,
+    bError     => bReadError,
+    nErrId     => nLastAdsErr,
+    sBICValue  => sBicRaw,
+    stMSID     => stBicSplit
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

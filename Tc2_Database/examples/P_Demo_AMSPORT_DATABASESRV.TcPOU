@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_AMSPORT_DATABASESRV" Id="{2985ff02-8091-576a-8751-ccd7a301036e}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_AMSPORT_DATABASESRV
+VAR
+    // === 数组上界：用 MAX_* 常量符号，自动跟随库版本 ===
+    arrDbCfg          : ARRAY[0..MAX_XML_DECLARATIONS] OF ST_DBXMLCfg;            // 255 + 1 = 256 项
+    arrColumns        : ARRAY[0..MAX_DB_TABLE_COLUMNS] OF ST_DBColumnCfg;         // 256 项
+    arrSpParams       : ARRAY[0..MAX_STORED_PROCEDURES_PARAMETERS] OF ST_DBParameter; // 256 项
+
+    // === 直访 Database Server 状态（绕过 FB_GetStateTcDatabase，调试用）===
+    fbRawRead         : ADSREAD;
+    bDirectQueryReq   : BOOL;
+    nServerStateInfo  : ARRAY[0..1] OF UINT;       // 接 nAdsState + nDevState
+    bRawBusy          : BOOL;
+    bRawErr           : BOOL;
+    nRawErrId         : UDINT;
+    cbRawRead         : UDINT;
+
+    // === HMI 显示用：上限值字串 ===
+    sCapInfo          : STRING(160);
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：本例程示范 Tc2_Database 全局常量的两类常见用法——
+//       (A) 用 MAX_* 常量声明库 FB 要求的输入 / 输出数组，避免硬编码 255；
+//       (B) 用 AMSPORT_DATABASESRV + DBADS_IGR_GETSTATE 直接 ADSREAD Server
+//           状态，绕过 FB_GetStateTcDatabase（用于排查库 FB 是否有 bug，或
+//           做高级集成场景）。
+// 价值：(A) 让代码对未来库版本扩展健壮；(B) 提供调试 / 集成下沉到 ADS 层
+//       的入口，便于故障定位。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_Database
+//   3. 编译 → 登录 → 运行；启动 TwinCAT Database Server
+//   4. 观察 sCapInfo 中 MAX_* 上限均显示为 255；arrDbCfg / arrColumns /
+//      arrSpParams 三个数组在 PLC 内存中各占预期字节数
+//   5. 在线写 bDirectQueryReq := TRUE → 观察 nServerStateInfo[0] 取到 ADS
+//      状态码（正常为 5 = RUN），nServerStateInfo[1] 取到 Server 设备状态
+//      位掩码；nRawErrId = 0 说明直访通讯成功
+// =============================================================================
+
+// (A) 上限值组合显示到 HMI
+sCapInfo := CONCAT(
+    CONCAT('MAX_DB_TABLE_COLUMNS=', UDINT_TO_STRING(MAX_DB_TABLE_COLUMNS)),
+    CONCAT(' | MAX_XML_DECLARATIONS=', UDINT_TO_STRING(MAX_XML_DECLARATIONS)));
+
+// (B) 直访 Database Server：读 GETSTATE
+// nServerStateInfo[0] = ADS 状态（5 = RUN）、nServerStateInfo[1] = 设备状态
+fbRawRead(
+    NETID     := '',
+    PORT      := AMSPORT_DATABASESRV,        // = 21372
+    IDXGRP    := DBADS_IGR_GETSTATE,         // = 16#200
+    IDXOFFS   := 0,
+    LEN       := SIZEOF(nServerStateInfo),
+    DESTADDR  := ADR(nServerStateInfo),
+    READ      := bDirectQueryReq,
+    TMOUT     := T#5S,
+    BUSY      => bRawBusy,
+    ERR       => bRawErr,
+    ERRID     => nRawErrId,
+    COUNT     => cbRawRead
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

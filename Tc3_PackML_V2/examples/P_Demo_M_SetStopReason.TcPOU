@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_M_SetStopReason" Id="{38629509-ef7b-547b-bc01-42d8340ba085}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_M_SetStopReason
+VAR
+    fbAdminAlarm       : PML_AdminAlarm;
+    fbAdminTime        : PML_AdminTime;
+    stAdmin            : ST_PMLa;
+    stStatus           : ST_PMLs;
+    bShiftEnd          : BOOL := FALSE;       // 模拟换班停机触发
+    rtShiftEdge        : R_TRIG;
+    stShiftChangeStop  : ST_Alarm := (
+        Id       := 1,
+        Value    := 0,
+        Message  := 'Shift change',
+        Category := 1                          // 1 = 计划停机
+    );
+    bSetOk             : BOOL;
+    bReset             : BOOL := FALSE;
+    stTimeOptions      : ST_AdminTimeOptions;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc3_PackML_V2.M_SetStopReason 演示程序
+// ============================================================
+// 场景：PackML 状态机切到 Stopped 时上报一条 StopReason 换班停机（Id=1），
+//       供 MES 做 OEE 分类聚合。
+// 价值：PackML 标准化的停机原因记录——OEE 计算的计划/非计划停机分类必备数据源。
+// 验证：在线写 bShiftEnd := TRUE→FALSE 一次。Watch stAdmin.StopReason[1].Trigger=TRUE，
+//        StopReason[1].Id=1，DateTime 不为 0。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_PackML_V2（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方"验证"指引在线写值观察
+// ============================================================
+
+fbAdminTime(bReset := bReset, stOptions := stTimeOptions,
+            stAdmin := stAdmin, stStatus := stStatus);
+
+(* 停机事件上升沿才写——否则会重复刷新数组 *)
+rtShiftEdge(CLK := bShiftEnd);
+IF rtShiftEdge.Q THEN
+    bSetOk := fbAdminAlarm.M_SetStopReason(
+        stAdmin      := stAdmin,
+        stStopReason := stShiftChangeStop
+    );
+END_IF
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

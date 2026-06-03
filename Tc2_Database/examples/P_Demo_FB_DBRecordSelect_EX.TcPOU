@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_DBRecordSelect_EX" Id="{bef11ee1-8963-5cda-9d3c-f0ae3ea6f135}" SpecialFunc="None">
+    <Declaration><![CDATA[TYPE ST_MidLegacyRecord :
+STRUCT
+    ID        : ULINT;
+    Timestamp : DT;
+    Name      : STRING(80);
+    Value     : LREAL;
+END_STRUCT
+END_TYPE
+
+PROGRAM P_Demo_FB_DBRecordSelect_EX
+VAR
+    fbSelEx          : FB_DBRecordSelect_EX;
+    record           : ST_MidLegacyRecord;
+    sLongSelectSql   : STRING(10000) := 'SELECT TOP 1 ID, Timestamp, Name, Value FROM tLog WHERE Name LIKE ''shift_%'' AND Value BETWEEN 0 AND 10000 ORDER BY Timestamp DESC';
+    nIdx             : UDINT := 0;
+    bUserReq         : BOOL;
+    rEdgeSel         : R_TRIG;
+    hDbId            : UDINT := 1;
+    bSelBusy         : BOOL;
+    bSelErr          : BOOL;
+    nSelErr          : UDINT;
+    sSelSqlState     : ST_DBSQLError;
+    nReturnedCount   : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：维护中期老代码（2017-2019 年），用本 FB 跑长 SQL（含 LIKE 模糊匹配
+//       和 BETWEEN 范围筛选）单条查询。新代码请用 FB_DBRecordArraySelect
+//       （PDF §7.1.20.4 已废弃）。
+// 价值（历史）：长 SQL 单条查询的中期 TC2 工具。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_Database；tLog 表有以 'shift_' 开头的 Name 列且 Value 在 0-10000 的记录
+//   3. 编译 → 登录 → 运行；启动 TwinCAT Database Server
+//   4. 在线写 bUserReq := TRUE → 观察 record 字段被填上数据；nReturnedCount = 1
+// =============================================================================
+
+rEdgeSel(CLK := bUserReq);
+
+IF rEdgeSel.Q THEN
+    MEMSET(destAddr := ADR(record), fillByte := 0, n := SIZEOF(record));
+END_IF
+
+fbSelEx(
+    sNetID       := '',
+    hDBID        := hDbId,
+    cbCmdSize    := SIZEOF(sLongSelectSql),
+    pCmdAddr     := ADR(sLongSelectSql),
+    nRecordIndex := nIdx,
+    cbRecordSize := SIZEOF(record),
+    pDestAddr    := ADR(record),
+    bExecute     := rEdgeSel.Q,
+    tTimeout     := T#15S,
+    bBusy        => bSelBusy,
+    bError       => bSelErr,
+    nErrID       => nSelErr,
+    sSQLState    => sSelSqlState,
+    nRecords     => nReturnedCount
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_DBStoredProcedures" Id="{774e967c-a633-57a5-a5ba-1538e6516090}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_DBStoredProcedures
+VAR
+    fbStoredProc      : FB_DBStoredProcedures;
+    paramList         : ARRAY[0..MAX_STORED_PROCEDURES_PARAMETERS] OF ST_DBParameter;
+    bParamsInited     : BOOL;
+    // === 实际参数变量（必须是全局 / 静态作用域，调用期间地址有效） ===
+    sParamBatchId     : STRING(40) := 'B20260603-001';
+    dtParamShiftStart : DT         := DT#2026-06-03-08:00:00;
+    dtParamShiftEnd   : DT         := DT#2026-06-03-16:00:00;
+    nParamTotalCount  : DINT       := 0;                 // OUT 参数：过程归档后回填行数
+    // === 触发 / 输出 ===
+    bUserCloseShift   : BOOL;
+    rEdgeClose        : R_TRIG;
+    hMesDbId          : UDINT := 1;
+    bSpBusy           : BOOL;
+    bSpErr            : BOOL;
+    nSpErr            : UDINT;
+    sSpSqlState       : ST_DBSQLError;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：每个班次结束 PLC 调用 DBA 写好的存储过程：
+//         CREATE PROC sp_CloseShift
+//           @batchId NVARCHAR(40),
+//           @shiftStart DATETIME,
+//           @shiftEnd DATETIME,
+//           @totalCount INT OUTPUT
+//         AS
+//           -- 归档、统计、更新看板……
+//           SET @totalCount = (SELECT COUNT(*) FROM tProcessLog
+//                              WHERE BatchID = @batchId)
+//       PLC 调用后从 nParamTotalCount 拿到归档行数显示到 HMI。
+// 价值：业务逻辑集中在 DB（DBA 维护），PLC 解耦；参数化无 SQL 注入；DBA 改
+//       归档规则不需要 PLC 改代码 + 重新升级。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_Database；DBA 在 hDBID=1 数据库里创建 sp_CloseShift 存储过程
+//   3. 编译 → 登录 → 运行；启动 TwinCAT Database Server
+//   4. 在线写 bUserCloseShift := TRUE → bSpBusy 短暂 TRUE → nParamTotalCount
+//      被回填为该 BatchID 对应的实际行数（0 也算正常调用成功）
+//   5. 故意把 sProcedureName 改为不存在的过程名 → sSpSqlState.sSQLState='42S02'
+// =============================================================================
+
+// 一次性初始化 paramList（PLC 启动后只做一次）
+IF NOT bParamsInited THEN
+    // 参数 0: @batchId INPUT NVARCHAR(40)
+    paramList[0].sParameterName     := 'batchId';
+    paramList[0].eParameterDataType := eDBColumn_NVarChar;
+    paramList[0].eParameterType     := eDBParameter_Input;
+    paramList[0].cbParameterValue   := SIZEOF(sParamBatchId);
+    paramList[0].pParameterValue    := ADR(sParamBatchId);
+
+    // 参数 1: @shiftStart INPUT DATETIME
+    paramList[1].sParameterName     := 'shiftStart';
+    paramList[1].eParameterDataType := eDBColumn_DateTime;
+    paramList[1].eParameterType     := eDBParameter_Input;
+    paramList[1].cbParameterValue   := SIZEOF(dtParamShiftStart);
+    paramList[1].pParameterValue    := ADR(dtParamShiftStart);
+
+    // 参数 2: @shiftEnd INPUT DATETIME
+    paramList[2].sParameterName     := 'shiftEnd';
+    paramList[2].eParameterDataType := eDBColumn_DateTime;
+    paramList[2].eParameterType     := eDBParameter_Input;
+    paramList[2].cbParameterValue   := SIZEOF(dtParamShiftEnd);
+    paramList[2].pParameterValue    := ADR(dtParamShiftEnd);
+
+    // 参数 3: @totalCount OUTPUT INT
+    paramList[3].sParameterName     := 'totalCount';
+    paramList[3].eParameterDataType := eDBColumn_Integer;
+    paramList[3].eParameterType     := eDBParameter_Output;
+    paramList[3].cbParameterValue   := SIZEOF(nParamTotalCount);
+    paramList[3].pParameterValue    := ADR(nParamTotalCount);
+
+    bParamsInited := TRUE;
+END_IF
+
+rEdgeClose(CLK := bUserCloseShift);
+
+// 单次完整调用
+fbStoredProc(
+    sNetID          := '',
+    hDBID           := hMesDbId,
+    sProcedureName  := 'sp_CloseShift',
+    cbParameterList := SIZEOF(paramList),
+    pParameterList  := ADR(paramList),
+    bExecute        := rEdgeClose.Q,
+    tTimeout        := T#60S,                       // 复杂归档过程留足时间
+    bBusy           => bSpBusy,
+    bError          => bSpErr,
+    nErrID          => nSpErr,
+    sSQLState       => sSpSqlState
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

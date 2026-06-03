@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_EcGetAllSyncUnitSlaveAddr" Id="{abba2657-dc86-5e8c-b26e-a7a29e9aecfe}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_EcGetAllSyncUnitSlaveAddr
+VAR
+    fbGetSuSlaves       : FB_EcGetAllSyncUnitSlaveAddr;
+    bRequestEnumerate   : BOOL := FALSE;
+    nMotionSyncUnitId   : OTCID;                          // 在线赋值：XAE 中要查的 Sync Unit ID
+    arrSlavesInSu       : ARRAY[0..EC_MAX_SLAVES] OF UINT; // 该 Sync Unit 内全部从站固定地址
+    nSlaveCount         : UINT;
+    bEnumerateBusy      : BOOL;
+    bEnumerateError     : BOOL;
+    nLastAdsErr         : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// Tc2_EtherCAT.FB_EcGetAllSyncUnitSlaveAddr 演示程序
+// =============================================================================
+// 场景：复杂工程含两个 task（1 kHz 运动 + 100 Hz 过程）各绑一个 Sync Unit；
+//       HMI 的"运动诊断" tab 需要列出运动 SU 内全部从站状态。先用本 FB
+//       拿到该 SU 内全部从站地址清单。
+//
+// 价值：把"哪些从站属于哪个 SU"做成运行时查询，工程变更后不再需要手工
+//       维护 HMI 端的从站列表。
+//
+// 验证步骤：
+//   1. Import 本文件，编译 → 登录
+//   2. XAE 中查到 SU_Motion 的 Object ID（System → Sync Tasks → 选 task →
+//      Online tab 看 OTCID），在线把 nMotionSyncUnitId 设为该值
+//   3. 在线置 bRequestEnumerate := TRUE
+//        - bEnumerateBusy 一两个周期后落回
+//        - nSlaveCount 等于该 SU 内实际从站数
+//        - arrSlavesInSu[0..nSlaveCount-1] 应填入对应从站固定地址
+//   4. 把 nMotionSyncUnitId 填一个不存在的 OTCID 再触发：
+//        nSlaveCount 应为 0，bEnumerateError = FALSE
+// =============================================================================
+
+fbGetSuSlaves(
+    sNetId    := '',
+    nObjectId := nMotionSyncUnitId,
+    pAddrBuf  := ADR(arrSlavesInSu),
+    cbBufLen  := SIZEOF(arrSlavesInSu),
+    bExecute  := bRequestEnumerate,
+    tTimeout  := DEFAULT_ADS_TIMEOUT,
+    bBusy     => bEnumerateBusy,
+    bError    => bEnumerateError,
+    nErrId    => nLastAdsErr,
+    nSlaves   => nSlaveCount
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

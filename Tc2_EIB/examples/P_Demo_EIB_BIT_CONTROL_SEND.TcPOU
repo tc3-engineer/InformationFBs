@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_EIB_BIT_CONTROL_SEND" Id="{3c85e750-93bd-5940-9773-0b427b43b490}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_EIB_BIT_CONTROL_SEND
+VAR
+    fbSendEmergency : EIB_BIT_CONTROL_SEND;
+    stEibRec        : EIB_REC;
+    stGroup         : EIB_GROUP_ADDR := (MAIN := 1, SUB_MAIN := 1, NUMBER := 40);
+    bForced         : BOOL;
+    bValueOn        : BOOL;
+    bSendError      : BOOL;
+    iLastErrID      : EIB_ERROR_CODE;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_EIB.EIB_BIT_CONTROL_SEND 演示程序
+// ============================================================
+// 场景：应急按钮：「警报」按下时 PLC 发 (`bControl = TRUE, bValue = FALSE`) 到组 1/1/40 强制关灯。
+// 价值：替代手写 2-bit 拼装；DPT 2.xxx 标准发送
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_EIB（References → Add library）
+//   3. 编译 → 登录 → 运行；按下方在线写值步骤操作
+// 验证：推 (TRUE, FALSE) → 组 1/1/40 出 0b10。
+// ============================================================
+
+fbSendEmergency(
+    Group_Address := stGroup,
+    bControl      := bForced,
+    bValue        := bValueOn,
+    str_Rec       := stEibRec,
+    bError        => bSendError,
+    iErrorID      => iLastErrID
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

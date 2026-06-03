@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_Rec_RPS_Switch" Id="{c70c6d17-58e5-5342-a405-c654148f8e5b}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_Rec_RPS_Switch
+VAR
+    fbKL6581           : FB_KL6581;
+    fbConfRoomPanel    : FB_Rec_RPS_Switch;            // 会议室 4 键场景面板
+
+    stKL6581Input      AT %I* : KL6581_Input;
+    stKL6581Output     AT %Q* : KL6581_Output;
+    nConfPanelId       : DWORD := 16#01AABBCC;          // 4 键面板 ID
+
+    stPanelEvents      : STR_EnOceanSwitch;             // 8 个事件位
+    bConfModePresentat : BOOL;                          // 演示模式：投影 + 阶梯灯
+    bConfModeMeeting   : BOOL;                          // 会议模式：白板 + 主灯
+    bAllLightsOff      : BOOL;                          // 全关
+    bCurtainsClosed    : BOOL;                          // 窗帘已关
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：会议室壁挂 EnOcean 4 键场景面板（Eltako FT55 / PEHA Easyclick 等）。
+//       4 键 × 2 半 = 8 种动作位：
+//         T1↑= 演示模式（投影 + 阶梯灯）   T1↓= 演示退出
+//         T2↑= 会议模式（白板 + 主灯）     T2↓= 会议退出
+//         T3↑= 窗帘关                     T3↓= 窗帘开
+//         T4↑= 全关                       T4↓= （备用）
+//
+// 价值：用 FB_Rec_RPS_Switch 把 8 位事件一次取出，按场景脚本写互锁逻辑；
+//       避免读 1 字节自拆 RPS nibble 的 20 多行解码代码。事件位天然就是
+//       "按下沿"，不用 R_TRIG。
+//
+// 验证步骤：
+//   1. 跑 P_Demo_FB_KL6581 让主端子初始化
+//   2. 把面板 ID 写到 nConfPanelId（可用 FB_Rec_Teach_In 或 FB_EnOcean_Search 获取）
+//   3. 引用 Tc2_EnOcean，编译，登录，运行
+//   4. 按面板 T1↑ -> stPanelEvents.bT1_ON 一帧 TRUE，bConfModePresentat 翻 TRUE
+//   5. 按面板 T1↓ -> stPanelEvents.bT1_OFF 一帧 TRUE，bConfModePresentat 翻 FALSE
+//   6. 按面板 T4↑ -> bAllLightsOff 翻 TRUE，bConfModePresentat / bConfModeMeeting 都关
+//   7. 按面板 T3↑/T3↓ -> bCurtainsClosed 切换
+//   8. 任何场景互斥：演示和会议互锁，不能同时为 TRUE
+// =============================================================================
+
+fbKL6581(
+    bInit        := TRUE,
+    nIdx         := 1,
+    stKL6581_in  := stKL6581Input,
+    stKL6581_out := stKL6581Output
+);
+
+fbConfRoomPanel(
+    str_KL6581         := fbKL6581.str_KL6581,
+    byNode             := 0,                            // 收所有 KL6583 节点
+    dw_ID              := nConfPanelId,
+    str_EnOceanSwitch  => stPanelEvents
+);
+
+// T1：演示模式（按下沿即触发，事件位语义）
+IF stPanelEvents.bT1_ON THEN
+    bConfModePresentat := TRUE;
+    bConfModeMeeting   := FALSE;                        // 与会议模式互锁
+    bAllLightsOff      := FALSE;
+END_IF;
+IF stPanelEvents.bT1_OFF THEN
+    bConfModePresentat := FALSE;
+END_IF;
+
+// T2：会议模式
+IF stPanelEvents.bT2_ON THEN
+    bConfModeMeeting   := TRUE;
+    bConfModePresentat := FALSE;
+    bAllLightsOff      := FALSE;
+END_IF;
+IF stPanelEvents.bT2_OFF THEN
+    bConfModeMeeting := FALSE;
+END_IF;
+
+// T3：窗帘开关
+IF stPanelEvents.bT3_ON  THEN bCurtainsClosed := TRUE;  END_IF;
+IF stPanelEvents.bT3_OFF THEN bCurtainsClosed := FALSE; END_IF;
+
+// T4 上半：一键全关
+IF stPanelEvents.bT4_ON THEN
+    bAllLightsOff      := TRUE;
+    bConfModePresentat := FALSE;
+    bConfModeMeeting   := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

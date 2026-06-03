@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_DBCyclicRdWrt" Id="{2d1692ac-5a96-5398-ba70-cd5fd4805d84}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_DBCyclicRdWrt
+VAR
+    fbCyclic          : FB_DBCyclicRdWrt;
+    bLoggingEnabled   : BOOL := FALSE;        // 业务侧"是否记录"标志：电平翻转启 / 停
+    bCyclicBusy       : BOOL;
+    bCyclicErr        : BOOL;
+    nCyclicErrCode    : UDINT;
+    sCyclicSqlState   : ST_DBSQLError;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：MES 集成——产线运行时连续记录 50 个工艺参数到 SQL Server，每 100 ms
+//       采样。运维用 XML Configuration File Editor 把 50 个变量配成一个 Symbol-
+//       group，PLC 启动后只需把业务侧"是否记录" BOOL 接到本 FB 的 bExecute，
+//       电平翻转自动启 / 停（不是 R_TRIG 单脉冲！）。
+// 价值：性能远高于 PLC 主动 FB_DBWrite——Server 内部做批量 INSERT、连接复用、
+//       缓冲管理；PLC 只暴露变量、按需开 / 关，几乎无 CPU 开销。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_Database；用 XML Configuration File Editor 配好一个 Symbolgroup
+//      （指定要采样的变量 + AdsID + DBID + 写入模式）
+//   3. 编译 → 登录 → 运行；启动 TwinCAT Database Server
+//   4. 在线写 bLoggingEnabled := TRUE → bCyclicBusy 短暂 TRUE → 周期读写启动
+//   5. 用 SQL Server 查目标表，确认新数据在累积
+//   6. 在线写 bLoggingEnabled := FALSE → 停止周期读写；SQL 表不再增长
+//   7. 配合 FB_GetStateTcDatabase 例程，确认 nDevState Bit1（值 2）跟随启停状态
+// =============================================================================
+
+// 注意：bExecute 是双沿触发——上升沿启动、下降沿停止。
+// 业务侧直接接"是否记录"BOOL，不要再加 R_TRIG！
+fbCyclic(
+    sNetID    := '',
+    bExecute  := bLoggingEnabled,                   // 电平接业务标志
+    tTimeout  := T#15S,
+    bBusy     => bCyclicBusy,
+    bError    => bCyclicErr,
+    nErrID    => nCyclicErrCode,
+    sSQLState => sCyclicSqlState
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

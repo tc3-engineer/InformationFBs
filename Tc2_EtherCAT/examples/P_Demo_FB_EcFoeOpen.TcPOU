@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_EcFoeOpen" Id="{c1d7e4e9-6b91-5b97-8525-57bee50bae8e}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_EcFoeOpen
+VAR
+    fbFoeOpen           : FB_EcFoeOpen;
+    bRequestOpenOnce    : BOOL := FALSE;
+    nLogFileSlaveAddr   : UINT := 1004;
+    sLogFileName        : T_MaxString := 'LogData';
+    nFoePassword        : DWORD := 0;
+    hFoeReadHandle      : T_HFoe;             // 给后续 FB_EcFoeAccess 用
+    bOpenBusy           : BOOL;
+    bOpenError          : BOOL;
+    nLastAdsErr         : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// Tc2_EtherCAT.FB_EcFoeOpen 演示程序
+// =============================================================================
+// 场景：流式读 EL 模块上的"实时日志文件"。第一步用本 FB 打开 FoE 端口
+//       拿 handle，第二步循环用 FB_EcFoeAccess 分块读，最后 FB_EcFoeClose
+//       关闭句柄。
+//
+// 价值：流式 FoE 处理大文件，PLC 内存友好。
+//
+// 验证步骤：
+//   1. Import 本文件，编译 → 登录
+//   2. nLogFileSlaveAddr 设为有 FoE 文件的从站地址
+//   3. sLogFileName 设为目标文件名（默认不含扩展名）
+//   4. 在线脉冲 bRequestOpenOnce := TRUE
+//        - bOpenBusy 一两个周期后落回
+//        - hFoeReadHandle 应填入有效句柄
+//        - nLastAdsErr = 0
+//   5. 业务侧后续把 hFoeReadHandle 传给 FB_EcFoeAccess 读分块
+// =============================================================================
+
+fbFoeOpen(
+    sNetId    := '',
+    nPort     := nLogFileSlaveAddr,
+    sPathName := sLogFileName,
+    dwPass    := nFoePassword,
+    eMode     := eFoeMode_Read,
+    bExecute  := bRequestOpenOnce,
+    tTimeout  := DEFAULT_ADS_TIMEOUT,
+    bBusy     => bOpenBusy,
+    bError    => bOpenError,
+    nErrId    => nLastAdsErr,
+    hFoe      => hFoeReadHandle
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

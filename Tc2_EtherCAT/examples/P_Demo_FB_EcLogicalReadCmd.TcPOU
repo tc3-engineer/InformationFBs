@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_EcLogicalReadCmd" Id="{4e4b75f5-3cfc-562c-90db-d41365501592}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_EcLogicalReadCmd
+VAR
+    fbReadPdoArea       : FB_EcLogicalReadCmd;
+    bRequestReadOnce    : BOOL := FALSE;             // 在线置 TRUE 触发一次读
+    nPdoLogicalAddr     : UDINT := 16#10000;          // PDO 映射区起始逻辑地址（请按 XAE Process Image 实际填）
+    abInputSnapshot     : ARRAY[0..63] OF BYTE;       // 接收 buffer（64 字节，可按需调整）
+    nWorkingCounter     : UINT;
+    bReadBusy           : BOOL;
+    bReadError          : BOOL;
+    nLastAdsErr         : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// Tc2_EtherCAT.FB_EcLogicalReadCmd 演示程序
+// =============================================================================
+// 场景：调试新建 EtherCAT 网络（EK1100 + EL3008 + EL2008），主站显示全部
+//       从站 OP 但 EL3008 PLC 端 PDO 读出全 0。怀疑 FMMU 映射没真正下发。
+//       用本 FB 直接发 LRD 命令读 PDO 映射区起始 64 字节，看：
+//         wkc = 1 → 映射 OK，问题在 EL3008 硬件或测量信号
+//         wkc = 0 → 映射没生效，需要在 XAE 重新激活配置
+//
+// 价值：旁路 PLC 任务的 PDO 双缓冲机制，单独发一次 LRD 命令验证主站到从站
+//       的逻辑地址映射是否真在工作。是排查"PDO 看似在跑但数据是上一周期残值"
+//       的诊断工具。
+//
+// 验证步骤：
+//   1. 在 XAE 视图 PLC → IO → Devices → 主站 → Process Image，找到目标 PDO
+//      所在 logical address（典型起始为 16#10000）；改 nPdoLogicalAddr
+//   2. Import 本文件，编译 → 登录
+//   3. 在线置 bRequestReadOnce := TRUE：
+//        - bReadBusy 短暂为 TRUE 一两个 PLC 周期后落回
+//        - nWorkingCounter > 0：至少有一个从站应答了该逻辑地址段
+//        - abInputSnapshot 应可见从站 PDO 当前值
+//   4. 把 nPdoLogicalAddr 故意填一个未映射的地址（如 16#FFFF0000）再触发：
+//        nWorkingCounter 应为 0，bReadError = FALSE（ADS 调用本身成功）
+// =============================================================================
+
+fbReadPdoArea(
+    sNetId   := '',
+    logAddr  := nPdoLogicalAddr,
+    len      := SIZEOF(abInputSnapshot),
+    pDstBuf  := ADR(abInputSnapshot),
+    bExecute := bRequestReadOnce,
+    tTimeout := DEFAULT_ADS_TIMEOUT,
+    bBusy    => bReadBusy,
+    bError   => bReadError,
+    nErrId   => nLastAdsErr,
+    wkc      => nWorkingCounter
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

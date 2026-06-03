@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_EcGetAllSlaveStates" Id="{b29650cd-a321-5eee-a54f-24a84ecbbd4e}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_EcGetAllSlaveStates
+VAR
+    fbGetAllStates      : FB_EcGetAllSlaveStates;
+    bRequestReadOnce    : BOOL := FALSE;
+    arrSlaveStates      : ARRAY[0..EC_MAX_SLAVES] OF ST_EcSlaveState;
+    nSlaveCount         : UINT;
+    nFirstSlaveDevState : WORD;     // 第 0 个从站 deviceState；正常 OP = 16#08
+    bReadBusy           : BOOL;
+    bReadError          : BOOL;
+    nLastAdsErr         : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// Tc2_EtherCAT.FB_EcGetAllSlaveStates 演示程序
+// =============================================================================
+// 场景：12 从站机型，HMI 主页要 12 个圆点显示各从站 OP / 非 OP 颜色。
+//       每秒调本 FB 拿一次全网状态数组，遍历 deviceState 字段做颜色判定，
+//       推给 HMI。任何从站非 OP 立即弹报警。
+//
+// 价值："全网状态总览"做成 1 行调用 + 一个循环遍历。免去为每个从站单
+//       独调 FB_EcGetSlaveState 引发的 12 倍 ADS 负载。
+//
+// 验证步骤：
+//   1. Import 本文件，编译 → 登录；现场至少 1 从站当前在 OP
+//   2. 在线置 bRequestReadOnce := TRUE
+//        - bReadBusy 一两个周期后落回
+//        - nSlaveCount 等于现场实际从站数
+//        - 展开 arrSlaveStates[0]，应看到 deviceState = 16#0008（OP）
+//   3. 拔掉一台从站再触发：对应从站 deviceState 应为非 16#08（典型 INIT_NO_COMM）
+// =============================================================================
+
+fbGetAllStates(
+    sNetId    := '',
+    pStateBuf := ADR(arrSlaveStates),
+    cbBufLen  := SIZEOF(arrSlaveStates),
+    bExecute  := bRequestReadOnce,
+    tTimeout  := DEFAULT_ADS_TIMEOUT,
+    bBusy     => bReadBusy,
+    bError    => bReadError,
+    nErrId    => nLastAdsErr,
+    nSlaves   => nSlaveCount
+);
+
+// 提取第 0 个从站 deviceState 单独监视
+IF nSlaveCount > 0 THEN
+    nFirstSlaveDevState := arrSlaveStates[0].deviceState;
+END_IF
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

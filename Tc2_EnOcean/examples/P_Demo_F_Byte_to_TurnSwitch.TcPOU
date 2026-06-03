@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_F_Byte_to_TurnSwitch" Id="{bfa3b195-3394-542f-a2df-9c73844d5124}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_F_Byte_to_TurnSwitch
+VAR
+    // 来自 FB_EnOceanSTM100Generic.nDataBytes[2] 或 FB_Rec_Generic.ar_Value[2]
+    byRawTurnSwitch    : BYTE := 16#10;                 // 任意一档的 raw 编码
+
+    stTurnSwitchPos    : STREnOceanTurnSwitch;          // 5 位互斥布尔
+    bAnyPositionValid  : BOOL;                          // 至少一位 TRUE = 已收到帧
+
+    // HVAC 应用：旋钮档位 -> 目标温度策略
+    rTargetTempDegC    : REAL;
+    nHvacMode          : INT;                            // 0=未知 1=关 2=节能 3=舒适 4=Boost 5=Auto
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：办公室温控面板带 5 档旋钮（Auto / 0 / 1 / 2 / 3）。从 EnOcean STM100
+//       接收到 4 byte 原始数据后，byte 2 是旋钮位的协议编码。本程序：① 用
+//       F_Byte_to_TurnSwitch 解码出 5 位互斥布尔，② 判断是否首帧已到，
+//       ③ 把档位映射到 HVAC 目标温度与运行模式。
+//
+// 价值：直接拿 5 位布尔写并列 IF 比 CASE 枚举更易读；本函数把协议字节
+//       细节屏蔽掉，工程师不用懂 EnOcean 旋钮 byte 编码。
+//
+// 验证步骤：
+//   1. 引用 Tc2_EnOcean，编译，登录，运行
+//   2. 在线写 byRawTurnSwitch 为不同档位的 raw byte（具体值取决于设备
+//      手册；典型映射：16#10 = Auto，16#00 = Stage 0，依此类推）
+//   3. 观察 stTurnSwitchPos：应只有一位 TRUE，bAnyPositionValid = TRUE
+//   4. 观察 rTargetTempDegC / nHvacMode：应按下方逻辑切换
+//   5. 故意写 byRawTurnSwitch = 16#FF（未定义值）：可能 5 位全 FALSE，
+//      bAnyPositionValid = FALSE，nHvacMode = 0（未知），rTargetTempDegC
+//      默认 22 °C（停车安全模式）
+// =============================================================================
+
+// 解码：5 位互斥布尔
+stTurnSwitchPos := F_Byte_to_TurnSwitch(byData := byRawTurnSwitch);
+
+// 判定是否有有效档位
+bAnyPositionValid := stTurnSwitchPos.bStageAuto
+                  OR stTurnSwitchPos.bStage_0
+                  OR stTurnSwitchPos.bStage_1
+                  OR stTurnSwitchPos.bStage_2
+                  OR stTurnSwitchPos.bStage_3;
+
+// HVAC 联动：按档位映射目标温度 + 运行模式
+IF NOT bAnyPositionValid THEN
+    // 未识别（首帧前或字节损坏）-> 停车安全模式
+    nHvacMode       := 0;
+    rTargetTempDegC := 22.0;
+ELSIF stTurnSwitchPos.bStage_0 THEN
+    nHvacMode       := 1;            // 关 / 防冻
+    rTargetTempDegC := 16.0;
+ELSIF stTurnSwitchPos.bStage_1 THEN
+    nHvacMode       := 2;            // 节能
+    rTargetTempDegC := 19.0;
+ELSIF stTurnSwitchPos.bStage_2 THEN
+    nHvacMode       := 3;            // 舒适
+    rTargetTempDegC := 22.0;
+ELSIF stTurnSwitchPos.bStage_3 THEN
+    nHvacMode       := 4;            // Boost
+    rTargetTempDegC := 24.0;
+ELSIF stTurnSwitchPos.bStageAuto THEN
+    nHvacMode       := 5;            // Auto；由 BMS 调度
+    rTargetTempDegC := 22.0;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

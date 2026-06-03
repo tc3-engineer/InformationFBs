@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_EIB_8BIT_UNSIGN_REC" Id="{c4a9801d-7aeb-53b0-9d08-a7836a599e35}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_EIB_8BIT_UNSIGN_REC
+VAR
+    fbReceiveStatus : EIB_8BIT_UNSIGN_REC;
+    stEibRec        : EIB_REC;
+    stGroupStatus   : EIB_GROUP_ADDR := (MAIN := 1, SUB_MAIN := 2, NUMBER := 5);
+    byStatusCode    : BYTE;
+    bGotNewSample   : BOOL;
+    rTrigSample     : R_TRIG;
+    bFanFault       : BOOL;
+    bFilterDirty    : BOOL;
+    bOverTemp       : BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_EIB.EIB_8BIT_UNSIGN_REC 演示程序
+// ============================================================
+// 场景：DPT 5.005 设备状态码：故障代码、运行模式编号等以 byte 形式发到 1/2/5。本 demo 接收并按状态码分支报警。
+// 价值：DPT 5.005/5.010 的标准接收；零成本拿到 raw byte
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_EIB（References → Add library）
+//   3. 编译 → 登录 → 运行；按下方在线写值步骤操作
+// 验证：推 0x03 到 1/2/5 → `byStatusCode` = 3 → `bFanFault` = TRUE（状态码 3 = 风机故障）。
+// ============================================================
+
+fbReceiveStatus(
+    Group_Address := stGroupStatus,
+    strData_Rec   := stEibRec,
+    bDataReceive  => bGotNewSample,
+    byData        => byStatusCode
+);
+
+rTrigSample(CLK := bGotNewSample);
+IF rTrigSample.Q THEN
+    bFanFault    := (byStatusCode = 3);
+    bFilterDirty := (byStatusCode = 5);
+    bOverTemp    := (byStatusCode = 7);
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

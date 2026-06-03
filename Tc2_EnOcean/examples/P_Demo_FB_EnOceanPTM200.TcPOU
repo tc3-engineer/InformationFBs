@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_EnOceanPTM200" Id="{677d92a8-513b-5cc0-87e8-5acce3162c80}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_EnOceanPTM200
+VAR
+    fbEnOceanReceive   : FB_EnOceanReceive;
+    fbOfficeDimmer     : FB_EnOceanPTM200;             // 办公室调光摇杆
+    stEnOceanInData    AT %I* : ST_EnOceanInData;
+    stEnOceanOutData   AT %Q* : ST_EnOceanOutData;
+    nOfficeDimmerId    : UDINT := 16#000000C6;         // 摇杆模块 ID
+
+    abRockerSwitches   : ARRAY [0..3] OF BOOL;         // 0/1 摇杆 1 上/下，2/3 摇杆 2 上/下
+    nLightLevelPercent : INT := 50;                    // 当前亮度（0-100）
+    tonDimSafety       : TON;                          // 调光安全限时（防丢失释放电报飞车）
+    bDimmingUpActive   : BOOL;                          // 当前是否在按住调亮
+    bDimmingDownActive : BOOL;                          // 当前是否在按住调暗
+    bPTM200Error       : BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：开放式办公室天花板 LED 灯调光。在墙面贴一片 EnOcean PTM200 双摇杆
+//       面板：摇杆 1 控制工作区主灯（上 = 升亮，下 = 降暗，按住持续），摇杆 2
+//       控制窗帘（上 = 升 / 下 = 降）。无墙线，零电池维护。本例演示摇杆 1
+//       的"按住调光 + 安全限时（防止丢失释放电报导致一直亮 / 暗到极端）"。
+//
+// 价值：PTM200/250 的"按下 + 释放"协议在 FB 内部自动解码为 4 位电平数组；
+//       应用只需配 RAMP + safety timeout 就有产品级调光体验。
+//
+// 验证步骤：
+//   1. 在 SysMgr 链 KL6021-0023 IO 字节区
+//   2. 把摇杆模块 ID 写到 nOfficeDimmerId（先跑 P_Demo_FB_EnOceanReceive
+//      观察 nLastTransmitterId 取得）
+//   3. 引用 Tc2_EnOcean，编译，登录，运行
+//   4. 按住摇杆 1 上键 -> abRockerSwitches[0] 变 TRUE，bDimmingUpActive
+//      变 TRUE，nLightLevelPercent 以每 100 ms +1 上升至 100
+//   5. 松开摇杆 1 上键 -> abRockerSwitches[0] 变 FALSE，停止上升
+//   6. 故意在按住期间让电波被遮（手罩住模块） -> 释放电报丢失，正常应在
+//      tonDimSafety 到时（3 秒）强制停止，避免一直调亮到 100 后又触发故障
+//   7. 同理可验证下键 abRockerSwitches[1]
+// =============================================================================
+
+fbEnOceanReceive(
+    bEnable          := TRUE,
+    stEnOceanInData  := stEnOceanInData,
+    stEnOceanOutData := stEnOceanOutData
+);
+
+fbOfficeDimmer(
+    bEnable               := NOT fbEnOceanReceive.bError AND fbEnOceanReceive.bEnable,
+    tWatchdog             := T#0s,                              // 按键场景不开 watchdog
+    nTransmitterId        := nOfficeDimmerId,
+    stEnOceanReceivedData := fbEnOceanReceive.stEnOceanReceivedData,
+    bSwitches             => abRockerSwitches,
+    bError                => bPTM200Error
+);
+
+// 调光安全限时：按住一直 TRUE 时 3 秒后强制停止，防止丢失释放电报
+tonDimSafety(IN := abRockerSwitches[0] OR abRockerSwitches[1], PT := T#3S);
+
+bDimmingUpActive   := abRockerSwitches[0] AND NOT tonDimSafety.Q;
+bDimmingDownActive := abRockerSwitches[1] AND NOT tonDimSafety.Q;
+
+// 简化的"按住调光"逻辑（每周期 +1 / -1，主任务 10 ms 周期即 100 单位/秒）
+IF bDimmingUpActive AND nLightLevelPercent < 100 THEN
+    nLightLevelPercent := nLightLevelPercent + 1;
+END_IF;
+IF bDimmingDownActive AND nLightLevelPercent > 0 THEN
+    nLightLevelPercent := nLightLevelPercent - 1;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

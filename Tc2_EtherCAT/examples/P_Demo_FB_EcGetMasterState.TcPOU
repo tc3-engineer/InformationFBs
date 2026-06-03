@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_EcGetMasterState" Id="{56866803-9512-5d10-acb5-a41075388968}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_EcGetMasterState
+VAR
+    fbReadMasterState   : FB_EcGetMasterState;
+    bRequestReadOnce    : BOOL := FALSE;
+    nMasterState        : WORD;             // 0x01=INIT, 0x02=PREOP, 0x04=SAFEOP, 0x08=OP
+    bMasterIsOp         : BOOL;             // 简洁业务前置
+    bReadBusy           : BOOL;
+    bReadError          : BOOL;
+    nLastAdsErr         : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// Tc2_EtherCAT.FB_EcGetMasterState 演示程序
+// =============================================================================
+// 场景：业务主循环开始处判"主站是不是 OP"作为前置。若不是 OP 业务跳过
+//       本周期，避免向脱机网络写 PDO 触发奇怪现象（如轴轴一动就报急停）。
+//
+// 价值：把"前置条件检查"做成 1 行 IF。
+//
+// 验证步骤：
+//   1. Import 本文件，编译 → 登录
+//   2. 在线置 bRequestReadOnce := TRUE
+//        - bReadBusy 一两个周期后落回
+//        - nMasterState 正常应为 16#0008 (OP)
+//        - bMasterIsOp 应为 TRUE
+//   3. 在 XAE 把主站 Stop（System Manager → 主站 → Restart 前先 Stop）
+//      再触发：nMasterState 应变为非 0x08，bMasterIsOp = FALSE
+// =============================================================================
+
+fbReadMasterState(
+    sNetId   := '',
+    bExecute := bRequestReadOnce,
+    tTimeout := DEFAULT_ADS_TIMEOUT,
+    bBusy    => bReadBusy,
+    bError   => bReadError,
+    nErrId   => nLastAdsErr,
+    state    => nMasterState
+);
+
+bMasterIsOp := (nMasterState = EC_DEVICE_STATE_OP) AND NOT bReadError;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_GetAdsDevXMLConfig" Id="{ddeff942-a6a5-59c7-8178-b4042b07c9ec}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_GetAdsDevXMLConfig
+VAR
+    fbGetAdsXml        : FB_GetAdsDevXMLConfig;
+    arrAdsCfg          : ARRAY[0..MAX_XML_DECLARATIONS] OF ST_ADSDevXMLCfg;
+    bUserQuery         : BOOL;                  // HMI 上"刷新 ADS 设备列表"按钮
+    rEdgeQuery         : R_TRIG;
+    bQueryBusy         : BOOL;
+    bQueryError        : BOOL;
+    nQueryErr          : UDINT;
+    // === 业务侧：找特定 NetID 对应的 hAdsId ===
+    sLookupNetID       : T_AmsNetID := '5.23.91.7.1.1';
+    nLookupPort        : UINT       := 851;
+    hSlaveAdsId        : UDINT;
+    bSlaveFound        : BOOL;
+    i                  : INT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：中央 CX 数据采集站要把名下 ADS 设备列表展示到 HMI（IP/Port/Timeout
+//       逐项），同时业务代码需要按 NetID + Port 动态找到对应 hAdsId 用于
+//       FB_DBWrite——避免硬编码 hAdsID := 1。
+// 价值：单源（XML 配置）、运行时（不依赖 PLC 端冗余表）、跨 ADS 路由通用。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_Database；确保 XML 中已注册一台 NetID = '5.23.91.7.1.1'
+//      Port = 851 的 ADS Device
+//   3. 编译 → 登录 → 运行
+//   4. 在线写 bUserQuery := TRUE → bQueryBusy 短暂 TRUE → 观察 arrAdsCfg[0..N-1]
+//      被填上当前 ADS Device 列表；hSlaveAdsId 应被设为对应条目的 nAdsDevID
+//   5. 改 sLookupNetID 为不存在的 → 触发后 bSlaveFound 应为 FALSE
+// =============================================================================
+
+rEdgeQuery(CLK := bUserQuery);
+
+// 触发前清空缓冲
+IF rEdgeQuery.Q THEN
+    MEMSET(destAddr := ADR(arrAdsCfg), fillByte := 0, n := SIZEOF(arrAdsCfg));
+END_IF
+
+// 单次完整调用
+fbGetAdsXml(
+    sNetID      := '',
+    cbAdsDevCfg := SIZEOF(arrAdsCfg),
+    pAdsDevCfg  := ADR(arrAdsCfg),
+    bExecute    := rEdgeQuery.Q,
+    tTimeout    := T#15S,
+    bBusy       => bQueryBusy,
+    bError      => bQueryError,
+    nErrID      => nQueryErr
+);
+
+// 查询完成后扫描数组找到目标 NetID + Port 对应的 nAdsDevID
+IF (NOT bQueryBusy) AND (NOT bQueryError) THEN
+    bSlaveFound := FALSE;
+    hSlaveAdsId := 0;
+    FOR i := 0 TO MAX_XML_DECLARATIONS DO
+        IF arrAdsCfg[i].nAdsDevID > 0
+           AND arrAdsCfg[i].sAdsDevNetID = sLookupNetID
+           AND arrAdsCfg[i].nAdsDevPort = nLookupPort THEN
+            hSlaveAdsId := DINT_TO_UDINT(arrAdsCfg[i].nAdsDevID);
+            bSlaveFound := TRUE;
+            EXIT;
+        END_IF
+    END_FOR
+END_IF
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

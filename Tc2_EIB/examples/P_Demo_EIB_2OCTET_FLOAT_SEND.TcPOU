@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_EIB_2OCTET_FLOAT_SEND" Id="{7eb8d154-95bd-5e4c-8418-2e6dc7154d38}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_EIB_2OCTET_FLOAT_SEND
+VAR
+    fbSendTemp    : EIB_2OCTET_FLOAT_SEND;
+    stEibRec      : EIB_REC;
+    stGroupTemp   : EIB_GROUP_ADDR := (MAIN := 1, SUB_MAIN := 2, NUMBER := 10);
+    rRoomTempC    : REAL := 22.5;
+    bSendError    : BOOL;
+    iLastErrID    : EIB_ERROR_CODE;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_EIB.EIB_2OCTET_FLOAT_SEND 演示程序
+// ============================================================
+// 场景：PLC 测得的当前室内温度（REAL）经组地址 1/2/10 推送到 BMS。BMS 监控页面订阅 1/2/10 显示房间温度。
+// 价值：替代手写 EIB 半精度浮点编码；变化时自动发，节省 EIB 带宽
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_EIB（References → Add library）
+//   3. 编译 → 登录 → 运行；按下方在线写值步骤操作
+// 验证：登录后改 `rRoomTempC := 23.5` → 1 秒内 BMS 应看到 1/2/10 新帧；再快速改成 24.0、24.5（< 1 秒内）→ 仅最后一次发出。
+// ============================================================
+
+// 只在 rRoomTempC 变化时下发；用最小 1 秒间隔合并连续变化
+fbSendTemp(
+    Group_Address := stGroupTemp,
+    rData         := rRoomTempC,
+    str_Rec       := stEibRec,
+    bError        => bSendError,
+    iErrorID      => iLastErrID
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_EcCoeSdoRead" Id="{c3ec4af2-3826-5e45-96a2-fb09aca8376d}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_EcCoeSdoRead
+VAR
+    fbReadVendorId      : FB_EcCoeSdoRead;
+    bRequestReadOnce    : BOOL := FALSE;
+    nTargetSlaveAddr    : UINT := 1001;
+    wIdentityIndex      : WORD := 16#1018;    // Identity Object
+    nVendorIdSubIndex   : BYTE := 1;          // sub 1 = Vendor ID
+    nVendorIdValue      : UDINT;              // 期望 = 16#00000002 (Beckhoff)
+    bIsBeckhoff         : BOOL;
+    cbActualRead        : UDINT;
+    bReadBusy           : BOOL;
+    bReadError          : BOOL;
+    nLastAdsErr         : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// Tc2_EtherCAT.FB_EcCoeSdoRead 演示程序
+// =============================================================================
+// 场景：HMI 显示一个 EL3008 模块的硬件 vendor ID 做防伪校验。每分钟调
+//       本 FB 读 0x1018:1，与期望值 16#00000002 (Beckhoff) 比对。装错牌
+//       子的从站立即触发"非授权硬件"报警。
+//
+// 价值：CoE 标准对象访问封装成一行；业务侧免学 SDO 协议细节。
+//
+// 验证步骤：
+//   1. Import 本文件，编译 → 登录；现场至少 1 个 Beckhoff 从站当前 OP
+//   2. nTargetSlaveAddr 设为 Beckhoff 从站地址
+//   3. 在线置 bRequestReadOnce := TRUE
+//        - bReadBusy 短暂为 TRUE 后落回
+//        - nVendorIdValue 应为 16#00000002
+//        - cbActualRead 应为 4（UDINT = 4 字节）
+//        - bIsBeckhoff = TRUE
+//   4. 把 nTargetSlaveAddr 换成第三方从站再触发：vendorId 应不同
+// =============================================================================
+
+fbReadVendorId(
+    sNetId     := '',
+    nSlaveAddr := nTargetSlaveAddr,
+    nSubIndex  := nVendorIdSubIndex,
+    nIndex     := wIdentityIndex,
+    pDstBuf    := ADR(nVendorIdValue),
+    cbBufLen   := SIZEOF(nVendorIdValue),
+    bExecute   := bRequestReadOnce,
+    tTimeout   := DEFAULT_ADS_TIMEOUT,
+    bBusy      => bReadBusy,
+    bError     => bReadError,
+    nErrId     => nLastAdsErr,
+    cbRead     => cbActualRead
+);
+
+IF NOT bReadBusy AND NOT bReadError THEN
+    bIsBeckhoff := (nVendorIdValue = 16#00000002);
+END_IF
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

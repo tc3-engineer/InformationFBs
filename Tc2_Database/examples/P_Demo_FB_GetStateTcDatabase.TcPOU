@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_GetStateTcDatabase" Id="{af14f13b-d6a5-5990-8151-c024c508eddb}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_GetStateTcDatabase
+VAR
+    fbGetState        : FB_GetStateTcDatabase;       // Database Server 状态查询 FB
+    bPollStart        : BOOL;                         // 在线写 TRUE 启动健康检查轮询
+    fbPollTimer       : TON;                          // 节流定时器：每 2 秒查一次
+    bDbServerOnline   : BOOL;                         // HMI 用：DB 服务在线指示灯
+    bCyclicRdWrtRun   : BOOL;                         // HMI 用：周期读写在跑指示灯
+    nLastAdsState     : UINT;                         // 在线 monitor 的 ADS 状态码
+    nLastDevState     : UINT;                         // 在线 monitor 的 DB Server 状态位掩码
+    nLastErr          : UDINT;                        // 最近一次错误号；0x6 = 服务未启动
+    bQueryBusy        : BOOL;                         // ADS 查询进行中
+    bQueryErr         : BOOL;                         // 上次查询失败
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：CX 控制器 HMI 上需要一个『Database Server 健康指示灯』，每 2 秒刷新一次；
+//       在批量数据库写入前用这个状态做预检——避免在服务未起时盲调 FB_DBWrite
+//       得到一堆 0x6 错误。
+// 价值：相比"先调 FB_DBWrite 看返回值再处理"，本 FB 把状态查询集中一处，业务
+//       侧只看 bDbServerOnline 这一个 BOOL 即可决定是否继续；HMI 也只需绑这
+//       两个 BOOL。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_Database（References → Add library）
+//   3. 编译 → 登录 → 运行；确认 TwinCAT Database Server 服务已启动
+//   4. 在线写 bPollStart := TRUE → 观察 nLastAdsState 在 2 秒内变为 5 (RUN)、
+//      nLastDevState Bit0 为 1（即 nLastDevState AND 1 = 1） → bDbServerOnline = TRUE
+//   5. 停掉 TwinCAT Database Server 服务 → 等下一次轮询触发 → nLastErr = 16#6
+//      （ADS port not found），bDbServerOnline 翻为 FALSE
+// =============================================================================
+
+// 用节流定时器实现"每 2 秒查一次"：bPollStart 启动后，定时器 Q 每 2 秒翘一下
+fbPollTimer(IN := bPollStart AND NOT fbPollTimer.Q, PT := T#2S);
+
+// 单次完整调用形式；空 sNetID = 本机
+// bExecute 用 fbPollTimer.Q 一脉冲触发；bBusy 期间不会重新触发
+fbGetState(
+    sNetID    := '',
+    bExecute  := fbPollTimer.Q,
+    tTimeout  := T#5S,
+    bBusy     => bQueryBusy,
+    bError    => bQueryErr,
+    nErrID    => nLastErr,
+    nAdsState => nLastAdsState,
+    nDevState => nLastDevState
+);
+
+// 业务侧只看这两个 BOOL：
+// - DB Server 在线 = ADS 状态 = RUN(5) 且 设备状态 Bit0 已置位
+bDbServerOnline := (NOT bQueryErr) AND (nLastAdsState = 5) AND ((nLastDevState AND 1) = 1);
+// - 周期读写在跑 = 设备状态 Bit1 已置位（注意是位掩码不是状态机，要按位与判断）
+bCyclicRdWrtRun := (NOT bQueryErr) AND ((nLastDevState AND 2) = 2);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

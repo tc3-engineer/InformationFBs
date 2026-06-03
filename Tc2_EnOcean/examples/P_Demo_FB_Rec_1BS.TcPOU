@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_Rec_1BS" Id="{e4014a9e-a391-5df6-a3d6-f40bcdb16c60}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_Rec_1BS
+VAR
+    fbKL6581            : FB_KL6581;
+    fbBedroomWindow     : FB_Rec_1BS;                  // 卧室窗户门磁
+
+    stKL6581Input       AT %I* : KL6581_Input;
+    stKL6581Output      AT %Q* : KL6581_Output;
+    nBedroomWindowId    : DWORD := 16#01ABCDEF;        // 1BS 模块 ID
+
+    bWindowOpen         : BOOL;                         // raw 输出
+    bWindowClose        : BOOL;
+    bLearnPressed       : BOOL;
+    bConfirmedState     : BOOL := FALSE;                // 首帧到达前 = 未知
+    rTrigWindowOpened   : R_TRIG;
+    bAirConditionerOff  : BOOL;                         // 联动：开窗时强制关空调
+    bIntrusionAlarm     : BOOL;                         // 夜间开窗 = 入侵
+    bNightMode          : BOOL := FALSE;                 // HMI 切换昼夜模式
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：智能家居卧室窗 EnOcean 1BS 门磁，触点闭合（磁铁靠近）= 关，断开 = 开。
+//       业务联动：① 开窗时联动关空调（HVAC 互锁省电），② 夜间模式下开窗
+//       触发入侵报警。本程序处理 1BS 接收 + 首帧确认 + 开窗沿触发。
+//
+// 价值：把 1BS 协议 + 互锁 + 沿触发 + 上电假状态过滤一起处理；应用层
+//       拿到的是已可靠表达"窗当前真实状态"的 bWindowOpen / bWindowClose，
+//       不会因为上电瞬间的未知态错误关空调或报警。
+//
+// 验证步骤：
+//   1. 先跑 P_Demo_FB_KL6581 让 KL6581 初始化
+//   2. 把卧室窗 1BS 设备 ID 写到 nBedroomWindowId（可用 FB_Rec_Teach_In
+//      抓取学习按键事件得到）
+//   3. 引用 Tc2_EnOcean，编译，登录，运行
+//   4. 关窗（磁铁靠近）：bWindowClose = TRUE，bConfirmedState = TRUE，
+//      不触发任何报警
+//   5. 开窗：bWindowOpen 变 TRUE，rTrigWindowOpened.Q 给出沿，
+//      bAirConditionerOff = TRUE
+//   6. 把 bNightMode 在线写 TRUE 后再开窗 -> bIntrusionAlarm = TRUE
+//   7. 按 1BS 设备的 LRN 学习按键 -> bLearnPressed 一帧 TRUE
+//   8. 重新登录模拟上电 -> bConfirmedState 重新变 FALSE，开关窗之前任何
+//      bWindowOpen = FALSE 都不可信
+// =============================================================================
+
+fbKL6581(
+    bInit        := TRUE,
+    nIdx         := 1,
+    stKL6581_in  := stKL6581Input,
+    stKL6581_out := stKL6581Output
+);
+
+fbBedroomWindow(
+    str_KL6581 := fbKL6581.str_KL6581,
+    byNode     := 0,
+    dw_ID      := nBedroomWindowId,
+    bOpen      => bWindowOpen,
+    bClose     => bWindowClose,
+    bLRN       => bLearnPressed
+);
+
+// 首帧前 bOpen = bClose = FALSE 是"未知"，不能当真实门窗状态用
+IF NOT fbBedroomWindow.bReceive THEN              // NOT 反相约定 = 新帧
+    bConfirmedState := TRUE;
+END_IF;
+
+// 关 → 开 沿；只有确认状态后才认
+rTrigWindowOpened(CLK := bWindowOpen);
+IF rTrigWindowOpened.Q AND bConfirmedState THEN
+    bAirConditionerOff := TRUE;                    // HVAC 互锁
+    IF bNightMode THEN
+        bIntrusionAlarm := TRUE;                   // 夜间开窗 = 入侵
+    END_IF;
+END_IF;
+
+// 关窗时自动取消空调互锁（夜间模式下报警须人工复位）
+IF bWindowClose AND bConfirmedState THEN
+    bAirConditionerOff := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

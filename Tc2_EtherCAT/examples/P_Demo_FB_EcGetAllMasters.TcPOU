@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_EcGetAllMasters" Id="{8ee51574-6a98-5ad9-b58a-db70ce956070}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_EcGetAllMasters
+VAR
+    fbGetAllMasters     : FB_EcGetAllMasters;
+    bRequestEnumerate   : BOOL := FALSE;
+    arrMasterInventory  : ARRAY[0..EC_MAX_DEVICES] OF ST_EcDeviceInfo;  // 容纳全部主站
+    nMasterCount        : UINT;             // 实际枚举到的主站数
+    bEnumerateBusy      : BOOL;
+    bEnumerateError     : BOOL;
+    nLastAdsErr         : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// Tc2_EtherCAT.FB_EcGetAllMasters 演示程序
+// =============================================================================
+// 场景：CX2030 控制器装了两块以太网卡，分别配置成 EtherCAT 主站 A 和 B。
+//       HMI 启动时需要列出"本机有几台主站、各自 NetID 和名称"以供操作员
+//       下拉选择"要诊断哪台"。本 FB 一次 ADS 调用拿全清单。
+//
+// 价值：把"几台主站、各自 NetID 是什么"的运行时查询封装成 4 行调用。免去
+//       工程师在多机型项目中硬编码 NetID 表。
+//
+// 验证步骤：
+//   1. Import 本文件，编译 → 登录
+//   2. 在线置 bRequestEnumerate := TRUE
+//        - bEnumerateBusy 一两个周期后落回
+//        - nMasterCount 应为本机实际主站数（单主站机典型 1，多卡机 2+）
+//        - 展开 arrMasterInventory[0]，应看到 sNetId / sDeviceName 已填
+//   3. 把 nLastAdsErr 监视到 0；若为 1798 检查 ADR 计算
+// =============================================================================
+
+fbGetAllMasters(
+    sNetId   := '',
+    bExecute := bRequestEnumerate,
+    pAddrBuf := ADR(arrMasterInventory),
+    cbBufLen := SIZEOF(arrMasterInventory),
+    tTimeout := DEFAULT_ADS_TIMEOUT,
+    bBusy    => bEnumerateBusy,
+    bError   => bEnumerateError,
+    nErrId   => nLastAdsErr,
+    nMasters => nMasterCount
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

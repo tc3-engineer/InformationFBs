@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_Rec_Teach_In" Id="{d67f2e90-9526-50a1-8894-8d086e32bc5c}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_Rec_Teach_In
+VAR
+    fbKL6581             : FB_KL6581;
+    fbLearnEvent         : FB_Rec_Teach_In;
+
+    stKL6581Input        AT %I* : KL6581_Input;
+    stKL6581Output       AT %Q* : KL6581_Output;
+
+    bLearnModeOn         : BOOL := TRUE;                // 调试期 TRUE，正式期 FALSE
+
+    bLearnTypeExtended   : BOOL;                        // 是否 4-byte EEP teach-in
+    nLearnNode           : BYTE;
+    nLastLearnedId       : DWORD;                       // 最近学习到的 ID
+    stLearnInfo          : STR_Teach_In;                // EEP manufacturer/type/profile
+    rTrigLearned         : R_TRIG;
+    bLearnEventPulse     : BOOL;                        // 沿
+    arrLearnedIds        : ARRAY [0..31] OF DWORD;     // 调试期记录的 ID 列表（最多 32 个）
+    nLearnedCount        : INT;
+    iCheck               : INT;
+    bAlreadyKnown        : BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：办公楼层 EnOcean 调试阶段。工程师走访 32 间办公室，每间装一只 1BS
+//       门磁。本程序在 PLC 端打开学习监听，工程师走到每个门磁按下 LRN
+//       学习按键，PLC 自动把 4-byte ID 列入 arrLearnedIds 数组；走完一圈
+//       即得全楼层 ID 清单，不必手抄铭牌。
+//
+// 价值：把"现场抄 ID + 输入 PLC"变成"现场按 LRN + PLC 自动收"。32 个设备
+//       人工记录易出错，PLC 自动收集 100% 准确。
+//
+// 验证步骤：
+//   1. 跑 P_Demo_FB_KL6581 让主端子初始化
+//   2. 引用 Tc2_EnOcean，编译，登录，运行
+//   3. 在线设 bLearnModeOn := TRUE
+//   4. 现场按一只 1BS 门磁的 LRN 学习按键 -> rTrigLearned.Q 给出沿，
+//      bLearnEventPulse 一周期 TRUE，nLastLearnedId 更新为该设备 ID，
+//      nLearnNode 为接收节点
+//   5. 内部去重逻辑检查 arrLearnedIds[] -> 若是新 ID，arrLearnedIds[
+//      nLearnedCount] = ID，nLearnedCount +1
+//   6. 重复按同一设备 LRN -> bAlreadyKnown = TRUE，nLearnedCount 不变
+//   7. 32 间办公室全部完成 -> nLearnedCount = 32，arrLearnedIds 含完整 ID 表
+//   8. 把 ID 表抄入项目变量后 bLearnModeOn := FALSE
+//   9. 高端 EEP 设备（少数）按 LRN 时 bLearnTypeExtended = TRUE，
+//      stLearnInfo 含厂商 + type + profile 信息
+// =============================================================================
+
+fbKL6581(
+    bInit        := TRUE,
+    nIdx         := 1,
+    stKL6581_in  := stKL6581Input,
+    stKL6581_out := stKL6581Output
+);
+
+fbLearnEvent(
+    bStart       := bLearnModeOn,
+    byNode       := 0,                                  // 全节点监听
+    str_KL6581   := fbKL6581.str_KL6581,
+    bLearnType   => bLearnTypeExtended,
+    by_Node      => nLearnNode,
+    dw_ID        => nLastLearnedId,
+    str_Teach_In => stLearnInfo
+);
+
+// NOT bReceive = 新帧到达；R_TRIG 取沿
+rTrigLearned(CLK := NOT fbLearnEvent.bReceive);
+bLearnEventPulse := rTrigLearned.Q;
+
+// 检查是否已知 ID（去重）
+IF bLearnEventPulse AND nLearnedCount < 32 THEN
+    bAlreadyKnown := FALSE;
+    FOR iCheck := 0 TO nLearnedCount - 1 DO
+        IF arrLearnedIds[iCheck] = nLastLearnedId THEN
+            bAlreadyKnown := TRUE;
+            EXIT;
+        END_IF;
+    END_FOR;
+    IF NOT bAlreadyKnown THEN
+        arrLearnedIds[nLearnedCount] := nLastLearnedId;
+        nLearnedCount := nLearnedCount + 1;
+    END_IF;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

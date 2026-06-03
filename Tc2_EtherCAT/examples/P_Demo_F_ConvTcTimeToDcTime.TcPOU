@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_F_ConvTcTimeToDcTime" Id="{7247fbdc-bda0-5913-a04b-6cbeb8d273f4}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_F_ConvTcTimeToDcTime
+VAR
+    // 本程序为 [obsolete] FC / FB 占位演示
+    // 新工程统一迁移到 64-bit 等价 FC / FB
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// Tc2_EtherCAT.F_ConvTcTimeToDcTime 演示程序（[obsolete]）
+// =============================================================================
+// 场景：维护老工程时偶尔需要查 32-bit DC 时间体系的 helper。本 FC / FB
+//       已被 Beckhoff 官方归入 [obsolete]；新工程一律用 64-bit 等价版本。
+// 价值：仓库保留本演示与文档，仅供维护老工程时查阅参考。
+// 验证步骤：
+//   1. 不建议在新工程中使用本 FC / FB
+//   2. 若必须使用，参考 PDF 对应章节签名调用
+//   3. 优先排期迁移到 64-bit 等价版本
+// =============================================================================
+
+// 本 [obsolete] 演示不展示具体调用；请参考 64-bit 版本的 demo 程序
+;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_EcPhysicalWriteCmd" Id="{d033f021-d811-5ed6-9937-b4f1802558f6}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_EcPhysicalWriteCmd
+VAR
+    fbWriteAlCtrl       : FB_EcPhysicalWriteCmd;     // 实例：写 AL Control 让从站做状态切换
+    bRequestWriteOnce   : BOOL := FALSE;             // 在线置 TRUE 触发一次写
+    nTargetSlaveAdp     : UINT := 16#3E9;            // 已配置从站地址（仅示例，请用 FB_EcGetAllSlaveAddr 实际查）
+    wAlCtrlValue        : UINT := 16#0004;           // AL Control：写 4 = 请求 SAFEOP；写 8 = 请求 OP
+    nWorkingCounter     : UINT;
+    bWriteBusy          : BOOL;
+    bWriteError         : BOOL;
+    nLastAdsErr         : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// Tc2_EtherCAT.FB_EcPhysicalWriteCmd 演示程序
+// =============================================================================
+// 场景：调试 EL3008 时怀疑主站 SetSlaveState 调用没正确下发到从站，用本 FB
+//       直接写 ESC 寄存器 0x0120 (AL Control)，再用 FB_EcPhysicalReadCmd 读
+//       0x0130 (AL Status) 看是否真切换；用于诊断"调用没生效是主站没发还是
+//       从站没接"。
+//
+// 价值：日常应用层（OP / SAFEOP 切换）建议用 FB_EcSetSlaveState；只有底层
+//       调试、绕过主站状态机时才用本 FB。能写到 ESC 任意寄存器，是排查
+//       "主站层 vs 从站层"问题的关键工具。
+//
+// 验证步骤：
+//   1. 在 XAE Import 本文件，编译 → 登录；现场至少 1 个从站当前在 OP
+//   2. 把 nTargetSlaveAdp 填成该从站 EtherCAT Configured Address
+//   3. 在线把 bRequestWriteOnce := TRUE：
+//        - bWriteBusy 短暂为 TRUE 一两个周期后落回
+//        - nWorkingCounter 应为 1（命令被该从站应答）
+//        - nLastAdsErr 应为 0
+//   4. 配合 FB_EcPhysicalReadCmd 读 0x0130，应观察到 AL Status = 16#0004 (SAFEOP)
+//   5. 回到正常运行：在线把 wAlCtrlValue 改为 16#0008 (OP) 再触发一次
+// 注意：本例程会让该从站脱离主站期望状态，结束后请重启主站或 FB_EcSetSlaveState 复原
+// =============================================================================
+
+fbWriteAlCtrl(
+    sNetId   := '',
+    adp      := nTargetSlaveAdp,
+    ado      := 16#0120,                          // ESC 寄存器：Application Layer Control
+    len      := SIZEOF(wAlCtrlValue),
+    eType    := eAdressingType_Fixed,             // FPWR
+    pSrcBuf  := ADR(wAlCtrlValue),
+    bExecute := bRequestWriteOnce,
+    tTimeout := DEFAULT_ADS_TIMEOUT,
+    bBusy    => bWriteBusy,
+    bError   => bWriteError,
+    nErrId   => nLastAdsErr,
+    wkc      => nWorkingCounter
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

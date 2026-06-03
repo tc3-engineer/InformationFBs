@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_DBRecordDelete" Id="{9d39ef21-ba8c-5765-bbca-cd5a792ac77e}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_DBRecordDelete
+VAR
+    fbDelete          : FB_DBRecordDelete;
+    bUserPurgeReq     : BOOL;                       // HMI"清理 90 天前日志"按钮
+    rEdgePurge        : R_TRIG;
+    hLocalDbId        : UDINT := 1;
+    sDeleteSql        : STRING(10000) := 'DELETE FROM tProcessLog WHERE Timestamp < DATEADD(day,-90,GETDATE())';
+    bDelBusy          : BOOL;
+    bDelErr           : BOOL;
+    nDelErr           : UDINT;
+    sDelSqlState      : ST_DBSQLError;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：本地 SQL Compact 库 tProcessLog 表会无限增长撑爆 SD 卡——按公司日志
+//       保留策略（90 天）周期清理。本例程演示 HMI 触发的一次性删除。生产代码
+//       建议接 PLC 定时器（每周一凌晨 3 点）自动触发。
+// 价值：相比"换大 SD 卡 / 人工 SQL 清理"——PLC 自动按策略清，运维零干预；
+//       同样适配按 Name 删某变量、按数值范围清理等更细的策略。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_Database
+//   3. 确保 hDBID = 1 指向有效连接，表里有几条 Timestamp 超过 90 天的旧记录
+//   4. 编译 → 登录 → 运行；启动 TwinCAT Database Server
+//   5. 在线写 bUserPurgeReq := TRUE → bDelBusy 短暂 TRUE → 操作成功后
+//      sDelSqlState.sSQLState = '00000'
+//   6. 用 SQL 工具查 tProcessLog 表，确认旧记录已被清掉，新记录保留
+//   7. 注意：本例程在测试时建议先用 SELECT COUNT(*) 看影响行数，避免 WHERE
+//      子句写错把整表清空
+// =============================================================================
+
+rEdgePurge(CLK := bUserPurgeReq);
+
+// 单次完整调用
+fbDelete(
+    sNetID    := '',
+    hDBID     := hLocalDbId,
+    cbCmdSize := SIZEOF(sDeleteSql),
+    pCmdAddr  := ADR(sDeleteSql),
+    bExecute  := rEdgePurge.Q,
+    tTimeout  := T#60S,                          // 大批量删除留足时间
+    bBusy     => bDelBusy,
+    bError    => bDelErr,
+    nErrID    => nDelErr,
+    sSQLState => sDelSqlState
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

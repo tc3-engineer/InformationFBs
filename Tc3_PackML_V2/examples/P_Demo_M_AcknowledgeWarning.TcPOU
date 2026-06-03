@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_M_AcknowledgeWarning" Id="{33bb7210-bdce-5c77-b873-dc34fca46df5}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_M_AcknowledgeWarning
+VAR
+    fbAdminAlarm  : PML_AdminAlarm;
+    fbAdminTime   : PML_AdminTime;
+    stAdmin       : ST_PMLa;
+    stStatus      : ST_PMLs;
+    bAckBtn       : BOOL := FALSE;
+    rtAckEdge     : R_TRIG;
+    stTarget      : ST_Alarm := (Id := 100);
+    bAckOk        : BOOL;
+    bReset        : BOOL := FALSE;
+    stTimeOptions : ST_AdminTimeOptions;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc3_PackML_V2.M_AcknowledgeWarning 演示程序
+// ============================================================
+// 场景：操作员看到液位低 warning 后按 了解 按钮——本方法标记已确认。
+// 价值：AckDateTime 记录了 warning 何时被人看到，便于审计响应时间。
+// 验证：假设已 Set 过一条 Id=100 warning。bAckBtn := TRUE→FALSE 后
+//        stAdmin.Warning[1].Trigger 应变 FALSE，但条目仍在（AckDateTime 不再为 0）。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_PackML_V2（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方"验证"指引在线写值观察
+// ============================================================
+
+fbAdminTime(bReset := bReset, stOptions := stTimeOptions,
+            stAdmin := stAdmin, stStatus := stStatus);
+
+rtAckEdge(CLK := bAckBtn);
+IF rtAckEdge.Q THEN
+    bAckOk := fbAdminAlarm.M_AcknowledgeWarning(
+        stAdmin   := stAdmin,
+        stWarning := stTarget
+    );
+END_IF
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_EcCoeSdoWriteEx" Id="{c8d53212-8556-5889-afdf-e52ea9888310}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_EcCoeSdoWriteEx
+VAR
+    fbWritePdoMapping   : FB_EcCoeSdoWriteEx;
+    bRequestWriteOnce   : BOOL := FALSE;
+    nTargetSlaveAddr    : UINT := 1006;
+    wPdoMappingObject   : WORD := 16#1A00;             // PDO Mapping
+    arrPdoEntries       : ARRAY[0..7] OF DWORD;         // PDO entries DUT
+    bWriteBusy          : BOOL;
+    bWriteError         : BOOL;
+    nLastAdsErr         : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// Tc2_EtherCAT.FB_EcCoeSdoWriteEx 演示程序
+// =============================================================================
+// 场景：一条产线兼容 3 种产品，每种产品要求不同的 EL3068 PDO 映射。换
+//       型时 PLC 用本 FB 动态切 PDO 映射（CompleteAccess 写 0x1A00），
+//       免去为每种产品单独维护 XAE 工程。单工程内多产品兼容。
+//
+// 价值：单工程多产品；换型 0 停机时间；无 XAE 介入。
+//
+// 验证步骤：
+//   1. Import 本文件，编译 → 登录
+//   2. 工程实际中：把 EL3068 切到 PREOP（PDO 映射不能在 OP 时改）
+//   3. 把 arrPdoEntries 填要写的 PDO entry 列表（参考 ESI 文档）
+//   4. 在线脉冲 bRequestWriteOnce := TRUE
+//        - bWriteBusy 短暂为 TRUE 后落回
+//        - nLastAdsErr = 0 → 写入成功
+//   5. 用 FB_EcCoeSdoReadEx + CompleteAccess 回读验证
+//   6. 切回 OP 让新映射生效
+// =============================================================================
+
+fbWritePdoMapping(
+    sNetId          := '',
+    nSlaveAddr      := nTargetSlaveAddr,
+    nSubIndex       := 0,                  // CompleteAccess 时通常 0
+    nIndex          := wPdoMappingObject,
+    pSrcBuf         := ADR(arrPdoEntries),
+    cbBufLen        := SIZEOF(arrPdoEntries),
+    bExecute        := bRequestWriteOnce,
+    tTimeout        := DEFAULT_ADS_TIMEOUT,
+    bCompleteAccess := TRUE,                // 关键：一次原子写整对象
+    bBusy           => bWriteBusy,
+    bError          => bWriteError,
+    nErrId          => nLastAdsErr
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

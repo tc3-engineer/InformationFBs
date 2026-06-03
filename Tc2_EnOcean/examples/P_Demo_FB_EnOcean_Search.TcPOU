@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_EnOcean_Search" Id="{e5389ab8-a9cf-5019-81cc-58951a9b3892}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_EnOcean_Search
+VAR
+    fbKL6581            : FB_KL6581;
+    fbScanAll           : FB_EnOcean_Search;           // 全节点扫描
+    fbScanNode1         : FB_EnOcean_Search;           // 节点 1 单独扫
+    fbScanNode2         : FB_EnOcean_Search;           // 节点 2 单独扫
+
+    stKL6581Input       AT %I* : KL6581_Input;
+    stKL6581Output      AT %Q* : KL6581_Output;
+
+    bDoNetworkScan      : BOOL := TRUE;                 // 调试期保持 TRUE，正式期间 FALSE
+
+    nAllDevicesFound    : INT;
+    arrAllDeviceIds     : ARRAY [0..255] OF DWORD;
+
+    nNode1DevicesFound  : INT;
+    arrNode1DeviceIds   : ARRAY [0..255] OF DWORD;
+
+    nNode2DevicesFound  : INT;
+    arrNode2DeviceIds   : ARRAY [0..255] OF DWORD;
+
+    // 射频覆盖分析（哪些设备在节点 1 与 2 都被听到 = 覆盖重叠区）
+    nOverlapCount       : INT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：办公楼楼层 EnOcean 网络部署调试。一片 KL6581 主端子 + 两只 KL6583
+//       节点（KL6583#1 装在走廊西头天花板，#2 装东头），覆盖整层。调试时
+//       要弄清：① 整楼层一共有多少在线 EnOcean 设备，② 哪些设备能被两只
+//       KL6583 同时听到（覆盖重叠 = 冗余 OK），③ 哪些设备只有单边能听
+//       到（边缘区，可能信号不稳）。本程序同时跑 3 个 FB_EnOcean_Search
+//       实例完成上述诊断。
+//
+// 价值：把 EnOcean 网络发现 + 节点覆盖诊断从"现场拿嗅探器跑全场"变成
+//       "PLC 在线观察 3 个数组"。在交付 / 接管现有项目时是必备工具。
+//
+// 验证步骤：
+//   1. 跑 P_Demo_FB_KL6581 让主端子初始化
+//   2. 引用 Tc2_EnOcean，编译，登录，运行
+//   3. 让现场用户操作每只 EnOcean 设备（按面板按键、开关门窗、转动调温
+//      旋钮）。每只设备需要被至少一只 KL6583 听到才会入列
+//   4. 观察 nAllDevicesFound：应等于现场清单总数；与纸面对照可发现"清单
+//      多 / 实际少"或反之的偏差
+//   5. 观察 nNode1DevicesFound / nNode2DevicesFound：应分别小于
+//      nAllDevicesFound；理想情况是两节点均有覆盖（无边缘盲区）
+//   6. 观察 nOverlapCount：节点 1 与 2 都能听到的设备数。理想是大半
+//      （走廊设备应被两端 KL6583 都听到）
+//   7. 调试结束后把 bDoNetworkScan := FALSE 停扫描节省主端子开销
+// =============================================================================
+
+fbKL6581(
+    bInit        := TRUE,
+    nIdx         := 1,
+    stKL6581_in  := stKL6581Input,
+    stKL6581_out := stKL6581Output
+);
+
+// 全节点收集
+fbScanAll(
+    bStart     := bDoNetworkScan,
+    str_KL6581 := fbKL6581.str_KL6581,
+    byNode     := 0,                                    // 0 = 全部 KL6583
+    iDevices   => nAllDevicesFound,
+    ar_ID      => arrAllDeviceIds
+);
+
+// 节点 1 单独
+fbScanNode1(
+    bStart     := bDoNetworkScan,
+    str_KL6581 := fbKL6581.str_KL6581,
+    byNode     := 1,
+    iDevices   => nNode1DevicesFound,
+    ar_ID      => arrNode1DeviceIds
+);
+
+// 节点 2 单独
+fbScanNode2(
+    bStart     := bDoNetworkScan,
+    str_KL6581 := fbKL6581.str_KL6581,
+    byNode     := 2,
+    iDevices   => nNode2DevicesFound,
+    ar_ID      => arrNode2DeviceIds
+);
+
+// 覆盖重叠粗算：N1 + N2 - All（双 KL6583 都能听到的 = 重叠区设备数）
+// 注意：仅在 N1 + N2 ≥ All 时有效（无信号丢失情况下）
+IF nNode1DevicesFound + nNode2DevicesFound >= nAllDevicesFound THEN
+    nOverlapCount := nNode1DevicesFound + nNode2DevicesFound - nAllDevicesFound;
+ELSE
+    nOverlapCount := 0;                                 // 异常：可能有未被任何节点听到的"幽灵 ID"
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

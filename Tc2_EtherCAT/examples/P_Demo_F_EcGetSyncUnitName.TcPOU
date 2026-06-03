@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_F_EcGetSyncUnitName" Id="{2646e091-2a4d-595d-8149-7f6bc4d3a014}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_F_EcGetSyncUnitName
+VAR
+    bDoCheckOnce        : BOOL := FALSE;
+    nSyncUnitOidToName  : OTCID;             // 在线赋 XAE 中要查的 SU OID
+    sSyncUnitName       : STRING(63);
+    hrResult            : HRESULT;
+    bSuccess            : BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// Tc2_EtherCAT.F_EcGetSyncUnitName 演示程序
+// =============================================================================
+// 场景：HMI 诊断页面要显示"当前网络中包含 SU 列表"。给操作员看 OID 数
+//       字毫无意义；本 FC 把 OID 转成 SU 名称（如 'SU_Motion'）。配合
+//       F_EcGetLinkedTaskOfSyncUnit 输出完整结构表。
+//
+// 价值：内部 ID 转业务可读。
+//
+// 验证步骤：
+//   1. Import 本文件，编译 → 登录；TwinCAT v3.1.4024.48+，Tc2_EtherCAT 3.4.2.0+
+//   2. 在线把 nSyncUnitOidToName 设为目标 SU OID
+//   3. 在线脉冲 bDoCheckOnce := TRUE
+//        - bSuccess 应为 TRUE
+//        - sSyncUnitName 应为 SU 名称字符串
+// =============================================================================
+
+IF bDoCheckOnce THEN
+    bDoCheckOnce := FALSE;
+    hrResult := F_EcGetSyncUnitName(
+        oidSyncUnit   := nSyncUnitOidToName,
+        sSyncUnitName => sSyncUnitName
+    );
+    bSuccess := SUCCEEDED(hrResult);
+END_IF
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

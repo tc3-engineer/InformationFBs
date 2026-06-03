@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_F_GetVersionTcDatabase" Id="{a8f6d38d-e60b-590e-aa34-2b2f983b8d55}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_F_GetVersionTcDatabase
+VAR
+    nMajor           : UINT;
+    nMinor           : UINT;
+    nRevision        : UINT;
+    sVersionLabel    : STRING(40);                  // HMI 显示用："Tc2_Database 1.2.0"
+    nMinMajor        : UINT := 1;                   // 业务要求的最低版本
+    nMinMinor        : UINT := 2;
+    bLibVersionOk    : BOOL;
+    bLibVersionLow   : BOOL;
+    bInited          : BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：HMI"系统信息"页展示 Tc2_Database 版本号；业务代码要求库 ≥ 1.2 才
+//       能用 Stored Procedures 系列 FB，不达标在 HMI 上跳错误提示拒绝进入
+//       主状态机。
+// 价值：客户运维方一眼看到库版本（不用进 TwinCAT XAE 项目检查 References）；
+//       OEM 代码在不满足版本时主动报错，避免运行时 FB 调用失败的隐蔽错误。
+//       TC3 工程推荐改用 stLibVersion_Tc2_Database 常量 + F_CmpLibVersion，
+//       本函数保留向后兼容。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_Database；不需要启动 Database Server 服务
+//   3. 编译 → 登录 → 运行
+//   4. 观察 nMajor = 1、nMinor = 2、nRevision = 0；sVersionLabel = 'Tc2_Database 1.2.0'
+//   5. 把 nMinMajor 改为 2 → bLibVersionLow 翻为 TRUE，bLibVersionOk 翻 FALSE
+// =============================================================================
+
+// 版本号是编译期固定值，一次性查询缓存即可
+IF NOT bInited THEN
+    nMajor    := F_GetVersionTcDatabase(nVersionElement := 1);
+    nMinor    := F_GetVersionTcDatabase(nVersionElement := 2);
+    nRevision := F_GetVersionTcDatabase(nVersionElement := 3);
+
+    // 组装 HMI 显示字串
+    sVersionLabel := CONCAT(
+        CONCAT('Tc2_Database ', UINT_TO_STRING(nMajor)),
+        CONCAT('.',
+               CONCAT(UINT_TO_STRING(nMinor),
+                      CONCAT('.', UINT_TO_STRING(nRevision)))));
+
+    // 版本检查：major > min 或 (major = min 且 minor >= min)
+    bLibVersionOk := (nMajor > nMinMajor)
+                     OR ((nMajor = nMinMajor) AND (nMinor >= nMinMinor));
+    bLibVersionLow := NOT bLibVersionOk;
+
+    bInited := TRUE;
+END_IF
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

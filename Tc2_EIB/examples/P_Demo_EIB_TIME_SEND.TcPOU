@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_EIB_TIME_SEND" Id="{c26408c1-39d5-5f58-9180-a59d0aeae54a}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_EIB_TIME_SEND
+VAR
+    fbSendTime  : EIB_TIME_SEND;
+    stEibRec    : EIB_REC;
+    stGroup     : EIB_GROUP_ADDR := (MAIN := 1, SUB_MAIN := 0, NUMBER := 2);
+    wHoure      : WORD := 14;
+    wMinute     : WORD := 30;
+    wSecond     : WORD := 0;
+    bSendError  : BOOL;
+    iLastErrID  : EIB_ERROR_CODE;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_EIB.EIB_TIME_SEND 演示程序
+// ============================================================
+// 场景：BMS 主时钟广播时间到组 1/0/2，每 5 分钟一次
+// 价值：DPT 10 标准发送，零代码
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_EIB（References → Add library）
+//   3. 编译 → 登录 → 运行；按下方在线写值步骤操作
+// 验证：登录后 → 每 5 分钟看到 1/0/2 出 3 byte 时间帧
+// ============================================================
+
+fbSendTime(
+    Group_Address := stGroup,
+    wHoure        := wHoure,
+    wMinute       := wMinute,
+    wSecond       := wSecond,
+    str_Rec       := stEibRec,
+    bError        => bSendError,
+    iErrorID      => iLastErrID
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

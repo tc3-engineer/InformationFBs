@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_EcReadBIC" Id="{124beb66-9967-59b6-802a-9880190bbf00}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_EcReadBIC
+VAR
+    fbReadBic           : FB_EcReadBIC;
+    bRequestReadOnce    : BOOL := FALSE;
+    nTargetSlaveAddr    : UINT := 1001;
+    sBicRaw             : STRING(1023);          // 原始 BIC 字符串
+    stBicSplit          : ST_SplittedBIC;        // 已拆解的子字段
+    sItemNumberView     : STRING;                 // 显示 sItemNo
+    sBtnNumberView      : STRING;                 // 显示 sBTN
+    bReadBusy           : BOOL;
+    bReadError          : BOOL;
+    nLastAdsErr         : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// Tc2_EtherCAT.FB_EcReadBIC 演示程序
+// =============================================================================
+// 场景：装配下线检验：PLC 调本 FB 读所有从站 BIC（Beckhoff Identification
+//       Code），写入 MES "本机配件溯源"表。未来某批次出问题可按 BTN 反
+//       查具体在哪台机上。
+//
+// 价值：自动化采集 BIC + 已拆解结构（物料号 / BTN / 描述 / 数量 / 批号）。
+//       省去人工扫码贴标签 + 字符串解析两道工。
+//
+// 验证步骤：
+//   1. Import 本文件，编译 → 登录
+//   2. nTargetSlaveAddr 设为带 BIC 的从站地址（typical: EL7411, EL3214 等新型号）
+//   3. 在线置 bRequestReadOnce := TRUE
+//        - bReadBusy 短暂为 TRUE 后落回
+//        - sBicRaw 应填入原始 BIC 字符串
+//        - 展开 stBicSplit，应看到 sItemNo / sBTN / sDescription 等子字段
+//   4. 若读到空串，说明该从站 EEPROM 未含 BIC（老型号或第三方）
+// =============================================================================
+
+fbReadBic(
+    sNetId     := '',
+    nSlaveAddr := nTargetSlaveAddr,
+    bExecute   := bRequestReadOnce,
+    tTimeout   := T#5S,
+    bBusy      => bReadBusy,
+    bError     => bReadError,
+    nErrId     => nLastAdsErr,
+    sBICValue  => sBicRaw,
+    stMSID     => stBicSplit
+);
+
+// 展开常用字段方便 HMI 直接绑定
+IF NOT bReadBusy AND NOT bReadError THEN
+    sItemNumberView := stBicSplit.sItemNo;
+    sBtnNumberView  := stBicSplit.sBTN;
+END_IF
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

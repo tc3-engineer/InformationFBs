@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_EcMasterFrameCount" Id="{435b73b2-c7d6-564e-a6ce-4ef35780dc4e}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_EcMasterFrameCount
+VAR
+    fbReadFrameCount    : FB_EcMasterFrameCount;
+    bRequestReadOnce    : BOOL := FALSE;
+    nConfiguredFrames   : UDINT;          // 主站配置帧数
+    bReadBusy           : BOOL;
+    bReadError          : BOOL;
+    nLastAdsErr         : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// Tc2_EtherCAT.FB_EcMasterFrameCount 演示程序
+// =============================================================================
+// 场景：工程师怀疑某机型 EtherCAT 任务超时是 PDO 配置过大导致。调本 FB
+//       读 nFrames 看主站每循环要发几帧；nFrames=1 占 ~1% / 1ms 周期，
+//       nFrames=10 占 ~10%。预算确定是否网络层瓶颈。
+//
+// 价值：把"网络是否拥堵"转化为可观测的数字，做工程容量决策。
+//
+// 验证步骤：
+//   1. Import 本文件，编译 → 登录
+//   2. 在线置 bRequestReadOnce := TRUE
+//        - bReadBusy 一两个周期后落回
+//        - nConfiguredFrames：典型小工程 1~2，含若干 EL30xx 模拟量 2~5，
+//          大工程（DC + 多 SU + 大 PDO）可能 10+
+//   3. 添加从站到工程重启 PLC 再触发：值应增大
+// =============================================================================
+
+fbReadFrameCount(
+    sNetId   := '',
+    bExecute := bRequestReadOnce,
+    tTimeout := DEFAULT_ADS_TIMEOUT,
+    bBusy    => bReadBusy,
+    bError   => bReadError,
+    nErrId   => nLastAdsErr,
+    nFrames  => nConfiguredFrames
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

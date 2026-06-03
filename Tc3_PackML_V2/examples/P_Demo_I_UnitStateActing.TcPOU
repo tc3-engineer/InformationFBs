@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_I_UnitStateActing" Id="{c5c42d3d-859b-5e1d-90d0-5e91e01468cd}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_I_UnitStateActing
+VAR
+    fbLabelActor        : FB_DemoLabelActor;        // 实现 I_UnitStateActing 的贴标动作 FB
+    ipActing            : I_UnitStateActing;        // 暴露为子接口
+    bGoStarting         : BOOL := FALSE;            // 演示触发 M_Starting
+    bGoExecute          : BOOL := FALSE;            // 演示触发 M_Execute
+    bGoAbort            : BOOL := FALSE;            // 演示触发 M_Aborting
+    nStartingTicks      : UDINT;
+    nExecuteTicks       : UDINT;
+    nAbortTicks         : UDINT;
+    rLabelHeadTempC     : REAL;                     // 贴头温度（M_Starting 预热目标 80°C）
+    nLabeledProductCount: UDINT;                    // 已贴标件数（M_Execute 计数）
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc3_PackML_V2.I_UnitStateActing 演示程序
+// ============================================================
+// 场景：演示只实现 PackML 12 个 Acting 过渡方法的场景——本例是贴标主动作模块。
+//       启动序列（M_Starting）预热贴头到 80°C，生产主循环（M_Execute）每件工件下发贴标，
+//       急停（M_Aborting）抬贴头、停传送带。
+// 价值：把 Acting 与 Waiting 分到不同 FB，新工艺替换 Acting FB、Waiting 不动。
+// 验证：登录后写 bGoStarting := TRUE，观察 nStartingTicks 累加 + rLabelHeadTempC 升至 80。
+//        随后写 bGoExecute := TRUE，观察 nExecuteTicks 累加 + nLabeledProductCount 递增。
+//        写 bGoAbort := TRUE 验证 nAbortTicks 立即累加且 Execute 停下。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_PackML_V2（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方"验证"指引在线写值观察
+// ============================================================
+
+(* 把 fbLabelActor 暴露为 I_UnitStateActing 接口 *)
+ipActing := fbLabelActor;
+
+(* 演示用：手动驱动状态过渡的 Acting 钩子（实际工程由 PML_StateMachine 自动调度） *)
+IF bGoAbort THEN
+    ipActing.M_Aborting();       // 急停：抬贴头、停传送带
+ELSIF bGoExecute THEN
+    ipActing.M_Execute();        // 主循环：每周期检查工件、贴标
+ELSIF bGoStarting THEN
+    ipActing.M_Starting();       // 启动序列：预热到 80°C
+END_IF
+
+(* 读出计数与状态供在线观察 *)
+nStartingTicks       := fbLabelActor.GetStartingTicks();
+nExecuteTicks        := fbLabelActor.GetExecuteTicks();
+nAbortTicks          := fbLabelActor.GetAbortTicks();
+rLabelHeadTempC      := fbLabelActor.GetLabelHeadTempC();
+nLabeledProductCount := fbLabelActor.GetLabeledCount();
+
+(* 注意：FB_DemoLabelActor 需要您在 PLC 项目里另建——
+   IMPLEMENTS I_UnitStateActing；M_Starting 做温度上升模拟、M_Execute
+   做计数与贴标动作、M_Aborting 立即复位贴头位置。 *)
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

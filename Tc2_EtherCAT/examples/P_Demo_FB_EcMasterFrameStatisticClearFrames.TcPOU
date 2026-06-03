@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_EcMasterFrameStatisticClearFrames" Id="{cca8d020-905f-526c-b200-dbdda570f9c5}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_EcMasterFrameStatisticClearFrames
+VAR
+    fbClearLostFrames   : FB_EcMasterFrameStatisticClearFrames;
+    bRequestClearOnce   : BOOL := FALSE;
+    bClearBusy          : BOOL;
+    bClearError         : BOOL;
+    nLastAdsErr         : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// Tc2_EtherCAT.FB_EcMasterFrameStatisticClearFrames 演示程序
+// =============================================================================
+// 场景：实验室验收测试。先用本 FB 清掉之前调试期间累积的 lost frame 计
+//       数，然后跑 1 小时压力测试，结束后用 FB_EcMasterFrameStatistic 读
+//       到的 nLostFrames 就是"该测试期实际丢包数"，可信用作 KPI。
+//
+// 价值：让 KPI 不被调试期噪声污染。
+//
+// 验证步骤：
+//   1. Import 本文件，编译 → 登录
+//   2. 先用 FB_EcMasterFrameStatistic 看当前 nLostFrames（应非 0）
+//   3. 在线脉冲 bRequestClearOnce := TRUE
+//        - bClearBusy 一两个周期后落回
+//        - nLastAdsErr = 0
+//   4. 再读 FB_EcMasterFrameStatistic：nLostFrames 应 = 0
+//   5. 注意：本 FB 仅清主站统计，不清各从站 ESC CRC 寄存器
+// =============================================================================
+
+fbClearLostFrames(
+    sNetId   := '',
+    bExecute := bRequestClearOnce,
+    tTimeout := DEFAULT_ADS_TIMEOUT,
+    bBusy    => bClearBusy,
+    bError   => bClearError,
+    nErrId   => nLastAdsErr
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

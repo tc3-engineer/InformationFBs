@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_SoEWrite_ByDriveRef" Id="{9688fed1-9df8-596b-b454-cefa85876e9f}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_SoEWrite_ByDriveRef
+VAR
+    fbWriteRamp         : FB_SoEWrite_ByDriveRef;
+    bRequestWriteOnce   : BOOL := FALSE;
+    stAxis1DriveRef     : ST_DriveRef;
+    wIdnAccel           : WORD := 138;             // S-0-0138 Bipolar Acceleration limit
+    nElementValue       : BYTE := 16#40;
+    dwNewAccel          : DWORD := 100000;
+    bWriteBusy          : BOOL;
+    bWriteError         : BOOL;
+    nAdsErr             : UINT;
+    nSercosErr          : UINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// Tc2_EtherCAT.FB_SoEWrite_ByDriveRef 演示程序
+// =============================================================================
+// 场景：换产前调整 AX5206 加减速时间常数（S-0-0138 等）。每种产品有专属
+//       参数组，PLC 切产时用本 FB 批量写。
+//
+// 价值：换产参数自动加载，免人工 Drive Manager。
+//
+// 验证步骤：
+//   1. Import 本文件，编译 → 登录
+//   2. System Manager 中链 stAxis1DriveRef → NC Axis 1
+//   3. 在线脉冲 bRequestWriteOnce := TRUE
+//        - bWriteBusy 一两个周期后落回
+//        - nAdsErr = 0 AND nSercosErr = 0
+//   4. 用 FB_SoERead_ByDriveRef 回读 S-0-0138 验证新值已生效
+// =============================================================================
+
+fbWriteRamp(
+    stDriveRef   := stAxis1DriveRef,
+    nIdn         := wIdnAccel,
+    nElement     := nElementValue,
+    pSrcBuf      := ADR(dwNewAccel),
+    cbBufLen     := SIZEOF(dwNewAccel),
+    bExecute     := bRequestWriteOnce,
+    tTimeout     := DEFAULT_ADS_TIMEOUT,
+    bBusy        => bWriteBusy,
+    bError       => bWriteError,
+    iAdsErrId    => nAdsErr,
+    iSercosErrId => nSercosErr
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

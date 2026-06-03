@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_M_ClearStopReason" Id="{221f0fc7-dbe6-52c2-be90-0fa97c52782d}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_M_ClearStopReason
+VAR
+    fbAdminAlarm   : PML_AdminAlarm;
+    fbAdminTime    : PML_AdminTime;
+    stAdmin        : ST_PMLa;
+    stStatus       : ST_PMLs;
+    bShiftClearBtn : BOOL := FALSE;
+    rtClearEdge    : R_TRIG;
+    stTarget       : ST_Alarm := (Id := 1);
+    bClearOk       : BOOL;
+    bReset         : BOOL := FALSE;
+    stTimeOptions  : ST_AdminTimeOptions;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc3_PackML_V2.M_ClearStopReason 演示程序
+// ============================================================
+// 场景：换班时班长在 HMI 点 清班 按钮——遍历 StopReason[] 调用本方法清掉上班次记录。
+// 价值：让 OEE 统计从干净状态起步，新班次数据不被上班次污染。
+// 验证：假设有活动 StopReason Id=1。在线写 bShiftClearBtn := TRUE→FALSE。
+//        Watch stAdmin.StopReason[1].Trigger 应变 FALSE。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_PackML_V2（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方"验证"指引在线写值观察
+// ============================================================
+
+fbAdminTime(bReset := bReset, stOptions := stTimeOptions,
+            stAdmin := stAdmin, stStatus := stStatus);
+
+rtClearEdge(CLK := bShiftClearBtn);
+IF rtClearEdge.Q THEN
+    bClearOk := fbAdminAlarm.M_ClearStopReason(
+        stAdmin      := stAdmin,
+        stStopReason := stTarget
+    );
+END_IF
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

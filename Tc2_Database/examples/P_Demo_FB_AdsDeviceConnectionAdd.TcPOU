@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_AdsDeviceConnectionAdd" Id="{c9e9893c-c99e-5d58-83a3-ab62acad9e69}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_AdsDeviceConnectionAdd
+VAR
+    fbAddAdsDev        : FB_AdsDeviceConnectionAdd;
+    bUserAddReq        : BOOL;
+    rEdgeAdd           : R_TRIG;
+    // === 要注册的远端 ADS 设备：一台机床上的 CX PLC ===
+    sSlavePlcNetID     : T_AmsNetID := '5.23.91.7.1.1';   // 机床 PLC 的 AMS Net ID
+    nSlavePlcPort      : UINT       := 851;               // TC3 PLC Runtime
+    tSlaveAccessTo     : TIME       := T#2S;              // Server 读 slave 的超时
+    // === 输出 ===
+    bAddBusy           : BOOL;
+    bAddError          : BOOL;
+    nAddErr            : UDINT;
+    hSlaveAdsId        : UDINT;                           // 新建条目 ID
+    hPersistedSlaveAds : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：车间中央 CX 数据采集站作为 Database Server 主控；要把分布式 CX-Slave
+//       （AMS '5.23.91.7.1.1'，机床 PLC）上的生产计数器变量周期落到 MS SQL。
+//       本 FB 在 Server XML 中注册 Slave PLC 为一个 ADS Device，得到 hAdsId
+//       后配合 hDBID 就能用 FB_DBWrite 周期记录 Slave 的变量。
+// 价值：相比让每台 Slave 自己写 DB——本方案让 DB 写入集中在中央 CX 上，
+//       Slave 只暴露 ADS 变量；网络拓扑简单（Slave 不需要 DB 访问权限）；
+//       Slave 死了不影响其它 Slave 和 DB。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_Database
+//   3. 在 TwinCAT Routes 里先添加 Slave PLC 的 ADS 路由（否则后续读不到变量）
+//   4. 启动 Database Server；编译 → 登录 → 运行
+//   5. 在线写 bUserAddReq := TRUE → hSlaveAdsId 应取到非零值；释放按钮
+//   6. 用 XML Configuration File Editor 验证 ADS-Device 列表中新增了这一条
+// =============================================================================
+
+rEdgeAdd(CLK := bUserAddReq);
+
+// 单次完整调用
+fbAddAdsDev(
+    sNetID         := '',                   // Database Server 在本机（中央 CX）
+    sADSDevNetID   := sSlavePlcNetID,       // 被添加的 Slave PLC 的 AMS
+    nADSDevPort    := nSlavePlcPort,        // TC3 PLC Runtime = 851
+    tADSDevTimeout := tSlaveAccessTo,       // Server 读 slave 的 per-cycle 超时
+    bExecute       := rEdgeAdd.Q,
+    tTimeout       := T#15S,                // 本 FB 调用的超时
+    bBusy          => bAddBusy,
+    bError         => bAddError,
+    nErrID         => nAddErr,
+    hAdsId         => hSlaveAdsId
+);
+
+// 成功后持久化 hAdsId
+IF (NOT bAddBusy) AND (NOT bAddError) AND (hSlaveAdsId <> 0) AND (rEdgeAdd.Q) THEN
+    hPersistedSlaveAds := hSlaveAdsId;
+END_IF
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

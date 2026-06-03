@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_DBConnectionClose" Id="{f703e117-f88f-5fc7-91ef-e3082aee43dd}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_DBConnectionClose
+VAR
+    fbCloseConn       : FB_DBConnectionClose;
+    bShutdownReq      : BOOL := FALSE;          // PLC 停机标志（HMI 发出 / 状态机赋）
+    rEdgeShutdown     : R_TRIG;
+    hMesDbIdUDINT     : UDINT := 1;             // 之前 Open 时用的 hDBID
+    bConnReady        : BOOL  := TRUE;          // 假设刚才已经 Open，业务保留的标志
+    bCloseBusy        : BOOL;
+    bCloseErr         : BOOL;
+    nCloseErr         : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：CX 控制器关闭流程——操作员按 HMI 上"停机"按钮后 PLC 状态机进入
+//       SHUTDOWN 状态；在彻底停 PLC 任务前必须先 Close 之前 Open 的常驻 DB
+//       连接，防止 DB 服务器侧累计孤儿连接（SQL Express 仅支持 10 连接，
+//       多次启停会撞上限）。
+// 价值：保护 DB 服务器资源；让多次启停可重复；满足小型 DB 部署的连接限额。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_Database；先用 FB_DBConnectionOpen 例程 Open 同一 hDBID
+//   3. 编译 → 登录 → 运行
+//   4. 在线写 bShutdownReq := TRUE → 观察 bCloseBusy 短暂 TRUE → 关闭成功后
+//      bConnReady 翻为 FALSE，nCloseErr = 0
+//   5. 重复触发应仍能跑通（关闭已关闭连接是幂等的）
+// =============================================================================
+
+rEdgeShutdown(CLK := bShutdownReq);
+
+// 单次完整调用：单次脉冲触发，不要周期触发！
+fbCloseConn(
+    sNetID    := '',
+    hDBID     := UDINT_TO_DINT(hMesDbIdUDINT),
+    bExecute  := rEdgeShutdown.Q,
+    tTimeout  := T#15S,
+    bBusy     => bCloseBusy,
+    bError    => bCloseErr,
+    nErrID    => nCloseErr
+);
+
+// 关闭完成后立刻把业务侧的"连接就绪"翻 FALSE；后续 FB_DBWrite 等会因此
+// 拒绝调用
+IF (NOT bCloseBusy) AND (NOT bCloseErr) AND rEdgeShutdown.Q THEN
+    bConnReady := FALSE;
+END_IF
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

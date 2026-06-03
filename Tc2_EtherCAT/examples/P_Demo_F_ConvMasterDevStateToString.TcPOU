@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_F_ConvMasterDevStateToString" Id="{39fd1ff9-f13a-53eb-b22b-155d9e5ff129}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_F_ConvMasterDevStateToString
+VAR
+    wMasterDevState     : WORD := 0;             // 从 FB_EcGetMasterDevState 拿
+    sMasterStateText    : T_MaxString;            // 推给 HMI
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// Tc2_EtherCAT.F_ConvMasterDevStateToString 演示程序
+// =============================================================================
+// 场景：HMI 主页"主站健康度"指示灯。配合 FB_EcGetMasterDevState：
+//       sMasterStateText = 'OK' → 绿灯；含错误描述 → 红灯并 tooltip 显示
+//       具体错误（如 'Link error'）。
+//
+// 价值：底层位掩码 → 业务可读，单点维护。
+//
+// 验证步骤：
+//   1. Import 本文件，编译 → 登录
+//   2. 用 FB_EcGetMasterDevState 把当前 nDevState 写到 wMasterDevState
+//   3. 在线监视：
+//        正常运行 wMasterDevState = 0，sMasterStateText = 'OK'
+//   4. 在线把 wMasterDevState 临时改为 16#0001，sMasterStateText 应含 'Link error'
+//   5. 改为 16#0101，应含两条错误描述
+// =============================================================================
+
+// 每周期调用更新 HMI 字符串
+sMasterStateText := F_ConvMasterDevStateToString(wMasterDevState);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

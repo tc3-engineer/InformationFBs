@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_Rec_Generic" Id="{951ae660-cb69-5a98-94a6-c552b18df3fd}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_Rec_Generic
+VAR
+    fbKL6581           : FB_KL6581;
+    fbUnknownDeviceRx  : FB_Rec_Generic;             // 接收一个未知厂家定制 EnOcean 设备
+
+    stKL6581Input      AT %I* : KL6581_Input;
+    stKL6581Output     AT %Q* : KL6581_Output;
+    nMyDeviceId        : DWORD := 16#01234567;       // 调试时实际抓到的 ID
+    nFilterNode        : BYTE := 0;                   // 0 = 收所有 KL6583
+
+    abRawData          : ARRAY [0..3] OF BYTE;
+    eOrgType           : E_EnOcean_Org;               // 判断设备类型用
+    nStateField        : BYTE;
+    nSourceNode        : BYTE;
+    rTrigNewFrame      : R_TRIG;                      // 把 NOT bReceive 转上升沿
+    bNewFrameArrived   : BOOL;                        // 一周期脉冲
+    cntFramesReceived  : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：现场抓了一台陌生厂家的 EnOcean 设备（铭牌 ID = 16#01234567），不确定
+//       是按键、门磁还是温控。用 FB_Rec_Generic 把任意 ORG 类型的电报先收
+//       下来：观察 eOrgType 判断类型（5=PTM/6=STM1B/7=STM4B），观察
+//       abRawData 看 4 字节具体数据，然后再决定切到 FB_Rec_1BS / RPS_Switch
+//       哪一类专用 FB；或者一直用本 FB 自己按厂家手册解码。
+//
+// 价值：调试期"我先收下来看看是什么"的万能 FB；上线后也可服务厂家变种设备。
+//       配合 R_TRIG(NOT bReceive) 取新帧沿是本 FB 最常见用法（bReceive 是
+//       反相脉冲很容易踩坑）。
+//
+// 验证步骤：
+//   1. 先跑 P_Demo_FB_KL6581 让 KL6581 主端子初始化好
+//   2. 把陌生设备的 EnOcean ID 写到 nMyDeviceId（可先用 FB_EnOcean_Search
+//      扫描得到列表）
+//   3. 引用 Tc2_EnOcean，编译，登录，运行
+//   4. 触发陌生设备一次（按按键 / 打开门 / 让传感器发送）
+//   5. 应观察：rTrigNewFrame.Q 给出一个周期 TRUE 沿；abRawData 更新为
+//      4 字节非零数据；eOrgType 显示该设备 ORG 类型；cntFramesReceived++
+//   6. 反复触发设备，cntFramesReceived 每次 +1 验证沿检测正确
+//   7. 如果 ORG = 5 (PTM_TELEGRAM)，下一步改用 FB_Rec_RPS_Switch 解码
+//      4 键状态；如果 ORG = 7 (STM_4BYTE_TELEGRAM)，按手册自行解码
+// =============================================================================
+
+// 上游主端子（也可以单独放一个 POU，这里为最小例程内联）
+fbKL6581(
+    bInit        := TRUE,
+    nIdx         := 1,
+    stKL6581_in  := stKL6581Input,
+    stKL6581_out := stKL6581Output
+);
+
+// 通用接收
+fbUnknownDeviceRx(
+    str_KL6581 := fbKL6581.str_KL6581,
+    byNode     := nFilterNode,
+    dw_ID      := nMyDeviceId,
+    ar_Value   => abRawData,
+    by_Node    => nSourceNode,
+    by_STATE   => nStateField,
+    EnOceanTyp => eOrgType
+);
+
+// PDF 反相约定：bReceive = FALSE 时是"刚到一帧"。用 NOT 翻成正向后取上升沿
+rTrigNewFrame(CLK := NOT fbUnknownDeviceRx.bReceive);
+bNewFrameArrived := rTrigNewFrame.Q;
+
+IF bNewFrameArrived AND fbKL6581.bReady THEN
+    cntFramesReceived := cntFramesReceived + 1;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

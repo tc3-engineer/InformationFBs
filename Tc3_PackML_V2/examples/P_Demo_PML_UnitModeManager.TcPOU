@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_PML_UnitModeManager" Id="{1e898167-8d67-5f9f-b53f-9da579e327df}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_PML_UnitModeManager
+VAR
+    fbModeMgr         : PML_UnitModeManager;
+    bSwitchToMaintBtn : BOOL := FALSE;             // 在线模拟 HMI 按钮（上升沿触发）
+    eRequestedMode    : DINT := 2;                  // 目标模式编号（2 = Maintenance）
+    ePMLState_Watch   : E_PMLState                  // 演示用：手动设当前状态供 Manager 判定
+                      := E_PMLState.ePMLState_Stopped;
+    eModeStatus       : DINT;                       // 当前生效模式（输出）
+    sModeStatus       : STRING;                     // 当前模式名（输出）
+    bDone             : BOOL;
+    bError            : BOOL;
+    bErrorID          : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc3_PackML_V2.PML_UnitModeManager 演示程序
+// ============================================================
+// 场景：HMI 上有一个 切到维护模式 按钮——按下后本 FB 检查当前 PackML 状态是否允许，
+//       允许则切换、并把 eModeStatus 回馈给 PML_StateMachine.eMode。
+// 价值：把模式切换的 什么状态允许切 规则集中执行，不让操作员在错误状态强切。
+//       sModeStatus 字符串输出可直接绑 HMI 显示。
+// 验证：登录后把 ePMLState_Watch 在线设到 ePMLState_Stopped（2），
+//        然后写 bSwitchToMaintBtn := TRUE→FALSE 一次（上升沿）。
+//        观察 bDone 闪一下变 TRUE、eModeStatus 由 1 变 2、sModeStatus 变 'Maintenance'。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_PackML_V2（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方"验证"指引在线写值观察
+// ============================================================
+
+(* 单次完整调用形式：所有 VAR_INPUT 显式赋值。
+   bExecute 是上升沿触发——bSwitchToMaintBtn 持续 TRUE 只切一次。 *)
+fbModeMgr(
+    bExecute     := bSwitchToMaintBtn,
+    eModeCommand := eRequestedMode,
+    ePMLState    := ePMLState_Watch,
+    eModeStatus  => eModeStatus,
+    sModeStatus  => sModeStatus,
+    bDone        => bDone,
+    bError       => bError,
+    bErrorID     => bErrorID
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

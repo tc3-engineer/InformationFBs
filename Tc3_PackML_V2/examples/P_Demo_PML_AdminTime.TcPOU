@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_PML_AdminTime" Id="{60c31c08-d7c1-5ba9-8a55-84dc237a91cc}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_PML_AdminTime
+VAR
+    fbAdminTime    : PML_AdminTime;
+    stAdmin        : ST_PMLa;            // 累计时间存这里
+    stStatus       : ST_PMLs;            // 当前模式/状态从这里读
+    bResetTimes    : BOOL := FALSE;       // HMI"复位累计"按钮（上升沿）
+    stTimeOptions  : ST_AdminTimeOptions; // 默认用 Windows 系统时间
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc3_PackML_V2.PML_AdminTime 演示程序
+// ============================================================
+// 场景：在每个 PLC 周期把当前模式（PMLs.UnitModeCurrent）和状态（PMLs.StateCurrent）
+//       的停留时间累计到 PackTags.Admin.*Time 数组，供 MES 做 OEE 时间分配。
+// 价值：OEE 计算的 时间分配数据 由本 FB 自动累计——节省手写状态停留时间累计逻辑。
+//       PlcDateTime 输出还为所有 PML_AdminAlarm 方法供新鲜时间戳。
+// 验证：登录后写 stStatus.UnitModeCurrent := 1; stStatus.StateCurrent := 6;
+//        每秒看 stAdmin.StateCurrentTime[1,6] 累加，stAdmin.PlcDateTime 与系统时间一致。
+//        切到 StateCurrent := 4（Idle）观察 [1,4] 开始累加、[1,6] 停止。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_PackML_V2（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方"验证"指引在线写值观察
+// ============================================================
+
+(* 演示场景：把当前 UnitMode 设为 1（Production）、State 设为 6（Execute）。
+   实际工程里这两个值由 PML_StateMachine 与 PML_UnitModeManager 输出后写入。 *)
+stStatus.UnitModeCurrent := 1;
+stStatus.StateCurrent    := 6;
+
+(* 必须每周期调一次——少调一次时间累计就缺一段 *)
+fbAdminTime(
+    bReset    := bResetTimes,
+    stOptions := stTimeOptions,
+    stAdmin   := stAdmin,
+    stStatus  := stStatus
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

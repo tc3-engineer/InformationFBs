@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_M_SetWarning" Id="{fa6a9fc0-b3ed-588f-98f1-9b12cf04fa95}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_M_SetWarning
+VAR
+    fbAdminAlarm        : PML_AdminAlarm;
+    fbAdminTime         : PML_AdminTime;
+    stAdmin             : ST_PMLa;
+    stStatus            : ST_PMLs;
+    bLowLevel           : BOOL := FALSE;
+    rtLowLevelEdge      : R_TRIG;
+    stMaterialLowWarning: ST_Alarm := (
+        Id       := 100,
+        Value    := 30,
+        Message  := 'Material level below 30%',
+        Category := 2
+    );
+    bSetOk              : BOOL;
+    bReset              : BOOL := FALSE;
+    stTimeOptions       : ST_AdminTimeOptions;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc3_PackML_V2.M_SetWarning 演示程序
+// ============================================================
+// 场景：原料桶液位低于 30% 时上报 warning 提醒补料——不停机不报警，只是黄色提示。
+// 价值：HMI 区分 alarm 红色 vs warning 黄色，操作员凭颜色判断严重度。
+// 验证：在线写 bLowLevel := TRUE，Watch stAdmin.Warning[1].Trigger 应立刻变 TRUE，
+//        DateTime[*] 不为 0。再写 bLowLevel := FALSE 不会自动清除（要主动调 Clear）。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_PackML_V2（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方"验证"指引在线写值观察
+// ============================================================
+
+fbAdminTime(bReset := bReset, stOptions := stTimeOptions,
+            stAdmin := stAdmin, stStatus := stStatus);
+
+(* 低液位检测上升沿才写 warning *)
+rtLowLevelEdge(CLK := bLowLevel);
+IF rtLowLevelEdge.Q THEN
+    bSetOk := fbAdminAlarm.M_SetWarning(
+        stAdmin   := stAdmin,
+        stWarning := stMaterialLowWarning
+    );
+END_IF
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

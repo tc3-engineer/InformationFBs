@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_EcFoeReadFile" Id="{2b17c1b4-3fcd-57a8-a3d5-331c3056cc4b}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_EcFoeReadFile
+VAR
+    fbReadLogToServer   : FB_EcFoeReadFile;
+    bRequestReadOnce    : BOOL := FALSE;
+    sCentralFileSrvId   : T_AmsNetId := '5.0.34.38.1.1';   // 远程文件服务器 AMS NetID
+    sTargetPath         : T_MaxString := 'C:\Data\LogData.csv';
+    nLogSourceSlaveAddr : UINT := 1004;
+    sFoeFileName        : T_MaxString := 'LogData';
+    nFoePassword        : DWORD := 0;
+    bReadBusy           : BOOL;
+    bReadError          : BOOL;
+    nLastAdsErr         : UDINT;
+    cbActualRead        : UDINT;
+    sExtraInfo          : T_MaxString;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// Tc2_EtherCAT.FB_EcFoeReadFile 演示程序
+// =============================================================================
+// 场景：5 条产线各有 PLC，日志统一存到中央文件服务器（独立 IPC，
+//       NetID = 5.0.34.38.1.1）。每条产线 PLC 用本 FB 把 EL 模块日志
+//       LogData 直接写到中央服务器 C:\Data\LogData.csv，免去经过自己本
+//       地硬盘转一次。
+//
+// 价值：分布式 IPC 间 FoE 转储，省中转硬盘空间。
+//
+// 验证步骤：
+//   1. Import 本文件，编译 → 登录；TwinCAT v3.1+，Tc2_EtherCAT ≥ 3.3.14
+//   2. 中央文件服务器必须有 ADS 路由可达
+//   3. 在线脉冲 bRequestReadOnce := TRUE
+//        - bReadBusy 持续 TRUE 数十秒（视文件大小）
+//        - 完成后 cbActualRead = 文件实际大小
+//   4. 在中央服务器 C:\Data\ 查看 LogData.csv 是否生成
+// =============================================================================
+
+fbReadLogToServer(
+    sFSrvNetId    := sCentralFileSrvId,
+    sFSrvPathName := sTargetPath,
+    sEcNetId      := '',
+    nSlaveAddr    := nLogSourceSlaveAddr,
+    sFoEPathName  := sFoeFileName,
+    dwPass        := nFoePassword,
+    bExecute      := bRequestReadOnce,
+    tTimeout      := T#200S,
+    bBusy         => bReadBusy,
+    bError        => bReadError,
+    nErrId        => nLastAdsErr,
+    cbRead        => cbActualRead,
+    sInfo         => sExtraInfo
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

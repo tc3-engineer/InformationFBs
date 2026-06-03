@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_EcGetSlaveCount" Id="{66dc7aa1-36a3-5c3f-be5e-2fbae7312c41}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_EcGetSlaveCount
+VAR
+    fbGetSlaveCount     : FB_EcGetSlaveCount;
+    bRequestReadOnce    : BOOL := FALSE;
+    nExpectedSlaveCount : UINT := 12;            // 机型期望从站数
+    nCurrentSlaveCount  : UINT;
+    bSystemReady        : BOOL;                  // 等于期望数后置 TRUE
+    bReadBusy           : BOOL;
+    bReadError          : BOOL;
+    nLastAdsErr         : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// Tc2_EtherCAT.FB_EcGetSlaveCount 演示程序
+// =============================================================================
+// 场景：批量装配线 PLC 上电后启动顺序需要等所有从站上线再开始业务。用本
+//       FB 每 100 ms 读一次连接的从站数，等等于 nExpectedSlaveCount 才把
+//       bSystemReady 置 TRUE 给业务程序，免去固定 sleep。
+//
+// 价值：把"系统初始化完成"判定形式化、自适应；慢机型不抢跑、快机型不浪费。
+//
+// 验证步骤：
+//   1. Import 本文件，编译 → 登录
+//   2. 在线置 bRequestReadOnce := TRUE：
+//        - bReadBusy 短暂为 TRUE 后落回
+//        - nCurrentSlaveCount 等于现场实际从站数
+//   3. 调 nExpectedSlaveCount 与实际匹配后，bSystemReady 应为 TRUE
+//   4. 拔掉一台从站再触发：nCurrentSlaveCount 应少 1，bSystemReady 为 FALSE
+// =============================================================================
+
+fbGetSlaveCount(
+    sNetId   := '',
+    bExecute := bRequestReadOnce,
+    tTimeout := DEFAULT_ADS_TIMEOUT,
+    bBusy    => bReadBusy,
+    bError   => bReadError,
+    nErrId   => nLastAdsErr,
+    nSlaves  => nCurrentSlaveCount
+);
+
+bSystemReady := (nCurrentSlaveCount >= nExpectedSlaveCount) AND NOT bReadError;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

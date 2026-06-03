@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_EcCoESdoAbortCode" Id="{c4e0a6d0-c774-573d-b320-37c11c54ace1}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_EcCoESdoAbortCode
+VAR
+    fbReadAbort         : FB_EcCoESdoAbortCode;
+    bRequestReadOnce    : BOOL := FALSE;
+    nFailedSlaveAddr    : UINT := 1005;
+    stAbortDetail       : ST_EcAbortCode;
+    bReadBusy           : BOOL;
+    bReadError          : BOOL;
+    nLastAdsErr         : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// Tc2_EtherCAT.FB_EcCoESdoAbortCode 演示程序
+// =============================================================================
+// 场景：现场某 EL3008 配置参数写不进去，HMI 仅显示"SDO Write Failed"。
+//       维修员按"查看详情"按钮调本 FB，HMI 显示具体 Abort Code（如
+//       0x06010002 = Object is read-only），立即知道是对象类型错了。
+//
+// 价值：把 CoE 错误的真实原因暴露给现场维修员；免去抓包解析。
+//
+// 验证步骤：
+//   1. Import 本文件，编译 → 登录
+//   2. 在其他程序里故意触发一次 CoE 错误（如写一个只读对象）
+//   3. 立即把 nFailedSlaveAddr 设为该从站地址
+//   4. 在线置 bRequestReadOnce := TRUE
+//        - bReadBusy 短暂 TRUE 后落回
+//        - stAbortDetail 应填入最近 abort 详情
+//   5. 注意：必须立即调，事后任何成功 CoE 命令会清掉这个 abort
+// =============================================================================
+
+fbReadAbort(
+    sNetId     := '',
+    nSlaveAddr := nFailedSlaveAddr,
+    bExecute   := bRequestReadOnce,
+    tTimeout   := DEFAULT_ADS_TIMEOUT,
+    bBusy      => bReadBusy,
+    bError     => bReadError,
+    nErrId     => nLastAdsErr,
+    stAbortCode=> stAbortDetail
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

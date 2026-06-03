@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_EcPhysicalReadCmd" Id="{7565af49-e846-5a0f-9142-1dba99c0f672}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_EcPhysicalReadCmd
+VAR
+    fbReadAlStatus      : FB_EcPhysicalReadCmd;     // 实例：读从站 AL Status 寄存器
+    bRequestReadOnce    : BOOL := FALSE;             // 在线置 TRUE 触发一次读
+    nFirstSlaveAdp      : UINT := 16#3E9;            // 已配置从站地址（参考 FB_EcGetAllSlaveAddr 返回值，1001 仅为示例）
+    wAlStatusValue      : UINT;                      // 读出的 AL Status：1=INIT 2=PREOP 4=SAFEOP 8=OP，高位=err
+    nWorkingCounter     : UINT;                      // wkc，1 = 该从站应答，0 = 没响应
+    bReadBusy           : BOOL;
+    bReadError          : BOOL;
+    nLastAdsErr         : UDINT;                     // ADS 错误码（0=OK / 1861=超时 / 6=端口未找到）
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// Tc2_EtherCAT.FB_EcPhysicalReadCmd 演示程序
+// =============================================================================
+// 场景：现场某 EK1100 + EL3008 串联站点，运行过程中怀疑 EL3008 自己 ESC 内的
+//       AL Status 已经掉到 PREOP 但主站缓存还显示 OP（PDO 看起来都还在变化）。
+//       直接 FPRD 读取该从站 ESC 寄存器 0x0130（AL Status），用真值与
+//       FB_EcGetMasterState 报告做对照判定是不是缓存延迟。
+//
+// 价值：本 FB 旁路主站状态机直接读 ESC DPRAM。比起 FB_EcGetSlaveState 的
+//       "主站轮询缓存"，本 FB 拿到的是 EtherCAT 命令往返时刻 ESC 寄存器本身
+//       的即时值。当主站缓存与现实出现分歧（比较少见但调试时常需要确认）时
+//       是唯一能给出准答案的工具。
+//
+// 验证步骤：
+//   1. 在 XAE 把本文件 Import 到 PLC 项目的 POUs 文件夹，编译 → 登录
+//   2. 现场至少接 1 个 EtherCAT 从站，并完成 Scan 进入 OP
+//   3. 用 Visual Studio 的 TwinCAT 视图查询该从站的 EtherCAT Address (configured)
+//      （右键从站 → Online → "EtherCAT" 列），把数值填到 nFirstSlaveAdp
+//   4. 在线把 bRequestReadOnce := TRUE，观察：
+//        - bReadBusy 短暂为 TRUE 一两个 PLC 周期后落回
+//        - nWorkingCounter 应为 1（命令被该从站应答）
+//        - wAlStatusValue 应为 16#0008（OP）；若读到 16#0014 / 16#0012 等
+//          高位置 1 的值，说明 ESC 内已记录到错误位
+//   5. 故意把 nFirstSlaveAdp 填成不存在的地址（如 16#FFFF），再触发：
+//        nWorkingCounter 应为 0（链路通畅但无人应答）；bReadError 仍为 FALSE
+//   6. 把 bRequestReadOnce 拉回 FALSE，再上升一次才会再触发一次（边沿触发）
+// =============================================================================
+
+// 单次完整调用：上升沿触发；bBusy 期间继续每周期调用让 ADS 状态机推进
+fbReadAlStatus(
+    sNetId   := '',                              // 空串 = 本机 EtherCAT 主站
+    adp      := nFirstSlaveAdp,                  // 该从站已配置的 EtherCAT 地址
+    ado      := 16#0130,                          // ESC 寄存器：Application Layer Status
+    len      := SIZEOF(wAlStatusValue),           // 2 字节
+    eType    := eAdressingType_Fixed,             // FPRD：按配置地址读
+    pDstBuf  := ADR(wAlStatusValue),              // 接收 buffer 必须保活
+    bExecute := bRequestReadOnce,
+    tTimeout := DEFAULT_ADS_TIMEOUT,
+    bBusy    => bReadBusy,
+    bError   => bReadError,
+    nErrId   => nLastAdsErr,
+    wkc      => nWorkingCounter
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

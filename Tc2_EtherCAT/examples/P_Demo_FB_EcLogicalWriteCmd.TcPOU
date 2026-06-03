@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_EcLogicalWriteCmd" Id="{fff61f5c-0360-5c38-8cd1-2d8c4e0c49e1}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_EcLogicalWriteCmd
+VAR
+    fbWriteOutputArea   : FB_EcLogicalWriteCmd;
+    bRequestWriteOnce   : BOOL := FALSE;             // 在线置 TRUE 触发一次写
+    nOutputLogicalAddr  : UDINT := 16#20000;          // 输出 PDO 区起始逻辑地址（按实际填）
+    abOutputPattern     : ARRAY[0..1] OF BYTE := [16#55, 16#AA];  // 写入测试模式：bit 交替
+    nWorkingCounter     : UINT;
+    bWriteBusy          : BOOL;
+    bWriteError         : BOOL;
+    nLastAdsErr         : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// Tc2_EtherCAT.FB_EcLogicalWriteCmd 演示程序
+// =============================================================================
+// 场景：实验室裸验证一台 EL2008（8 路数字量输出）。先把主站任务停掉（避免
+//       循环 LWR 覆盖），用本 FB 把测试模式 16#55 / 16#AA 直接 LWR 到该
+//       从站的输出 logical address，万用表测量输出通道高电平点位是否符合
+//       预期。
+//
+// 价值：完全旁路 PLC 业务层，直接以 EtherCAT 协议级写硬件输出，做"从主站
+//       帧 → 从站 → 硬件外设"全链路一遍。是新硬件入网时的标准排查工具。
+//
+// 验证步骤：
+//   1. XAE → 主站 → Stop（关掉循环任务，否则本 FB 写的值瞬间被覆盖）
+//   2. 在 Process Image 视图找到 EL2008 输出 PDO 的 logical address，填入
+//      nOutputLogicalAddr（典型在 16#20000+ 区段）
+//   3. Import 本文件，编译 → 登录
+//   4. 在线置 bRequestWriteOnce := TRUE：
+//        - bWriteBusy 短暂为 TRUE 一两个周期后落回
+//        - nWorkingCounter 应为 1（命令被 EL2008 应答）
+//   5. 万用表 / LED 板观察 EL2008 输出：通道 0/2/4/6 应高（pattern 0x55）
+//      下一次触发改 pattern 为 0xAA，通道 1/3/5/7 高
+//   6. 测试完毕重启主站任务恢复正常 PDO 周期下发
+// =============================================================================
+
+fbWriteOutputArea(
+    sNetId   := '',
+    logAddr  := nOutputLogicalAddr,
+    len      := SIZEOF(abOutputPattern),
+    pSrcBuf  := ADR(abOutputPattern),
+    bExecute := bRequestWriteOnce,
+    tTimeout := DEFAULT_ADS_TIMEOUT,
+    bBusy    => bWriteBusy,
+    bError   => bWriteError,
+    nErrId   => nLastAdsErr,
+    wkc      => nWorkingCounter
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

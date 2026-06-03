@@ -111,7 +111,7 @@ def _vars_from_text(text: str) -> list[tuple[str, str]]:
         # Strip (* multi-line comments *) and // line comments. Done BEFORE
         # decl extraction so the `;` we hunt for is the real terminator, not
         # one buried inside a comment.
-        region = re.sub(r"\(\*.*?\*\)", "", region, flags=re.DOTALL)
+        region = re.sub(r"\(\*[\s\S]*?\*\s*\)", "", region, flags=re.DOTALL)
         region = re.sub(r"//.*$", "", region, flags=re.MULTILINE)
         # Join wrapped-type lines: if pypdf split a type across two lines
         # (e.g. "in : POINTER TO\nT_HUGE_INTEGER;"), the type token would
@@ -155,7 +155,7 @@ def _naked_method_params(section_text: str) -> list[tuple[str, str]]:
     if not m:
         return []
     body = m.group(1)
-    body = re.sub(r"\(\*.*?\*\)", "", body, flags=re.DOTALL)
+    body = re.sub(r"\(\*[\s\S]*?\*\s*\)", "", body, flags=re.DOTALL)
     body = re.sub(r"//.*$", "", body, flags=re.MULTILINE)
     body = _join_wrapped_decls(body)
     out: list[tuple[str, str]] = []
@@ -187,7 +187,7 @@ def _extract_defaults(section_text: str) -> dict[str, str]:
     out: dict[str, str] = {}
     for m in VAR_REGION_RE.finditer(section_text):
         region = m.group(1)
-        region = re.sub(r"\(\*.*?\*\)", "", region, flags=re.DOTALL)
+        region = re.sub(r"\(\*[\s\S]*?\*\s*\)", "", region, flags=re.DOTALL)
         region = re.sub(r"//.*$", "", region, flags=re.MULTILINE)
         region = _join_wrapped_decls(region)
         for dm in _DEFAULT_PAT.finditer(region):
@@ -211,16 +211,28 @@ def _find_section_in_body(lib: str, name: str) -> str | None:
     if not txt.exists():
         return None
     body = txt.read_text()
-    # Body heading: "<sec> <name>" at line start, where <sec> is 1–5 levels.
-    # The title may carry a suffix after the POU name (Tc2_ModbusSrv prints
-    # "6.2.1 FB_MBReadCoils (Modbus function 1)"), so allow trailing text — but
-    # gate the name with a non-identifier lookahead so searching "FB_MBRead"
-    # can't match "FB_MBReadCoils". TOC echoes (same line + dot-leader + page)
-    # share the section number, so grabbing either is fine; we de-dup by depth.
-    pat = re.compile(
-        rf"(?m)^\s*(\d+(?:\.\d+){{0,4}})\s+{re.escape(name)}(?![A-Za-z0-9_]).*$"
-    )
-    secs = pat.findall(body)
+    # Body heading match has two tiers; we try the strict form first so that an
+    # exact-title section wins over an "FB_X with foo" describing/sample section
+    # that happens to share the same POU token.
+    #
+    # Tier 1 — strict: "<sec> <name>" with nothing after the name except whitespace.
+    # Matches "4.2.2 KL6301" but NOT "4.4.1 KL6301 with CX5120" — fixes Tc2_EIB
+    # where a "KL6301 with CX5120" sample chapter sits at the same depth as the
+    # real "KL6301" FB and previously won the secs[-1] tie-break.
+    #
+    # Tier 2 — loose (fallback when strict has no hit): "<sec> <name>" followed
+    # by anything that does NOT continue the identifier. Recovers TF manuals
+    # like Tc2_ModbusSrv where titles legitimately carry suffixes
+    # ("6.2.1 FB_MBReadCoils (Modbus function 1)"). The negative-lookahead
+    # `(?![A-Za-z0-9_])` still guards against prefix matches like
+    # "FB_MBRead" hitting "FB_MBReadCoils".
+    strict = re.compile(rf"(?m)^\s*(\d+(?:\.\d+){{0,4}})\s+{re.escape(name)}\s*$")
+    secs = strict.findall(body)
+    if not secs:
+        loose = re.compile(
+            rf"(?m)^\s*(\d+(?:\.\d+){{0,4}})\s+{re.escape(name)}(?![A-Za-z0-9_]).*$"
+        )
+        secs = loose.findall(body)
     if not secs:
         return None
     # Prefer the most specific (deepest) section; ties → last occurrence
@@ -258,8 +270,11 @@ _INFOSYS_TOPIC_RE = re.compile(
     # Beckhoff InfoSys uses several URL slugs depending on the library:
     #   tcplclib_<lower>            — most TwinCAT 3 libs (e.g. tcplclib_tc2_mc2)
     #   tcplclib<lower>             — some legacy / NC libs (e.g. tcplclibmc2_camming)
+    #   tf<n>_tc3_<lower>           — most TF product manuals (e.g. tf6310_tc3_tcp_ip)
+    #   tf<n>_<lower>               — some TF manuals omit the _tc3_ infix
+    #                                 (e.g. tf8020_bacnetrev14 — Tc2_BACnet)
     #   tf<digits>_tc3_<lower>      — TF function products (e.g. tf6310_tc3_tcpip → Tc2_TcpIp)
-    r"https?://infosys\.beckhoff\.com/content/\d+/(?:tcplclib[a-z0-9_]+|tf\d+_tc3_[a-z0-9_]+)/\d+\.html"
+    r"https?://infosys\.beckhoff\.com/content/\d+/(?:tcplclib[a-z0-9_]+|tf\d+(?:_tc3)?_[a-z0-9_]+)/\d+\.html"
 )
 _INFOSYS_CHECKED_OK_RE = re.compile(
     r"(?:✅\s*\d{4}-\d{2}-\d{2}|⚠️\s*not-on-infosys)"

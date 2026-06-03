@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_PML_AdminAlarm" Id="{8177d3d6-2022-5958-86d1-9c6bbb274132}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_PML_AdminAlarm
+VAR
+    fbAdminAlarm  : PML_AdminAlarm;     // 报警管理 FB
+    fbAdminTime   : PML_AdminTime;       // 必须配合周期调用，保证 PlcDateTime 新鲜
+    stAdmin       : ST_PMLa;             // PackML 管理 PackTag 实例
+    stStatus      : ST_PMLs;             // 状态 PackTag（PML_AdminTime 需要）
+    bFault        : BOOL := FALSE;       // 在线模拟"故障检测"位
+    rtFaultEdge   : R_TRIG;              // 边沿检测：保证 Set 只在故障出现的一刻调用
+    bAckBtn       : BOOL := FALSE;       // HMI 确认按钮
+    rtAckEdge     : R_TRIG;
+    bClearBtn     : BOOL := FALSE;       // HMI 清除按钮
+    rtClearEdge   : R_TRIG;
+    stThisAlarm   : ST_Alarm := (
+        Id := 1001,
+        Value := 85,
+        Message := 'Outlet temperature exceeded 85C',
+        Category := 1
+    );
+    bSetOk        : BOOL;
+    bAckOk        : BOOL;
+    bClearOk      : BOOL;
+    bReset        : BOOL := FALSE;       // PML_AdminTime 复位输入
+    stTimeOptions : ST_AdminTimeOptions; // 默认使用 Windows 系统时间
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc3_PackML_V2.PML_AdminAlarm 演示程序
+// ============================================================
+// 场景：构建完整的 alarm 上报+确认+清除业务循环：在 R_TRIG 上升沿调 M_SetAlarm 写报警；
+//       HMI 按钮调 M_AcknowledgeAlarm 确认；清除按钮调 M_ClearAlarm 归档到 AlarmHistory。
+//       本例演示一条 出料温度过高 报警的完整三阶段流程。
+// 价值：ISA-18.2 标准三阶段报警管理一次性封装，HMI/MES 走 PackTags 统一数据契约。
+// 验证：确保 PackTags 全局已声明。在线写 bFault := TRUE 触发报警——
+//        Watch PackTags.Admin.Alarm[1].Trigger 应变 TRUE。然后 bAckBtn := TRUE→FALSE，
+//        Alarm[1].Trigger 应变 FALSE 但条目仍在；bClearBtn := TRUE→FALSE 后条目移入 AlarmHistory[]。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_PackML_V2（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方"验证"指引在线写值观察
+// ============================================================
+
+(* —— 第一步：必须周期调 PML_AdminTime 喂新鲜 PlcDateTime，否则报警时间戳全是 0 —— *)
+fbAdminTime(
+    bReset    := bReset,
+    stOptions := stTimeOptions,
+    stAdmin   := stAdmin,
+    stStatus  := stStatus
+);
+
+(* —— 边沿检测：故障检测位上升沿才触发一次 SetAlarm —— *)
+rtFaultEdge(CLK := bFault);
+IF rtFaultEdge.Q THEN
+    bSetOk := fbAdminAlarm.M_SetAlarm(stAdmin := stAdmin, stAlarm := stThisAlarm);
+END_IF
+
+(* —— HMI"确认"按钮上升沿调 M_AcknowledgeAlarm —— *)
+rtAckEdge(CLK := bAckBtn);
+IF rtAckEdge.Q THEN
+    bAckOk := fbAdminAlarm.M_AcknowledgeAlarm(stAdmin := stAdmin, stAlarm := stThisAlarm);
+END_IF
+
+(* —— HMI"清除"按钮上升沿调 M_ClearAlarm 把项目移入 AlarmHistory —— *)
+rtClearEdge(CLK := bClearBtn);
+IF rtClearEdge.Q THEN
+    bClearOk := fbAdminAlarm.M_ClearAlarm(stAdmin := stAdmin, stAlarm := stThisAlarm);
+END_IF
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

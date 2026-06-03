@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_SoERead_ByDriveRef" Id="{e9a78f6d-caf6-5a6c-8101-9d6a50ed674d}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_SoERead_ByDriveRef
+VAR
+    fbReadDiagnostic    : FB_SoERead_ByDriveRef;
+    bRequestReadOnce    : BOOL := FALSE;
+    stAxis1DriveRef     : ST_DriveRef;             // System Manager 中链接到 NC Axis 1
+    wIdnDiagnostic      : WORD := 148;             // S-0-0148 Drive Diagnostic
+    nElementValue       : BYTE := 16#40;
+    dwDriveError        : DWORD;
+    dwParamAttribute    : DWORD;
+    cbActualRead        : UDINT;
+    bReadBusy           : BOOL;
+    bReadError          : BOOL;
+    nAdsErr             : UINT;
+    nSercosErr          : UINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// Tc2_EtherCAT.FB_SoERead_ByDriveRef 演示程序
+// =============================================================================
+// 场景：NC 多轴系统，每轴用 ST_DriveRef 引用。本 FB 读 S-0-0148 (Drive
+//       Diagnostic) 错误码给 HMI 看板。NC 与 PLC 解耦的驱动诊断访问。
+//
+// 价值：NC 集成场景的标准 SoE 读取；输出 dwAttribute 可做数据自描述。
+//
+// 验证步骤：
+//   1. Import 本文件，编译 → 登录
+//   2. System Manager 中链 stAxis1DriveRef → NC Axis 1
+//   3. 编译激活；现场轴当前 OP
+//   4. 在线置 bRequestReadOnce := TRUE
+//        - bReadBusy 一两个周期后落回
+//        - dwDriveError 应为驱动错误代码（正常 = 0）
+//        - dwParamAttribute 应为 S-0-0148 的属性字
+//        - nAdsErr = 0 AND nSercosErr = 0
+// =============================================================================
+
+fbReadDiagnostic(
+    stDriveRef   := stAxis1DriveRef,
+    nIdn         := wIdnDiagnostic,
+    nElement     := nElementValue,
+    pDstBuf      := ADR(dwDriveError),
+    cbBufLen     := SIZEOF(dwDriveError),
+    bExecute     := bRequestReadOnce,
+    tTimeout     := DEFAULT_ADS_TIMEOUT,
+    bBusy        => bReadBusy,
+    bError       => bReadError,
+    iAdsErrId    => nAdsErr,
+    iSercosErrId => nSercosErr,
+    dwAttribute  => dwParamAttribute,
+    cbRead       => cbActualRead
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

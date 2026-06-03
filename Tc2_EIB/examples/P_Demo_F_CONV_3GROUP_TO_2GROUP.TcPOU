@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_F_CONV_3GROUP_TO_2GROUP" Id="{429c16f5-1de8-5fe2-b1ae-200bb743b6cb}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_F_CONV_3GROUP_TO_2GROUP
+VAR
+    st3GroupAddr : EIB_GROUP_ADDR := (MAIN := 1, SUB_MAIN := 1, NUMBER := 0);
+    st2GroupAddr : EIB_GROUP_ADDR_2GROUP;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc2_EIB.F_CONV_3GROUP_TO_2GROUP 演示程序
+// ============================================================
+// 场景：工厂 BMS 系统部分用 3 级地址，部分用老设备 2 级地址。本 demo 把内部 3 级地址转成 2 级后发到老设备。
+// 价值：1 行调用替代位运算；老设备兼容
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_EIB（References → Add library）
+//   3. 编译 → 登录 → 运行；按下方在线写值步骤操作
+// 验证：改 `st3GroupAddr := (1, 1, 0)` → `st2GroupAddr` 应为 (MAIN=1, SUB_MAIN=256)。
+// ============================================================
+
+// 纯函数调用
+st2GroupAddr := F_CONV_3GROUP_TO_2GROUP(IN := st3GroupAddr);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

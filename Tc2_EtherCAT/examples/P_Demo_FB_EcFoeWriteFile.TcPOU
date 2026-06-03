@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_EcFoeWriteFile" Id="{6c7ab169-92b3-5d05-9e05-a84c3ecea159}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_EcFoeWriteFile
+VAR
+    fbWriteFwToSlave    : FB_EcFoeWriteFile;
+    bStartFwUpload      : BOOL := FALSE;
+    sCentralFwSrvId     : T_AmsNetId := '5.0.34.38.1.1';
+    sFwSourcePath       : T_MaxString := 'C:\Firmware\EL6751_V3.efw';
+    nTargetSlaveAddr    : UINT := 1004;
+    sFoeTargetName      : T_MaxString := 'firmware';
+    nFwPass             : DWORD := 0;
+    bUploadBusy         : BOOL;
+    bUploadError        : BOOL;
+    nLastAdsErr         : UDINT;
+    cbWritten           : UDINT;
+    nProgress           : UDINT;
+    sExtraInfo          : T_MaxString;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// Tc2_EtherCAT.FB_EcFoeWriteFile 演示程序
+// =============================================================================
+// 场景：100 台分布式 PLC，固件统一从中央版本服务器（NetID 5.0.34.38.1.1）
+//       拉。本 FB 直接从中央拉到从站，免去本地 PLC 缓存一份。HMI 显示
+//       nProgress 进度条让维修员看着升级进展。
+//
+// 价值：中央化固件管理，分布式部署。
+//
+// 验证步骤：
+//   1. Import 本文件，编译 → 登录；TwinCAT 3.1.4024.56+，Tc2_EtherCAT ≥ 3.5.1.0
+//   2. 中央服务器存放固件 C:\Firmware\EL6751_V3.efw
+//   3. 在线脉冲 bStartFwUpload := TRUE
+//        - bUploadBusy 持续 TRUE 数分钟
+//        - nProgress 应从 0 升到 100
+//        - 完成后 cbWritten = 固件大小
+// =============================================================================
+
+fbWriteFwToSlave(
+    sFSrvNetId    := sCentralFwSrvId,
+    sFSrvPathName := sFwSourcePath,
+    sEcNetId      := '',
+    nSlaveAddr    := nTargetSlaveAddr,
+    sFoEPathName  := sFoeTargetName,
+    dwPass        := nFwPass,
+    bExecute      := bStartFwUpload,
+    tTimeout      := T#600S,
+    bBusy         => bUploadBusy,
+    bError        => bUploadError,
+    nErrId        => nLastAdsErr,
+    cbWritten     => cbWritten,
+    nProgress     => nProgress,
+    sInfo         => sExtraInfo
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

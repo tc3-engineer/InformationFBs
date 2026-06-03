@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_EcReqSlaveState" Id="{7dcedfc0-0fbd-5d8b-bcb7-33edd31f2b37}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_EcReqSlaveState
+VAR
+    fbReqClearSlaveErr  : FB_EcReqSlaveState;
+    bRequestClearErr    : BOOL := FALSE;          // 监测 deviceState & 0x10 = TRUE 时触发
+    nProblemSlaveAddr   : UINT := 1001;
+    wRequestClearOnly   : WORD := EC_DEVICE_STATE_ERROR;   // = 0x10 仅清错误位
+    bReqBusy            : BOOL;
+    bReqError           : BOOL;
+    nLastAdsErr         : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// Tc2_EtherCAT.FB_EcReqSlaveState 演示程序
+// =============================================================================
+// 场景：某 EL3204 偶发掉到 SAFEOP_ERR（deviceState 同时含 0x04 + 0x10）。
+//       PLC 监测到错误位置后用本 FB 发 state = 0x10 清错误位，等 200 ms
+//       再用 FB_EcSetSlaveState 重新切回 OP。自动恢复无需重启工程。
+//
+// 价值：从站偶发错误自动恢复，免去现场重启的工时。
+//
+// 验证步骤：
+//   1. Import 本文件，编译 → 登录
+//   2. nProblemSlaveAddr 设为目标从站地址
+//   3. 当 FB_EcGetSlaveState.state.deviceState & EC_DEVICE_STATE_ERROR 为 TRUE
+//      时（监测 deviceState >= 0x10 或 AND 0x10 非 0），脉冲 bRequestClearErr
+//        - bReqBusy 一两个周期后落回
+//        - deviceState 错误位应被清，几百 ms 后回到 OP（需配合 SetSlaveState）
+//   4. 用 FB_EcGetSlaveState 轮询验证恢复
+// =============================================================================
+
+fbReqClearSlaveErr(
+    sNetId     := '',
+    nSlaveAddr := nProblemSlaveAddr,
+    bExecute   := bRequestClearErr,
+    tTimeout   := DEFAULT_ADS_TIMEOUT,
+    state      := wRequestClearOnly,
+    bBusy      => bReqBusy,
+    bError     => bReqError,
+    nErrId     => nLastAdsErr
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

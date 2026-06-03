@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_F_ConvBK1120CouplerStateToString" Id="{5441a3b3-1c66-5ed1-81b6-2edf987d3a06}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_F_ConvBK1120CouplerStateToString
+VAR
+    wBkCouplerStateInput : WORD := 16#0021;     // 在线设为耦合器实际状态字
+    sCouplerStateView    : T_MaxString;          // HMI 显示用
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// Tc2_EtherCAT.F_ConvBK1120CouplerStateToString 演示程序
+// =============================================================================
+// 场景：现场用 BK1120 总线耦合器接 K-Bus 端子模块。HMI 状态总览页要显
+//       示"BK1120 状态: K-Bus error, K-Bus overrun"而非"0x0021"。
+//       本 FC 在每个 PLC 周期把 WORD 状态翻译成字符串供 HMI 直接绑。
+//
+// 价值：HMI 工程师不必懂位掩码，直接绑字符串显示即可。
+//
+// 验证步骤：
+//   1. Import 本文件，编译 → 登录
+//   2. 在 System Manager 中把 BK1120 的 'State' 输入链到 wBkCouplerStateInput
+//   3. 正常运行时 wBkCouplerStateInput = 0，sCouplerStateView = 'No error'
+//   4. 在线把 wBkCouplerStateInput 临时改为 16#0001，sCouplerStateView 应为含 K-Bus error
+//   5. 在线把 wBkCouplerStateInput 改为 16#0021（多错），sCouplerStateView 应含两个错误描述
+// =============================================================================
+
+// 同步 FC，每周期调用即更新 HMI 显示字符串
+sCouplerStateView := F_ConvBK1120CouplerStateToString(wBkCouplerStateInput);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

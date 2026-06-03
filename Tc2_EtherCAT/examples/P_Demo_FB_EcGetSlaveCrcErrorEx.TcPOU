@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_EcGetSlaveCrcErrorEx" Id="{4f6132f9-460f-57c6-ad2d-ecaf750e1c2d}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_EcGetSlaveCrcErrorEx
+VAR
+    fbReadSlaveCrcEx    : FB_EcGetSlaveCrcErrorEx;
+    bRequestReadOnce    : BOOL := FALSE;
+    nEk1122Addr         : UINT := 1002;          // EK1122 分支耦合器地址
+    stEk1122PortCrc     : ST_EcCrcErrorEx;       // A/D/B/C 端口计数
+    bReadBusy           : BOOL;
+    bReadError          : BOOL;
+    nLastAdsErr         : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// Tc2_EtherCAT.FB_EcGetSlaveCrcErrorEx 演示程序
+// =============================================================================
+// 场景：某 EK1122 接两条 EtherCAT 分支（D 出主控柜、C 出辅控柜）。主控
+//       柜 CRC 偶发增长，辅控柜不发生。用本 FB 看 EK1122 四端口分别计
+//       数，若仅 D 端口在涨 → 主控柜布线接触松动。
+//
+// 价值：4 端口分支耦合器精确定位。3 端口版做不到。
+//
+// 验证步骤：
+//   1. Import 本文件，编译 → 登录
+//   2. nEk1122Addr 设为现场 EK1122 的固定地址
+//   3. 在线置 bRequestReadOnce := TRUE
+//        - bReadBusy 短暂为 TRUE 后落回
+//        - 展开 stEk1122PortCrc，应看到 A/D/B/C 四个端口计数字段
+//   4. 故意抖动主控柜分支线 1 秒，再触发：D 端口（或对应分支）计数 +1
+// =============================================================================
+
+// 注意：本 FB 的 tTimeout 没有默认值
+fbReadSlaveCrcEx(
+    sNetId     := '',
+    nSlaveAddr := nEk1122Addr,
+    bExecute   := bRequestReadOnce,
+    tTimeout   := DEFAULT_ADS_TIMEOUT,
+    bBusy      => bReadBusy,
+    bError     => bReadError,
+    nErrId     => nLastAdsErr,
+    CrcError   => stEk1122PortCrc
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

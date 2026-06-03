@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_TIME_TO_PackMLTime" Id="{5853b97d-7fd9-5ee0-b9eb-14fe6f4719be}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_TIME_TO_PackMLTime
+VAR
+    tInput          : TIME := T#1H23M45S;          // 演示用：1 小时 23 分 45 秒
+    aPackMLDuration : ARRAY[0..6] OF DINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc3_PackML_V2.TIME_TO_PackMLTime 演示程序
+// ============================================================
+// 场景：把 TIME 类型测得的 本次循环用时 转成 PackML 数组写入 OEE 字段。
+// 价值：TIME 是最常用的 IEC 时长类型，本函数提供 PackML 数组标准转换。
+// 验证：tInput=T#1H23M45S 时 aPackMLDuration 应填好对应分量。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_PackML_V2（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方"验证"指引在线写值观察
+// ============================================================
+
+aPackMLDuration := TIME_TO_PackMLTime(Input := tInput);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

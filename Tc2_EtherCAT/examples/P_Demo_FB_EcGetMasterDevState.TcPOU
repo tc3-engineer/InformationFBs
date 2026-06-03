@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_EcGetMasterDevState" Id="{ef7882f9-b556-57d6-b95b-8816e1c6ac7f}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_EcGetMasterDevState
+VAR
+    fbReadDevState      : FB_EcGetMasterDevState;
+    bRequestReadOnce    : BOOL := FALSE;
+    nMasterDevState     : WORD;            // 位掩码 0 = OK
+    sStateDecoded       : STRING(80);      // 经 F_ConvMasterDevStateToString 翻译后的可读串
+    bReadBusy           : BOOL;
+    bReadError          : BOOL;
+    nLastAdsErr         : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// Tc2_EtherCAT.FB_EcGetMasterDevState 演示程序
+// =============================================================================
+// 场景：HMI 主页要显示"网络健康度"红绿灯（绿 / 黄 / 红）。用本 FB 1 Hz
+//       刷新主站设备状态，配合 F_ConvMasterDevStateToString 翻译为字符串
+//       推给 HMI，业务侧不必懂 EtherCAT 位掩码细节。
+//
+// 价值：把网卡级底层状态抽象成业务可消费的红绿灯指标。HMI 工程师只关心
+//       sStateDecoded 内容，PLC 端封装好底层逻辑。
+//
+// 验证步骤：
+//   1. Import 本文件，编译 → 登录；现场至少 1 个从站当前在 OP
+//   2. 在线置 bRequestReadOnce := TRUE
+//        - bReadBusy 一两个周期后落回
+//        - nMasterDevState 应为 0（正常）
+//        - sStateDecoded 应为 'OK'
+//   3. 拔掉主站网线再触发：
+//        - nMasterDevState 应非 0
+//        - sStateDecoded 类似 'Not OK - Link error'
+// =============================================================================
+
+fbReadDevState(
+    sNetId    := '',
+    bExecute  := bRequestReadOnce,
+    tTimeout  := DEFAULT_ADS_TIMEOUT,
+    bBusy     => bReadBusy,
+    bError    => bReadError,
+    nErrId    => nLastAdsErr,
+    nDevState => nMasterDevState
+);
+
+// 把位掩码翻译成可读字符串，给 HMI 消费
+sStateDecoded := F_ConvMasterDevStateToString(nMasterDevState);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

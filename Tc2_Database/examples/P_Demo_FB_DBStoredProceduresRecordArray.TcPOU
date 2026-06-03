@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_DBStoredProceduresRecordArray" Id="{01a9f451-0403-5b42-822f-b053c21c7650}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_DBStoredProceduresRecordArray
+TYPE ST_BatchLogRecord :
+STRUCT
+    ID        : ULINT;             // bigint
+    Timestamp : DT;                // datetime
+    Name      : STRING(80);        // nvarchar(80)
+    Value     : LREAL;             // float
+END_STRUCT
+END_TYPE
+
+VAR
+    fbSpArray         : FB_DBStoredProceduresRecordArray;
+    paramList         : ARRAY[0..MAX_STORED_PROCEDURES_PARAMETERS] OF ST_DBParameter;
+    arrRecords        : ARRAY[0..19] OF ST_BatchLogRecord;
+    bParamsInited     : BOOL;
+    // === 参数变量（静态作用域） ===
+    sQueryBatchId     : STRING(40) := 'B20260603-001';
+    nQueryMaxRows     : DINT       := 20;
+    // === 触发 / 输出 ===
+    bUserQuery        : BOOL;
+    rEdgeQuery        : R_TRIG;
+    hMesDbId          : UDINT := 1;
+    bSpBusy           : BOOL;
+    bSpErr            : BOOL;
+    nSpErr            : UDINT;
+    sSpSqlState       : ST_DBSQLError;
+    nRowsReturned     : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：HMI "批次报表"页按 BatchID 查最近 20 条记录。DBA 写了存储过程
+//         CREATE PROC sp_GetLatestLogs @batchId NVARCHAR(40), @maxRows INT
+//         AS
+//           SELECT TOP (@maxRows) ID, Timestamp, Name, Value
+//             FROM tProcessLog
+//            WHERE BatchID = @batchId
+//            ORDER BY Timestamp DESC
+//       PLC 调用本 FB 把结果填到 arrRecords，HMI 直接绑数组到 Repeater。
+// 价值：相比 FB_DBRecordArraySelect 拼 SQL——参数化无 SQL 注入；过程内可加
+//       权限校验 / 时间范围限制等业务规则；DBA 改 SQL 不需要 PLC 改代码。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_Database；DBA 创建 sp_GetLatestLogs 过程，tProcessLog 表里
+//      插入若干 BatchID = 'B20260603-001' 的记录
+//   3. 编译 → 登录 → 运行；启动 TwinCAT Database Server
+//   4. 在线写 bUserQuery := TRUE → bSpBusy 短暂 TRUE → 观察 arrRecords[0..N-1]
+//      被填上数据；nRowsReturned 为该 BatchID 的实际行数（≤ 20）
+//   5. ARM CX 上跑要按 PDF §7.1.17 调整结构体字段顺序 + Dummy:BYTE，否则
+//      数据读到错位
+// =============================================================================
+
+// 一次性初始化 paramList
+IF NOT bParamsInited THEN
+    // 参数 0: @batchId INPUT NVARCHAR(40)
+    paramList[0].sParameterName     := 'batchId';
+    paramList[0].eParameterDataType := eDBColumn_NVarChar;
+    paramList[0].eParameterType     := eDBParameter_Input;
+    paramList[0].cbParameterValue   := SIZEOF(sQueryBatchId);
+    paramList[0].pParameterValue    := ADR(sQueryBatchId);
+
+    // 参数 1: @maxRows INPUT INT
+    paramList[1].sParameterName     := 'maxRows';
+    paramList[1].eParameterDataType := eDBColumn_Integer;
+    paramList[1].eParameterType     := eDBParameter_Input;
+    paramList[1].cbParameterValue   := SIZEOF(nQueryMaxRows);
+    paramList[1].pParameterValue    := ADR(nQueryMaxRows);
+
+    bParamsInited := TRUE;
+END_IF
+
+rEdgeQuery(CLK := bUserQuery);
+
+// 触发前清空结果数组（避免上次残留干扰）
+IF rEdgeQuery.Q THEN
+    MEMSET(destAddr := ADR(arrRecords), fillByte := 0, n := SIZEOF(arrRecords));
+END_IF
+
+// 单次完整调用；注意 pDesAddr 拼写少一个 t（PDF 原文）
+fbSpArray(
+    sNetID            := '',
+    hDBID             := hMesDbId,
+    sProcedureName    := 'sp_GetLatestLogs',
+    cbParameterList   := SIZEOF(paramList),
+    pParameterList    := ADR(paramList),
+    nStartIndex       := 0,
+    nRecordCount      := 20,
+    cbRecordArraySize := SIZEOF(arrRecords),
+    pDesAddr          := ADR(arrRecords),         // PDF 原文 pDesAddr（缺 t）
+    bExecute          := rEdgeQuery.Q,
+    tTimeout          := T#60S,
+    bBusy             => bSpBusy,
+    bError            => bSpErr,
+    nErrID            => nSpErr,
+    sSQLState         => sSpSqlState,
+    nRecords          => nRowsReturned
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

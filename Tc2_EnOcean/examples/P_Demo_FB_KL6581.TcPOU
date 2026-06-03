@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_KL6581" Id="{b158999d-5ba6-5d09-9067-0fb1b561c704}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_KL6581
+VAR
+    fbKL6581             : FB_KL6581;                  // KL6581 主端子驱动
+
+    // —— SysMgr 链 KL6581 端子 IO 字节区 ——
+    stKL6581Input        AT %I* : KL6581_Input;        // 12 字节输入
+    stKL6581Output       AT %Q* : KL6581_Output;       // 12 字节输出
+
+    bInitKL6581          : BOOL := TRUE;               // 上电默认 TRUE 开始初始化
+    nMyKL6581Idx         : USINT := 1;                 // 工程里第几片 KL6581
+
+    bKL6581Ready         : BOOL;                       // 配置完成可收发
+    bKL6581Busy          : BOOL;
+    bKL6581Error         : BOOL;
+    iKL6581ErrId         : E_KL6581_Err;
+
+    // 状态监视
+    tonInitTimeout       : TON;                        // 初始化时长监视
+    bInitTimedOut        : BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：楼宇 BMS 项目里布置一片 KL6581 EnOcean 主端子 + 一只 KL6583 远端
+//       收发器（放在三楼会议室区天花板上）+ KL9010 终端电阻。本程序：
+//       ① 上电后自动初始化 KL6581，② 监视 30 秒初始化超时报警，③ 给下游
+//       FB_Rec_* / FB_Send_* 提供共享 str_KL6581 入口。本 FB 是 KL6581
+//       体系的"通信主入口"，必须每个 PLC 周期调用且只调一次。
+//
+// 价值：把 K-bus 握手 + KL6583 调度 + 状态机错误处理 + 初始化超时监视封
+//       装为单 FB 调用；下游 send / receive 块全部共享 fbKL6581.str_KL6581
+//       即可，无须再自管 KL6581 配置时序。
+//
+// 验证步骤：
+//   1. 在 SysMgr 给 KL6581 启用 K-bus，把 12-byte input/output 字节区
+//      链到 stKL6581Input / stKL6581Output
+//   2. 引用 Tc2_EnOcean，编译，登录，运行
+//   3. 上电后约 1-3 秒：观察 bKL6581Busy 从 TRUE 变 FALSE，bKL6581Ready
+//      从 FALSE 变 TRUE，bKL6581Error = FALSE
+//   4. 此时下游 FB_Rec_* / FB_Send_* 应能正常工作
+//   5. 故障注入：拔掉 KL6583 信号线 -> iKL6581ErrId 应进 0x15
+//      (KL6581_No_KL6853_Found) 或 0x13 (KL6581_Switch_to_Stopp)
+//   6. 在 SysMgr 改链到 KL6021 端子 -> iKL6581ErrId 应进 0x0A
+//      (KL6581_WrongTerminal)
+//   7. 把 nMyKL6581Idx 设 65 -> iKL6581ErrId = 0x12 (idx_number_not_OK)
+//   8. tonInitTimeout 30 秒还没 Ready -> bInitTimedOut = TRUE 报警
+// =============================================================================
+
+// 主调用：每周期一次，bInit 控制是否进入工作态
+fbKL6581(
+    bInit        := bInitKL6581,
+    nIdx         := nMyKL6581Idx,
+    stKL6581_in  := stKL6581Input,
+    stKL6581_out := stKL6581Output,
+    bReady       => bKL6581Ready,
+    bBusy        => bKL6581Busy,
+    bError       => bKL6581Error,
+    iErrorID     => iKL6581ErrId
+);
+
+// 初始化超时：30 秒还没 Ready 则报警
+tonInitTimeout(IN := bInitKL6581 AND NOT bKL6581Ready AND NOT bKL6581Error,
+               PT := T#30S);
+bInitTimedOut := tonInitTimeout.Q;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

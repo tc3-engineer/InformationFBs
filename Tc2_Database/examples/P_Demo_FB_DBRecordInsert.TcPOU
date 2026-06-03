@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_DBRecordInsert" Id="{319a2021-71d4-5ad8-beb5-daacae6bedff}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_DBRecordInsert
+VAR
+    fbInsert         : FB_DBRecordInsert;
+    sShortInsertSql  : T_MaxString := 'INSERT INTO tLog (Timestamp, Name, Value) VALUES (GETDATE(), ''p1'', 1.0)';
+    bUserReq         : BOOL;
+    rEdgeIns         : R_TRIG;
+    hDbId            : UDINT := 1;
+    bInsBusy         : BOOL;
+    bInsErr          : BOOL;
+    nInsErr          : UDINT;
+    sInsSqlState     : ST_DBSQLError;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：维护 2014 年部署的老 OEM 设备——SQL 都短（< 200 字符），用本 FB 已
+//       稳定运行多年。新工程应改用 FB_DBRecordInsert_EX（PDF §7.1.20.2 已废弃）。
+// 价值（历史）：早期 TC2 时代的唯一 INSERT 入口。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_Database；hDBID = 1 数据库的 tLog 表已建好（Timestamp/Name/Value 列）
+//   3. 编译 → 登录 → 运行；启动 TwinCAT Database Server
+//   4. 在线写 bUserReq := TRUE → bInsBusy 短暂 TRUE → sInsSqlState.sSQLState = '00000'
+//   5. 验证 SQL 表里多了一条记录
+//   6. 把 sShortInsertSql 改成 > 255 字符的 SQL → 触发后会语法错（截断陷阱）
+// =============================================================================
+
+rEdgeIns(CLK := bUserReq);
+
+// 单次完整调用；新代码请用 FB_DBRecordInsert_EX
+fbInsert(
+    sNetID     := '',
+    hDBID      := hDbId,
+    sInsertCmd := sShortInsertSql,            // 注意 T_MaxString 限 255 字符
+    bExecute   := rEdgeIns.Q,
+    tTimeout   := T#15S,
+    bBusy      => bInsBusy,
+    bError     => bInsErr,
+    nErrID     => nInsErr,
+    sSQLState  => sInsSqlState
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_I_UnitState" Id="{4216b3f9-90f2-5ea7-9209-a968ed7f3e44}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_I_UnitState
+VAR
+    (* 演示用：状态机持有 I_UnitState 引用，按 eState 调对应方法 *)
+    fbStateMachine     : PML_StateMachine;          // 中央状态机
+    fbUnit             : FB_DemoUnit_AllStates;     // 实现 I_UnitState 的工艺 FB
+    ipUnit             : I_UnitState;               // 把 fbUnit 暴露为 I_UnitState 引用
+    bGoExecute         : BOOL := FALSE;             // 在线置 TRUE 进入 Execute
+    bGoAbort           : BOOL := FALSE;             // 在线置 TRUE 触发急停
+    eCmd               : E_PMLCommand;              // 主任务向状态机注入的命令
+    nExecuteTickCounter: UDINT;                     // M_Execute 被调次数（监视用）
+    nAbortTickCounter  : UDINT;                     // M_Aborting 被调次数
+    stSubUnitInfoRef   : ST_PMLSubUnitInfoRef;      // 子单元状态汇总，本例不用
+    stOptions          : ST_PMLStateMachineOptions; // 状态机选项，PDF V1.2.4 未用
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc3_PackML_V2.I_UnitState 演示程序
+// ============================================================
+// 场景：演示如何在 unit FB 上实现 PackML V3 全集状态接口（19 方法），
+//       并把实例引用通过 I_UnitState 传给 PackML 状态机。
+// 价值：应用层一次性获得标准 PackML 状态分派点；中央状态机自动按 eState 调对应方法。
+// 验证：登录后写 bGoExecute := TRUE，观察 nExecuteTickCounter 持续累加，
+//        说明 PML_StateMachine 通过 I_UnitState 引用调到了 M_Execute 钩子。
+//        切到 bGoAbort := TRUE 后 nAbortTickCounter 开始累加，M_Execute 停下。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_PackML_V2（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方"验证"指引在线写值观察
+// ============================================================
+
+(* 把 fbUnit 暴露为 I_UnitState 引用——典型注入模式：
+   PackML 状态机不直接持有 FB 实例，只持有接口引用，便于多机型替换。 *)
+ipUnit := fbUnit;
+
+(* 把演示按钮映射到状态机命令——电平触发 *)
+IF bGoAbort THEN
+    eCmd := E_PMLCommand.ePMLCommand_Abort;     // 急停命令优先级最高
+ELSIF bGoExecute THEN
+    eCmd := E_PMLCommand.ePMLCommand_Start;     // 启动命令
+ELSE
+    eCmd := E_PMLCommand.ePMLCommand_Undefined; // 无命令保持
+END_IF
+
+(* 状态机周期推进——它会按 eState 通过 ipUnit 多态分派到 M_Execute / M_Aborting 等 *)
+fbStateMachine(
+    eMode            := 1,                 // 1 = Production 基础模式
+    eCommand         := eCmd,
+    stSubUnitInfoRef := stSubUnitInfoRef,
+    stOptions        := stOptions
+);
+
+(* 在演示里直接调用 fbUnit 内部的计数器读取，方便在线观察 *)
+nExecuteTickCounter := fbUnit.GetExecuteTicks();
+nAbortTickCounter   := fbUnit.GetAbortTicks();
+
+(* 注意：FB_DemoUnit_AllStates 需要您在 PLC 项目里另建——
+   声明 IMPLEMENTS I_UnitState、19 个方法各填 nXxxTickCounter += 1。
+   本例程只演示主程序调用框架。 *)
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

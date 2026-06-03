@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_EcGetAllSlavePresentStateChanges" Id="{5538bc1c-aa59-5375-9eab-1e04b86ac6e0}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_EcGetAllSlavePresentStateChanges
+VAR
+    fbReadPresentChanges : FB_EcGetAllSlavePresentStateChanges;
+    bRequestReadOnce     : BOOL := FALSE;
+    arrPresentChanges    : ARRAY[0..EC_MAX_SLAVES] OF UDINT;     // 每从站断线累计计数
+    nSlaveCount          : UINT;
+    bReadBusy            : BOOL;
+    bReadError           : BOOL;
+    nLastAdsErr          : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// Tc2_EtherCAT.FB_EcGetAllSlavePresentStateChanges 演示程序
+// =============================================================================
+// 场景：现场 EL3204 模块偶发"无数据"事件，怀疑网线接触不良。用本 FB 每
+//       秒读全部从站累计断线计数，PLC 端做 Δ；连续 1 分钟 Δ > 0 即报警
+//       告警业务。
+//
+// 价值：把"哪台从站断线了几次"指标化，把"偶发故障"变成可观测可统计的
+//       数据；不会漏 ms 级瞬时断线（普通报警监听极易漏）。
+//
+// 验证步骤：
+//   1. Import 本文件，编译 → 登录；现场至少 1 从站当前在 OP
+//   2. 在线置 bRequestReadOnce := TRUE
+//        - bReadBusy 短暂为 TRUE 一两个周期后落回
+//        - nSlaveCount 等于实际从站数
+//        - arrPresentChanges[0..nSlaveCount-1] 正常运行时多数为 0
+//   3. 故意拔掉某条 EtherCAT 网线 1 秒后插回，再触发：
+//        对应从站的计数应 +1
+//   4. nLastAdsErr 监视应为 0
+// =============================================================================
+
+// 注意：本 FB 的 tTimeout 没有默认值，必须显式赋 DEFAULT_ADS_TIMEOUT
+fbReadPresentChanges(
+    sNetId   := '',
+    pAddrBuf := ADR(arrPresentChanges),
+    cbBufLen := SIZEOF(arrPresentChanges),
+    bExecute := bRequestReadOnce,
+    tTimeout := DEFAULT_ADS_TIMEOUT,
+    bBusy    => bReadBusy,
+    bError   => bReadError,
+    nErrId   => nLastAdsErr,
+    nSlaves  => nSlaveCount
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>
