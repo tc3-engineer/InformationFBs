@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_F_ULARGE" Id="{4a6fcf25-9223-52ad-892d-e3e1af4406cc}" SpecialFunc="None">
+  <POU Name="P_Demo_F_ULARGE" Id="{0c386498-a90c-559d-82cb-0b68d10864a7}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_F_ULARGE
 VAR
     ulgLargeAccum : T_ULARGE_INTEGER; // 业务量（T_ULARGE_INTEGER）

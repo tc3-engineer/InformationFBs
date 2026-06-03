@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_F_GetMappingStatus" Id="{3eb5029b-941b-5a3f-a6d4-e6780efa3f12}" SpecialFunc="None">
+  <POU Name="P_Demo_F_GetMappingStatus" Id="{41c50062-477b-5289-bbaf-f4c421c94ed1}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_F_GetMappingStatus
 VAR
     bMonitoredInput : BOOL; // 应映射的关键输入变量

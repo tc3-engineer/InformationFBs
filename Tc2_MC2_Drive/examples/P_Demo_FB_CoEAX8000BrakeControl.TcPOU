@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_CoEAX8000BrakeControl" Id="{d25589cc-aaa2-574a-a300-6994acc08c6f}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_CoEAX8000BrakeControl" Id="{88594b60-73d2-5c34-897b-41818fbd2fc0}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_CoEAX8000BrakeControl
 VAR
     fbAX8000Brake       : FB_CoEAX8000BrakeControl; // AX8000 手动抱闸控制 FB 实例

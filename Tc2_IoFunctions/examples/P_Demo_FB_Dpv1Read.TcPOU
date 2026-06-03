@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_Dpv1Read" Id="{24afe242-407a-57b7-a827-9b485b82f97b}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_Dpv1Read" Id="{f8871723-d1dd-543f-b813-cf67841ac929}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_Dpv1Read
 VAR
     fbDpv1Read           : FB_Dpv1Read; // SINAMICS DPV1 读 FB

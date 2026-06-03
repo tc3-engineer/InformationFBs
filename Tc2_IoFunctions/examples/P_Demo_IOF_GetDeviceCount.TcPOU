@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_IOF_GetDeviceCount" Id="{fa9523f1-71c1-502f-8151-30d4759ae21d}" SpecialFunc="None">
+  <POU Name="P_Demo_IOF_GetDeviceCount" Id="{102d1c00-5354-506e-bf83-26481087b275}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_IOF_GetDeviceCount
 VAR
     fbReadDeviceCount   : IOF_GetDeviceCount; // IO 设备计数 FB

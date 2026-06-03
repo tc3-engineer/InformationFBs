@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_LrealIsFinite" Id="{b29bcd7d-a61b-5398-b6c5-552892ec09af}" SpecialFunc="None">
+  <POU Name="P_Demo_LrealIsFinite" Id="{4028b058-3abd-56c1-86d8-70f5a7bb5a3d}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_LrealIsFinite
 VAR
     lrPidOut : LREAL;; // PID 输出

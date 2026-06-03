@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_F_CreateMacAddr" Id="{fd04f750-bc1e-566e-8277-e11b6e934a35}" SpecialFunc="None">
+  <POU Name="P_Demo_F_CreateMacAddr" Id="{0368a28b-6d42-5726-82ed-d945e76c7be1}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_F_CreateMacAddr
 VAR
     aMacBytes      : T_MacAddrArr := [16#1C, 16#2C, 16#3C, 16#4C, 16#5C, 16#6C]; // 6 字节 MAC 地址

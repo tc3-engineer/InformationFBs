@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_WCONCAT" Id="{e883d4bf-231a-52ab-92b5-d056246075fc}" SpecialFunc="None">
+  <POU Name="P_Demo_WCONCAT" Id="{083ca346-b43c-58d2-b52f-193e1a52309b}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_WCONCAT
 VAR
     sAlarmPrefix : WSTRING(255) := "报警："; // 中文报警前缀（UCS-2 编码）

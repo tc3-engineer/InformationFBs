@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_DMXGetProductDetailIdList" Id="{232f9d65-72c6-5942-b7ac-43748510f2a8}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_DMXGetProductDetailIdList" Id="{13f69729-e665-5f8b-a566-95531eb970e7}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_DMXGetProductDetailIdList
 VAR
     fbGetProdDetails  : FB_DMXGetProductDetailIdList; // 读产品类别列表

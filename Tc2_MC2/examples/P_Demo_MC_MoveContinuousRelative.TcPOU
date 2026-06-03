@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_MC_MoveContinuousRelative" Id="{49730aa1-7e22-5477-8c06-3de166505702}" SpecialFunc="None">
+  <POU Name="P_Demo_MC_MoveContinuousRelative" Id="{9616d57c-fa63-512c-b024-ac4cefc6487a}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_MC_MoveContinuousRelative
 VAR
     fbLabelStroke   : MC_MoveContinuousRelative;

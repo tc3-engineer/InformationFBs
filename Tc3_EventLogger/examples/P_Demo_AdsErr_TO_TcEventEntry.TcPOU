@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_AdsErr_TO_TcEventEntry" Id="{4ed4bdc3-94ff-5cca-a488-8e916cca1c0b}" SpecialFunc="None">
+  <POU Name="P_Demo_AdsErr_TO_TcEventEntry" Id="{46b9484b-d8e1-51c0-8c21-8bc37b8f87ec}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_AdsErr_TO_TcEventEntry
 VAR
     eErrorId     : E_AdsErr := E_AdsErr.ADSERR_DEVICE_INVALIDPARM; // 在线写入要转换的 ADS 错误码

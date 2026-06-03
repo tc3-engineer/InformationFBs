@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_stLibVersion_Tc2_SerialCom" Id="{df328fec-ebe1-564a-ad1c-78d03d9ffcf1}" SpecialFunc="None">
+  <POU Name="P_Demo_stLibVersion_Tc2_SerialCom" Id="{336c5a5e-d443-5881-b556-6fafd78801fc}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_stLibVersion_Tc2_SerialCom
 VAR
     bInit          : BOOL := TRUE;

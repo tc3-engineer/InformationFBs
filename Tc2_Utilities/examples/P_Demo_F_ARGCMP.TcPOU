@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_F_ARGCMP" Id="{fdfca513-25f3-513a-aa5d-7b18ba8152b8}" SpecialFunc="None">
+  <POU Name="P_Demo_F_ARGCMP" Id="{80712695-a60b-5f12-bd6f-cb5993a583a8}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_F_ARGCMP
 VAR
     nValueA         : INT := 100; // 模拟上一条消息的参数

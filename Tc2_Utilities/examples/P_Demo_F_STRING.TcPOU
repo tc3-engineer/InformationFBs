@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_F_STRING" Id="{86c0a6c7-e0e2-5ade-9750-fa9869f60c55}" SpecialFunc="None">
+  <POU Name="P_Demo_F_STRING" Id="{11a7a99e-f0a8-5ea4-9f81-50988e9603f1}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_F_STRING
 VAR
     sLogLine      : T_MaxString := 'Pump 1 alarm: low flow'; // 业务量（T_MaxString）

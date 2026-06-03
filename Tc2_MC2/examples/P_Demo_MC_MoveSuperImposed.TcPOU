@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_MC_MoveSuperImposed" Id="{798453a5-a6bb-55ad-af8a-c93c8ba257b5}" SpecialFunc="None">
+  <POU Name="P_Demo_MC_MoveSuperImposed" Id="{e9133c41-26d8-57e1-89d8-458c388f4aa0}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_MC_MoveSuperImposed
 VAR
     fbColorRegistration : MC_MoveSuperImposed;

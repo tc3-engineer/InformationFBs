@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_S_UPS_BAPI" Id="{00edba7b-8579-5e85-80fc-200a39d06165}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_S_UPS_BAPI" Id="{34cdbb5e-54a6-56c4-b786-7a537169718d}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_S_UPS_BAPI
 VAR
     fbSUPS                  : FB_S_UPS_BAPI; // 通用 BAPI 版 1-second UPS 管家（BIOS-API v1.15+）

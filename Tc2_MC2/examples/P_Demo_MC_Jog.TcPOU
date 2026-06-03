@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_MC_Jog" Id="{a641041b-7117-5509-9c1c-8be673fda003}" SpecialFunc="None">
+  <POU Name="P_Demo_MC_Jog" Id="{27e5f027-ba27-503f-911d-5e1b01b34bf8}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_MC_Jog
 VAR
     fbJogX          : MC_Jog;

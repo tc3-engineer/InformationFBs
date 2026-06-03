@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_MBUdpReadRegs" Id="{35cdc6e0-84be-5872-a3bb-7fe2f77315ed}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_MBUdpReadRegs" Id="{4ff5c14f-d4c4-5ddb-b51c-854abb170f6c}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_MBUdpReadRegs
 VAR
     fbUdpReadRegs : FB_MBUdpReadRegs;

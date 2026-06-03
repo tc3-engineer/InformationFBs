@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_F_TRIG" Id="{bc2ada7f-d289-5dc4-9e09-1be0ecb05f9f}" SpecialFunc="None">
+  <POU Name="P_Demo_F_TRIG" Id="{256b55b2-fc8d-550a-8f12-16cb19460d04}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_F_TRIG
 VAR
     fbSensorLossEdge : F_TRIG; // 下降沿检测器实例

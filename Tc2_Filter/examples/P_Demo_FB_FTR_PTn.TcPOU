@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_FTR_PTn" Id="{32ddb276-9ebe-5abf-8941-3c220afb7be7}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_FTR_PTn" Id="{932c29d0-a42b-54de-abaa-961c98f26edd}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_FTR_PTn
 VAR
     fbFilter      : FB_FTR_PTn;                  // 被演示的滤波器实例

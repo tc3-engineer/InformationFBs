@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_PLINT_TO_LINT" Id="{4fd38a12-6573-551c-8aba-4755ebbc7ccc}" SpecialFunc="None">
+  <POU Name="P_Demo_PLINT_TO_LINT" Id="{47ba55cd-f87c-5fbd-9aed-784645c5f7a3}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_PLINT_TO_LINT
 VAR
     nRealValue           : LINT := -1234567890123; // 模拟 wire 缓冲区中的 LINT 字段

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_HRESULTAdsErr_TO_TcEventEntry" Id="{e2f74b3f-645b-5f62-8356-8ef4e7434989}" SpecialFunc="None">
+  <POU Name="P_Demo_HRESULTAdsErr_TO_TcEventEntry" Id="{2faa4971-078d-57e0-a46d-69727e674901}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_HRESULTAdsErr_TO_TcEventEntry
 VAR
     hr           : E_HRESULTAdsErr := E_HRESULTAdsErr.HRESULTADSERR_DEVICE_INVALIDPARM; // 在线写入要转换的 HRESULT 错误码

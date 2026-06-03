@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_HEXASCNIBBLE_TO_BYTE" Id="{0fa0c768-f111-5e9c-a143-0e98f64ed0b7}" SpecialFunc="None">
+  <POU Name="P_Demo_HEXASCNIBBLE_TO_BYTE" Id="{2e1aa2ef-6ecf-5ede-ae02-89b1b93d37a0}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_HEXASCNIBBLE_TO_BYTE
 VAR
     nAscByte : BYTE := 16#41; // 工业语义：串口收到的一个 hex 字符 ASCII 码（例：0x41 = 'A'）

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_SoERead" Id="{6fe94084-dca2-5dd3-b458-974b72cdd36b}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_SoERead" Id="{0b35420e-7415-5606-8cb3-6972b997a12f}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_SoERead
 VAR
     fbSoERead      : FB_SoERead; // SoE 读参数 FB 实例

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_GetRemotePCInfo" Id="{bbf2710b-3061-568d-959b-7dc376d61061}" SpecialFunc="None">
+  <POU Name="P_Demo_GetRemotePCInfo" Id="{cf2c292c-4ae2-53d7-99d0-6d181dac1697}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_GetRemotePCInfo
 VAR
     fbGetRemotePCInfo : GetRemotePCInfo; // GetRemotePCInfo 实例

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_ASI_ParameterControl" Id="{0653edf0-3038-569f-8cc8-76b70b5f2933}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_ASI_ParameterControl" Id="{54c5a473-44d9-5117-8cac-a331d593034a}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_ASI_ParameterControl
 VAR
     fbAsiParamControl  : FB_ASI_ParameterControl; // ASI 库后台调度器（必须循环调用）

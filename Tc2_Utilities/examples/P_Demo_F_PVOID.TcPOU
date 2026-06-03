@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_F_PVOID" Id="{b3f840ab-fab9-582d-8ba5-944172b1d06e}" SpecialFunc="None">
+  <POU Name="P_Demo_F_PVOID" Id="{79a952ec-6168-57d7-b1b7-ac217429a57c}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_F_PVOID
 VAR
     pPayload      : PVOID; // 业务量（PVOID）

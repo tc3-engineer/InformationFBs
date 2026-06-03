@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_GetAdaptersInfo" Id="{4ceca5fa-4f31-57ae-a2ad-3fcabd182dc7}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_GetAdaptersInfo" Id="{bd639e69-fa47-529b-b5ca-fbf21d1b916f}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_GetAdaptersInfo
 VAR
     fbFB_GetAdaptersInfo : FB_GetAdaptersInfo; // FB_GetAdaptersInfo 实例

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_UTF8Len" Id="{096c698f-5bab-5b05-8eb0-dbc0e659fafd}" SpecialFunc="None">
+  <POU Name="P_Demo_UTF8Len" Id="{7dc553a1-ba22-5718-b34a-66cfc34d5feb}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_UTF8Len
 VAR
     aUtf8  : ARRAY[0..63] OF BYTE; // 工业语义：UTF-8 数据

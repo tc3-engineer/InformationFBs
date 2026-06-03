@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_ParkAxis" Id="{dacee8c2-76c2-54e4-9563-092c2c4262da}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_ParkAxis" Id="{a151652f-57c2-52e2-9911-40650d033ef0}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_ParkAxis
 VAR
     fbParkAxis         : FB_ParkAxis; // 驻留/释放轴 FB 实例

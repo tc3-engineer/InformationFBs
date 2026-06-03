@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_BrakeControl" Id="{f974b96a-77f1-5923-b955-56285a68a453}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_BrakeControl" Id="{711b89c8-ca76-533a-96ac-3bb69e0881b5}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_BrakeControl
 VAR
     fbBrakeCtrl         : FB_BrakeControl; // 手动抱闸控制 FB 实例

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_LTOF" Id="{287e0c76-c40a-5c04-a227-452335c85614}" SpecialFunc="None">
+  <POU Name="P_Demo_LTOF" Id="{d6bcee93-13fc-5b51-ada5-89f0f4a6228f}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_LTOF
 VAR
     fbServoDisableDelay : LTOF; // LTOF 实例：伺服停止指令后 μs 级关使能延时

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_RegSetValue" Id="{145cca5d-ac22-5b93-88d4-12009ead42c3}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_RegSetValue" Id="{1fae7940-45d9-58ce-b70f-cac52b2b5fdd}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_RegSetValue
 VAR
     fbFB_RegSetValue : FB_RegSetValue; // FB_RegSetValue 实例

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_DeletePositionOffset" Id="{f4b042c4-a531-5b47-957d-e71f5f549389}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_DeletePositionOffset" Id="{19a96770-e012-5e61-9e8a-5796eb290fa8}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_DeletePositionOffset
 VAR
     fbDeleteOffset  : FB_DeletePositionOffset; // 删除位置偏置 FB 实例

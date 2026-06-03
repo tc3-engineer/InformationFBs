@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_ADSLOGEVENT" Id="{0ac6018a-06ee-5a12-ac26-7a5dce5c339c}" SpecialFunc="None">
+  <POU Name="P_Demo_ADSLOGEVENT" Id="{fc4bef79-7693-5bdd-936c-6c27da26de9a}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_ADSLOGEVENT
 VAR
     fbADSLOGEVENT : ADSLOGEVENT; // ADSLOGEVENT 实例

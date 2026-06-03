@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_EL6851Communication" Id="{24692ff6-a880-572d-bfb6-3840bb0b1a8e}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_EL6851Communication" Id="{f463f101-37a4-551f-a272-02a115182262}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_EL6851Communication
 VAR
     fbEL6851Comm        : FB_EL6851Communication;        // 旧版通讯核心（每周期调用）

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_SerialLineControl" Id="{6e9ce882-cd49-5118-891f-2c9c0bc865ea}" SpecialFunc="None">
+  <POU Name="P_Demo_SerialLineControl" Id="{a70950e3-7235-530b-bf02-0e16a474896c}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_SerialLineControl
 VAR
     fbSerialLine  : SerialLineControl;          // 后台通信引擎，每周期调用

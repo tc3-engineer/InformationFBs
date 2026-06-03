@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_DMXGetSensorValue" Id="{1fdfda82-6135-508a-9cf4-8613ba8490f1}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_DMXGetSensorValue" Id="{59762c9d-3198-58da-8eb9-e377ce21e68e}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_DMXGetSensorValue
 VAR
     fbGetSensorVal    : FB_DMXGetSensorValue;         // 读传感器当前值

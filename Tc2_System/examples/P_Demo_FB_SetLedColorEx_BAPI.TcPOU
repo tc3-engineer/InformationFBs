@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_SetLedColorEx_BAPI" Id="{90b5b829-d1b5-5796-be10-d154005db1a9}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_SetLedColorEx_BAPI" Id="{3fca4fc3-047e-5206-85c5-638ec2b61e0f}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_SetLedColorEx_BAPI
 VAR
     fbFB_SetLedColorEx_BAPI : FB_SetLedColorEx_BAPI; // FB_SetLedColorEx_BAPI 实例

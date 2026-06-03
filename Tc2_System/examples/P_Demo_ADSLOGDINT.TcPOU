@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_ADSLOGDINT" Id="{54f4fd18-a33c-53fa-87e3-258015c902e0}" SpecialFunc="None">
+  <POU Name="P_Demo_ADSLOGDINT" Id="{08c5e9a9-b790-5099-ba62-986baf5d2cb7}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_ADSLOGDINT
 VAR
     bFeedTooHigh     : BOOL; // feed 越限信号（业务侧上升沿）

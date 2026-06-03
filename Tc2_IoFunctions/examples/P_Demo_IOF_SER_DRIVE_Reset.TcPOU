@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_IOF_SER_DRIVE_Reset" Id="{7d4dbaac-5be4-55e9-94f8-9872589410a2}" SpecialFunc="None">
+  <POU Name="P_Demo_IOF_SER_DRIVE_Reset" Id="{271e6f33-2190-5efb-95cd-9b30510ac09c}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_IOF_SER_DRIVE_Reset
 VAR
     fbSercosDriveReset : IOF_SER_DRIVE_Reset; // SERCOS 单 drive 清错 FB

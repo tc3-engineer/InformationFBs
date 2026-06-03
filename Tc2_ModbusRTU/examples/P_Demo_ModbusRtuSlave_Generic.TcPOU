@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_ModbusRtuSlave_Generic" Id="{4b05b9b6-783f-5972-adba-3960b2b1b065}" SpecialFunc="None">
+  <POU Name="P_Demo_ModbusRtuSlave_Generic" Id="{2fc8f120-29f1-5274-85bc-d5d887540c5c}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_ModbusRtuSlave_Generic
 VAR
     fbModbusSlave : ModbusRtuSlave_Generic;          // 硬件无关从站

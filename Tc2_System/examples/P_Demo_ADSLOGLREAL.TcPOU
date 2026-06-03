@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_ADSLOGLREAL" Id="{34189f58-e0a9-5669-90e8-de508a5f0ef7}" SpecialFunc="None">
+  <POU Name="P_Demo_ADSLOGLREAL" Id="{4871a103-b95e-56c3-ab7d-a4f86f8a49a3}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_ADSLOGLREAL
 VAR
     bTemperatureTooHigh : BOOL; // 温度越限信号

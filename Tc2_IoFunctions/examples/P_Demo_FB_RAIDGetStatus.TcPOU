@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_RAIDGetStatus" Id="{db945e58-ef8f-56b3-b030-b310968f354c}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_RAIDGetStatus" Id="{b6bed2d3-4e29-5a7a-b947-be5f9ac6bf38}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_RAIDGetStatus
 VAR
     fbGetRaidStatus   : FB_RAIDGetStatus; // RAID 状态读 FB（≤ 每秒一次）

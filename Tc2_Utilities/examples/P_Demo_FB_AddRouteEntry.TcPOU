@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_AddRouteEntry" Id="{f8efb5d0-b5e5-526b-8edf-101243fe93c4}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_AddRouteEntry" Id="{9fe6c5b5-d398-5edc-bc31-93b519f8ad36}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_AddRouteEntry
 VAR
     fbFB_AddRouteEntry : FB_AddRouteEntry; // FB_AddRouteEntry 实例

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_F_BIGTYPE" Id="{3d961fee-968e-5bd7-b43b-7d240bd88796}" SpecialFunc="None">
+  <POU Name="P_Demo_F_BIGTYPE" Id="{93bc91d7-dfb6-5650-b0fb-d7db06e1bbc4}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_F_BIGTYPE
 VAR
     stCurrentRecipe : ST_Recipe; // 当前配方

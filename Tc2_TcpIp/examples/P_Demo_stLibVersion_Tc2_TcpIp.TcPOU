@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_stLibVersion_Tc2_TcpIp" Id="{57d362e7-866d-5062-8f32-00911974b535}" SpecialFunc="None">
+  <POU Name="P_Demo_stLibVersion_Tc2_TcpIp" Id="{1c0184b6-9344-52be-8eef-c60aae5febeb}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_stLibVersion_Tc2_TcpIp
 VAR
     bInit          : BOOL := TRUE;

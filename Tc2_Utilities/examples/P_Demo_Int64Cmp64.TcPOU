@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_Int64Cmp64" Id="{acca402e-ae15-5e17-9396-a70ee4f8455a}" SpecialFunc="None">
+  <POU Name="P_Demo_Int64Cmp64" Id="{84aa0af2-b983-53eb-915f-8a048ad7e93b}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_Int64Cmp64
 VAR
     liA      : T_LARGE_INTEGER;

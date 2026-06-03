@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_MC_StepLimitSwitch" Id="{72f2729a-a63e-5e38-97a7-4531a06bacb4}" SpecialFunc="None">
+  <POU Name="P_Demo_MC_StepLimitSwitch" Id="{44135f0f-3688-5e81-911a-e3f67878410e}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_MC_StepLimitSwitch
 VAR
     fbStepLimitSwitch : MC_StepLimitSwitch;

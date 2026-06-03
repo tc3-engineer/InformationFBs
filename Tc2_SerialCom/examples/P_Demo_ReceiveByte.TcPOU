@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_ReceiveByte" Id="{0afe33e5-f09d-5879-a675-2f43e55370a3}" SpecialFunc="None">
+  <POU Name="P_Demo_ReceiveByte" Id="{065e2445-c067-5258-9b39-a3d47ddcee9d}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_ReceiveByte
 VAR
     fbSerialLine    : SerialLineControl;       // 后台通信，每周期调用填充 bufRx

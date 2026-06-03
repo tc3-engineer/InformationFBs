@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_TestAndSet" Id="{19032778-044c-5ae8-984b-b51054bd82bd}" SpecialFunc="None">
+  <POU Name="P_Demo_TestAndSet" Id="{8c6defe8-2533-5556-b2c1-90f56987d7f8}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_TestAndSet
 VAR
     bGlobalLock   : BOOL := FALSE; // 全局互斥标志（应放在 GVL，这里 demo 用本地）

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_STRING_TO_PVOID" Id="{1f42d2cc-44f8-54a5-a93d-a02f86956e6a}" SpecialFunc="None">
+  <POU Name="P_Demo_STRING_TO_PVOID" Id="{d9f13b6c-82ed-515a-8ef5-81c24ee1f8d0}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_STRING_TO_PVOID
 VAR
     sAddrLit : STRING(32) := '16#80001000'; // 工业语义：硬编码内存地址（hex）

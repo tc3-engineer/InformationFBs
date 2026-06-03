@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FindAndReplaceChar" Id="{46028135-ca1c-5634-9b53-16a4f18ab870}" SpecialFunc="None">
+  <POU Name="P_Demo_FindAndReplaceChar" Id="{1aca05b7-7768-5063-9613-0f0c8dfafcf6}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FindAndReplaceChar
 VAR
     sFileName  : STRING(128) := 'recipe alpha 2026.csv'; // 工业语义：原始文件名含空格

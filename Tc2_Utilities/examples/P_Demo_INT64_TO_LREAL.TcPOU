@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_INT64_TO_LREAL" Id="{71189bae-8189-5bf4-bfad-b640a9935d9f}" SpecialFunc="None">
+  <POU Name="P_Demo_INT64_TO_LREAL" Id="{fc1a4c00-470c-5979-adf2-3ee033929c16}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_INT64_TO_LREAL
 VAR
     liTorqueInt  : T_LARGE_INTEGER;; // 有符号 64 位扭矩积分

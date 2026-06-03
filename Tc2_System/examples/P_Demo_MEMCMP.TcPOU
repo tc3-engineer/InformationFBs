@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_MEMCMP" Id="{0182cd87-b22d-532c-aab9-9dc5fb72b6a7}" SpecialFunc="None">
+  <POU Name="P_Demo_MEMCMP" Id="{5423db04-9c38-5c51-84dd-300393e19c2b}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_MEMCMP
 VAR
     stCurrent       : ARRAY[0..199] OF BYTE; // 本次工艺参数缓冲（200 字节）

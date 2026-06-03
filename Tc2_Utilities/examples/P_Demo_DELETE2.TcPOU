@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_DELETE2" Id="{fb5cd327-8ec6-583d-b92d-11a8e3f21759}" SpecialFunc="None">
+  <POU Name="P_Demo_DELETE2" Id="{43244155-4829-58d0-91ef-3381d012109f}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_DELETE2
 VAR
     sDevTag    : STRING(64) := 'EL-12345-PUMP-01'; // 工业语义：设备标签，前缀 'EL-' 需去掉

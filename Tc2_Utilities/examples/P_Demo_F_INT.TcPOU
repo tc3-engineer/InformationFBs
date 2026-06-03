@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_F_INT" Id="{55eb5a1b-f6d7-5b6c-80cf-54ec52389b92}" SpecialFunc="None">
+  <POU Name="P_Demo_F_INT" Id="{8dd75992-6181-5bbc-927a-f3bf6345ccfc}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_F_INT
 VAR
     nTempC        : INT := -30; // 业务量（INT）

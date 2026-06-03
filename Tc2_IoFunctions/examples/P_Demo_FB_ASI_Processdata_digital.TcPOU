@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_ASI_Processdata_digital" Id="{42d10979-3cf9-5826-ae2b-576df675a91d}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_ASI_Processdata_digital" Id="{2a760bc4-0947-5190-b939-79f15efeab47}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_ASI_Processdata_digital
 VAR
     fbAsiProcessDataDigital : FB_ASI_Processdata_digital; // ASI 数字过程数据 FB

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_F_FormatArgToStr" Id="{a406bb82-0ed7-5f5f-956c-7d0113b551c6}" SpecialFunc="None">
+  <POU Name="P_Demo_F_FormatArgToStr" Id="{4b19fc0a-dccf-5268-83fa-ff128df65b79}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_F_FormatArgToStr
 VAR
     nValue           : UDINT := 12345; // 工业语义：要格式化的整数（如生产计数）

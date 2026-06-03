@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_DT_TO_SYSTEMTIME" Id="{59a1e1ae-e08f-5b87-9789-e91c2f70aa82}" SpecialFunc="None">
+  <POU Name="P_Demo_DT_TO_SYSTEMTIME" Id="{bd539bb1-96e6-52b2-8d92-28dabda3c0a5}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_DT_TO_SYSTEMTIME
 VAR
     dtCurrent : DATE_AND_TIME := DT#2026-05-11-12:34:56; // 当前 PLC 时间（来自 F_GetActualDateTime）

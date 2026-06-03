@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_GuidsEqualByVal" Id="{576198f4-3088-57a4-a858-dde7ca490bff}" SpecialFunc="None">
+  <POU Name="P_Demo_GuidsEqualByVal" Id="{c76608c1-a7c7-5f2b-a2f5-f499acb2d9ed}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_GuidsEqualByVal
 VAR
     stExpected : GUID; // 工业语义：预先记录的 Session GUID

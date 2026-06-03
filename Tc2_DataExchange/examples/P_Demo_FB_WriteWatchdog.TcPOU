@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_WriteWatchdog" Id="{ecf9ab01-2bba-5332-939c-4cbd6a9644b2}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_WriteWatchdog" Id="{00a204d8-d6cd-59c3-84be-90bf145bc536}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_WriteWatchdog
 VAR
     fbWriteWatchdog  : FB_WriteWatchdog; // 发送端心跳生成器实例

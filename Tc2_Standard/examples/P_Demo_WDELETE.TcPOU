@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_WDELETE" Id="{6930c7c4-09e6-5c04-94bf-ead0c96ad2ae}" SpecialFunc="None">
+  <POU Name="P_Demo_WDELETE" Id="{e2acd85d-8146-525a-97ec-21dba4dac784}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_WDELETE
 VAR
     sFullAlarm : WSTRING(255) := "[报警] 1号电机过流"; // 完整中文报警，含前缀 '[报警] '

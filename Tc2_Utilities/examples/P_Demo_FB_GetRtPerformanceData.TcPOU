@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_GetRtPerformanceData" Id="{ae341f6f-4372-5e6f-8a1a-95863720a3aa}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_GetRtPerformanceData" Id="{0863bd6d-3283-509b-bb55-f884b191bca8}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_GetRtPerformanceData
 VAR
     fbFB_GetRtPerformanceData : FB_GetRtPerformanceData; // FB_GetRtPerformanceData 实例

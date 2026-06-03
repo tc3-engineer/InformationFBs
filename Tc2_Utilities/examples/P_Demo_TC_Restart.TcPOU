@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_TC_Restart" Id="{6da03987-2abd-587e-8866-4a2b5e740d03}" SpecialFunc="None">
+  <POU Name="P_Demo_TC_Restart" Id="{b6e5100c-8882-53d0-96d2-fecbb87ccd19}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_TC_Restart
 VAR
     fbTC_Restart : TC_Restart; // TC_Restart 实例

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_F_CreateDpv1ReadReqPkg" Id="{b9fb9100-462f-5a8e-96b2-2ee42d9e4aee}" SpecialFunc="None">
+  <POU Name="P_Demo_F_CreateDpv1ReadReqPkg" Id="{96f85130-4c53-59d1-99e2-b544b1367895}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_F_CreateDpv1ReadReqPkg
 VAR
     aDpv1ReqBuffer   : ARRAY[1..240] OF BYTE; // DPV1 读请求帧缓冲 240 字节

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_REPLACE2" Id="{51891600-abe6-5d1e-9f28-cb9fc4ed6366}" SpecialFunc="None">
+  <POU Name="P_Demo_REPLACE2" Id="{873912a8-069c-5159-bcbb-8c8f58af42d9}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_REPLACE2
 VAR
     sTpl  : STRING(64) := '2026-05-12T08:00:?? UTC'; // 工业语义：模板含占位 '?'

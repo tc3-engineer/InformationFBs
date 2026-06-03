@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_MC_MoveContinuousAbsolute" Id="{9345ab64-f4b5-5689-ae6e-312e499a194f}" SpecialFunc="None">
+  <POU Name="P_Demo_MC_MoveContinuousAbsolute" Id="{1d304315-4c78-57f8-be41-f9aa648101c8}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_MC_MoveContinuousAbsolute
 VAR
     fbStraightCut   : MC_MoveContinuousAbsolute;

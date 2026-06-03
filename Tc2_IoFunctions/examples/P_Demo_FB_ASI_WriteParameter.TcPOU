@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_ASI_WriteParameter" Id="{11a2f3e3-4768-533d-9450-9612c0db32af}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_ASI_WriteParameter" Id="{7199d775-1d15-53aa-8f6c-9831717bc6bf}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_ASI_WriteParameter
 VAR
     fbAsiWriteParam    : FB_ASI_WriteParameter; // ASI slave 参数写 FB

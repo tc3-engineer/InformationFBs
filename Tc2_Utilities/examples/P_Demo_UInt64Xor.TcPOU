@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_UInt64Xor" Id="{c76cb9c6-d0a2-584a-ba34-dbc9e2e3afe7}" SpecialFunc="None">
+  <POU Name="P_Demo_UInt64Xor" Id="{5f19978d-7504-5ac4-b7d7-b451a3d8fd84}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_UInt64Xor
 VAR
     uliPrev  : T_ULARGE_INTEGER;; // 上周期状态

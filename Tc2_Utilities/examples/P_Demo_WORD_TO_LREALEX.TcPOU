@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_WORD_TO_LREALEX" Id="{17ca7e49-79a6-59ef-91a1-1553521a4a65}" SpecialFunc="None">
+  <POU Name="P_Demo_WORD_TO_LREALEX" Id="{422b49fd-9a0a-5ac6-986c-e94417e08cad}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_WORD_TO_LREALEX
 VAR
     nLegacyValue : WORD := 16#FFFF; // 待转换的 WORD 无符号值；最高位为 1 时在 Tc2 ARM 旧平台上会被误判负

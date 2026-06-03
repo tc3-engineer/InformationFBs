@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_TcMessage_SetJsonAttribute" Id="{79d6894c-f4c3-5e28-8ce5-1cb8686cc04e}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_TcMessage_SetJsonAttribute" Id="{53d678e4-eb2f-51f3-a853-4da62a3991cb}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_TcMessage_SetJsonAttribute
 VAR
     fbMessage      : FB_TcMessage; // message 实例（已 Create）

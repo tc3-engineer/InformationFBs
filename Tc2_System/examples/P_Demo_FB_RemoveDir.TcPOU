@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_RemoveDir" Id="{9f54a3af-8d60-50b0-928c-f20d7075f9dc}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_RemoveDir" Id="{63fa5fb7-b5a4-5a64-9dbb-90666e7c088e}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_RemoveDir
 VAR
     fbRemoveDir       : FB_RemoveDir; // FB_RemoveDir 实例

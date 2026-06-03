@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_GetTimeZoneInformation" Id="{6da73091-9eef-5474-9256-8cb7ef61d996}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_GetTimeZoneInformation" Id="{471b89c2-1595-5224-bba6-465e1c439974}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_GetTimeZoneInformation
 VAR
     fbFB_GetTimeZoneInformation : FB_GetTimeZoneInformation; // FB_GetTimeZoneInformation 实例

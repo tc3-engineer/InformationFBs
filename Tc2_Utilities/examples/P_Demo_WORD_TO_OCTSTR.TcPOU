@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_WORD_TO_OCTSTR" Id="{aecca479-19ee-5482-905c-35b143b51672}" SpecialFunc="None">
+  <POU Name="P_Demo_WORD_TO_OCTSTR" Id="{0fad4947-0a19-5514-830b-4d4ce3d13fd5}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_WORD_TO_OCTSTR
 VAR
     nValue     : WORD := 43981; // 待转换的 WORD 值；在线写值替换测试不同输入

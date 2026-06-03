@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_GetPowerConsumption" Id="{b0bf8a07-1232-50a3-b2fd-06d26fea0e08}" SpecialFunc="None">
+  <POU Name="P_Demo_GetPowerConsumption" Id="{57893699-ea7f-5ddc-b7fd-38fea41e8c99}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_GetPowerConsumption
 VAR
     fbCBM                               : TC_CoreBoostMonitor; // TC_CoreBoostMonitor 实例

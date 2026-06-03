@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_DATA_TO_HEXSTR" Id="{f4c5e396-2ece-5566-8f98-dbb9f01c2f11}" SpecialFunc="None">
+  <POU Name="P_Demo_DATA_TO_HEXSTR" Id="{4cea3901-5058-5c35-8996-bf27868953db}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_DATA_TO_HEXSTR
 VAR
     aCmdFrame : ARRAY[0..31] OF BYTE; // 工业语义：32 字节命令帧

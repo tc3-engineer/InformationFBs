@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_LINT_TO_DECSTR" Id="{86d9ce3e-cf79-593f-a18c-1e33bf1bcbed}" SpecialFunc="None">
+  <POU Name="P_Demo_LINT_TO_DECSTR" Id="{480116bd-6826-534d-bf7a-5bd8e14c5e40}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_LINT_TO_DECSTR
 VAR
     nValue     : LINT := -1234; // 待转换的 LINT 值；在线写值替换测试不同输入

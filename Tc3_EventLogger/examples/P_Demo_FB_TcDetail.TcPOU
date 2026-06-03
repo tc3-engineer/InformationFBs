@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_TcDetail" Id="{6df825a1-f197-5a21-bffc-711cd9d12442}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_TcDetail" Id="{a97047ac-aa6a-594b-9e0d-7a484bc22a83}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_TcDetail
 VAR
     fbReq    : FB_RequestEventClassDetails; // 上游请求 FB

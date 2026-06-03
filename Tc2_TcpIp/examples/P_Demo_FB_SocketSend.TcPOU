@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_SocketSend" Id="{9041fb6b-1235-5ea2-b47a-3c5b8e5b7a85}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_SocketSend" Id="{1811101f-14b6-5cd4-aada-d9536db778f2}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_SocketSend
 VAR
     fbConnectToMes   : FB_SocketConnect; // 先建连，给 Send 提供一个真实句柄

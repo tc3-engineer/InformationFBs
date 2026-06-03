@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_FileProperties" Id="{10607209-bd6d-57fb-8baf-dfbe8988ea55}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_FileProperties" Id="{a7127cf1-c23c-5bd8-9d34-47203cde7858}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_FileProperties
 VAR
     fbFB_FileProperties : FB_FileProperties; // FB_FileProperties 实例

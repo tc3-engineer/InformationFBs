@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_PSINT_TO_SINT" Id="{c3c0bb13-bdee-5409-b1b8-e92120a1fb56}" SpecialFunc="None">
+  <POU Name="P_Demo_PSINT_TO_SINT" Id="{f73d01fa-ec1a-589f-8d52-1d576fcc0c4f}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_PSINT_TO_SINT
 VAR
     nRealValue           : SINT := -42; // 模拟 wire 缓冲区中的 SINT 字段

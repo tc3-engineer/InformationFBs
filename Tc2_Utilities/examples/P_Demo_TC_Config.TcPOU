@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_TC_Config" Id="{9d0ae2a7-c5c8-52a3-8ae1-1b406da47e39}" SpecialFunc="None">
+  <POU Name="P_Demo_TC_Config" Id="{95056764-8c17-5ccc-b1c8-05ed1e707788}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_TC_Config
 VAR
     fbTC_Config : TC_Config; // TC_Config 实例

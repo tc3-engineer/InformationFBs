@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_FTR_LeadLag" Id="{7826efdc-1431-51b8-8fd3-65b50918122d}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_FTR_LeadLag" Id="{e3125acf-fa8b-5265-a2ed-9d72b6c639ec}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_FTR_LeadLag
 VAR
     fbFilter      : FB_FTR_LeadLag;                  // 被演示的滤波器实例

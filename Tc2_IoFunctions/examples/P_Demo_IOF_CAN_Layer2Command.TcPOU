@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_IOF_CAN_Layer2Command" Id="{6d6ab45b-ea97-510b-acfa-0bc06573838a}" SpecialFunc="None">
+  <POU Name="P_Demo_IOF_CAN_Layer2Command" Id="{83d95a49-def6-516e-9a27-07ec19a37c9d}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_IOF_CAN_Layer2Command
 VAR
     fbCanLayer2     : IOF_CAN_Layer2Command; // CAN layer-2 命令 FB

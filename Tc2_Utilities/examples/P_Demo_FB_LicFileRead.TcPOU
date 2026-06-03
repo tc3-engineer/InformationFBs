@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_LicFileRead" Id="{4338bd76-2871-5b6b-b685-dc03fd085dcd}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_LicFileRead" Id="{28c137a2-a5e6-5152-9a16-e4303387f8e0}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_LicFileRead
 VAR
     fbFB_LicFileRead : FB_LicFileRead; // FB_LicFileRead 实例

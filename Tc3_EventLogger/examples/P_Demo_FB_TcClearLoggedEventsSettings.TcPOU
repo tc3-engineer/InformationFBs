@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_TcClearLoggedEventsSettings" Id="{1a673038-5a90-5e52-ad16-3ce6eeec927a}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_TcClearLoggedEventsSettings" Id="{06a68eae-6db5-5fce-9aa6-c573b92e34d4}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_TcClearLoggedEventsSettings
 VAR
     fbSettings : FB_TcClearLoggedEventsSettings; // 清除规则实例

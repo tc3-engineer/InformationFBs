@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_F_GetMonthOfDOY" Id="{a893a8ce-fda2-567a-b31a-81239f6c8239}" SpecialFunc="None">
+  <POU Name="P_Demo_F_GetMonthOfDOY" Id="{65b5ed2c-0bca-518a-bc1b-0c16e159d7f3}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_F_GetMonthOfDOY
 VAR
     wYear    : WORD := 2024; // 年份

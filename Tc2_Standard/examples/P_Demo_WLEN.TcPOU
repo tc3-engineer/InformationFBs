@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_WLEN" Id="{26d018c4-90a7-50b0-8ce3-a914b89050b3}" SpecialFunc="None">
+  <POU Name="P_Demo_WLEN" Id="{1eeea0c6-a07b-5a60-b025-a9acd4c98514}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_WLEN
 VAR
     sUserInput : WSTRING(255); // HMI 中文输入框（在线写值模拟）

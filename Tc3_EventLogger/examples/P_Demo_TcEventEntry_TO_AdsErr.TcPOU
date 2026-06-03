@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_TcEventEntry_TO_AdsErr" Id="{9a463275-22bf-5291-beae-57b4b23dbe5e}" SpecialFunc="None">
+  <POU Name="P_Demo_TcEventEntry_TO_AdsErr" Id="{eebef09a-1c46-539e-a67c-06c3a5f0b158}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_TcEventEntry_TO_AdsErr
 VAR
     stEventEntry : TcEventEntry; // 在线写入要转换的事件定义

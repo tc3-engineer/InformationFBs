@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_DATA_TO_HEXSTR2" Id="{3e032eb6-a085-5f36-be8c-a181d169dcac}" SpecialFunc="None">
+  <POU Name="P_Demo_DATA_TO_HEXSTR2" Id="{b26a46c7-55a4-5022-ab3c-e649c4028513}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_DATA_TO_HEXSTR2
 VAR
     aPdoBytes  : ARRAY[0..15] OF BYTE; // 工业语义：CoE 字典对象 16 字节缓冲

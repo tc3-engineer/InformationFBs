@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_PN_SEND_ALARM" Id="{6950d112-9531-5ea7-8828-0554234c3a3b}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_PN_SEND_ALARM" Id="{4c89c866-eb63-5d7b-a45c-883570440016}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_PN_SEND_ALARM
 VAR
     fbSendAlarm   : FB_PN_SEND_ALARM;

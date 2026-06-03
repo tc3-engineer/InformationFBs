@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_TC_CoreBoostMonitor" Id="{12cb571d-a60f-523e-bbcd-18f1abb108b3}" SpecialFunc="None">
+  <POU Name="P_Demo_TC_CoreBoostMonitor" Id="{191f79e8-4784-5f01-8584-c0e34386f3a9}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_TC_CoreBoostMonitor
 VAR
     fbBoostMonitor            : TC_CoreBoostMonitor; // TC_CoreBoostMonitor 实例（默认 nCoreId=-1 自我监视）

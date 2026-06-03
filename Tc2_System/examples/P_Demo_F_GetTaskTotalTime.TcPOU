@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_F_GetTaskTotalTime" Id="{705dd747-a07f-5578-8428-72de86ffe929}" SpecialFunc="None">
+  <POU Name="P_Demo_F_GetTaskTotalTime" Id="{ecd5e588-41a6-5b3e-a0b8-e815f6204217}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_F_GetTaskTotalTime
 VAR
     nMonitoredTaskIndex   : DINT := 1; // 被监视任务索引（TwinCAT System Manager 任务列表序号，1=PlcTask）

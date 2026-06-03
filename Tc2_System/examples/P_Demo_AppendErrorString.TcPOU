@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_AppendErrorString" Id="{0458eb43-32e0-51bd-a0a9-0776ee3d353e}" SpecialFunc="None">
+  <POU Name="P_Demo_AppendErrorString" Id="{eaace665-2eba-5b28-a221-c6a76fee3146}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_AppendErrorString
 VAR
     fbAppendErrorString : AppendErrorString; // AppendErrorString 实例

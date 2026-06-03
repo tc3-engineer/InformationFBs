@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_GetCoreFrequency" Id="{d0d469c8-9474-572e-b378-15c04fffd2df}" SpecialFunc="None">
+  <POU Name="P_Demo_GetCoreFrequency" Id="{a9c36ac9-e37f-51a6-a5d8-3ab1ed30bc39}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_GetCoreFrequency
 VAR
     fbCBM                        : TC_CoreBoostMonitor; // TC_CoreBoostMonitor 实例

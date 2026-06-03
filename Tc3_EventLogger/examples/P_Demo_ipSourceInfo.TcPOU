@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_ipSourceInfo" Id="{fd40ad5e-9024-5eff-9cf3-64fb9d71926e}" SpecialFunc="None">
+  <POU Name="P_Demo_ipSourceInfo" Id="{19e5f692-ab2b-515d-a48b-0ab7c6a73e44}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_ipSourceInfo
 VAR
     fbAlarm     : FB_TcAlarm; // alarm 实例（已 Create）

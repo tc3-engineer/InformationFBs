@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_ULARGE_TO_ULINT" Id="{9d2ac19a-1195-56c8-b85d-7ad143842fe6}" SpecialFunc="None">
+  <POU Name="P_Demo_ULARGE_TO_ULINT" Id="{90fd478b-b668-5b58-baa9-ddd4797df094}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_ULARGE_TO_ULINT
 VAR
     uliFromAds : T_ULARGE_INTEGER;; // ADS 报文里读到的字段

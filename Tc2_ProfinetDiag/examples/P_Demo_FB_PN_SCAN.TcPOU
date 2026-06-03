@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_PN_SCAN" Id="{f40972a6-80b8-5939-90be-a375f2a5603b}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_PN_SCAN" Id="{b3ee843e-0c0c-5ac7-85f6-6c852e3b43a3}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_PN_SCAN
 VAR
     fbScan        : FB_PN_SCAN;

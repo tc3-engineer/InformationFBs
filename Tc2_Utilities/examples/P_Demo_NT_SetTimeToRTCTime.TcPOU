@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_NT_SetTimeToRTCTime" Id="{a8ca424c-bcb4-50df-9d4c-5c6f840d4757}" SpecialFunc="None">
+  <POU Name="P_Demo_NT_SetTimeToRTCTime" Id="{3aa60863-986e-5510-b384-7d4fbd700067}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_NT_SetTimeToRTCTime
 VAR
     fbNT_SetTimeToRTCTime : NT_SetTimeToRTCTime; // NT_SetTimeToRTCTime 实例

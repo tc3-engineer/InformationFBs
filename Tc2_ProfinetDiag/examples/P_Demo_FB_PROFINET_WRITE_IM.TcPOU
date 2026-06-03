@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_PROFINET_WRITE_IM" Id="{7565233d-a7d0-5d75-b82b-a28d8c9e954d}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_PROFINET_WRITE_IM" Id="{bb156219-5fa4-591c-92fe-52a0de43964f}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_PROFINET_WRITE_IM
 VAR
     fbReadIM      : FB_PROFINET_READ_IM;       // 先读出原 I&M 结构

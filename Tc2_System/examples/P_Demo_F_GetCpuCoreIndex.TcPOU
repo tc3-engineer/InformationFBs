@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_F_GetCpuCoreIndex" Id="{b5c863b3-a731-54a4-a78c-15e4ec306b1b}" SpecialFunc="None">
+  <POU Name="P_Demo_F_GetCpuCoreIndex" Id="{4e88b1f5-acca-5ef3-8b10-028bf968a232}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_F_GetCpuCoreIndex
 VAR
     nCurrentCore : DINT; // 当前任务所在 CPU 核心索引

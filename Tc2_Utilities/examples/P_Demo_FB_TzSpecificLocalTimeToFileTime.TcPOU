@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_TzSpecificLocalTimeToFileTime" Id="{7a89a342-5814-54bb-bfa8-f39c0edd4ab0}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_TzSpecificLocalTimeToFileTime" Id="{ba62061a-abe0-54e7-895b-1a7d73f7bc08}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_TzSpecificLocalTimeToFileTime
 VAR
     fbConvertLocalToUtc : FB_TzSpecificLocalTimeToFileTime; // FB 实例（已弃用；新代码用 FB_TzSpecificLocalTimeToFileTime64）

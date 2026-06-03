@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_F_CreateAmsNetId" Id="{d3079ce8-6690-52f1-8aba-0079fab4e077}" SpecialFunc="None">
+  <POU Name="P_Demo_F_CreateAmsNetId" Id="{85703303-fbea-5b1f-85a1-9dcef3d8e05b}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_F_CreateAmsNetId
 VAR
     arrTargetIdBytes : T_AmsNetIdArr := [127, 16, 17, 3, 1, 1]; // 目标 NetID 字节数组（来自配置）

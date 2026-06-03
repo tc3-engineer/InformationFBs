@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_WLEN2" Id="{3813d9ef-3e16-529a-9f8e-51177aee58db}" SpecialFunc="None">
+  <POU Name="P_Demo_WLEN2" Id="{96768d00-e79d-5823-82e3-650af6e3d0b3}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_WLEN2
 VAR
     wsBuf  : WSTRING(1024) := "HMI text..."; // 工业语义：HMI 多语言长缓冲

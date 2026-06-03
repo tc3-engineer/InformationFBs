@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_MBWriteSingleReg" Id="{1706b38b-d131-5559-874f-11f5bb955519}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_MBWriteSingleReg" Id="{766abfc7-0616-5ad2-ba74-b419c934763b}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_MBWriteSingleReg
 VAR
     fbWriteSingleReg: FB_MBWriteSingleReg;

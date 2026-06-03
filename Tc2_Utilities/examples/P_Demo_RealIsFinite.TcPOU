@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_RealIsFinite" Id="{1af2680f-be19-5756-b4b4-26738d4a0aa8}" SpecialFunc="None">
+  <POU Name="P_Demo_RealIsFinite" Id="{75c1b8c3-e2d3-57e3-ad8e-67b09ab1fca3}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_RealIsFinite
 VAR
     rAdcSample : REAL;

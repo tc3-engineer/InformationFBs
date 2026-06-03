@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_RS" Id="{4e9da565-1a55-5b30-92aa-520026da1b9d}" SpecialFunc="None">
+  <POU Name="P_Demo_RS" Id="{488addf2-82b5-5767-a2f5-936522bc0c91}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_RS
 VAR
     fbRunInterlock : RS; // RS 实例：电机启动 + 急停联锁（RESET 优先）

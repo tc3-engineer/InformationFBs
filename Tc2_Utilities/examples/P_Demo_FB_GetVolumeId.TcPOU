@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_GetVolumeId" Id="{44c9b3eb-84b4-5717-a840-c619717106bc}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_GetVolumeId" Id="{75dd1c51-8be4-5016-9c9c-21e10973c0c2}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_GetVolumeId
 VAR
     fbFB_GetVolumeId : FB_GetVolumeId; // FB_GetVolumeId 实例

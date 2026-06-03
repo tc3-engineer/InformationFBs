@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_CoEDriveMoveVelocity" Id="{21a7f58e-be77-54ca-9f07-2c57c9aced0f}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_CoEDriveMoveVelocity" Id="{031dc3eb-8e52-5030-ae05-6ac0ba65b2d0}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_CoEDriveMoveVelocity
 VAR
     fbDriveEnable  : FB_CoEDriveEnable; // 先使能 CoE 驱动器

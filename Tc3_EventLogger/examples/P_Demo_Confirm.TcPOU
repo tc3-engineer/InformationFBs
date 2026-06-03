@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_Confirm" Id="{926e6128-a14d-5f54-9ad3-0cd7fe22fab9}" SpecialFunc="None">
+  <POU Name="P_Demo_Confirm" Id="{e10d79a5-77da-53a7-aa0e-20eadabbb1d8}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_Confirm
 VAR
     fbAlarm         : FB_TcAlarm; // 已 Create 且 Raised 的 alarm 实例

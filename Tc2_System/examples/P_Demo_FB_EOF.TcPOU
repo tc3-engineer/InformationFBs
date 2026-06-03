@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_EOF" Id="{09c8e563-30a5-5149-a1fd-2ed7bd3499b3}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_EOF" Id="{214538b5-5caf-5aa1-9ba5-9d1538bcbec4}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_EOF
 VAR
     fbEof            : FB_EOF; // FB_EOF 实例

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_MC_TorqueControl" Id="{29158063-774f-560a-bec7-b265157731aa}" SpecialFunc="None">
+  <POU Name="P_Demo_MC_TorqueControl" Id="{5cb49f01-23d6-5c7c-b65c-64e7dc66f4f0}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_MC_TorqueControl
 VAR
     fbTensionCtrl   : MC_TorqueControl;

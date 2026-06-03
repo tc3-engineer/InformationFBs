@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_SoESetDataAccessMode" Id="{19aeaacb-dedd-5b54-aad8-6c848c506bd7}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_SoESetDataAccessMode" Id="{98d5ce0c-b752-5a23-864f-5b14febbe7a7}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_SoESetDataAccessMode
 VAR
     fbSetAccessMode : FB_SoESetDataAccessMode; // 设置 SoE 访问模式 FB 实例

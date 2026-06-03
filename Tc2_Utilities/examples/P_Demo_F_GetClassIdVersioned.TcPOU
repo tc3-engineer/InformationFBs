@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_F_GetClassIdVersioned" Id="{bf106d75-43a2-5dc2-a1ba-5c46d6270079}" SpecialFunc="None">
+  <POU Name="P_Demo_F_GetClassIdVersioned" Id="{a5ca3311-b307-58aa-8339-5998ea497f0f}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_F_GetClassIdVersioned
 VAR
     sLibId  : STRING(255) := 'MyCorp|PumpCtrlCpp|1.0.0.5'; // 工业语义：库标识

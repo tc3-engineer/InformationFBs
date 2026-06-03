@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_ReadCouplerDiag" Id="{46d1c463-506e-5e33-89ef-ec000c6264f3}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_ReadCouplerDiag" Id="{612da6e7-5f3b-55f8-9b14-fb5fc4888833}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_ReadCouplerDiag
 VAR
     fbReadDiag           : FB_ReadCouplerDiag; // 读耦合器诊断 FB 实例

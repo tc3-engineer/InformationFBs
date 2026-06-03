@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_ASI_Addressing" Id="{f0408708-eb1e-5909-9865-1b24968f8a51}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_ASI_Addressing" Id="{fa6ab237-f124-5f59-93b6-d1af930c84e0}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_ASI_Addressing
 VAR
     fbAsiAddressing    : FB_ASI_Addressing; // ASI 编址 FB

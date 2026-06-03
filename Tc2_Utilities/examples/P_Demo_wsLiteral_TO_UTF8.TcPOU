@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_wsLiteral_TO_UTF8" Id="{b50f9fe8-5dd0-5b47-822f-2a165724b987}" SpecialFunc="None">
+  <POU Name="P_Demo_wsLiteral_TO_UTF8" Id="{8f93d65a-303d-5baa-bbc6-2cdc058c8262}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_wsLiteral_TO_UTF8
 VAR
     sUtf8Init : STRING(255) := wsLiteral_TO_UTF8("主泵状态"); // 工业语义：含中文的 UTF-8 字面量

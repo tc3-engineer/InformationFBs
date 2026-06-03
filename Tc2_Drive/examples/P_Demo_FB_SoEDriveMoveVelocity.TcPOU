@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_SoEDriveMoveVelocity" Id="{10bc27f0-309f-5a69-9e1e-00a08ffae51d}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_SoEDriveMoveVelocity" Id="{5cbcaafe-7d0d-52ec-9afd-58e30a9f55e0}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_SoEDriveMoveVelocity
 VAR
     fbDriveEnable  : FB_SoEDriveEnable; // 先使能 SoE 驱动器

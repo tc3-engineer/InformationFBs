@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_DMXSetLampHours" Id="{4198e345-c2f5-588d-9020-8d8a8a76b07a}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_DMXSetLampHours" Id="{5cab4a5a-f7fa-513c-88ad-7823b262ffa3}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_DMXSetLampHours
 VAR
     fbSetLampHours    : FB_DMXSetLampHours;           // 写灯泡点亮小时数

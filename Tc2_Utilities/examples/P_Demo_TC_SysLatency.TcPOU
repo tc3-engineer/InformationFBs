@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_TC_SysLatency" Id="{829cddf2-252c-5641-88c7-75872ce6cb2f}" SpecialFunc="None">
+  <POU Name="P_Demo_TC_SysLatency" Id="{16bf6bf5-a111-5de3-a222-c4ae2a63bfa2}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_TC_SysLatency
 VAR
     fbTC_SysLatency : TC_SysLatency; // TC_SysLatency 实例

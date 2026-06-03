@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_LicFileCopyToDongle" Id="{2c6862d7-749b-56cd-a38b-e8d8b30e12e8}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_LicFileCopyToDongle" Id="{421bde34-29f3-5cc3-a578-605e39f660b3}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_LicFileCopyToDongle
 VAR
     fbFB_LicFileCopyToDongle : FB_LicFileCopyToDongle; // FB_LicFileCopyToDongle 实例

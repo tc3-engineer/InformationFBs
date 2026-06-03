@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_PLC_ReadSymInfoByName" Id="{c8894b29-f6cf-5e72-9437-eef0012426a1}" SpecialFunc="None">
+  <POU Name="P_Demo_PLC_ReadSymInfoByName" Id="{8a50c1f9-959e-5ade-8404-73aed60dbc42}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_PLC_ReadSymInfoByName
 VAR
     fbPLC_ReadSymInfoByName : PLC_ReadSymInfoByName; // PLC_ReadSymInfoByName 实例

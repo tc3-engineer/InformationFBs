@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_IsFinite" Id="{1fab11e7-58f0-52b7-8746-3e20abb62811}" SpecialFunc="None">
+  <POU Name="P_Demo_IsFinite" Id="{7b040b36-c651-598a-9247-5061cc619ce4}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_IsFinite
 VAR
     fSensorRaw       : LREAL := 25.0; // 模拟传感器原始值

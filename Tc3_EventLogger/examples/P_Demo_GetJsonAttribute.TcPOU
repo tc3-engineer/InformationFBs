@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_GetJsonAttribute" Id="{28f78060-42fe-5adb-8e3d-69a13e03c5a3}" SpecialFunc="None">
+  <POU Name="P_Demo_GetJsonAttribute" Id="{41cf6e7d-55c5-5fbc-9550-e4961d4b56fa}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_GetJsonAttribute
 VAR
     fbAlarm        : FB_TcAlarm; // alarm 实例

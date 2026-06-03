@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_MC_Power" Id="{486bbd0d-066e-563e-88e0-b85cbcbed535}" SpecialFunc="None">
+  <POU Name="P_Demo_MC_Power" Id="{22c62e8d-f34f-5448-a2b7-38571d5737ba}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_MC_Power
 VAR
     fbPowerAxis     : MC_Power;     // 轴软件使能 FB 实例

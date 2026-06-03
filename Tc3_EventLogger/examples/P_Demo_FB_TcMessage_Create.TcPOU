@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_TcMessage_Create" Id="{dcdd8591-35b3-5517-aaad-019bc3ff3562}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_TcMessage_Create" Id="{5bd9fd34-0542-51ed-a822-eb3a13b00687}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_TcMessage_Create
 VAR
     fbMessage      : FB_TcMessage; // 配方切换消息实例

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_PDT_TO_DT" Id="{8d860eb0-a5de-5f45-868f-0b59a6c47588}" SpecialFunc="None">
+  <POU Name="P_Demo_PDT_TO_DT" Id="{f1849cba-431c-5ab3-9d5d-7c228ab3b818}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_PDT_TO_DT
 VAR
     dtRealValue           : DT := DT#2026-05-11-12:34:56; // 模拟 wire 缓冲区中的 DT 字段

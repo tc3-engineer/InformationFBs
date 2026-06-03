@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_IOF_SER_DRIVE_Backup" Id="{75adf30a-a778-5982-b6cc-f219ba520f7e}" SpecialFunc="None">
+  <POU Name="P_Demo_IOF_SER_DRIVE_Backup" Id="{c4c7871f-8c41-5389-afef-e538a91ea391}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_IOF_SER_DRIVE_Backup
 VAR
     fbSercosDriveBackup : IOF_SER_DRIVE_Backup; // SERCOS drive 备份 FB

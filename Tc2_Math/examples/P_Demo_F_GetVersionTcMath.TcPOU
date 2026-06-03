@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_F_GetVersionTcMath" Id="{97e3ecd9-d558-5b0b-9585-391ac8e9002e}" SpecialFunc="None">
+  <POU Name="P_Demo_F_GetVersionTcMath" Id="{c1a91c56-d3e5-5b3d-8dd4-d2d2e2c80aee}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_F_GetVersionTcMath
 VAR
     nMajor_OldWay    : UINT; // 旧 API：F_GetVersionTcMath(1) 返回 major

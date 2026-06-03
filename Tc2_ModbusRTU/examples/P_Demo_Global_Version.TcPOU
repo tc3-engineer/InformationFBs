@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_Global_Version" Id="{ba772ff7-0d63-5e4a-80ef-0d031ab8baa4}" SpecialFunc="None">
+  <POU Name="P_Demo_Global_Version" Id="{51bbf8e2-c005-5af6-9dac-26852a4e4fe3}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_Global_Version
 VAR
     bInit          : BOOL := TRUE;                    // 仅初始化跑一次

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_LcomplexIsNaN" Id="{5b6050fd-bd01-5c5a-bfa2-8f589ff87a7e}" SpecialFunc="None">
+  <POU Name="P_Demo_LcomplexIsNaN" Id="{1a83ba68-4995-5694-9c1c-4ab4fce1cd46}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_LcomplexIsNaN
 VAR
     lcCurrent : LCOMPLEX;; // d-q 反变换电流

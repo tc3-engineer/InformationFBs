@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_F_DINT" Id="{b62b2967-7482-502e-8550-9c0f46cfa38e}" SpecialFunc="None">
+  <POU Name="P_Demo_F_DINT" Id="{95e86ed3-2251-514d-9f2c-145dff0450d4}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_F_DINT
 VAR
     nEncoderPos   : DINT := -1500000; // 业务量（DINT）

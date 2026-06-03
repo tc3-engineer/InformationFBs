@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_PBYTE_TO_BYTE" Id="{a799e69c-8183-5fc6-8fd1-e1e9e0f8dea9}" SpecialFunc="None">
+  <POU Name="P_Demo_PBYTE_TO_BYTE" Id="{24b2fec3-1c60-5e8d-ac36-3a29dfe4cadb}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_PBYTE_TO_BYTE
 VAR
     nRealValue           : BYTE := 16#A5; // 模拟 wire 缓冲区中的 BYTE 字段

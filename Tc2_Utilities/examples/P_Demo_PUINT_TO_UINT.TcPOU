@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_PUINT_TO_UINT" Id="{f8cb44be-cad4-5f03-a7ca-aabeb5b14ffa}" SpecialFunc="None">
+  <POU Name="P_Demo_PUINT_TO_UINT" Id="{deba1ce6-5e44-5771-8a49-6e153128abc9}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_PUINT_TO_UINT
 VAR
     nRealValue           : UINT := 60000; // 模拟 wire 缓冲区中的 UINT 字段

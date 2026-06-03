@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_PLREAL_TO_LREAL" Id="{41776a31-70e1-5ce0-b1b0-492928701255}" SpecialFunc="None">
+  <POU Name="P_Demo_PLREAL_TO_LREAL" Id="{e6fa710e-0bec-5419-a7cf-a93d07cafabc}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_PLREAL_TO_LREAL
 VAR
     fRealValue           : LREAL := 3.141592653589793; // 模拟 wire 缓冲区中的 LREAL 字段

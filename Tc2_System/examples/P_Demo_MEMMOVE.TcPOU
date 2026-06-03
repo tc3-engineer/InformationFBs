@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_MEMMOVE" Id="{1170b1c4-3f5a-52e1-8954-2d4ba867024a}" SpecialFunc="None">
+  <POU Name="P_Demo_MEMMOVE" Id="{3bddf3f1-8b1b-5ebd-a0ac-3719b1682217}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_MEMMOVE
 VAR
     aSamples      : ARRAY[0..9] OF LREAL; // 环形采样缓冲（10 个）

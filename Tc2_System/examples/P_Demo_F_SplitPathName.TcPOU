@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_F_SplitPathName" Id="{72d2da59-19de-5a9d-9ebf-33988b28e484}" SpecialFunc="None">
+  <POU Name="P_Demo_F_SplitPathName" Id="{12c0d015-9891-5102-87de-eba42e206924}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_F_SplitPathName
 VAR
     sFullPath : T_MaxString := 'D:\Recipes\Apr\BatchA.csv'; // 完整路径

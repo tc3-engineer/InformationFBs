@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_WRIGHT" Id="{ac8a2602-ee52-51e5-beb5-b4b7d3eb29bd}" SpecialFunc="None">
+  <POU Name="P_Demo_WRIGHT" Id="{5b31b001-bba1-5910-83a8-c827254a673d}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_WRIGHT
 VAR
     sOrderID   : WSTRING(255) := "客户A订单20260511-00123"; // 中文订单号：前缀（部门）+ 日期 + 流水号

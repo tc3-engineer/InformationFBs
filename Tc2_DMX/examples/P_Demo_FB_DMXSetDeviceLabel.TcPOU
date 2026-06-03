@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_DMXSetDeviceLabel" Id="{30f0139f-3cf4-5157-b611-714c896eac39}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_DMXSetDeviceLabel" Id="{f495546b-4256-5c91-8325-775d2ad6a844}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_DMXSetDeviceLabel
 VAR
     fbSetDeviceLabel  : FB_DMXSetDeviceLabel;         // 写设备标签

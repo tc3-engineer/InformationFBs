@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_F_GetCpuCoreInfo" Id="{3b7b4b2a-62c6-5a7e-8153-a10034dcd47c}" SpecialFunc="None">
+  <POU Name="P_Demo_F_GetCpuCoreInfo" Id="{e142dec6-0939-536b-aa57-c13f350a8f24}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_F_GetCpuCoreInfo
 VAR
     nCoreIndex : DINT; // 要查询的核心索引（先从 F_GetCpuCoreIndex 拿）

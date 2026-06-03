@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_GetDeviceIdentificationEx" Id="{bac345b8-5fb7-5549-b9bf-35b7b56d3297}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_GetDeviceIdentificationEx" Id="{ee581cb4-fb11-59d8-98c1-74e9df222612}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_GetDeviceIdentificationEx
 VAR
     fbFB_GetDeviceIdentificationEx : FB_GetDeviceIdentificationEx; // FB_GetDeviceIdentificationEx 实例

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FIX16Align" Id="{fd7936cd-12a3-5d6e-8442-b0dcfbaa5dcd}" SpecialFunc="None">
+  <POU Name="P_Demo_FIX16Align" Id="{8b517f80-3937-5880-a556-0ac59f70d37f}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FIX16Align
 VAR
     fp8Source  : T_FIX16;; // Q8 来源

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_WriteCouplerRegs" Id="{b8c4f1c3-a0a1-5b1a-9909-7f1db10f360f}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_WriteCouplerRegs" Id="{715ff093-e8f8-54fb-b649-6a87095d15e6}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_WriteCouplerRegs
 VAR
     fbWriteRegs       : FB_WriteCouplerRegs; // 批量写耦合器/端子寄存器

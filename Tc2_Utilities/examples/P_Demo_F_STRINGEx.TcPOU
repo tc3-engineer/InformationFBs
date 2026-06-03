@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_F_STRINGEx" Id="{6a499b9f-4e9d-5f60-bd72-e9bf725e28ab}" SpecialFunc="None">
+  <POU Name="P_Demo_F_STRINGEx" Id="{69b2dc3b-a539-560f-949c-0b2c1da099c2}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_F_STRINGEx
 VAR
     sRecipeName   : STRING(80) := 'BatchAlpha'; // 业务量（STRING）

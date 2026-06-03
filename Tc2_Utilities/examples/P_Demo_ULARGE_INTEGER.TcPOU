@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_ULARGE_INTEGER" Id="{912ad0eb-df22-56bf-a7e8-5ca43b71da83}" SpecialFunc="None">
+  <POU Name="P_Demo_ULARGE_INTEGER" Id="{810c96de-822b-5649-8f6f-04c7518ecc78}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_ULARGE_INTEGER
 VAR
     uliThreshold : T_ULARGE_INTEGER;; // 1E12 字面常量

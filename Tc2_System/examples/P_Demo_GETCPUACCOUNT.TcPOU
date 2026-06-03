@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_GETCPUACCOUNT" Id="{a35c0d8d-039e-5002-9799-bf7a2dfd967c}" SpecialFunc="None">
+  <POU Name="P_Demo_GETCPUACCOUNT" Id="{804e17ea-fcd4-53e2-ad1c-f8db5249a3dd}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_GETCPUACCOUNT
 VAR
     fbGETCPUACCOUNT : GETCPUACCOUNT; // GETCPUACCOUNT 实例

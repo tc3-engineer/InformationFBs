@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_MC_Reset" Id="{7459a686-267c-50f7-8ede-6057d67bc903}" SpecialFunc="None">
+  <POU Name="P_Demo_MC_Reset" Id="{0d69d080-0ac7-5887-b094-ad9833dae368}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_MC_Reset
 VAR
     fbResetAxis     : MC_Reset;     // 轴复位 FB 实例

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_MC_MoveRelative" Id="{94b634fd-00ea-5d23-a296-5259f3356f87}" SpecialFunc="None">
+  <POU Name="P_Demo_MC_MoveRelative" Id="{1df29d4b-6fe6-5f18-8826-1a71a6a3cf88}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_MC_MoveRelative
 VAR
     fbMoveRel       : MC_MoveRelative; // 相对定位 FB 实例

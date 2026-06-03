@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_FileRename" Id="{f0955375-e548-583e-976c-394c4e103cc9}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_FileRename" Id="{d2e067f9-4034-5ecc-898f-bb85d8ea115b}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_FileRename
 VAR
     fbFileRename   : FB_FileRename; // FB_FileRename 实例

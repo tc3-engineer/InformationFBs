@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_3964R" Id="{11d5d480-386f-502e-85dd-86227d80f920}" SpecialFunc="None">
+  <POU Name="P_Demo_3964R" Id="{7aa5d1f4-862a-577b-a607-28bed087cbea}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_3964R
 VAR
     fbSerialLine : SerialLineControl;           // 底层硬件收发(3964R 只管协议层)

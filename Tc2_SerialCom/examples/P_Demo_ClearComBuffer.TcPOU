@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_ClearComBuffer" Id="{ef29cd50-fa97-5478-8889-df95bd3144aa}" SpecialFunc="None">
+  <POU Name="P_Demo_ClearComBuffer" Id="{5deb01f8-e25c-55c1-a484-475722e1a0ec}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_ClearComBuffer
 VAR
     fbSerialLine     : SerialLineControl;       // 后台通信，持续填充 bufRx

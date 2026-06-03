@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_sLiteral_TO_UTF8" Id="{2654f1a7-0cca-5670-a0d1-90f5095e9dc2}" SpecialFunc="None">
+  <POU Name="P_Demo_sLiteral_TO_UTF8" Id="{a6b61312-32e6-5b17-990a-dcbd80490b8d}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_sLiteral_TO_UTF8
 VAR
     sUtf8Init : STRING(255) := sLiteral_TO_UTF8('Hühner legen Eier.'); // 工业语义：UTF-8 初值字面量（编译期编码）

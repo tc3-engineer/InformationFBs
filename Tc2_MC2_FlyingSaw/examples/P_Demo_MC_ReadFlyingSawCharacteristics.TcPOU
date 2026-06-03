@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_MC_ReadFlyingSawCharacteristics" Id="{2e3f101c-9f50-53e3-a6b3-111cba2153e0}" SpecialFunc="None">
+  <POU Name="P_Demo_MC_ReadFlyingSawCharacteristics" Id="{84fce3bb-78e1-5cbe-8a2d-67bfa977cc54}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_MC_ReadFlyingSawCharacteristics
 VAR
     fbReadCharac  : MC_ReadFlyingSawCharacteristics;

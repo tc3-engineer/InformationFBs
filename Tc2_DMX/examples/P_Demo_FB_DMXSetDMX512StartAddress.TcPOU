@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_DMXSetDMX512StartAddress" Id="{c6c78fe4-8cb6-526e-83a0-bf1ca43ade48}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_DMXSetDMX512StartAddress" Id="{33d763af-36a8-5a16-917f-b00ca3fa957d}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_DMXSetDMX512StartAddress
 VAR
     fbSetStartAddr    : FB_DMXSetDMX512StartAddress;  // 设起始地址

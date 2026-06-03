@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_OTSTRUCT_TO_TIME" Id="{942ab604-4222-5d65-9312-5ae8eeef963e}" SpecialFunc="None">
+  <POU Name="P_Demo_OTSTRUCT_TO_TIME" Id="{8d356397-b74c-5af4-879b-23eacf0bfea9}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_OTSTRUCT_TO_TIME
 VAR
     otDryingTime : OTSTRUCT; // HMI 输入的多字段时间结构

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_FileOpen" Id="{d5c2be43-987e-5c3e-9965-ebd85b6d8bd4}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_FileOpen" Id="{540d226d-e8f1-51a9-b2d1-c71f28564c04}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_FileOpen
 VAR
     fbFileOpen   : FB_FileOpen; // FB_FileOpen 实例

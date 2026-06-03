@@ -78,10 +78,41 @@ def lint(path: Path) -> tuple[bool, list[str]]:
     return (len(diags) == 0), diags
 
 
+def check_unique_guids(root: Path) -> tuple[bool, list[str]]:
+    """Repo-wide check: every .TcPOU under <root>/Tc*/examples/ must carry a
+    unique POU Id. Same-named FBs across libraries (e.g. MC_Halt in Tc2_MC2 vs
+    Tc3_DriveMotionControl, FB_SoEReset in Tc2_MC2_Drive vs Tc2_NcDrive) would
+    otherwise collide and XAE refuses to load two POUs with the same Id.
+    """
+    import collections
+    guid_to_files: dict[str, list[str]] = collections.defaultdict(list)
+    for f in sorted(root.glob("Tc*/examples/P_Demo_*.TcPOU")):
+        text = f.read_text()
+        m = re.search(r'Id="(\{[0-9a-f-]{36}\})"', text)
+        if m:
+            guid_to_files[m.group(1)].append(str(f.relative_to(root)))
+    dups = {g: fs for g, fs in guid_to_files.items() if len(fs) > 1}
+    diags: list[str] = []
+    for g, fs in dups.items():
+        diags.append(f"duplicate Id {g}: " + " ↔ ".join(fs))
+    return (len(dups) == 0), diags
+
+
 def main() -> int:
     if len(sys.argv) < 2:
-        print("usage: lint_tcpou.py <file.TcPOU> [<file2.TcPOU> ...]", file=sys.stderr)
+        print("usage: lint_tcpou.py <file.TcPOU> [...]\n"
+              "       lint_tcpou.py --check-unique [<root>]", file=sys.stderr)
         return 2
+    if sys.argv[1] == "--check-unique":
+        root = Path(sys.argv[2]).resolve() if len(sys.argv) > 2 else Path.cwd()
+        ok, diags = check_unique_guids(root)
+        if ok:
+            print(f"PASS: all TcPOU GUIDs unique under {root}")
+            return 0
+        print(f"FAIL: {len(diags)} duplicate-GUID groups under {root}")
+        for d in diags:
+            print(f"  - {d}")
+        return 1
     overall = 0
     for arg in sys.argv[1:]:
         path = Path(arg).resolve()

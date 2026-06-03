@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_F_GetVersionTcIoFunctions" Id="{df644318-cdf5-5303-bc18-855df56eb74b}" SpecialFunc="None">
+  <POU Name="P_Demo_F_GetVersionTcIoFunctions" Id="{5d3309a2-5861-59ad-a936-cab2ce9df559}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_F_GetVersionTcIoFunctions
 VAR
     nMajorVersion     : UINT := 0; // 主版本号

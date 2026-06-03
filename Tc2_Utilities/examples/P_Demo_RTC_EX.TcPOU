@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_RTC_EX" Id="{22b2dca7-a636-5a2a-9cb9-c569c1b080f9}" SpecialFunc="None">
+  <POU Name="P_Demo_RTC_EX" Id="{fb62ef5f-ba80-5792-b07e-49233e4c43c0}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_RTC_EX
 VAR
     fbRTC_EX : RTC_EX; // RTC_EX 实例

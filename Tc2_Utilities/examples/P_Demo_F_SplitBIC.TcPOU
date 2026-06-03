@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_F_SplitBIC" Id="{8e402c12-3795-5eaf-88eb-84025b0e3a66}" SpecialFunc="None">
+  <POU Name="P_Demo_F_SplitBIC" Id="{a7c6cbde-fae6-5e69-b130-925a02c963a2}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_F_SplitBIC
 VAR
     sBicRaw : STRING(255) := 1P193995SBTN0002agdw1KEL7411 Q1 2P112104020018; // 完整的 BIC 原始串；在线写值替换

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_CoEAX8000SetPositionOffset" Id="{8a6ea051-31e4-5ad7-bdc3-a30d9a384b07}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_CoEAX8000SetPositionOffset" Id="{9224d531-c1c9-5e6a-967a-26ae6454333a}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_CoEAX8000SetPositionOffset
 VAR
     fbAX8000SetOffset   : FB_CoEAX8000SetPositionOffset; // AX8000 写位置偏置 FB 实例

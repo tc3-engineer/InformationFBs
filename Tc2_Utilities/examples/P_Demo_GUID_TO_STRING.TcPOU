@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_GUID_TO_STRING" Id="{22ea8c2c-2ff5-5133-b590-47d69e1458cf}" SpecialFunc="None">
+  <POU Name="P_Demo_GUID_TO_STRING" Id="{15577af5-9530-5c8d-b4af-a2a8784ff079}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_GUID_TO_STRING
 VAR
     stGuid  : GUID; // 工业语义：UA App ID

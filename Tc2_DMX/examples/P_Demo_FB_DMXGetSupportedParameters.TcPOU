@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_DMXGetSupportedParameters" Id="{55d8c689-efa0-53ac-ae09-4a158a618985}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_DMXGetSupportedParameters" Id="{c2851e7d-2eaf-55c0-b73a-2f7206d91632}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_DMXGetSupportedParameters
 VAR
     fbGetSupported    : FB_DMXGetSupportedParameters; // 读支持的 PID 列表

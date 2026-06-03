@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_ComReset" Id="{19fd38aa-26a8-525d-99c0-c4657eb51ab3}" SpecialFunc="None">
+  <POU Name="P_Demo_ComReset" Id="{deba6e93-aa74-577e-a88a-5b5e00ac7edb}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_ComReset
 VAR
     fbComReset    : ComReset;

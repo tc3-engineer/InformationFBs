@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_stLibVersion_Tc2_DataExchange" Id="{1d123999-3004-5e93-9696-09660de643ad}" SpecialFunc="None">
+  <POU Name="P_Demo_stLibVersion_Tc2_DataExchange" Id="{cce8deac-daa6-513f-b8aa-44d2622cb48c}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_stLibVersion_Tc2_DataExchange
 VAR
     stCurrentLibVer : ST_LibVersion; // 运行时实际加载的库版本快照（在线 monitor 用）

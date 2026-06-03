@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_PHUGE_TO_HUGE" Id="{d8e0a02c-b890-5db9-822b-87cd9d62e81f}" SpecialFunc="None">
+  <POU Name="P_Demo_PHUGE_TO_HUGE" Id="{95057c3d-dc61-52f7-845b-ca90ea44e49a}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_PHUGE_TO_HUGE
 VAR
     hRealValue           : HUGE; // 模拟 wire 缓冲区中的 HUGE 字段

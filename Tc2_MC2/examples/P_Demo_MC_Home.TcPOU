@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_MC_Home" Id="{f3ead42a-13a6-5a57-be3c-3c86ed1d86b6}" SpecialFunc="None">
+  <POU Name="P_Demo_MC_Home" Id="{aafb4b3f-533f-59cc-b5ae-56347f357c12}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_MC_Home
 VAR
     fbAxisHoming   : MC_Home;

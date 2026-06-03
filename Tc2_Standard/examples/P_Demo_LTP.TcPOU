@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_LTP" Id="{6ae42519-721d-5e89-92e1-ac47e3224f56}" SpecialFunc="None">
+  <POU Name="P_Demo_LTP" Id="{a5c04339-b288-5918-aa56-48a17f961d05}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_LTP
 VAR
     fbStepPulse    : LTP; // LTP 实例：步进电机 μs 级 STEP 脉冲

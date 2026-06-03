@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_LTRUNC" Id="{4ac3bbfe-a580-51e4-ba1c-2e1a9c7b2d59}" SpecialFunc="None">
+  <POU Name="P_Demo_LTRUNC" Id="{3a33ecdc-1600-55f7-a514-72a7bf9baef6}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_LTRUNC
 VAR
     lrServoPositionMm   : LREAL := 12.7; // 伺服轴位置（毫米，含小数零头）；在线写值模拟实时位置

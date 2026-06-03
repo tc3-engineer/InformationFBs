@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_IOF_GetDeviceIDs" Id="{142e9114-2480-531e-a1cf-c426bd098d44}" SpecialFunc="None">
+  <POU Name="P_Demo_IOF_GetDeviceIDs" Id="{2fad2a77-5a9f-5244-84a1-0050d49d3984}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_IOF_GetDeviceIDs
 VAR
     fbReadAllDeviceIds : IOF_GetDeviceIDs; // FB：一次性读所有 IO 设备 ID

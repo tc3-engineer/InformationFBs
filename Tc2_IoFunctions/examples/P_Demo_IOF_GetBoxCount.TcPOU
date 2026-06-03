@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_IOF_GetBoxCount" Id="{b454db5c-5340-507d-895b-9587361f00b6}" SpecialFunc="None">
+  <POU Name="P_Demo_IOF_GetBoxCount" Id="{80a808d1-079d-5dac-b29b-6bcb9e955324}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_IOF_GetBoxCount
 VAR
     fbReadBoxCount    : IOF_GetBoxCount; // 读现场总线 box 计数

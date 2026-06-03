@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_CTD" Id="{25bae484-c4c8-5b75-b45f-dfabb98d5a3d}" SpecialFunc="None">
+  <POU Name="P_Demo_CTD" Id="{91fdef4d-fcf5-5a2f-9c14-8f9f76ba13d1}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_CTD
 VAR
     fbCreditCounter : CTD; // 向下计数器实例：售货机出货次数余量

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_RAD_TO_DEG" Id="{75be47ba-dc55-5905-90a4-8f26566a35e4}" SpecialFunc="None">
+  <POU Name="P_Demo_RAD_TO_DEG" Id="{34fb02c8-8e7d-53d9-9f63-fb4ca459f337}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_RAD_TO_DEG
 VAR
     lrInputAngle : LREAL := 1.5707963; // 输入角度（单位 弧度 (radian)）；在线改值测试不同输入

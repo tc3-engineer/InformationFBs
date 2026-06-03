@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_DCF77_TIME" Id="{5fa0abf7-101d-50d2-bea8-66a20c63dc7e}" SpecialFunc="None">
+  <POU Name="P_Demo_DCF77_TIME" Id="{b73b593c-2ed9-5604-b9fc-b3601fdcb36b}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_DCF77_TIME
 VAR
     fbDCF77_TIME : DCF77_TIME; // DCF77_TIME 实例

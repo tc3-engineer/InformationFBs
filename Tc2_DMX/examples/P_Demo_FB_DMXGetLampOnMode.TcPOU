@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_DMXGetLampOnMode" Id="{74320089-d185-57d6-ad91-3a0caf6c4810}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_DMXGetLampOnMode" Id="{04748319-712b-5479-b168-8839ce04d53b}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_DMXGetLampOnMode
 VAR
     fbGetLampOnMode   : FB_DMXGetLampOnMode;          // 读开灯模式

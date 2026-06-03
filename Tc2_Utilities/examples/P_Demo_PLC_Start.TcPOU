@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_PLC_Start" Id="{24459c8b-2c0b-54cb-9df6-efd68eff3bfd}" SpecialFunc="None">
+  <POU Name="P_Demo_PLC_Start" Id="{1054ccca-81a9-5dc8-8384-b00e2b5ab7b9}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_PLC_Start
 VAR
     fbPLC_Start : PLC_Start; // PLC_Start 实例

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_F_SplitDpv1WriteResPkgPNET" Id="{10f09909-2724-5f1b-88ba-29df58e0ed7b}" SpecialFunc="None">
+  <POU Name="P_Demo_F_SplitDpv1WriteResPkgPNET" Id="{7f1ea78a-8235-5814-b265-f4084952259c}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_F_SplitDpv1WriteResPkgPNET
 VAR
     aDpv1WriteResBuffer   : ARRAY[1..240] OF BYTE; // 响应缓冲

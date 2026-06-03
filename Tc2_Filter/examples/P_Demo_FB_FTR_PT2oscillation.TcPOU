@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_FTR_PT2oscillation" Id="{b066239e-6af3-53e2-b9f8-ec90271eebea}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_FTR_PT2oscillation" Id="{67c96ca8-4e3b-5e41-8b48-29116c4a1230}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_FTR_PT2oscillation
 VAR
     fbFilter      : FB_FTR_PT2oscillation;                  // 被演示的滤波器实例

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_RIGHT" Id="{3535016d-172f-57dc-b0dc-de3e9de2c8f5}" SpecialFunc="None">
+  <POU Name="P_Demo_RIGHT" Id="{c40b52dd-6e23-5f52-af6d-2cc99399011b}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_RIGHT
 VAR
     sOrderID   : STRING(255) := 'ORD2026051100123'; // 订单号：前缀 ORD + 日期 8 位 + 流水号 5 位

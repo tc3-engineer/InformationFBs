@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_DINT_TO_DECSTR" Id="{71cca615-ec27-5845-ac52-ecc5dfe24a2a}" SpecialFunc="None">
+  <POU Name="P_Demo_DINT_TO_DECSTR" Id="{ed0b3bc5-dc39-5d0c-bd2f-bba214ad217a}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_DINT_TO_DECSTR
 VAR
     nValue     : DINT := -1234; // 待转换的 DINT 值；在线写值替换测试不同输入

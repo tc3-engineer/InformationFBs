@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_UINT64_TO_LREAL" Id="{4ef0c985-938a-5049-a85e-26c65045d43d}" SpecialFunc="None">
+  <POU Name="P_Demo_UINT64_TO_LREAL" Id="{fcc5bfc2-66d6-587f-b6a9-653088c5cded}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_UINT64_TO_LREAL
 VAR
     uliEnergy   : T_ULARGE_INTEGER;; // 累计电度（来自电表通讯）

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_BCD_TO_DEC" Id="{5aedc9b4-b8a3-5731-af51-f4ce6196f216}" SpecialFunc="None">
+  <POU Name="P_Demo_BCD_TO_DEC" Id="{97beaaa6-ec56-5515-af5d-ba29237dcc36}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_BCD_TO_DEC
 VAR
     fbBCD_TO_DEC : BCD_TO_DEC; // BCD_TO_DEC 实例

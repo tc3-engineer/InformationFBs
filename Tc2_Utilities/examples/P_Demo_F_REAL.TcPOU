@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_F_REAL" Id="{fbdc9e99-f7de-5639-9e60-81d21e6415e5}" SpecialFunc="None">
+  <POU Name="P_Demo_F_REAL" Id="{816834b9-7f00-55d0-ac7a-66cdc35d0a8f}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_F_REAL
 VAR
     fPositionMm   : REAL := 123.45; // 业务量（REAL）

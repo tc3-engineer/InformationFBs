@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_ListenerBase2" Id="{72accac8-559b-590e-94ed-bddbef0477c0}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_ListenerBase2" Id="{cbcc8edb-bbb9-540f-9a13-0286a63b89d9}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_ListenerBase2
 VAR
     fbListener  : FB_ListenerBase2; // 实际工程应声明子类（继承自 FB_ListenerBase2）

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_F_DWORD" Id="{a4eb11d2-e217-561d-b8a0-88ba5721d536}" SpecialFunc="None">
+  <POU Name="P_Demo_F_DWORD" Id="{84f20884-3577-577b-b689-28dce542c708}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_F_DWORD
 VAR
     nBitfield     : DWORD := 16#DEAD0001; // 业务量（DWORD）

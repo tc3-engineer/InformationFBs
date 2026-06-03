@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_CoEEL72xxSetPositionOffset" Id="{ea13f386-2594-548f-9d22-687b9b2da65a}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_CoEEL72xxSetPositionOffset" Id="{8b89dc79-1bbe-5a32-ab30-7c72dc2ee512}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_CoEEL72xxSetPositionOffset
 VAR
     fbEL72xxSetOffset   : FB_CoEEL72xxSetPositionOffset; // EL72xx 写位置偏置 FB 实例

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_MC_StepBlockLagBased" Id="{a62be1ab-b32f-5fe0-81a1-2ac04ca2923c}" SpecialFunc="None">
+  <POU Name="P_Demo_MC_StepBlockLagBased" Id="{a91f9a35-1d89-5927-a2a3-37b999549492}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_MC_StepBlockLagBased
 VAR
     fbStepBlockLagBased : MC_StepBlockLagBased;

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_GetRouterStatusInfo" Id="{c20ee7a6-3f5d-5f90-8a9f-4274898521ac}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_GetRouterStatusInfo" Id="{b8fe0f25-6f2f-599e-8c1f-f38c91edd5db}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_GetRouterStatusInfo
 VAR
     fbFB_GetRouterStatusInfo : FB_GetRouterStatusInfo; // FB_GetRouterStatusInfo 实例

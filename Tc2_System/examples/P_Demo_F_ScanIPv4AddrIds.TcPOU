@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_F_ScanIPv4AddrIds" Id="{99e879e8-6a3e-57b3-9558-4925e972d2f0}" SpecialFunc="None">
+  <POU Name="P_Demo_F_ScanIPv4AddrIds" Id="{681c3949-c9d5-5b20-b299-4eb554586e3d}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_F_ScanIPv4AddrIds
 VAR
     sUserInput  : T_IPv4Addr := '172.16.7.199'; // HMI 输入的 IP 字符串

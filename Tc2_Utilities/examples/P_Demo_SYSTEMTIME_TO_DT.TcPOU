@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_SYSTEMTIME_TO_DT" Id="{b37db726-166d-54f5-b187-266301742349}" SpecialFunc="None">
+  <POU Name="P_Demo_SYSTEMTIME_TO_DT" Id="{bd27d8d5-2052-52b8-9ad7-87ff63742c9f}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_SYSTEMTIME_TO_DT
 VAR
     stOpcTime : TIMESTRUCT; // OPC UA 收到的时间结构 (初始化通过在线手动赋值; 推荐字段：( wYear := 2026, wMonth := 5, wDay := 11, wHour := 12, wMinute := 34, wSecond := 56, wMilliseconds := 500 ))

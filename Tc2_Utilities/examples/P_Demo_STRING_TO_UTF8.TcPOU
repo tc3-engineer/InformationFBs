@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_STRING_TO_UTF8" Id="{aa9c3fc5-63af-53f6-80a6-702a3299a1da}" SpecialFunc="None">
+  <POU Name="P_Demo_STRING_TO_UTF8" Id="{a293d7f8-5c84-5bd8-98c4-e3a98255fd58}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_STRING_TO_UTF8
 VAR
     sLocal   : STRING(128) := 'Hühner alarm'; // 工业语义：本地 Codepage STRING（含 Umlaut）

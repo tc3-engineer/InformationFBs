@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_S_UPS_CX9020_U900" Id="{85e30e4a-2c05-5d18-a008-18e5cf7a49a6}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_S_UPS_CX9020_U900" Id="{7dc62466-15a7-5596-bae6-86504a9485fa}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_S_UPS_CX9020_U900
 VAR
     fbSUPS             : FB_S_UPS_CX9020_U900; // CX9020-U900 平台 1-second UPS 管家

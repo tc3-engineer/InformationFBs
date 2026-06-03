@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_FTR_MovAvg" Id="{9b6e3fa1-83b2-5bfa-885f-d3a41e4e3452}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_FTR_MovAvg" Id="{8578495f-dee8-5aed-b234-2fb4eda4e207}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_FTR_MovAvg
 VAR
     fbFilter      : FB_FTR_MovAvg;                  // 被演示的滤波器实例

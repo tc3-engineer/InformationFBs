@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_KL6Configuration" Id="{ad5bc3f9-b5bf-54cb-9e18-0b9ed9bcec31}" SpecialFunc="None">
+  <POU Name="P_Demo_KL6Configuration" Id="{83fe5f7a-dff8-5aba-b215-3c60f8d7b254}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_KL6Configuration
 VAR
     fbKL6Config   : KL6Configuration;

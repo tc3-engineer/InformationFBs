@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_FilePuts" Id="{e0654084-1166-55ba-b805-9f285fffa671}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_FilePuts" Id="{426110b7-6056-59ef-aa0f-94a78089609f}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_FilePuts
 VAR
     fbFilePuts   : FB_FilePuts; // FB_FilePuts 实例

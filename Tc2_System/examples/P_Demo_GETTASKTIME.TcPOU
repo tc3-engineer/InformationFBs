@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_GETTASKTIME" Id="{0c6627e7-ab87-51f7-8c6f-3104375f303e}" SpecialFunc="None">
+  <POU Name="P_Demo_GETTASKTIME" Id="{34f12ba8-d39a-5329-9938-8185e7af0dc1}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_GETTASKTIME
 VAR
     fbGetTaskTime  : GETTASKTIME; // 废弃 FB 实例（仅演示）

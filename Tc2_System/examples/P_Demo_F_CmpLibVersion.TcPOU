@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_F_CmpLibVersion" Id="{a44bb276-13e9-51f4-8e48-5e8a776c77e3}" SpecialFunc="None">
+  <POU Name="P_Demo_F_CmpLibVersion" Id="{f2f4b43f-3481-5c1e-9c2b-752320388c98}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_F_CmpLibVersion
 VAR
     iMajorRequired    : UINT := 3; // 要求 major

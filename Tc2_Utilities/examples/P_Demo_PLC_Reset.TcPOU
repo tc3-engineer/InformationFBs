@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_PLC_Reset" Id="{515d7292-e6bd-5855-bc55-c563cbabb905}" SpecialFunc="None">
+  <POU Name="P_Demo_PLC_Reset" Id="{e6832c43-805f-5629-b9e6-fe14fc2c82be}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_PLC_Reset
 VAR
     fbPLC_Reset : PLC_Reset; // PLC_Reset 实例

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_Int64IsZero" Id="{e6c2a710-2855-5b7a-b10b-2d44d712d5e0}" SpecialFunc="None">
+  <POU Name="P_Demo_Int64IsZero" Id="{20acbfb2-ccbf-532f-bf81-5da989aae71b}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_Int64IsZero
 VAR
     liDivisor : T_LARGE_INTEGER;

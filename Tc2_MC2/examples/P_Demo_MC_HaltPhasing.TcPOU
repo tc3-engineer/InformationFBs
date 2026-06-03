@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_MC_HaltPhasing" Id="{595d8fa4-1be6-5db7-a85c-73a0503ae1d4}" SpecialFunc="None">
+  <POU Name="P_Demo_MC_HaltPhasing" Id="{6ee16733-c39a-51db-ac3d-aecb93628fa4}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_MC_HaltPhasing
 VAR
     fbStopPhasing  : MC_HaltPhasing;

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_KL3228Config" Id="{688545c9-d8ab-54d0-b4a5-3786ba74a92a}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_KL3228Config" Id="{352ef615-4ea2-54ee-a646-b83b44f39121}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_KL3228Config
 VAR
     fbKl3228              : FB_KL3228Config; // KL3228 配置 FB

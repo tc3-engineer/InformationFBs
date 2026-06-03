@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_MC_GearInMultiMaster" Id="{b08a518c-28e7-55ac-8d2c-8acf78ff5c39}" SpecialFunc="None">
+  <POU Name="P_Demo_MC_GearInMultiMaster" Id="{281458e9-56b7-5eca-8ef0-c76145f5d41a}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_MC_GearInMultiMaster
 VAR
     fbMultiGear    : MC_GearInMultiMaster;

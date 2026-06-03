@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_LREAL_TO_FMTSTR" Id="{adeef80f-1561-54eb-86f2-56e9bf4940e5}" SpecialFunc="None">
+  <POU Name="P_Demo_LREAL_TO_FMTSTR" Id="{607a8eed-f328-59f0-ad51-f3a2cff471a0}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_LREAL_TO_FMTSTR
 VAR
     fPressureBar : LREAL := 1.0132456; // 工业语义：压力测量值（Bar）

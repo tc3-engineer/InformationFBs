@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_stLibVersion_Tc2_IoFunctions" Id="{8812ce69-23e6-56c5-87f4-163989072514}" SpecialFunc="None">
+  <POU Name="P_Demo_stLibVersion_Tc2_IoFunctions" Id="{61c4e412-9260-5229-96fa-d77b6545c421}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_stLibVersion_Tc2_IoFunctions
 VAR
     stLibVer          : ST_LibVersion; // 本库版本副本（赋值后查看）

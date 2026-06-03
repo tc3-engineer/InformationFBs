@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_F_LINT" Id="{3bcd887a-b04a-5d7a-8edc-d8b5170bba62}" SpecialFunc="None">
+  <POU Name="P_Demo_F_LINT" Id="{bc428eca-9234-5242-99cf-b4ab539ab6c2}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_F_LINT
 VAR
     nPulseCount   : LINT := 100000000000; // 业务量（LINT）

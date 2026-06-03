@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_LTON" Id="{13739594-83e8-51af-b502-e6350e9b0653}" SpecialFunc="None">
+  <POU Name="P_Demo_LTON" Id="{4ba308d8-fbce-52cb-9f99-0b036ca6adae}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_LTON
 VAR
     fbServoReadyDelay : LTON; // LTON 实例：伺服上电后 μs 级就绪延时

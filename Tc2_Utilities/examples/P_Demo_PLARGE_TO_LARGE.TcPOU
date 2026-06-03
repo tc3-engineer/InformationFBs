@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_PLARGE_TO_LARGE" Id="{d57ca450-1bda-5756-9ffe-a02304e2d4ed}" SpecialFunc="None">
+  <POU Name="P_Demo_PLARGE_TO_LARGE" Id="{35f47b69-16b2-5f82-a541-8ac5586ba0ea}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_PLARGE_TO_LARGE
 VAR
     lgRealValue           : LARGE; // 模拟 wire 缓冲区中的 LARGE 字段

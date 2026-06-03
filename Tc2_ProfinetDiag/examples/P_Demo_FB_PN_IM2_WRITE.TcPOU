@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_PN_IM2_WRITE" Id="{e275265a-358f-53c2-9265-3e01fb4420eb}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_PN_IM2_WRITE" Id="{a41c30b7-c380-52fc-9adb-5e1e860af363}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_PN_IM2_WRITE
 VAR
     fbIM2Write    : FB_PN_IM2_WRITE;

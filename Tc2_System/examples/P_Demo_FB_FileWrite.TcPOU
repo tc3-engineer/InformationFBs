@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_FileWrite" Id="{e3a8b8cc-4366-58f9-ab20-eebac3a89849}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_FileWrite" Id="{ec44d312-220b-58c4-91e0-54797999fcd4}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_FileWrite
 VAR
     fbFileWrite     : FB_FileWrite; // FB_FileWrite 实例

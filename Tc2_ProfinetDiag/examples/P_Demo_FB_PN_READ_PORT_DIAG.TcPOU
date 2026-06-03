@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_PN_READ_PORT_DIAG" Id="{d1a45189-8e45-547e-b8f2-4370f3eeaac7}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_PN_READ_PORT_DIAG" Id="{3285e96e-6e8c-599b-89b7-241f9ca976e6}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_PN_READ_PORT_DIAG
 VAR
     fbReadDiag    : FB_PN_READ_PORT_DIAG;

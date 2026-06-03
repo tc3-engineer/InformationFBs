@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_F_WORD" Id="{76a8a761-07e9-5b09-9549-ce19ed3af5bb}" SpecialFunc="None">
+  <POU Name="P_Demo_F_WORD" Id="{c4bff477-1ee5-5827-be29-cf444e784b98}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_F_WORD
 VAR
     nModbusReg    : WORD := 16#1234; // 业务量（WORD）

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_STRNCPY" Id="{81e4ee6d-7942-54b3-965c-4f7473db18dc}" SpecialFunc="None">
+  <POU Name="P_Demo_STRNCPY" Id="{c9dd2bfe-ffe1-52e0-b473-4e88e0774f05}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_STRNCPY
 VAR
     sSrc    : STRING(255) := 'Recipe alpha description'; // 工业语义：源 STRING

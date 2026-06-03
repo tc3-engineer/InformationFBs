@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FindAndDeleteChar" Id="{5fb20cbc-a8ca-537a-893f-962ebc8dd111}" SpecialFunc="None">
+  <POU Name="P_Demo_FindAndDeleteChar" Id="{b052d388-3817-50b1-8480-c573ffedfc9b}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FindAndDeleteChar
 VAR
     sPhoneRaw : STRING(32) := '0049-7531 567-890'; // 工业语义：原始电话号码含空格连字符

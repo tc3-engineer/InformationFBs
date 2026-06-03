@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_PN_ReadCompleteInfoOfDevices" Id="{7e42526a-97bf-5c67-8db9-bc5802d0ef75}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_PN_ReadCompleteInfoOfDevices" Id="{1301df08-df71-5b4f-bd96-ea2c8b8a9d41}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_PN_ReadCompleteInfoOfDevices
 VAR
     fbReadAll     : FB_PN_ReadCompleteInfoOfDevices;

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_LREAL_TO_UINT64" Id="{2231a532-274e-56da-8a35-b7ae86001084}" SpecialFunc="None">
+  <POU Name="P_Demo_LREAL_TO_UINT64" Id="{5360c44c-2bb6-58fd-aec2-c91a752f9e77}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_LREAL_TO_UINT64
 VAR
     lrSetpoint   : LREAL := 1.5E12;; // 业务侧浮点（如累计产量上限）

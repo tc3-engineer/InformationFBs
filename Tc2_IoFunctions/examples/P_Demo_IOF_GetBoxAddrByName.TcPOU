@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_IOF_GetBoxAddrByName" Id="{80b7b9fa-8da2-5f2a-b68c-04d5292f151e}" SpecialFunc="None">
+  <POU Name="P_Demo_IOF_GetBoxAddrByName" Id="{6e4f59b2-b5b2-5857-877e-53df0dd5f94e}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_IOF_GetBoxAddrByName
 VAR
     fbResolveBoxAddr  : IOF_GetBoxAddrByName; // box 名字 → 现场总线地址 FB 实例

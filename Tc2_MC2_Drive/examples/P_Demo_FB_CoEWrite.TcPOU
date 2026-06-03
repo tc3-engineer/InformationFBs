@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_CoEWrite" Id="{a77dfa6c-9fad-57b1-9850-afd9d0f42518}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_CoEWrite" Id="{4667e7a0-f188-5dec-8be9-6ead71bba82c}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_CoEWrite
 VAR
     fbCoEWrite      : FB_CoEWrite; // CoE 写对象 FB 实例

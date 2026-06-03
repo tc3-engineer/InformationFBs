@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_MC_MoveAbsolute" Id="{2b4443b2-a8c5-55fe-8e6d-4a9f79f0a174}" SpecialFunc="None">
+  <POU Name="P_Demo_MC_MoveAbsolute" Id="{df24e3ba-071a-5e70-9808-c5cf9cf7457f}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_MC_MoveAbsolute
 VAR
     fbMoveAbs       : MC_MoveAbsolute; // 绝对定位 FB 实例

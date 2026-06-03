@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_WriteOutput_analog" Id="{826c13e4-0917-5b2f-b71f-351dc766336b}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_WriteOutput_analog" Id="{dd34fedf-5da6-5329-a6d4-08127bf31ab0}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_WriteOutput_analog
 VAR
     fbAsiAnalogWrite    : FB_WriteOutput_analog; // ASI 模拟输出 FB

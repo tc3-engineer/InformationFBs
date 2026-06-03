@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_WSTRING_TO_UTF8" Id="{cd5f9e6c-5958-5d53-89c1-ef7c87ffa605}" SpecialFunc="None">
+  <POU Name="P_Demo_WSTRING_TO_UTF8" Id="{2e00ed31-1761-5f5d-81b4-ce8469440db3}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_WSTRING_TO_UTF8
 VAR
     wsSrc    : WSTRING(128) := "主泵状态"; // 工业语义：HMI WSTRING 含 Unicode

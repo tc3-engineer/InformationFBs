@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_MemRingBuffer" Id="{812292e0-b347-59b8-aba2-681f1a10f5ee}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_MemRingBuffer" Id="{9ae9b01a-b982-5d0e-a842-76c32e955fc2}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_MemRingBuffer
 VAR
     fbFB_MemRingBuffer : FB_MemRingBuffer; // FB_MemRingBuffer 实例

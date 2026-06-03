@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_ReadInput_analog" Id="{fd5c2226-b371-5e64-9c26-9deb3bccaaa7}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_ReadInput_analog" Id="{60d96f8d-b685-505e-a646-d8f14a6c8fcc}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_ReadInput_analog
 VAR
     fbAsiAnalogRead     : FB_ReadInput_analog; // ASI 模拟输入 FB

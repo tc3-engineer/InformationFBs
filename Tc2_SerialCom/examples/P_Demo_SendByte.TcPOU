@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_SendByte" Id="{2b20d8dc-745e-5b69-9f46-be06703b61a3}" SpecialFunc="None">
+  <POU Name="P_Demo_SendByte" Id="{63d22478-5cf1-5be1-b4b9-ac85395ad051}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_SendByte
 VAR
     fbSerialLine : SerialLineControl;           // 后台通信，消费 bufTx 发往硬件

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_RealIsNaN" Id="{29fd8d68-3316-5c2a-a9ce-ae3e155220c2}" SpecialFunc="None">
+  <POU Name="P_Demo_RealIsNaN" Id="{8056d1a9-81b4-587d-9d88-cbca6e50fa22}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_RealIsNaN
 VAR
     rSensor : REAL;

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_CheckLicense" Id="{1d3f73db-b84a-5750-bb49-f6df98389a6f}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_CheckLicense" Id="{b3edf49c-1eab-5eb9-9870-50a6f184c285}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_CheckLicense
 VAR
     fbFB_CheckLicense : FB_CheckLicense; // FB_CheckLicense 实例

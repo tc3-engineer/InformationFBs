@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_MC_Jog" Id="{a641041b-7117-5509-9c1c-8be673fda003}" SpecialFunc="None">
+  <POU Name="P_Demo_MC_Jog" Id="{f8f2587a-18dc-5d14-9c8b-6e8b33060117}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_MC_Jog
 VAR
     fbJog           : MC_Jog;       // 手动寸动 FB 实例

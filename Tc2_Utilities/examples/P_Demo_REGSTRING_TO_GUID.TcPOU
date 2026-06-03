@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_REGSTRING_TO_GUID" Id="{2da7903c-e56c-587b-a63f-9d4af23375c2}" SpecialFunc="None">
+  <POU Name="P_Demo_REGSTRING_TO_GUID" Id="{5d1973ee-31d9-5c5f-9398-ce0a2a49ffef}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_REGSTRING_TO_GUID
 VAR
     sRegStr : STRING(38) := '{12345678-1234-5678-9ABC-123456789ABC}'; // 工业语义：注册表 GUID 串

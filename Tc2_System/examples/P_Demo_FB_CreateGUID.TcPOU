@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_CreateGUID" Id="{12a4399d-1223-51ee-ba5b-2f2fd0b27faa}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_CreateGUID" Id="{77c12855-baa7-5be0-be06-1fc48742cc5d}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_CreateGUID
 VAR
     fbFB_CreateGUID : FB_CreateGUID; // FB_CreateGUID 实例

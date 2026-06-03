@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_ADSREAD" Id="{7c1486c3-37ec-5d70-88af-4b261c9af3f2}" SpecialFunc="None">
+  <POU Name="P_Demo_ADSREAD" Id="{1d43ca84-d2d3-5464-b1ce-8c58042af5c0}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_ADSREAD
 VAR
     fbADSREAD       : ADSREAD; // ADSREAD 实例
