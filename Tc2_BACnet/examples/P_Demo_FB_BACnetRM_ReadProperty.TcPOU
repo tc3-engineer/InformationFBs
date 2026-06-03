@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_BACnetRM_ReadProperty" Id="{12ba6ceb-13bb-59d3-b59f-4de4ab0c88a5}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_BACnetRM_ReadProperty
+VAR
+    fbClient : FB_BACnet_Client := (
+        nDeviceInstance := 42,
+        tReadCycleTime := T#10S,
+        nMaxParallelRequests := 255);
+    fbDevice : FB_BACnetRM_Device := (Client := fbClient);
+    fbRemoteAI : FB_BACnetRM_AI := (Client := fbClient, nObjectInstance := 1);
+
+    fbRead : FB_BACnetRM_ReadProperty := (Client := fbClient);
+
+    bReadHighLimit : BOOL := FALSE;            // 在线写 TRUE 触发一次读
+    fRemoteHighLimit : REAL;                   // 读回来的对端 HighLimit
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景:运维偶尔要读对端 device-id=42 的 AI:1 的 High_Limit 属性(不是 Present_Value,
+//       不需要周期拉);RM 对象 fbRemoteAI 已经在做周期读 Present_Value,这次
+//       一次性读其它属性。
+// 价值:按需读,典型 < 1 秒响应;不污染 client 的周期请求带宽;复用现有 RM
+//       对象做 iObject 指针。
+// 验证:1) 上电等 client 连接成功(fbDevice.bOperational=TRUE)。2) BACnet
+//       Explorer 在 device 42 的 AI:1 上设 High_Limit=99.0。3) 在线写 bReadHighLimit
+//       := TRUE,fbRead 应触发一次 ReadProperty,fbRead.bDone 短暂置位后清零,
+//       fRemoteHighLimit 应变为 99.0。
+// =============================================================================
+
+fbClient();
+fbDevice();
+fbRemoteAI();
+
+fbRead.bExecute := bReadHighLimit;
+IF fbRead.bExecute THEN
+    bReadHighLimit := FALSE;
+    fbRead.iObject := fbRemoteAI;             // 通过 RM 对象指定目标
+    fbRead.ePropID := E_BACnet_PropertyIdentifier.PropHighLimit;
+    fbRead.pData   := ADR(fRemoteHighLimit);
+    fbRead.nData   := SIZEOF(fRemoteHighLimit);
+END_IF
+
+fbRead();
+
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

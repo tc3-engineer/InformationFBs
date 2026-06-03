@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_BACnet_BI" Id="{e29051db-faf7-5785-9b29-fde0a666653d}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_BACnet_BI
+VAR
+    // 门磁开关状态暴露给 BMS,带 30 秒延时报警
+    fbDoorOpen   : FB_BACnet_BI := (
+        sObjectName := 'Door_3F_East',
+        sDescription := 'Floor 3 East office door open switch',
+        sInactiveText := 'Closed',          // BMS 显示 "Closed" 而不是 0
+        sActiveText := 'Open',              // BMS 显示 "Open" 而不是 1
+        ePolarity := E_BACnet_Polarity.eNormal,  // 物理高电平 = open
+        bAlarmValue := TRUE,                // active(门开)算报警
+        bEventDetectionEnable := TRUE,
+        nNotificationClass := 11,           // 报警走 NC11
+        nTimeDelay := 30);                  // 开门 30 秒才报警(避免日常进出误报)
+
+    fbAlarmClass : FB_BACnet_NC := (
+        nObjectInstance := 11,
+        nNotificationClass := 11,
+        sDescription := 'Door alarms',
+        aAckRequired := [TRUE, TRUE, FALSE],
+        aPriority := [10, 11, 12]);
+
+    bDoorSensorPlc : BOOL := FALSE;         // 从 EL1809 端子读到的门磁信号
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景:楼宇安防 — CX 控制器接 100 个房间门磁开关,每个状态要暴露给 BMS,门开
+//       超 30 秒发报警走 NC11;BMS 上显示 "Open" / "Closed" 而不是 0/1。
+// 价值:Active_Text / Inactive_Text / Alarm_Value / Time_Delay / NC 路由全在
+//       一行声明里;手写 BACnet/IP 报文 + 状态机延时计数 + COV 推送至少 500+
+//       行,本 FB 一行声明完成。
+// 验证:1) 在线写 bDoorSensorPlc := TRUE,30 秒内 BACnet Explorer 看 Event_State
+//       应为 normal;30 秒后切到 OFFNORMAL,NC11 发出 alarm。2) bDoorSensorPlc
+//       := FALSE 后 Event_State 立刻切回 normal。3) Explorer 读 Active_Text /
+//       Inactive_Text 应分别为 'Open' / 'Closed'。
+// =============================================================================
+
+fbDoorOpen.bVal := bDoorSensorPlc;
+fbDoorOpen();
+fbAlarmClass();
+
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

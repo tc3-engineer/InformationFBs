@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_BACnet_ReadProperty" Id="{bd97390a-19b3-5ade-8418-d6aa9567f0ab}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_BACnet_ReadProperty
+VAR
+    fbLocalAv : FB_BACnet_AV := (
+        sObjectName := 'LocalAv',
+        fHighLimit := 90.0,
+        bHighLimitEnable := TRUE);
+
+    fbRead : FB_BACnet_ReadProperty;
+    bTrigger : BOOL := FALSE;
+    fLocalHighLimit : REAL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景:PLC 程序临时需要本机 fbLocalAv 的 HighLimit 属性值(虽然声明时设了
+//       90.0,但运维通过 BACnet 改过 — 想看当前值)。
+// 价值:不必为每个 BACnet 标准属性都在 FB 中加 getter 成员;BACnet stack 维护
+//       这些属性,本 FB 一行读出当前值。
+// 验证:1) 上电后 BACnet Explorer 把 fbLocalAv 的 HighLimit 改成 99.0。2) 在线
+//       写 bTrigger := TRUE,fbRead 应触发一次本机读,bDone 短暂置位后
+//       fLocalHighLimit 应为 99.0(不是 90.0,因为 Explorer 已经改过)。
+// 注意:本对象类型 PDF 未给独立示例,基于 §6.1.1 命名规则推导。
+// =============================================================================
+
+fbLocalAv();
+
+fbRead.bExecute := bTrigger;
+IF fbRead.bExecute THEN
+    bTrigger := FALSE;
+    fbRead.iObject := fbLocalAv;
+    fbRead.ePropID := E_BACnet_PropertyIdentifier.PropHighLimit;
+    fbRead.pData   := ADR(fLocalHighLimit);
+    fbRead.nData   := SIZEOF(fLocalHighLimit);
+END_IF
+
+fbRead();
+
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

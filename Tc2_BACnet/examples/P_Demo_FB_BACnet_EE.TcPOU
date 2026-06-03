@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_BACnet_EE" Id="{515f1685-c052-542b-9f97-a2df3dd5bd40}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_BACnet_EE
+VAR
+    // 同一个 fbAv:用 Intrinsic 报警限走 NC10,用 EE 预警限走 NC20
+    fbAv     : FB_BACnet_AV := (
+        sObjectName := 'TempAv',
+        eUnit := E_BA_Unit.eTemperature_DegreesCelsius,
+        bEnPgm := TRUE,
+        bEventDetectionEnable := TRUE,
+        bHighLimitEnable := TRUE,
+        fHighLimit := 87.0,                   // 87°C 触发"alarm"
+        nNotificationClass := 10,
+        aEventEnable := [TRUE, TRUE, TRUE]);
+
+    fbEE     : FB_BACnet_EE := (
+        sObjectName := 'TempPrewarning',
+        sDescription := 'Pre-alarm threshold for early warning',
+        nNotificationClass := 20,              // 预警走 NC20
+        eNotifyType := E_BACnet_NotifyType.eNotifyEvent,
+        aEventEnable := [TRUE, TRUE, TRUE],
+        stEventParameter := (
+            eEventType := E_BACnet_EventType.eOutOfRange,
+            stEventArgs := (stOutOfRange := (
+                nTimeDelay := 0,
+                fLowLimit  := 25.0,
+                fHighLimit := 82.0,            // 82°C 触发"event"(预警,比 alarm 低 5°C)
+                fDeadband  := 0.0))),
+        stObjectPropertyReference := F_BACnet_Reference(fbAv, PropPresentValue));
+
+    fbNC10   : FB_BACnet_NC := (nObjectInstance := 10, nNotificationClass := 10,
+                                aAckRequired := [TRUE, TRUE, FALSE], aPriority := [10, 11, 12]);
+    fbNC20   : FB_BACnet_NC := (nObjectInstance := 20, nNotificationClass := 20,
+                                aAckRequired := [FALSE, TRUE, FALSE], aPriority := [50, 60, 70]);
+
+    fTempVal : REAL := 22.0;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景:楼控加双限报警 — 温度 82°C 预警(走 NC20 黄色 event,提示运维注意),
+//       87°C 报警(走 NC10 红色 alarm,需 ack)。给运维一个缓冲时间。
+// 价值:在不重叠 Intrinsic Reporting 报警的前提下加预警限,等同于 BACnet 标准
+//       的双限报警;BMS 端两个事件类型用不同颜色显示。
+// 验证:1) 在线写 fTempVal := 83.0,BACnet Explorer 应收到 NC20 的 event 通知。
+//       2) 继续写 fTempVal := 88.0,Explorer 还应收到 NC10 的 alarm 通知。
+//       3) fTempVal := 22.0,两个 NC 都应发 normal 事件。
+// =============================================================================
+
+fbAv.fValPgm := fTempVal;
+fbAv();
+fbEE();
+fbNC10();
+fbNC20();
+
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

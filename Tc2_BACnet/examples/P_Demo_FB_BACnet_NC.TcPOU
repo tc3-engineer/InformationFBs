@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_BACnet_NC" Id="{0af99e61-f8ea-5d66-8c13-fdae7b4e042d}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_BACnet_NC
+VAR
+    // 配 1 个 NC10 + 1 个用 NC10 路由报警的 BV(NC 实例必须有对象引用才有意义)
+    fbAlarmClass : FB_BACnet_NC := (
+        nObjectInstance := 10,
+        nNotificationClass := 10,
+        sObjectName := 'NC_Alarms_BMS',
+        sDescription := 'Alarm notification class for BMS main display',
+        aAckRequired := [TRUE, TRUE, FALSE],     // OFFNORMAL / FAULT 需 ack;NORMAL 不需要
+        aPriority := [10, 11, 12]);              // 报警等级(BACnet 标准 0..255)
+
+    fbTestAlarm  : FB_BACnet_BV := (
+        sObjectName := 'TestAlarm',
+        sInactiveText := 'OK',
+        sActiveText := 'Alarm',
+        bAlarmValue := TRUE,
+        aEventEnable := [TRUE, TRUE, TRUE],
+        bEventDetectionEnable := TRUE,
+        nNotificationClass := 10,                // 路由到 NC10
+        aEventMessageTextsConfig := ['Test alarm raised', 'Sensor fault', 'Recovered']);
+
+    bRaiseAlarm  : BOOL := FALSE;                // 在线写 TRUE 触发一次报警
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景:楼控项目用 NC10 把所有 BMS 主屏报警分类路由;BMS 端能收到 BACnet
+//       ConfirmedEventNotification,自动产生告警条目并响铃。运维 ack 后 NC10
+//       维护已 ack 状态。
+// 价值:BACnet 标准的报警路由表,跨厂商 BMS 都识别;BMS 可远程改 Recipient_List
+//       增删订阅,无需 PLC 重启。
+// 验证:1) BACnet Explorer 连本机,订阅 NC10 的 Recipient_List。2) 在线写
+//       bRaiseAlarm := TRUE,Explorer 应收到一条 ConfirmedEventNotification,
+//       event type = TO_OFFNORMAL,priority=10,message='Test alarm raised'。
+//       3) bRaiseAlarm := FALSE,应收到一条 unconfirmed 的 NORMAL 通知。
+// =============================================================================
+
+fbTestAlarm.bEnPgm  := TRUE;
+fbTestAlarm.bValPgm := bRaiseAlarm;
+
+fbAlarmClass();
+fbTestAlarm();
+
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

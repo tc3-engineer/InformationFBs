@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_BACnetRM_Device" Id="{8c8dfd7a-c05d-53c9-a6ac-6e20490482d9}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_BACnetRM_Device
+VAR
+    fbClient : FB_BACnet_Client := (
+        nDeviceInstance := 42,
+        tReadCycleTime := T#5S,
+        nMaxParallelRequests := 20);
+
+    // 必须实例化 + 每周期调用,否则 client 不发 Who-Is,所有 RM 对象都跑不起来
+    fbRmDevice : FB_BACnetRM_Device := (Client := fbClient);
+
+    // 监视:bDeviceOnline 用于 PLC 业务逻辑决定是否发 RM 请求
+    bDeviceOnline : BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景:监控 BACnet 远端设备 42 的在线状态;一旦连接中断 PLC 停掉对应业务逻辑
+//       (避免一直发失败的请求填满带宽),恢复后自动续。
+// 价值:把 client + 远端设备拆两个 FB,monitor / discovery / fault detect 都自动
+//       化;PLC 端代码量从手写状态机 200 行降到 2 行。
+// 验证:1) 上电后等几秒,fbRmDevice.eSysState 应从 eInit → eDiscovery →
+//       eOperational,bDeviceOnline 同时为 TRUE。2) 断网测试:拔网线后 30 秒
+//       左右 eSysState 切到 eNoCommunication,bDeviceOnline 变 FALSE;恢复
+//       后又自动回到 eOperational。3) 不调用 fbRmDevice() 会让 client 永远
+//       停在 eInit,试一下看现象。
+// =============================================================================
+
+fbClient();
+fbRmDevice();
+
+// ---- 暴露给 PLC 业务用 ----
+bDeviceOnline := fbRmDevice.bOperational;
+
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

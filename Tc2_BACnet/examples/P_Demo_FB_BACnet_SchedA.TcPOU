@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_BACnet_SchedA" Id="{2d4f70d6-4c58-5442-a0e1-b51229a7b347}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_BACnet_SchedA
+VAR
+    // 房间温度设定点周时间表:工作日 7:00 升到 22°C,19:00 降到 18°C
+    fbRoomSchedA   : FB_BACnet_SchedA := (
+        sObjectName := 'RoomTempSchedule_3F',
+        sDescription := 'Floor 3 East zone temperature schedule',
+        aWeek := F_BACnet_SchedWeekly3xA(
+            E_BA_Weekday.eMonday, E_BA_Weekday.eFriday,
+            T#0H,  18.0,
+            T#7H,  22.0,
+            T#19H, 18.0),
+        fScheduleDefault := 18.0);             // 节假日 / 周末用默认值
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景:房间温度设定点按时间表自动切换,工作日 7:00 升到 22°C 让员工到岗时舒适,
+//       19:00 降到 18°C 进入节能模式;周末与节假日全天 18°C 节能。
+// 价值:BACnet 标准的时间表,BMS 端可视化拖时段;PLC 不用写一堆 IF 判时刻。
+// 验证:1) BACnet Explorer 读 Present_Value 应跟时段对应(早上 7 点之前 18.0,
+//       7 点后 22.0,19 点后 18.0)。2) 把系统时间临时改到 8:00,Present_Value
+//       应跳到 22.0。3) aObjectPropertyReferences 留空时本对象只暴露当前值,
+//       不写下游;实际工程中应在 aObjectPropertyReferences 加目标 AV_Setp 引用。
+// =============================================================================
+
+fbRoomSchedA();
+
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

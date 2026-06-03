@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_BACnetRM_WritePropertyEx" Id="{5c5a8fb2-7e97-503d-9060-2eca1cbd996f}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_BACnetRM_WritePropertyEx
+VAR
+    fbClient : FB_BACnet_Client := (
+        nDeviceInstance := 42,
+        tWriteCycleTime := T#10S,
+        nMaxParallelRequests := 255);
+    fbDevice : FB_BACnetRM_Device := (Client := fbClient);
+
+    fbWriteEx : FB_BACnetRM_WritePropertyEx := (Client := fbClient);
+    bWriteOutOfService : BOOL := FALSE;
+    bOutOfServiceVal : BOOL := TRUE;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景:一次性写远端 device 42 BO:1 的 Out_Of_Service;不为该对象专门建 RM
+//       实例。
+// 价值:比 WriteProperty 更轻量;适合大量一次性写命令。
+// 验证:1) 等 fbDevice.bOperational=TRUE。2) BACnet Explorer 在 device 42 BO:1
+//       上查 Out_Of_Service=FALSE。3) 在线写 bWriteOutOfService := TRUE,fbWriteEx
+//       应触发一次 WritePropertyEx,Out_Of_Service 应变 TRUE。
+// =============================================================================
+
+fbClient();
+fbDevice();
+
+fbWriteEx.bExecute := bWriteOutOfService;
+IF fbWriteEx.bExecute THEN
+    bWriteOutOfService := FALSE;
+    fbWriteEx.eObjType := E_BACnet_ObjectType.ObjBinaryOutput;
+    fbWriteEx.nObjInst := 1;
+    fbWriteEx.ePropID := E_BACnet_PropertyIdentifier.PropOutOfService;
+    fbWriteEx.pData   := ADR(bOutOfServiceVal);
+    fbWriteEx.nData   := SIZEOF(bOutOfServiceVal);
+END_IF
+
+fbWriteEx();
+
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

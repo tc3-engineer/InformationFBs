@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_BACnet_PC" Id="{5cce5e15-065e-5ed7-bf38-4024a2fdc3d4}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_BACnet_PC
+VAR
+    // 把累计脉冲直接换算成 kWh,BMS 上看到的就是 kWh 累计值
+    fbEnergyConv   : FB_BACnet_PC := (
+        sObjectName := 'EnergyKwh_AHU_3F',
+        sDescription := 'AHU floor 3 cumulative energy (kWh)',
+        eUnit := E_BA_Unit.eEnergy_KilowattHours,
+        fScale := 0.001,                      // 每脉冲 = 0.001 kWh
+        fMinPresValue := 0.0,
+        fMaxPresValue := 1.0E9);              // 1 GWh 上界(够民用大用户)
+
+    fEnergyKwhPlc  : REAL := 0.0;             // PLC 端把脉冲 × 0.001 后送来
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景:同电度表场景,但 BMS 端只关心 kWh 累计显示,不需要瞬时 Pulse_Rate;
+//       PLC 端已经把脉冲乘以 Scale 做好换算。
+// 价值:把 ACC 的"脉冲数 + Scale 分两个属性"折叠成"已经换算的工程量",BMS
+//       端读 Present_Value 即可直接显示,无需在画面里写公式;Adjust_Value 让
+//       运维"年度抄表后清零"或"换表后接续"。
+// 验证:1) 上电后 BACnet Explorer 读 Present_Value=0.0,Units=kilowatt-hours。
+//       2) 在线写 fEnergyKwhPlc := 123.456,Explorer 应看到 Present_Value=123.456。
+//       3) Explorer 写 Adjust_Value := 1000.0,Present_Value 应跳到 1000.0
+//       (Adjust 校正语义)。
+// 注意:本对象类型 PDF/InfoSys 仅在 §6.1.1 表中列出,未给独立示例,Adjust_Value
+//       由 BMS 端写入触发的具体行为以 BACnet 标准定义为准。
+// =============================================================================
+
+fbEnergyConv.fVal := fEnergyKwhPlc;
+fbEnergyConv();
+
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

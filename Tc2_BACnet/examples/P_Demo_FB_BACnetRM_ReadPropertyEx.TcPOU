@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_BACnetRM_ReadPropertyEx" Id="{4cd195cd-aacd-5b2c-ba1c-7545933f148f}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_BACnetRM_ReadPropertyEx
+VAR
+    fbClient : FB_BACnet_Client := (
+        nDeviceInstance := 42,
+        tReadCycleTime := T#10S,
+        nMaxParallelRequests := 255);
+    fbDevice : FB_BACnetRM_Device := (Client := fbClient);
+
+    // 不需要为 AI:1 建专门 RM 对象,Ex 版直接指定类型 + 实例号
+    fbReadEx : FB_BACnetRM_ReadPropertyEx := (Client := fbClient);
+
+    bReadLowLimit : BOOL := FALSE;
+    fRemoteLowLimit : REAL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景:一次性读远端 device 42 的 AnalogInput:1 的 Low_Limit;不为该对象专门建
+//       RM 实例(节省 PLC 内存 + router memory)。
+// 价值:比 ReadProperty 更轻量:无需 RM 对象;多个 Ex 同步触发可让 stack 自动
+//       合并成 RPM 请求(PDF §7.12)。
+// 验证:1) Client 连接成功后,BACnet Explorer 在 device 42 的 AI:1 上设
+//       Low_Limit=10.0。2) 在线写 bReadLowLimit := TRUE,fbReadEx 应触发一次
+//       ReadPropertyEx;bDone 短暂置位后 fRemoteLowLimit 应变为 10.0。
+// =============================================================================
+
+fbClient();
+fbDevice();
+
+fbReadEx.bExecute := bReadLowLimit;
+IF fbReadEx.bExecute THEN
+    bReadLowLimit := FALSE;
+    fbReadEx.eObjType := E_BACnet_ObjectType.ObjAnalogInput;
+    fbReadEx.nObjInst := 1;
+    fbReadEx.ePropID := E_BACnet_PropertyIdentifier.PropLowLimit;
+    fbReadEx.pData   := ADR(fRemoteLowLimit);
+    fbReadEx.nData   := SIZEOF(fRemoteLowLimit);
+END_IF
+
+fbReadEx();
+
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

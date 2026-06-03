@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_BACnet_SchedB" Id="{24561503-e092-5b27-91a4-35c99bc1a641}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_BACnet_SchedB
+VAR
+    // 走廊灯周时间表:工作日 6:30 开,19:30 关;周末全关
+    fbHallLightSchedB : FB_BACnet_SchedB := (
+        sObjectName := 'HallLightSchedule_3F',
+        sDescription := 'Floor 3 hallway light schedule',
+        aWeek := F_BACnet_SchedWeekly3xB(
+            E_BA_Weekday.eMonday, E_BA_Weekday.eFriday,
+            T#0H,    FALSE,
+            T#6H30M, TRUE,
+            T#19H30M, FALSE),
+        bScheduleDefault := FALSE);
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景:走廊灯按时间表自动开关,工作日 6:30 开,19:30 关;周末全关。
+// 价值:BACnet 标准时间表,BMS 端拖动调整 / 远程查询。
+// 验证:1) BACnet Explorer 读 Present_Value=FALSE(下班时段)。2) 临时把
+//       系统时间改到 8:00 Monday,Present_Value 应跳到 TRUE。3) 周末
+//       Present_Value 为 FALSE。
+// =============================================================================
+
+fbHallLightSchedB();
+
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

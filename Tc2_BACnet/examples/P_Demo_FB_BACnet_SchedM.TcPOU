@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_BACnet_SchedM" Id="{10872586-ddcf-5578-9589-7927c7ce7521}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_BACnet_SchedM
+VAR
+    // 楼宇运行场景周时间表:工作日 6 点切到 Day(1),22 点切到 Night(2)
+    fbBuildingSchedM : FB_BACnet_SchedM := (
+        sObjectName := 'BuildingModeSchedule',
+        sDescription := 'Whole building mode schedule',
+        aWeek := F_BACnet_SchedWeekly3xM(
+            E_BA_Weekday.eMonday, E_BA_Weekday.eFriday,
+            T#0H,  2,
+            T#6H,  1,
+            T#22H, 2),
+        nScheduleDefault := 4);                // 周末 / 节假日 Eco
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景:楼宇运行模式(1=Day / 2=Night / 3=Holiday / 4=Eco)按时间表自动切换,
+//       工作日 6 点切 Day,22 点切 Night;周末全天 Eco。
+// 价值:把 4 种模式的切换标准化为一个 BACnet Schedule,BMS 端可视化时段;下游
+//       空调 / 灯光 / 电梯调度都引用本 Schedule 自动跟随。
+// 验证:1) 工作日早上 BACnet Explorer 读 Present_Value=1(Day)。2) 临时改
+//       系统时间到 23:00,Present_Value=2(Night)。3) 周末 Present_Value=4(Eco)。
+// =============================================================================
+
+fbBuildingSchedM();
+
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

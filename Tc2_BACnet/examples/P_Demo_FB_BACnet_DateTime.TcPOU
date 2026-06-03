@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_BACnet_DateTime" Id="{ad8ea2bf-13d2-5c92-99a4-04de62315e4c}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_BACnet_DateTime
+VAR
+    fbBatchTimestamp : FB_BACnet_DateTime := (
+        sObjectName := 'BatchTimestamp',
+        sDescription := 'Timestamp the current batch was started');
+    stNow : ST_BA_DateTime := (
+        stDate := (nYear := 126, eMonth := E_BA_MONTH.eJune,
+                   nDay := E_BA_DAY.eDay03, eDayOfWeek := E_BA_WEEKDAY.eWednesday),
+        stTime := (nHour := 14, nMinute := 30, nSecond := 0, nHundredths := 0));
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景:把"批次开始时间戳"暴露给 BMS,做时序记录用。
+// 价值:DateTime 是 BACnet 标准的完整时间戳容器,BMS 识别;比拼接 Date+Time
+//       两个对象省 1 个对象 + 保证读取原子性(BMS 端一次拉读不会出现日期与
+//       时刻字段不一致的瞬间)。
+// 验证:1) BACnet Explorer 读 fbBatchTimestamp.Present_Value 应显示
+//       2026-06-03 Wed 14:30:00.00。2) 在线改 stNow.stTime.nHour := 15,
+//       Explorer 跟随。
+// 注意:stDate.nYear := 126 表示 2026 年(BACnet 标准从 1900 起算)。
+// =============================================================================
+
+fbBatchTimestamp.stValue := stNow;
+fbBatchTimestamp();
+
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

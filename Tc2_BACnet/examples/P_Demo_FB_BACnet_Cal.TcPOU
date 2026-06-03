@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_BACnet_Cal" Id="{ee030c55-3389-52db-b9ee-ad43621528ae}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_BACnet_Cal
+VAR
+    // 2026 中国法定节假日表简化版:元旦 + 国庆 + 母亲节
+    fbHolidayCal : FB_BACnet_Cal := (
+        sObjectName := 'PublicHolidays_2026',
+        sDescription := 'PRC public holidays 2026',
+        aDateList := [
+            // 元旦
+            (eType := E_BA_DateValChoice.eDate,
+             uDate := F_BA_DateVal(2026, E_BA_Month.eJanuary, 1)),
+            // 国庆 10/1-10/7
+            (eType := E_BA_DateValChoice.eDateRange,
+             uDate := F_BA_DateRangeVal(nFromYear := 2026, E_BA_Month.eOctober, 1,
+                                        nToYear := 2026, E_BA_Month.eOctober, 7)),
+            // 每年 5 月第 2 个周日 = 母亲节
+            (eType := E_BA_DateValChoice.eWeekNDay,
+             uDate := F_BA_WeekNDayVal(E_BA_Weekday.eSunday, E_BA_Week.eWeek2, E_BA_Month.eMay))
+        ]);
+
+    bIsHolidayToday : BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景:楼控项目要按 节假日不开空调 / 灯光按节能时段 运行,运维一次配好全年
+//       节假日表后 Schedule 自动切换;母亲节这种浮动日期用 WeekNDay 一次搞定。
+// 价值:BACnet 标准的节假日表,Schedule 引用一行解决;BMS 端可远程改节假日表,
+//       无需停 PLC;母亲节用 WeekNDay 表达后跨年不用维护。
+// 验证:1) 今天若是 2026-10-03(国庆假期内),BACnet Explorer 读 Present_Value
+//       应为 TRUE,bIsHolidayToday 应为 TRUE。2) 今天若是 2026-05-10(母亲节),
+//       Present_Value 也应为 TRUE。3) 今天若是普通工作日,Present_Value 为 FALSE。
+// =============================================================================
+
+fbHolidayCal();
+bIsHolidayToday := fbHolidayCal.bPresVal;
+
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

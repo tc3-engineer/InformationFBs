@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_BACnet_AO" Id="{c7d93838-0b21-5834-8032-4048b56d808b}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_BACnet_AO
+VAR
+    // 基础 AO:楼控 VAV 风阀指令(0..100%),Program 优先级由 PLC 自动控制,
+    //        BMS 仍可在 Manual Operator(8)槽位手动覆盖
+    fbValveCmd       : FB_BACnet_AO := (
+        sObjectName := 'Valve_3F_East',
+        sDescription := 'Floor 3 East VAV valve command',
+        sDeviceType := 'AnalogValve_0_10V',
+        eUnit := E_BA_Unit.eOther_Percent,
+        fMinPresValue := 0.0,
+        fMaxPresValue := 100.0,
+        fResolution := 0.5,
+        fRelinquishDefault := 0.0);     // 所有人都释放时回退到全关阀(安全)
+
+    fAutoValveCmd    : REAL := 30.0;    // PLC 算出来的自动指令
+    bAutoModeEnable  : BOOL := FALSE;   // 在线写 TRUE 让 PLC 开始写 Program 优先级
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景:VAV 风阀控制,PLC 根据室温偏差算阀位(0..100%)并写 Program 优先级,
+//       运维人员若要强制开/关阀位,可在 BMS 上手动覆盖(Manual Operator,槽 8)。
+// 价值:用基础类 AO,PLC 占 1 个槽位、BMS 占 1 个槽位,Present_Value 自动取较
+//       高优先级(8>16);BMS 释放后 PLC 自动恢复控制——无需 PLC 写"是否被覆盖"
+//       判断。手写要管 16 个 priority 槽位状态、Relinquish_Default 回退、BMS
+//       写访问回调,至少 500+ 行;本 FB 一行声明完成。
+// 验证:登录后 1) 在线写 fAutoValveCmd := 50.0,bAutoModeEnable := TRUE,BACnet
+//       Explorer 读 Present_Value 应为 50.0,Priority_Array[16] = 50,其它为
+//       NULL。2) 在 Explorer 中以 priority := 8 写 Present_Value := 80,本机
+//       Present_Value 应跳到 80(高优先级),Priority_Array[8] = 80。3) 释放
+//       priority 8 后 Present_Value 回到 50.0(回到 PLC 控制)。
+// =============================================================================
+
+// ---- PLC 写 Program 优先级 ----
+fbValveCmd.bEnPgm  := bAutoModeEnable;        // TRUE = PLC 占槽位 / FALSE = 释放
+fbValveCmd.fValPgm := fAutoValveCmd;          // 自动算出来的阀位
+
+// ---- 必须每周期调用一次 ----
+fbValveCmd();
+
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

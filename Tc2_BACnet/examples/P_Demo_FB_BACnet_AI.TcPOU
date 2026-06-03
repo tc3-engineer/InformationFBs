@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_BACnet_AI" Id="{2a9f84df-f7eb-5eff-a102-858f495de50e}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_BACnet_AI
+VAR
+    // 基础 AI:暴露一个 PT1000 温度传感器读数给 BMS,带高/低限报警 + COV
+    fbRoomTemp     : FB_BACnet_AI := (
+        sObjectName  := 'RoomTemp_3F_East',
+        sDescription := 'Floor 3 East zone PT1000',
+        sDeviceType  := 'TemperatureSensor',
+        eUnit        := E_BA_Unit.eTemperature_DegreesCelsius,
+        fMinPresValue := -50.0,
+        fMaxPresValue := 150.0,
+        fCovIncrement := 0.5,              // 超过 0.5°C 才向订阅者推送 COV
+        fHighLimit := 30.0,
+        fLowLimit  := 5.0,
+        bHighLimitEnable := TRUE,
+        bLowLimitEnable  := TRUE,
+        nTimeDelay       := 60,            // 越限 60 秒才报警
+        nTimeDelayNormal := 30,            // 恢复 30 秒才解警
+        bEventDetectionEnable := TRUE,
+        nNotificationClass := 10);         // 报警走 NC 实例号 10
+
+    // 报警接收方:本机必须有一个 NC10 的实例,否则报警发不出去
+    fbAlarmClass   : FB_BACnet_NC := (
+        nObjectInstance := 10,
+        nNotificationClass := 10,
+        sDescription := 'Temperature high/low alarms',
+        aAckRequired := [TRUE, TRUE, FALSE],
+        aPriority    := [10, 11, 12]);
+
+    fRoomTempPlc   : REAL := 22.0;         // 从 PLC 其它代码(滤波后)送来的工程值
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景:楼宇 BMS 项目要把控制器上挂的 PT1000 温度传感器暴露给 Honeywell EBI 做
+//       趋势记录 + 报警;BACnet 标准要求带工程单位 ℃、量程 -50~150、超 30°C
+//       持续 60 秒发 OFFNORMAL 报警走 NC10。
+// 价值:声明 + 一行 fb() 调用,BACnet 协议层 / 报警延时计数 / COV 推送全部由
+//       Tc3_BACnetRev14 stack 处理。手写 BACnet/IP 报文 + 报警延时计数器 + COV
+//       订阅管理至少 2000+ 行;此处一行声明完成。
+// 验证:登录后 1) 在线写 fRoomTempPlc := 35.0,等 60 秒后用 BACnet Explorer 看
+//       Event_State 应切到 high_limit;再写回 fRoomTempPlc := 22.0 等 30 秒后
+//       恢复 normal。2) BACnet Explorer 订阅 COV 后,fRoomTempPlc 每变化 ≥ 0.5°C
+//       应能看到 COV 通知;< 0.5°C 不发。
+// =============================================================================
+
+// ---- 喂 Present_Value 后周期调用 FB(必须每周期一次,且与其它 BACnet FB 同周期) ----
+fbRoomTemp.fVal := fRoomTempPlc;
+fbRoomTemp();
+fbAlarmClass();
+
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

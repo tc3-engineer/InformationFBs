@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_BACnet_Time" Id="{2d192d24-1b9a-597e-96c9-19474a7225dc}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_BACnet_Time
+VAR
+    fbLastBackupTime : FB_BACnet_Time := (
+        sObjectName := 'LastBackupTime',
+        sDescription := 'Time of day when last data backup finished');
+    stNow : ST_BA_Time := (
+        nHour := 14, nMinute := 30, nSecond := 0, nHundredths := 0);
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景:把"今日数据备份完成时刻"暴露给 BMS,运维查看;无需 DateTime 多余的
+//       日期字段。
+// 价值:Time 是 BACnet 标准的轻量时刻容器,BMS 识别;比字符串 '14:30:00' 节省
+//       解析,nHundredths 字段提供百分秒精度。
+// 验证:1) BACnet Explorer 读 fbLastBackupTime.Present_Value 应显示 14:30:00.00。
+//       2) 把 stNow.nHour := 15 在线改,Explorer 跟随更新。
+// 注意:nHundredths 范围 0..99 而不是 0..999(BACnet 标准百分秒,不是毫秒)。
+// =============================================================================
+
+fbLastBackupTime.stValue := stNow;
+fbLastBackupTime();
+
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

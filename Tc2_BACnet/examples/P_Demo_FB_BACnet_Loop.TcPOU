@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_BACnet_Loop" Id="{03f2d97e-7b23-5f13-86dd-1aea7a933949}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_BACnet_Loop
+VAR
+    // 简单回路:PID 参数 BMS 可整定,setpoint/process/output 是 FB 内部 REAL
+    fbLoopInternal : FB_BACnet_Loop := (
+        bEn := TRUE,
+        sObjectName := 'TempLoop_3F_East',
+        sDescription := 'PI controller for floor 3 east room temperature',
+        eOutputUnit := E_BA_Unit.eOther_Percent,
+        eAction := E_BA_Action.eReverse,           // 制冷:温度↑ → 阀位↓
+        fProportionalConstant := 5.0,              // Kp = 5
+        fIntegralConstant := 180,                  // 积分时间 Ti = 180 秒
+        fSetpoint := 20.0,                         // 默认 20°C 设定点
+        fMaximumOutput := 100.0,                   // 阀位上限 100%
+        fMinimumOutput := 0.0);
+
+    fRoomTempPlc : REAL := 22.0;                   // 从 PT1000 读出来的过程值
+    fValveCmdOut : REAL;                           // 算出来的阀位(PLC 端送给 AO)
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景:房间温度 PID 控温 — 每个房间一只 PT1000 + 一只 0..10V 阀门,运维想在
+//       BMS 上在线整定 PID(房间负载随季节变化,要调 Kp / Ti)。
+// 价值:Loop 对象把 PID 参数 BACnet 标准化暴露,运维在 BMS 上直接调,无需每
+//       次登录 PLC 改代码;eAction = eReverse 适合制冷,设错方向系统会发散。
+// 验证:1) BACnet Explorer 读 Loop 的 Proportional_Constant=5.0,
+//       Integral_Constant=180,Setpoint=20.0。2) 在线写 fRoomTempPlc := 23.0,
+//       几个周期后 fValveCmdOut 应增大(温度高 + 制冷反向动作 → 阀位增加)。
+//       3) Explorer 写 Setpoint := 18.0,fValveCmdOut 应进一步增大(误差变大)。
+// =============================================================================
+
+fbLoopInternal.fCtrlVar := fRoomTempPlc;          // 喂过程值
+fbLoopInternal();
+fValveCmdOut := fbLoopInternal.fOutput;           // 取输出送下游 AO
+
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

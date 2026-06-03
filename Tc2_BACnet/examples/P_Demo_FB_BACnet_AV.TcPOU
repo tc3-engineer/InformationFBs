@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_BACnet_AV" Id="{0cefa40c-93ae-570a-8be1-e860bee12c3f}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_BACnet_AV
+VAR
+    // _Setp 变体:房间温度设定点,BMS 可写,PLC 周期读;无命令优先级,
+    //              last-writer-wins(PDF §6.1.2)
+    fbRoomSetp        : FB_BACnet_AV_Setp := (
+        sObjectName := 'RoomSetp_3F_East',
+        sDescription := 'Floor 3 East zone temperature setpoint',
+        eUnit := E_BA_Unit.eTemperature_DegreesCelsius,
+        fValue := 22.0);             // 上电默认 22°C(夏季舒适区中点)
+
+    bResetSetpToDefault : BOOL := FALSE;   // 在线写 TRUE 把 setpoint 重置
+    fCurrentSetpoint    : REAL;            // PLC 内部 PID 用到的当前设定点
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景:楼宇 BMS 项目每间办公室都要让操作员从上位机设置温度设定点(早班 22°C
+//       / 晚班 26°C),PLC 内部 PID 控温要读这个设定点。
+// 价值:用 _Setp 变体一行声明,BMS 直接 WriteProperty 改值;PLC 只用读
+//       fbRoomSetp.fValue,无需判"BMS 是否在写"。换成基础类 AV + 命令优先级
+//       的话,PLC 也要写 Program 优先级,逻辑反而复杂。
+// 验证:登录后 1) BACnet Explorer 读 Present_Value 应为 22.0。2) BMS 写
+//       Present_Value := 24.5,fCurrentSetpoint 在下个 PLC 周期变为 24.5。
+//       3) PLC 在线写 bResetSetpToDefault := TRUE,fCurrentSetpoint 跳回 22.0,
+//       BMS 端也立刻看到 22.0。注意:不要把 fbRoomSetp.fValue := 22.0 写在
+//       周期主循环,否则 BMS 写下来的值会被一直覆盖(PDF §6.3.1 强调)。
+// =============================================================================
+
+// ---- 条件触发的属性写入:避免周期覆盖 BMS 端值 ----
+IF bResetSetpToDefault THEN
+    bResetSetpToDefault := FALSE;
+    fbRoomSetp.fValue := 22.0;             // 仅在触发条件下复位
+END_IF
+
+fbRoomSetp();
+fCurrentSetpoint := fbRoomSetp.fValue;     // 喂给本地 PID
+
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

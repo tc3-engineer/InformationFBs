@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_BACnet_MV" Id="{cab2215d-aeae-5f50-976a-088a89d2f59a}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_BACnet_MV
+VAR
+    // 全楼运行场景:Day/Night/Holiday/Eco
+    fbBuildingMode  : FB_BACnet_MV := (
+        sObjectName := 'BuildingMode',
+        sDescription := 'Whole-building operating scenario',
+        aStateText := ['Day', 'Night', 'Holiday', 'Eco'],
+        nRelinquishDefault := 1);            // 全释放回退到 Day(安全的常用默认)
+
+    nLocalSetMode   : UDINT := 1;             // 从本地 HMI / 调度脚本算出来的当前场景
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景:商办楼希望运维一键切 "工作日 / 周末 / 节假日 / 节能" 四种运行场景,
+//       切换后自动改变全楼空调时间表、灯光场景、电梯调度策略等。
+// 价值:一个 MV 包装 "全楼模式",所有下游对象都通过引用本 MV 跟随;运维只改
+//       一个值代替改几十个设定。BMS 端可直接看 State_Text 知道当前场景。
+// 验证:1) BACnet Explorer 读 Present_Value=1 / 'Day'。2) 在线写 nLocalSetMode
+//       := 4,Explorer 应看到 Present_Value=4 / 'Eco'。3) Explorer 用 priority
+//       := 8 写 3,Present_Value=3 / 'Holiday'(高优先级覆盖)。释放后回到
+//       PLC 控制的 4。
+// =============================================================================
+
+fbBuildingMode.bEnPgm  := TRUE;
+fbBuildingMode.nValPgm := nLocalSetMode;
+fbBuildingMode();
+
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

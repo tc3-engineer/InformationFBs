@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_BACnetRM_BO" Id="{312c3a02-0658-5cc9-947e-a6c8f216d0a4}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_BACnetRM_BO
+VAR
+    fbClient   : FB_BACnet_Client := (
+        nDeviceInstance := 42,
+        tReadCycleTime := T#5S,
+        nMaxParallelRequests := 20);
+    fbDevice   : FB_BACnetRM_Device := (Client := fbClient);
+
+    // 引用远端 device 42 的对应对象(实例号 1)
+    fbRemote   : FB_BACnetRM_BO := (
+        Client := fbClient,
+        nObjectInstance := 1);
+
+    val        : BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景:把远端 BACnet 设备(device-id=42)中实例号 1 的对应对象 Present_Value 拉
+//       到本机 PLC 用 — 例如对端房间温度引到本机 PID 做综合控制。
+// 价值:周期拉值 + 状态监控全自动,PLC 端只读一个成员;BACnet 标准跨厂商通用,
+//       无需为每种品牌 BMS 单独写驱动。
+// 验证:1) BACnet Explorer 在 device-id=42 上模拟一个对应对象实例 1,设置一个
+//       初值(FALSE)。2) 上电后等几秒 fbClient.bConnected=TRUE,fbDevice.
+//       bOperational=TRUE。3) 等一个 tReadCycleTime(5 秒)后 fbRemote.bPresVal 应
+//       变为 Explorer 端设的值。4) Explorer 改值,5 秒内 PLC 端 val 应跟随。
+// =============================================================================
+
+fbClient();
+fbDevice();
+fbRemote();
+
+// ---- 暴露给 PLC 业务用 ----
+val := fbRemote.bPresVal;
+
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>
