@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_KL6821Config" Id="{0c40fa41-ba74-539a-a23c-f351f444a08d}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_KL6821Config
+VAR
+    fbKL6821Config        : FB_KL6821Config;
+    stTerminalIn  AT %I*  : ST_KL6821InData;       // SysMgr 链到 KL6821 输入字节
+    stTerminalOut AT %Q*  : ST_KL6821OutData;      // SysMgr 链到 KL6821 输出字节
+    stBridgeIn            : ST_KL6821InData;       // 与通信 FB 之间的内部桥
+    stBridgeOut           : ST_KL6821OutData;
+
+    bConfigEnable         : BOOL := TRUE;          // 上电就触发配置（标准做法）
+    bConfigDone           : BOOL;                   // 配置完成镜像
+    bConfigErr            : BOOL;                   // 配置错误
+    nLastErr              : UDINT;                  // 错误号
+    sTerminalInfo         : STRING;                 // 端子名 + 固件版本
+    wTermDesc             : WORD;                   // 端子型号（应为 6821）
+    wFwVersion            : WORD;                   // 固件版本号
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：KL6821 DALI 端子上电时把 KBus 看门狗动作、两路 DI 触发的 DALI 命令、
+//       内置电源工作模式三类参数写到端子 EEPROM；这是所有 DALI 工程的"第
+//       一句代码"。本例选了"应急安全"配置：KBus 看门狗触发时端子自动让灯
+//       全亮（Recall MAX）；DI2 上升沿（楼梯间按钮）也是一键全亮。
+//
+// 价值：替代 KS2000 手动配端子的离线流程；让端子参数跟 PLC 工程版本绑定，
+//       工程更新时自动重配。同时端子 DI 硬触发使得 PLC 死机也能保持物理按
+//       钮响应——这是工业 / 楼宇照明的"故障安全"机制。
+//
+// 验证步骤：
+//   1. SysMgr 链 KL6821 输入字节区到 stTerminalIn，输出到 stTerminalOut，
+//      并把本程序与 P_Demo_FB_KL6821Communication（同库下）放进同一任务。
+//   2. 引用 Tc2_DALI 库，编译，登录，运行。
+//   3. 上电后 1-2 个周期内：bConfigDone（fbKL6821Config.bBusy = FALSE）应为
+//      TRUE，sTerminalInfo 应为 "Terminal KL6821 / Firmware ..."。
+//   4. wTermDesc 应等于 6821（10 进制）；wFwVersion 反映端子固件。
+//   5. 故障注入：把 K-Bus 主断电使 KBus 看门狗触发——端子应把所连 DALI 灯
+//      全部点亮（eDALIV2CommandRecallMaxLevel 生效）。
+//   6. 按 KL6821 DI2 按钮 → 灯全亮（按本配置 DI2 上升沿 = RecallMaxLevel）。
+//   7. 把 IO mapping 断开看 nLastErr = 16#0007（端子无响应）。
+// =============================================================================
+
+// 单次完整调用：所有 VAR_INPUT 显式赋值
+fbKL6821Config(
+    bConfigurate           := bConfigEnable,
+    // —— 选 RecallMaxLevel 让 PLC 死机时灯全亮（应急照明保险）——
+    eCommandKBusWatchdog   := eDALIV2CommandRecallMaxLevel,
+    // —— DI1 上升沿 = 关灯（接消防联动按钮：火警时关闭非应急灯）——
+    eCommandDI1RisingEdge  := eDALIV2CommandOff,
+    eCommandDI1FallingEdge := eDALIV2CommandDoNothing,
+    // —— DI2 上升沿 = 全亮（接楼梯间一键开灯按钮）——
+    eCommandDI2RisingEdge  := eDALIV2CommandRecallMaxLevel,
+    eCommandDI2FallingEdge := eDALIV2CommandDoNothing,
+    // —— 内置电源开（小 DALI 网，<32 个负载）——
+    ePowerSupplyMode       := eDALIV2PowerSupplyModeOn,
+    nOptions                := 0,
+    stInDataTerminal       := stTerminalIn,
+    stOutDataTerminal      := stTerminalOut,
+    stInData               := stBridgeIn,
+    stOutData              := stBridgeOut
+);
+
+// 把输出镜像出来观察
+bConfigDone   := NOT fbKL6821Config.bBusy;
+bConfigErr    := fbKL6821Config.bError;
+nLastErr      := fbKL6821Config.nErrorId;
+sTerminalInfo := fbKL6821Config.sDescription;
+wTermDesc     := fbKL6821Config.nTerminalDescription;
+wFwVersion    := fbKL6821Config.nFirmwareVersion;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

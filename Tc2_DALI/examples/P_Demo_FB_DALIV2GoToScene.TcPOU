@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_DALIV2GoToScene" Id="{867678b6-d215-57a4-b60c-2508d82e2c64}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_DALIV2GoToScene
+VAR
+    fbFB_DALIV2GoToScene        : FB_DALIV2GoToScene;
+    stCommandBuffer : ST_DALIV2CommandBuffer;
+
+    bTrigger        : BOOL;
+    nLampAddr        : BYTE := 0;
+
+    nSceneNumber     : BYTE := 1;
+
+    bBusy           : BOOL;
+    bErr            : BOOL;
+    nErrId          : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：触发会议室『演示模式』场景（场景 1）：广播本 FB 给所有灯同时切到该场景。
+//
+// 价值：替代 PLC 端硬编码各灯亮度；场景与代码解耦。
+//
+// 验证步骤：
+//   1. 通信 FB 跑起；编译；登录。
+//   2. 必须先用 P_Demo_FB_DALIV2SetScene 给每盏灯配置场景 1 的目标亮度。
+//   3. 把 eAddrType 改为 eDALIV2AddrTypeBroadcast（默认 Short 仅触发一盏）。
+//   4. 在线 bTrigger 一次上升沿；等 bBusy 回 FALSE。
+//   5. 所有灯应按各自场景 1 设定值调亮度（不同灯调到不同亮度）。
+// =============================================================================
+fbFB_DALIV2GoToScene(
+    bStart           := bTrigger,
+    nAddr            := nLampAddr,
+    eAddrType        := eDALIV2AddrTypeShort,
+    eCommandPriority := eDALIV2CommandPriorityMiddle,
+    nScene           := nSceneNumber,
+    stCommandBuffer  := stCommandBuffer
+);
+
+bBusy  := fbFB_DALIV2GoToScene.bBusy;
+bErr   := fbFB_DALIV2GoToScene.bError;
+nErrId := fbFB_DALIV2GoToScene.nErrorId;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

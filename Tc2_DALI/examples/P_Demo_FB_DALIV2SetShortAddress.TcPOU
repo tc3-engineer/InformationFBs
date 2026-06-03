@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_DALIV2SetShortAddress" Id="{4db889c2-a962-56c4-ab3e-032935814580}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_DALIV2SetShortAddress
+VAR
+    fbFB_DALIV2SetShortAddress        : FB_DALIV2SetShortAddress;
+    stCommandBuffer : ST_DALIV2CommandBuffer;
+
+    bTrigger        : BOOL;
+    nLampAddr        : BYTE := 0;
+
+    nNewShortAddr    : BYTE := 5;
+
+    bBusy           : BOOL;
+    bErr            : BOOL;
+    nErrId          : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：给当前寻址到的灯写入 short address 5。
+//
+// 价值：DALI 寻址过程中固定地址；按设计表精确配置。
+//
+// 验证步骤：
+//   1. 通信 FB 跑起；编译；登录。
+//   2. 必须先做 random addressing 流程让灯被 SELECT，本例简化只展示命令。
+//   3. 在线 bTrigger 一次上升沿；等 bBusy 回 FALSE。
+//   4. 用 P_Demo_FB_DALIV2QueryShortAddress 应能用 short addr 5 查到这盏灯。
+// =============================================================================
+fbFB_DALIV2SetShortAddress(
+    bStart           := bTrigger,
+    nAddr            := nLampAddr,
+    eAddrType        := eDALIV2AddrTypeShort,
+    eCommandPriority := eDALIV2CommandPriorityMiddle,
+    nShortAddress    := nNewShortAddr,
+    stCommandBuffer  := stCommandBuffer
+);
+
+bBusy  := fbFB_DALIV2SetShortAddress.bBusy;
+bErr   := fbFB_DALIV2SetShortAddress.bError;
+nErrId := fbFB_DALIV2SetShortAddress.nErrorId;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

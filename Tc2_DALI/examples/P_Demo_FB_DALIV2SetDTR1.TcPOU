@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_DALIV2SetDTR1" Id="{a5610d6d-8f07-54a7-8670-8dfeab7183c3}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_DALIV2SetDTR1
+VAR
+    fbFB_DALIV2SetDTR1        : FB_DALIV2SetDTR1;
+    stCommandBuffer : ST_DALIV2CommandBuffer;
+
+    bTrigger        : BOOL;
+    nLampAddr        : BYTE := 0;
+
+    nDTR1Value       : BYTE := 50;
+
+    bBusy           : BOOL;
+    bErr            : BOOL;
+    nErrId          : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：底层写 DTR1。
+//
+// 价值：底层操作。
+//
+// 验证步骤：
+//   1. 通信 FB 跑起；编译；登录。
+//   2. 在线 bTrigger 一次上升沿；等 bBusy 回 FALSE。
+//   3. 用 P_Demo_FB_DALIV2QueryContentDTR1 → 应读出 50。
+// =============================================================================
+fbFB_DALIV2SetDTR1(
+    bStart           := bTrigger,
+    nAddr            := nLampAddr,
+    eAddrType        := eDALIV2AddrTypeShort,
+    eCommandPriority := eDALIV2CommandPriorityMiddle,
+    nValue           := nDTR1Value,
+    stCommandBuffer  := stCommandBuffer
+);
+
+bBusy  := fbFB_DALIV2SetDTR1.bBusy;
+bErr   := fbFB_DALIV2SetDTR1.bError;
+nErrId := fbFB_DALIV2SetDTR1.nErrorId;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

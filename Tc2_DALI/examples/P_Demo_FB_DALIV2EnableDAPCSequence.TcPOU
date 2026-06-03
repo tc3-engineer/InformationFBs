@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_DALIV2EnableDAPCSequence" Id="{07c04f76-26d8-5d7f-af53-f39d549d4a82}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_DALIV2EnableDAPCSequence
+VAR
+    fbFB_DALIV2EnableDAPCSequence        : FB_DALIV2EnableDAPCSequence;
+    stCommandBuffer : ST_DALIV2CommandBuffer;
+
+    bTrigger        : BOOL;
+    nLampAddr        : BYTE := 0;
+
+
+    bBusy           : BOOL;
+    bErr            : BOOL;
+    nErrId          : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：启用 short addr 0 灯的 DAPC 序列模式，准备 PLC 自己实现平滑渐变。
+//
+// 价值：解锁 PLC 自定义渐变曲线的能力。
+//
+// 验证步骤：
+//   1. 通信 FB 跑起；编译；登录。
+//   2. 在线 bTrigger 一次上升沿启用序列模式。
+//   3. 紧接着每 100 ms 触发一次 P_Demo_FB_DALIV2DirectArcPowerControl（PLC 循环或定时器）亮度从 0 递增到 254。
+//   4. 灯应平滑渐亮（不被 FADE TIME 影响）。
+//   5. 停止下发 DAPC 后等 200 ms 序列模式自动退出。
+// =============================================================================
+fbFB_DALIV2EnableDAPCSequence(
+    bStart           := bTrigger,
+    nAddr            := nLampAddr,
+    eAddrType        := eDALIV2AddrTypeShort,
+    eCommandPriority := eDALIV2CommandPriorityMiddle,
+    stCommandBuffer  := stCommandBuffer
+);
+
+bBusy  := fbFB_DALIV2EnableDAPCSequence.bBusy;
+bErr   := fbFB_DALIV2EnableDAPCSequence.bError;
+nErrId := fbFB_DALIV2EnableDAPCSequence.nErrorId;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

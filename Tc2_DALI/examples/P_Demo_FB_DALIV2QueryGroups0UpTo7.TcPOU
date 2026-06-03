@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_DALIV2QueryGroups0UpTo7" Id="{e69054f8-3bca-525c-bc42-54946a0daede}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_DALIV2QueryGroups0UpTo7
+VAR
+    fbFB_DALIV2QueryGroups0UpTo7        : FB_DALIV2QueryGroups0UpTo7;
+    stCommandBuffer : ST_DALIV2CommandBuffer;
+
+    bTrigger        : BOOL;
+    nLampAddr        : BYTE := 0;
+
+    nQueryData       : BYTE;
+
+    bBusy           : BOOL;
+    bErr            : BOOL;
+    nErrId          : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：巡检读取 short addr 0 的 查询灯具组归属 bit 0..7（即属于哪些组 0..7）。
+//
+// 价值：HMI 实时显示 / 上线批量校验用。
+//
+// 验证步骤：
+//   1. 通信 FB 跑起；编译；登录。
+//   2. 在线 bTrigger 一次上升沿；等 bBusy 回 FALSE。
+//   3. 观察 fbFB_DALIV2QueryGroups0UpTo7.nQueryData 应为预期值（参考本 FB 文档 §4 描述）。
+// =============================================================================
+fbFB_DALIV2QueryGroups0UpTo7(
+    bStart           := bTrigger,
+    nAddr            := nLampAddr,
+    eAddrType        := eDALIV2AddrTypeShort,
+    eCommandPriority := eDALIV2CommandPriorityLow,
+    stCommandBuffer  := stCommandBuffer
+);
+
+bBusy  := fbFB_DALIV2QueryGroups0UpTo7.bBusy;
+bErr   := fbFB_DALIV2QueryGroups0UpTo7.bError;
+nErrId := fbFB_DALIV2QueryGroups0UpTo7.nErrorId;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

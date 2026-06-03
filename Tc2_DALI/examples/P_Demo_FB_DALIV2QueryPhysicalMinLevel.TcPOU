@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_DALIV2QueryPhysicalMinLevel" Id="{7f944099-16e6-53ec-9d3b-1f2c49951001}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_DALIV2QueryPhysicalMinLevel
+VAR
+    fbFB_DALIV2QueryPhysicalMinLevel        : FB_DALIV2QueryPhysicalMinLevel;
+    stCommandBuffer : ST_DALIV2CommandBuffer;
+
+    bTrigger        : BOOL;
+    nLampAddr        : BYTE := 0;
+
+    nQueryData       : BYTE;
+
+    bBusy           : BOOL;
+    bErr            : BOOL;
+    nErrId          : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：巡检读取 short addr 0 的 查询灯具硬件 `PHYSICAL MIN LEVEL`（厂家固化的最低可点亮亮度）。
+//
+// 价值：HMI 实时显示 / 上线批量校验用。
+//
+// 验证步骤：
+//   1. 通信 FB 跑起；编译；登录。
+//   2. 在线 bTrigger 一次上升沿；等 bBusy 回 FALSE。
+//   3. 观察 fbFB_DALIV2QueryPhysicalMinLevel.nQueryData 应为预期值（参考本 FB 文档 §4 描述）。
+// =============================================================================
+fbFB_DALIV2QueryPhysicalMinLevel(
+    bStart           := bTrigger,
+    nAddr            := nLampAddr,
+    eAddrType        := eDALIV2AddrTypeShort,
+    eCommandPriority := eDALIV2CommandPriorityLow,
+    stCommandBuffer  := stCommandBuffer
+);
+
+bBusy  := fbFB_DALIV2QueryPhysicalMinLevel.bBusy;
+bErr   := fbFB_DALIV2QueryPhysicalMinLevel.bError;
+nErrId := fbFB_DALIV2QueryPhysicalMinLevel.nErrorId;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

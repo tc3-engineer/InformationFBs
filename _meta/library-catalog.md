@@ -78,7 +78,7 @@
 | Tc3_Vision | ~80 | ⏳ pending | 机器视觉 TF7xxx（走 TF7000-TF7810 别名） |
 | Tc2_Hydraulic | 33 ✅ done user-facing (v1.8.3) | ✅ done | 液压闭环 TF5810；33 个用户面 FB(管理/单轴运动/多轴/归零/控制器/压力力反馈)。PDF 另含 ~67 个 _BkPlcMc internal-use FB（StandardBody/Generator/AdsCommServer 等模板内部调用），按 PDF 自身"internal use only/not recommended"标注未单独成篇 |
 | Tc2_BACnet | 53 ✅ done (v1.1.2 / Tc3_BACnetRev14) | ✅ done | TF8020；7 基础架构 FB/GVL（Wave-2）+ 24 对象 FB 类（objects/）+ 6 Primitive Value 类 + 14 Client/RM FB + 2 服务端 RP/WP（Wave-3）。对象类型每篇覆盖该类型全部后缀变体（_IO/_ECAT/_Raw/_5P 等）。41 篇 `chapter-overview-only` + 5 篇 `infer-from-naming-convention`（PDF 不按"每 FB 一节"展开,verify_doc 走合规旁路）。 |
-| Tc2_DALI | ~30 | ⏳ pending | 照明总线 |
+| Tc2_DALI | 71 ✅ partial (v2.3.0) | 🚧 partial | 71 个高频 / 核心 FB 完成(KL68x1 base + 全 Part 102 config/power/queries/special + 各 1 个 Part 207/209/emergency 代表)。PDF ~299 FB,~228 个 Part 103/207/209/emergency-low/third-party/obsolete 家族留后续按需补。InfoSys 库根可达但**无 per-FB topic**(SPA 渲染,标 not-on-infosys)。 |
 | Tc2_DMX | 34 ✅ done (34 FB, v1.8.1) | ✅ done | 舞台灯光 DMX512/RDM（主站/发现/RDM 参数/状态/EL6851；含 1 outdated FB） |
 | Tc2_KNXLib | ~30 | ❌ unavailable | KNX/EIB（PDF 404） |
 | Tc2_EIB | 48 ✅ done (v1.16.1) | ✅ done | EIB（旧 KNX）— KL6301 耦合器接入 + 15 个 receive FB + 29 个 send FB + 2 个地址转换 FC |

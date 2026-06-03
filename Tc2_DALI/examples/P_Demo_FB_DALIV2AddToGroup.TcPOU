@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_DALIV2AddToGroup" Id="{0828431a-2725-548d-b909-edcebf679fe4}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_DALIV2AddToGroup
+VAR
+    fbAddToGroup    : FB_DALIV2AddToGroup;
+    stCommandBuffer : ST_DALIV2CommandBuffer;
+
+    bTrigger        : BOOL;
+    nLampShortAddr  : BYTE := 5;          // 要加组的镇流器 short addr
+    nTargetGroup    : BYTE := 1;          // 加入哪个组（0..15）
+
+    bBusy           : BOOL;
+    bErr            : BOOL;
+    nErrId          : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：DALI 工程初始化——把刚上线的镇流器 short addr 5 加入 "走廊照明组"
+//       （组号 1）。后续走廊总开关 / 调光命令都用 eAddrType=Group + nAddr=1
+//       一次性控制整组灯。
+//
+// 价值：替代手动用厂家 GUI 工具一个个点选；PLC 程序里批量执行、与工程版本
+//       绑定。运维 / 改造时只需改程序里的分组表重新部署。
+//
+// 验证步骤：
+//   1. 先把 P_Demo_FB_KL6821Communication 跑起来，stCommandBuffer 共享。
+//   2. 引用 Tc2_DALI 库，编译，登录，运行。
+//   3. 在线写 bTrigger := TRUE 一次（再写 FALSE 等下次触发用）。
+//   4. 等 bBusy 回 FALSE（约 50..100 ms）。
+//   5. 用 P_Demo_FB_DALIV2QueryGroups 查询 short addr 5 的组归属位图——
+//      bit 1 应该已置位（属于组 1）。
+//   6. 用 P_Demo_FB_DALIV2DirectArcPowerControl 设组寻址（eAddrType=Group
+//      + nAddr=1）调亮组 1 → short addr 5 也应该跟着亮。
+//   7. 想撤回归属用 P_Demo_FB_DALIV2RemoveFromGroup。
+// =============================================================================
+fbAddToGroup(
+    bStart           := bTrigger,
+    nAddr            := nLampShortAddr,
+    eAddrType        := eDALIV2AddrTypeShort,
+    eCommandPriority := eDALIV2CommandPriorityMiddle,
+    nGroup           := nTargetGroup,
+    stCommandBuffer  := stCommandBuffer
+);
+
+bBusy  := fbAddToGroup.bBusy;
+bErr   := fbAddToGroup.bError;
+nErrId := fbAddToGroup.nErrorId;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_DALIV2QueryLampPowerOn" Id="{6b7799c1-58f3-5596-8cb4-4f31ada9acda}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_DALIV2QueryLampPowerOn
+VAR
+    fbFB_DALIV2QueryLampPowerOn        : FB_DALIV2QueryLampPowerOn;
+    stCommandBuffer : ST_DALIV2CommandBuffer;
+
+    bTrigger        : BOOL;
+    nLampAddr        : BYTE := 0;
+
+    bResult          : BOOL;
+
+    bBusy           : BOOL;
+    bErr            : BOOL;
+    nErrId          : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：巡检 short addr 0：查询灯具是否当前点亮（亮度 > 0）。
+//
+// 价值：HMI 显示用。
+//
+// 验证步骤：
+//   1. 通信 FB 跑起；编译；登录。
+//   2. 在线 bTrigger 一次上升沿；等 bBusy 回 FALSE。
+//   3. 观察 fbFB_DALIV2QueryLampPowerOn.bQueryData 应为预期值（参考本 FB 文档 §4 描述）。
+// =============================================================================
+fbFB_DALIV2QueryLampPowerOn(
+    bStart           := bTrigger,
+    nAddr            := nLampAddr,
+    eAddrType        := eDALIV2AddrTypeShort,
+    eCommandPriority := eDALIV2CommandPriorityLow,
+    stCommandBuffer  := stCommandBuffer
+);
+
+bBusy  := fbFB_DALIV2QueryLampPowerOn.bBusy;
+bErr   := fbFB_DALIV2QueryLampPowerOn.bError;
+nErrId := fbFB_DALIV2QueryLampPowerOn.nErrorId;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

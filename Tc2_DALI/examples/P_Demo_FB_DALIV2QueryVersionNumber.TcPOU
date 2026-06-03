@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_DALIV2QueryVersionNumber" Id="{9cc6156b-17bd-56f3-ac37-9f6ff15af56d}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_DALIV2QueryVersionNumber
+VAR
+    fbFB_DALIV2QueryVersionNumber        : FB_DALIV2QueryVersionNumber;
+    stCommandBuffer : ST_DALIV2CommandBuffer;
+
+    bTrigger        : BOOL;
+    nLampAddr        : BYTE := 0;
+
+    nQueryData       : BYTE;
+
+    bBusy           : BOOL;
+    bErr            : BOOL;
+    nErrId          : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：巡检读取 short addr 0 的 查询灯具 DALI 协议版本号（高 4 bit 主版本，低 4 bit 副版本）。
+//
+// 价值：HMI 实时显示 / 上线批量校验用。
+//
+// 验证步骤：
+//   1. 通信 FB 跑起；编译；登录。
+//   2. 在线 bTrigger 一次上升沿；等 bBusy 回 FALSE。
+//   3. 观察 fbFB_DALIV2QueryVersionNumber.nQueryData 应为预期值（参考本 FB 文档 §4 描述）。
+// =============================================================================
+fbFB_DALIV2QueryVersionNumber(
+    bStart           := bTrigger,
+    nAddr            := nLampAddr,
+    eAddrType        := eDALIV2AddrTypeShort,
+    eCommandPriority := eDALIV2CommandPriorityLow,
+    stCommandBuffer  := stCommandBuffer
+);
+
+bBusy  := fbFB_DALIV2QueryVersionNumber.bBusy;
+bErr   := fbFB_DALIV2QueryVersionNumber.bError;
+nErrId := fbFB_DALIV2QueryVersionNumber.nErrorId;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

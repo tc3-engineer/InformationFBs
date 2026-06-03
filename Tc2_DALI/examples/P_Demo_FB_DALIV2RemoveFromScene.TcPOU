@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_DALIV2RemoveFromScene" Id="{00e93be3-b2c8-5796-825d-2f3ce36cf558}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_DALIV2RemoveFromScene
+VAR
+    fbFB_DALIV2RemoveFromScene        : FB_DALIV2RemoveFromScene;
+    stCommandBuffer : ST_DALIV2CommandBuffer;
+
+    bTrigger        : BOOL;
+    nLampAddr        : BYTE := 0;
+
+    nSceneToClear    : BYTE := 1;
+
+    bBusy           : BOOL;
+    bErr            : BOOL;
+    nErrId          : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：把 short addr 15 (窗边灯) 的场景 1 清成 MASK——调用场景 1 时这盏灯保持原状。
+//
+// 价值：精确控制哪些灯参与哪个场景；比统一设为 0 的语义更准确。
+//
+// 验证步骤：
+//   1. 先跑通信 FB；编译运行；等 bLineIsInitialized。
+//   2. 在线 bTrigger 一次上升沿；等 bBusy 回 FALSE。
+//   3. 用 P_Demo_FB_DALIV2QuerySceneLevel 查 short addr 15 场景 1 → 应为 255 (MASK)。
+//   4. 用 P_Demo_FB_DALIV2GoToScene 触发场景 1，short addr 15 应保持原状不变。
+// =============================================================================
+fbFB_DALIV2RemoveFromScene(
+    bStart           := bTrigger,
+    nAddr            := nLampAddr,
+    eAddrType        := eDALIV2AddrTypeShort,
+    eCommandPriority := eDALIV2CommandPriorityMiddle,
+    nScene           := nSceneToClear,
+    stCommandBuffer  := stCommandBuffer
+);
+
+bBusy  := fbFB_DALIV2RemoveFromScene.bBusy;
+bErr   := fbFB_DALIV2RemoveFromScene.bError;
+nErrId := fbFB_DALIV2RemoveFromScene.nErrorId;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

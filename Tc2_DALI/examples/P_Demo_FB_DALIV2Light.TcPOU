@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_DALIV2Light" Id="{30c269da-02a5-5da2-a7a0-9e4ce5b22e81}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_DALIV2Light
+VAR
+    fbFB_DALIV2Light        : FB_DALIV2Light;
+    stCommandBuffer : ST_DALIV2CommandBuffer;
+
+    bTrigger        : BOOL;
+    bSensorTriggered : BOOL;
+    nLampLevel       : BYTE := 254;
+    nGroupAddr       : BYTE := 1;
+
+    bBusy           : BOOL;
+    bErr            : BOOL;
+    nErrId          : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：走廊红外感应灯：感应器 BOOL 输出接 bSensorTriggered，触发即开灯 100%，停发即关。
+//
+// 价值：纯开关场景最简单接法。
+//
+// 验证步骤：
+//   1. 通信 FB 跑起；编译；登录。
+//   2. 在线写 bSensorTriggered := TRUE → 灯组应开到 254。
+//   3. 在线写 bSensorTriggered := FALSE → 灯组关。
+//   4. 多次切换 bSensorTriggered，灯应跟随。
+// =============================================================================
+fbFB_DALIV2Light(
+    bSwitch          := bSensorTriggered,
+    nOnValue         := nLampLevel,
+    nAddr            := nGroupAddr,
+    eAddrType        := eDALIV2AddrTypeGroup,
+    stCommandBuffer  := stCommandBuffer
+);
+
+bBusy  := fbFB_DALIV2Light.bBusy;
+bErr   := fbFB_DALIV2Light.bError;
+nErrId := fbFB_DALIV2Light.nErrorId;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

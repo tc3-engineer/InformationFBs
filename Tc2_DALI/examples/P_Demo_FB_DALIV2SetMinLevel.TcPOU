@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_DALIV2SetMinLevel" Id="{61114bf5-eb5d-5cf4-bafe-7a65563eb65c}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_DALIV2SetMinLevel
+VAR
+    fbFB_DALIV2SetMinLevel        : FB_DALIV2SetMinLevel;
+    stCommandBuffer : ST_DALIV2CommandBuffer;
+
+    bTrigger        : BOOL;
+    nLampAddr        : BYTE := 0;
+
+    nNewMinLevel     : BYTE := 100;
+
+    bBusy           : BOOL;
+    bErr            : BOOL;
+    nErrId          : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：把灯具 MIN VALUE 设为 100，调光最暗不会低于约 5% 物理亮度。
+//
+// 价值：运行时直接修改灯具寄存器；改完失电保护。
+//
+// 验证步骤：
+//   1. 通信 FB 跑起；编译；登录。
+//   2. 在线 bTrigger 一次上升沿；等 bBusy 回 FALSE。
+//   3. 用 P_Demo_FB_DALIV2QueryMinLevel 查 → MIN 应为 100。
+//   4. 用 P_Demo_FB_DALIV2DirectArcPowerControl 设 DAPC=50 → 灯应跳到 100（被钳）；
+//      DAPC=0 → 灯关（不受钳位）。
+// =============================================================================
+fbFB_DALIV2SetMinLevel(
+    bStart           := bTrigger,
+    nAddr            := nLampAddr,
+    eAddrType        := eDALIV2AddrTypeShort,
+    eCommandPriority := eDALIV2CommandPriorityMiddle,
+    nMinLevel        := nNewMinLevel,
+    stCommandBuffer  := stCommandBuffer
+);
+
+bBusy  := fbFB_DALIV2SetMinLevel.bBusy;
+bErr   := fbFB_DALIV2SetMinLevel.bError;
+nErrId := fbFB_DALIV2SetMinLevel.nErrorId;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

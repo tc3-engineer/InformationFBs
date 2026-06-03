@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_DALIV2SetScene" Id="{098a9e8b-55d0-5cbb-a7c6-b0ebd8622df5}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_DALIV2SetScene
+VAR
+    fbFB_DALIV2SetScene        : FB_DALIV2SetScene;
+    stCommandBuffer : ST_DALIV2CommandBuffer;
+
+    bTrigger        : BOOL;
+    nLampAddr        : BYTE := 0;
+
+    nSceneToSet      : BYTE := 1;
+    nSceneLevel      : BYTE := 200;
+
+    bBusy           : BOOL;
+    bErr            : BOOL;
+    nErrId          : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：给 short addr 0 配置场景 1 对应亮度 200（演示模式投影附近灯）。
+//
+// 价值：运行时直接修改灯具寄存器；改完失电保护。
+//
+// 验证步骤：
+//   1. 通信 FB 跑起；编译；登录。
+//   2. 在线 bTrigger 一次上升沿；等 bBusy 回 FALSE。
+//   3. 用 P_Demo_FB_DALIV2QuerySceneLevel 查 short addr 0 场景 1 → 应等于 200。
+//   4. 用 P_Demo_FB_DALIV2GoToScene 触发场景 1 → 这盏灯应调到 200。
+// =============================================================================
+fbFB_DALIV2SetScene(
+    bStart           := bTrigger,
+    nAddr            := nLampAddr,
+    eAddrType        := eDALIV2AddrTypeShort,
+    eCommandPriority := eDALIV2CommandPriorityMiddle,
+    nScene           := nSceneToSet,
+    nLevel           := nSceneLevel,
+    stCommandBuffer  := stCommandBuffer
+);
+
+bBusy  := fbFB_DALIV2SetScene.bBusy;
+bErr   := fbFB_DALIV2SetScene.bError;
+nErrId := fbFB_DALIV2SetScene.nErrorId;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

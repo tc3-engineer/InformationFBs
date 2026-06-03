@@ -329,10 +329,21 @@ def _check_content_quality(doc: str, meta: dict) -> list[str]:
 
     # E. InfoSys topic URL + checked status in metadata
     src_info = meta.get("Source InfoSys", "").strip()
-    if not src_info or not _INFOSYS_TOPIC_RE.search(src_info):
+    checked_field = meta.get("InfoSys-checked", "").strip()
+    # When InfoSys-checked declares ⚠️ not-on-infosys (e.g. Tc2_DALI, where
+    # Beckhoff InfoSys serves the library root but the per-FB nav tree is JS-
+    # rendered with no static per-FB topic IDs), accept a library-root URL
+    # (`index.html` or just the library slug) instead of a per-FB topic URL.
+    is_not_on_infosys = "not-on-infosys" in checked_field.lower()
+    src_info_ok = bool(src_info) and (
+        _INFOSYS_TOPIC_RE.search(src_info)
+        or (is_not_on_infosys and "infosys.beckhoff.com" in src_info)
+    )
+    if not src_info_ok:
         diags.append(
             "Source InfoSys: missing or not a specific topic URL "
-            "(must match https://infosys.beckhoff.com/content/.../tcplclib_*/<id>.html)"
+            "(must match https://infosys.beckhoff.com/content/.../tcplclib_*/<id>.html, "
+            "or a library-root URL when InfoSys-checked is ⚠️ not-on-infosys)"
         )
     checked = meta.get("InfoSys-checked", "").strip()
     if not checked or not _INFOSYS_CHECKED_OK_RE.search(checked):

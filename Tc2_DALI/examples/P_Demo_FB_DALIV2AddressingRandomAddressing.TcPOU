@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_DALIV2AddressingRandomAddressing" Id="{8159248f-c7a8-5fbe-a5be-cae8f3be69f4}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_DALIV2AddressingRandomAddressing
+VAR
+    fbFB_DALIV2AddressingRandomAddressing        : FB_DALIV2AddressingRandomAddressing;
+    stCommandBuffer : ST_DALIV2CommandBuffer;
+
+    bTrigger        : BOOL;
+    bStartAddressing : BOOL;
+    bAbortAddressing : BOOL;
+    nFoundLamps      : BYTE;
+    bAddrDone        : BOOL;
+
+    bBusy           : BOOL;
+    bErr            : BOOL;
+    nErrId          : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：DALI 工程上线第一次寻址——所有灯从 short addr 0 开始批量分配，并清除原有组 / 场景。
+//
+// 价值：工程上线标准流程，省去厂家工具的离线步骤。
+//
+// 验证步骤：
+//   1. 通信 FB 跑起；编译；登录；所有灯具应通电（出厂状态 short addr 都是 MASK）。
+//   2. 在线 bStartAddressing 一次上升沿；fb.bBusy 应保持 TRUE 几分钟。
+//   3. 观察 nFoundLamps 实时累加。
+//   4. fb.bBusy 回 FALSE 后，nFoundLamps 应等于实际灯数。
+//   5. 用 P_Demo_FB_DALIV2QueryControlGearPresent 测各 short addr 应能查到。
+// =============================================================================
+fbFB_DALIV2AddressingRandomAddressing(
+    bStart               := bStartAddressing,
+    bAbort               := bAbortAddressing,
+    nStartWithShortAddress := 0,
+    nOptions             := DALIV2_OPTION_COMPLETE_NEW_INSTALLATION OR DALIV2_OPTION_DELETE_ALL_GROUP_ASSIGNMENTS OR DALIV2_OPTION_DELETE_ALL_SCENE_ASSIGNMENTS OR DALIV2_OPTION_OPTICAL_FEEDBACK,
+    stCommandBuffer  := stCommandBuffer
+);
+
+bBusy  := fbFB_DALIV2AddressingRandomAddressing.bBusy;
+bErr   := fbFB_DALIV2AddressingRandomAddressing.bError;
+nErrId := fbFB_DALIV2AddressingRandomAddressing.nErrorId;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

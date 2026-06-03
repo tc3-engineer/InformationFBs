@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_DALIV2RecallMinLevel" Id="{f06f3656-2900-5df3-af95-1241c82217b6}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_DALIV2RecallMinLevel
+VAR
+    fbFB_DALIV2RecallMinLevel        : FB_DALIV2RecallMinLevel;
+    stCommandBuffer : ST_DALIV2CommandBuffer;
+
+    bTrigger        : BOOL;
+    nLampAddr        : BYTE := 0;
+
+
+    bBusy           : BOOL;
+    bErr            : BOOL;
+    nErrId          : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：智能家居睡前模式：用户说『睡眠模式』，PLC 广播本 FB 给卧室所有灯——按各灯 `MIN VALUE` （典型 1..30）调到最暗但不关，提供夜起照明。...
+//
+// 价值：DALI 协议标准命令的轻量封装。
+//
+// 验证步骤：
+//   1. 通信 FB 跑起；编译；登录。
+//   2. 在线 bTrigger 一次上升沿；等 bBusy 回 FALSE。
+//   3. 观察 short addr 0 灯的物理亮度变化是否符合本命令描述。
+// =============================================================================
+fbFB_DALIV2RecallMinLevel(
+    bStart           := bTrigger,
+    nAddr            := nLampAddr,
+    eAddrType        := eDALIV2AddrTypeShort,
+    eCommandPriority := eDALIV2CommandPriorityMiddle,
+    stCommandBuffer  := stCommandBuffer
+);
+
+bBusy  := fbFB_DALIV2RecallMinLevel.bBusy;
+bErr   := fbFB_DALIV2RecallMinLevel.bError;
+nErrId := fbFB_DALIV2RecallMinLevel.nErrorId;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

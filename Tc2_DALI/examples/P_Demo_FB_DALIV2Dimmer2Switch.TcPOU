@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_DALIV2Dimmer2Switch" Id="{a202cd9c-ccbf-5e3c-b9f4-ae4991590bb4}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_DALIV2Dimmer2Switch
+VAR
+    fbFB_DALIV2Dimmer2Switch        : FB_DALIV2Dimmer2Switch;
+    stCommandBuffer : ST_DALIV2CommandBuffer;
+
+    bTrigger        : BOOL;
+    nGroupAddr       : BYTE := 5;
+    nMasterShortAddr : BYTE := 12;
+    nMinDim          : BYTE := 100;
+    nMaxDim          : BYTE := 254;
+    bUpButton        : BOOL;
+    bDownButton      : BOOL;
+    bForceOn         : BOOL;
+    bForceOff        : BOOL;
+    bHmiSet          : BOOL;
+    nHmiTarget       : BYTE := 150;
+    nActualLevel     : BYTE;
+
+    bBusy           : BOOL;
+    bErr            : BOOL;
+    nErrId          : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：影院控制台双按钮调光：上 = 渐亮，下 = 渐暗，短按 = 开 / 关。
+//
+// 价值：方向明确的专业 UX。
+//
+// 验证步骤：
+//   1. 通信 FB 跑起；编译；登录。
+//   2. 在线写 bUpButton := TRUE 保持 < 300 ms 再 FALSE → 灯开（关时）或关（亮时）。
+//   3. 在线写 bUpButton := TRUE 保持 > 400 ms → 灯渐亮到 nMaxDim。
+//   4. 在线写 bDownButton := TRUE 保持 > 400 ms → 灯渐暗到 nMinDim。
+//   5. nHmiTarget := 100，bHmiSet 一次上升沿 → 灯立即跳到 100。
+// =============================================================================
+fbFB_DALIV2Dimmer2Switch(
+    bSwitchDimmUp              := bUpButton,
+    bSwitchDimmDown            := bDownButton,
+    bOn                        := bForceOn,
+    bOff                       := bForceOff,
+    bSetDimmValue              := bHmiSet,
+    nDimmValue                 := nHmiTarget,
+    tSwitchOverTime            := T#400MS,
+    tCycleDelay                := T#500MS,
+    bMemoryModeOn              := TRUE,
+    nOnValueWithoutMemoryMode  := 200,
+    nAddr                      := nGroupAddr,
+    eAddrType                  := eDALIV2AddrTypeGroup,
+    nMasterDevAddr             := nMasterShortAddr,
+    nMinLevelMasterDev         := nMinDim,
+    nMaxLevelMasterDev         := nMaxDim,
+    tCycleActualLevelMasterDev := T#1S,
+    stCommandBuffer  := stCommandBuffer
+);
+
+bBusy  := fbFB_DALIV2Dimmer2Switch.bBusy;
+bErr   := fbFB_DALIV2Dimmer2Switch.bError;
+nErrId := fbFB_DALIV2Dimmer2Switch.nErrorId;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>
