@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_EcGetAllSlaveCrcErrors" Id="{e841f81f-eab1-5eac-907c-16c2f1fc4d1c}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_EcGetAllSlaveCrcErrors
+VAR
+    fbReadCrcTotals     : FB_EcGetAllSlaveCrcErrors;
+    bRequestReadOnce    : BOOL := FALSE;
+    arrSlaveCrcTotals   : ARRAY[0..EC_MAX_SLAVES] OF DWORD;     // 每从站 CRC 端口汇总
+    nSlaveCount         : UINT;
+    bReadBusy           : BOOL;
+    bReadError          : BOOL;
+    nLastAdsErr         : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// Tc2_EtherCAT.FB_EcGetAllSlaveCrcErrors 演示程序
+// =============================================================================
+// 场景：长距离布线的总装线，月度可靠性 KPI 要求"过去 30 天网络 CRC 错误
+//       总数"。用本 FB 每小时记录一次全网 CRC 计数到归档表，PLC 端做差值
+//       汇总。
+//
+// 价值：一次 ADS 调用拿全部从站 CRC 端口汇总（A+B+C 相加）。比手工查 ESC
+//       0x0300 寄存器快得多，且不需要知道每个从站的固定地址。
+//
+// 验证步骤：
+//   1. Import 本文件，编译 → 登录
+//   2. 在线置 bRequestReadOnce := TRUE
+//        - bReadBusy 短暂为 TRUE 后落回
+//        - nSlaveCount 等于实际从站数
+//        - arrSlaveCrcTotals[0..nSlaveCount-1] 正常运行时多数为 0
+//   3. 故意拔 / 抖动某条网线一次，再触发：对应从站的计数应 +1（或更多）
+//   4. 把网线插回后再触发：计数不会回零（单调递增）
+// =============================================================================
+
+fbReadCrcTotals(
+    sNetId       := '',
+    pCrcErrorBuf := ADR(arrSlaveCrcTotals),
+    cbBufLen     := SIZEOF(arrSlaveCrcTotals),
+    bExecute     := bRequestReadOnce,
+    tTimeout     := DEFAULT_ADS_TIMEOUT,
+    bBusy        => bReadBusy,
+    bError       => bReadError,
+    nErrId       => nLastAdsErr,
+    nSlaves      => nSlaveCount
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

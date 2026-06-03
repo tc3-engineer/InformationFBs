@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_EcGetAllSlaveAbnormalStateChanges" Id="{0a484b73-41ef-5d9e-a87f-036d98cca406}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_EcGetAllSlaveAbnormalStateChanges
+VAR
+    fbGetAbnormalCounts : FB_EcGetAllSlaveAbnormalStateChanges;
+    bRequestReadOnce    : BOOL := FALSE;
+    arrAbnormalCounters : ARRAY[0..EC_MAX_SLAVES] OF UDINT;  // 每从站累计计数
+    nSlaveCount         : UINT;
+    bReadBusy           : BOOL;
+    bReadError          : BOOL;
+    nLastAdsErr         : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// Tc2_EtherCAT.FB_EcGetAllSlaveAbnormalStateChanges 演示程序
+// =============================================================================
+// 场景：现场 EL3204 温度采集模块偶尔自动从 OP 掉到 SAFEOP_ERR 又恢复，
+//       PLC 周期日志没抓到瞬时状态。用本 FB 每 5 s 读一次累计计数，第二
+//       次比第一次大的 → 期间发生过非预期降级，定位是哪个从站。
+//
+// 价值：累计"次数"统计比瞬时状态更适合捕获短抖动事件。把"过去 5 秒内某
+//       从站抖了多少次"做成可视化指标，用于做硬件可靠性 KPI。
+//
+// 验证步骤：
+//   1. Import 本文件，编译 → 登录
+//   2. 现场至少 1 个 EtherCAT 从站当前在 OP
+//   3. 在线置 bRequestReadOnce := TRUE：
+//        - bReadBusy 短暂为 TRUE 后落回
+//        - nSlaveCount 应为主站连接的从站数
+//        - 展开 arrAbnormalCounters[0..nSlaveCount-1]，正常运行时各从站应为 0
+//   4. 故意拔一台从站的网线又插回：再触发一次，对应从站计数应 +1
+// =============================================================================
+
+// 注意：本 FB 的 tTimeout 没有默认值，必须显式赋 DEFAULT_ADS_TIMEOUT
+fbGetAbnormalCounts(
+    sNetId   := '',
+    pAddrBuf := ADR(arrAbnormalCounters),
+    cbBufLen := SIZEOF(arrAbnormalCounters),
+    bExecute := bRequestReadOnce,
+    tTimeout := DEFAULT_ADS_TIMEOUT,
+    bBusy    => bReadBusy,
+    bError   => bReadError,
+    nErrId   => nLastAdsErr,
+    nSlaves  => nSlaveCount
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

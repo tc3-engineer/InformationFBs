@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_F_ConvSlaveStateToBits" Id="{8091f124-103e-5e01-b524-961810036769}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_F_ConvSlaveStateToBits
+VAR
+    stSlaveStateInput   : ST_EcSlaveState;
+    stStateBits         : ST_EcSlaveStateBits;     // 拆位后结构
+    bSlaveOpAndNoError  : BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// Tc2_EtherCAT.F_ConvSlaveStateToBits 演示程序
+// =============================================================================
+// 场景：业务条件 "从站在 OP 且无错误" 判定。写成 stStateBits.bOp AND NOT
+//       stStateBits.bErr 比 deviceState = 16#08 AND deviceState AND 16#10 = 0
+//       可读得多。
+//
+// 价值：业务代码可读性，免位运算。
+//
+// 验证步骤：
+//   1. Import 本文件，编译 → 登录
+//   2. 用 FB_EcGetSlaveState 把当前从站状态写到 stSlaveStateInput
+//   3. 正常运行时 stStateBits.bOp = TRUE，bSlaveOpAndNoError = TRUE
+//   4. 在线临时把 deviceState 改为 16#12 (PREOP + Error)，stStateBits.bErr = TRUE
+//      bSlaveOpAndNoError = FALSE
+// =============================================================================
+
+stStateBits := F_ConvSlaveStateToBits(stSlaveStateInput);
+
+// 用拆位结构做业务条件
+bSlaveOpAndNoError := stStateBits.bOp AND NOT stStateBits.bErr;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

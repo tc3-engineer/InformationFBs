@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_EcSoeWrite" Id="{5c786018-f035-5c1c-8982-77def1633acb}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_EcSoeWrite
+VAR
+    fbWritePidGain      : FB_EcSoeWrite;
+    bRequestWriteOnce   : BOOL := FALSE;
+    nAx5206SlaveAddr    : UINT := 1010;
+    wIdnPidGain         : WORD := 100;            // P-0-0100 例
+    nElementValue       : BYTE := 16#40;
+    nDriveNumber        : BYTE := 0;
+    bUseInternalCmd     : BOOL := FALSE;
+    nNewPidGain         : UINT := 1500;
+    bWriteBusy          : BOOL;
+    bWriteError         : BOOL;
+    nLastAdsErr         : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// Tc2_EtherCAT.FB_EcSoeWrite 演示程序
+// =============================================================================
+// 场景：换工件类型时调整 AX5206 PID 参数。本 FB 写 P-0-0100 等厂商参数，
+//       根据工件重量动态调整位置环增益，不停机适应不同负载。
+//
+// 价值：运行时调驱动参数无需停机，提高生产柔性。
+//
+// 验证步骤：
+//   1. Import 本文件，编译 → 登录
+//   2. nAx5206SlaveAddr 设为 AX5206 地址
+//   3. nNewPidGain 调到目标值
+//   4. 在线脉冲 bRequestWriteOnce := TRUE
+//        - bWriteBusy 短暂 TRUE 后落回
+//        - nLastAdsErr = 0
+//   5. 用 FB_EcSoeRead 回读 P-0-0100 验证
+// =============================================================================
+
+fbWritePidGain(
+    sNetId     := '',
+    nSlaveAddr := nAx5206SlaveAddr,
+    nIdn       := wIdnPidGain,
+    nElement   := nElementValue,
+    nDriveNo   := nDriveNumber,
+    pCommand   := bUseInternalCmd,
+    pSrcBuf    := ADR(nNewPidGain),
+    cbBufLen   := SIZEOF(nNewPidGain),
+    bExecute   := bRequestWriteOnce,
+    tTimeout   := DEFAULT_ADS_TIMEOUT,
+    bBusy      => bWriteBusy,
+    bError     => bWriteError,
+    nErrId     => nLastAdsErr
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

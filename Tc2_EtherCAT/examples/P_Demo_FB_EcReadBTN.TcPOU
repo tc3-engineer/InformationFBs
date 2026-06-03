@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_EcReadBTN" Id="{46272d8c-947d-5757-ae73-b36ebb7a89a5}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_EcReadBTN
+VAR
+    fbReadBtn           : FB_EcReadBTN;
+    bRequestReadOnce    : BOOL := FALSE;
+    nTargetSlaveAddr    : UINT := 1001;
+    sBtnRead            : STRING(9);              // BTN 8 字符 + 终止符
+    bReadBusy           : BOOL;
+    bReadError          : BOOL;
+    nLastAdsErr         : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// Tc2_EtherCAT.FB_EcReadBTN 演示程序
+// =============================================================================
+// 场景：售后流程，客户某 EL 模块返厂。PLC 端先调本 FB 拿 BTN 自动填入
+//       "返厂申请表"，免去维修员把模块拆下来才能看背面贴的标签。
+//
+// 价值：内存友好（9 字节）的 BTN 单字段读取。要拿全部 BIC 字段用
+//       FB_EcReadBIC，但 BTN 单一追溯号场景本 FB 更简洁。
+//
+// 验证步骤：
+//   1. Import 本文件，编译 → 登录
+//   2. nTargetSlaveAddr 设为带 BTN 的从站地址
+//   3. 在线置 bRequestReadOnce := TRUE
+//        - bReadBusy 短暂为 TRUE 后落回
+//        - sBtnRead 应为 8 字符 BTN（如 '0002agdw'）
+//   4. 老型号或第三方从站可能返回空串
+// =============================================================================
+
+fbReadBtn(
+    sNetId     := '',
+    nSlaveAddr := nTargetSlaveAddr,
+    bExecute   := bRequestReadOnce,
+    tTimeout   := T#5S,
+    bBusy      => bReadBusy,
+    bError     => bReadError,
+    nErrId     => nLastAdsErr,
+    sBTN       => sBtnRead
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

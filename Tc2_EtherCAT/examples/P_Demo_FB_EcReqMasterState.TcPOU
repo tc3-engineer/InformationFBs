@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_EcReqMasterState" Id="{a0e32e5e-7d47-5e78-8936-8c75e941c3e6}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_EcReqMasterState
+VAR
+    fbReqMasterInit     : FB_EcReqMasterState;
+    bEmergencyStopReq   : BOOL := FALSE;          // 上层紧急停止信号上升沿
+    wTargetState        : WORD := EC_DEVICE_STATE_INIT;
+    bReqBusy            : BOOL;
+    bReqError           : BOOL;
+    nLastAdsErr         : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// Tc2_EtherCAT.FB_EcReqMasterState 演示程序
+// =============================================================================
+// 场景：紧急停止按钮按下，业务流程要立即把主站切到 INIT 切断所有 PDO，
+//       PLC 主循环不能等切换完成（要立刻去做其他紧急处理）。本 FB 异步
+//       请求 INIT 后立即返回，让主循环不阻塞。
+//
+// 价值：非阻塞性命令，让上层程序不会被状态切换卡死。日常切换用 SetState，
+//       紧急用 ReqState。
+//
+// 验证步骤：
+//   1. Import 本文件，编译 → 登录；现场主站处于 OP
+//   2. 在线脉冲 bEmergencyStopReq := TRUE：
+//        - bReqBusy 短暂为 TRUE 后立即落回
+//        - nLastAdsErr = 0
+//   3. 用 FB_EcGetMasterState 轮询：主站状态应在几百 ms 内变为 INIT (0x01)
+//   4. 注意：bReqBusy = FALSE 不等于切换完成，必须 poll 状态确认
+// =============================================================================
+
+fbReqMasterInit(
+    sNetId   := '',
+    bExecute := bEmergencyStopReq,
+    tTimeout := DEFAULT_ADS_TIMEOUT,
+    state    := wTargetState,
+    bBusy    => bReqBusy,
+    bError   => bReqError,
+    nErrId   => nLastAdsErr
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

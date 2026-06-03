@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_F_CheckVendorId" Id="{293fbb43-64dd-583a-bfdc-0c942b420e2c}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_F_CheckVendorId
+VAR
+    fbGetIdentity       : FB_EcGetSlaveIdentity;
+    bRequestCheckOnce   : BOOL := FALSE;
+    nSlaveAddrToCheck   : UINT := 1001;
+    stIdentityRead      : ST_EcSlaveIdentity;
+    bIsBeckhoff         : BOOL;
+    bReadBusy           : BOOL;
+    bReadError          : BOOL;
+    nLastAdsErr         : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// Tc2_EtherCAT.F_CheckVendorId 演示程序
+// =============================================================================
+// 场景：客户现场允许装第三方 EtherCAT 从站做特定功能。PLC 端对 Beckhoff
+//       从站调专有 FB_EcCoeReadBIC 取 BIC，对第三方走通用 SDO 0x1018 拿
+//       vendor / product 信息。用本 FC 一行 IF 判定走哪条分支。
+//
+// 价值：把"厂商分支选择"逻辑封装成单点维护；避免散落各处的硬编码 vendorId
+//       比较。
+//
+// 验证步骤：
+//   1. Import 本文件，编译 → 登录
+//   2. nSlaveAddrToCheck 填 Beckhoff 从站地址
+//   3. 在线置 bRequestCheckOnce := TRUE
+//        - bReadBusy 一两个周期后落回
+//        - stIdentityRead.vendorId 应为 16#00000002（Beckhoff）
+//        - bIsBeckhoff 应为 TRUE
+//   4. 把 nSlaveAddrToCheck 换成第三方从站地址再触发：
+//        - bIsBeckhoff 应为 FALSE
+// =============================================================================
+
+// 先读身份信息
+fbGetIdentity(
+    sNetId     := '',
+    nSlaveAddr := nSlaveAddrToCheck,
+    bExecute   := bRequestCheckOnce,
+    tTimeout   := DEFAULT_ADS_TIMEOUT,
+    bBusy      => bReadBusy,
+    bError     => bReadError,
+    nErrId     => nLastAdsErr,
+    identity   => stIdentityRead
+);
+
+// 同步调用 F_CheckVendorId 判定厂商
+bIsBeckhoff := F_CheckVendorId(stIdentityRead);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

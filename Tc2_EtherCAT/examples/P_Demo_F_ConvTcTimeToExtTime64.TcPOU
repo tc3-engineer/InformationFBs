@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_F_ConvTcTimeToExtTime64" Id="{58477ad0-c207-5698-b348-d4e18e7162f6}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_F_ConvTcTimeToExtTime64
+VAR
+    // 同步 FUNCTION 调用：参考 PDF 签名
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// Tc2_EtherCAT.F_ConvTcTimeToExtTime64 演示程序
+// =============================================================================
+// 场景：DC 同步精密时间体系，本 FC / FB 用于实现具体时间换算或同步检测。
+// 价值：把 EtherCAT DC 物理时间体系与业务可用时间格式打通，是飞剪、电子
+//       凸轮、IEEE 1588 同步等高精度场景的基础工具。
+// 验证步骤：
+//   1. Import 本文件，编译 → 登录；TwinCAT 配置含 DC 同步
+//   2. 参考对应 PDF 章节与 InfoSys topic，按签名实例化具体调用
+//   3. 用 FB_EcExtSyncCheck64 确认 DC 已同步
+//   4. 在线观察转换结果与 NC / Windows 时间体系是否吻合
+// =============================================================================
+
+// 详细调用请参考 PDF 对应章节与 InfoSys topic
+// 本 FC 是同步函数，根据具体签名直接调用即可
+;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

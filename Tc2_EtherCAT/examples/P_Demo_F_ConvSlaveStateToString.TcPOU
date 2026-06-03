@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_F_ConvSlaveStateToString" Id="{2537a322-6e17-58e2-97d9-66c155c63e18}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_F_ConvSlaveStateToString
+VAR
+    stSlaveStateInput   : ST_EcSlaveState;        // 从 FB_EcGetSlaveState 拿
+    sStateText          : T_MaxString;             // 推给 HMI
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// Tc2_EtherCAT.F_ConvSlaveStateToString 演示程序
+// =============================================================================
+// 场景：HMI 从站详情页"当前状态: OP"。配合 FB_EcGetSlaveState 读出
+//       ST_EcSlaveState 结构，本 FC 翻译成 'OP' / 'SAFEOP' 等字符串。
+//
+// 价值：HMI 直接绑字符串，免去 switch case。
+//
+// 验证步骤：
+//   1. Import 本文件，编译 → 登录
+//   2. 用 FB_EcGetSlaveState 把当前从站状态写到 stSlaveStateInput
+//   3. 正常运行时 stSlaveStateInput.deviceState = 16#08，sStateText = 'OP'
+//   4. 在线临时把 deviceState 改为 16#01，sStateText 应为 'INIT'
+//   5. 改为 16#12 (PREOP + Error)，sStateText 应含两个描述
+// =============================================================================
+
+// 每周期调用更新 HMI 字符串
+sStateText := F_ConvSlaveStateToString(stSlaveStateInput);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

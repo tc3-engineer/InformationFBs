@@ -43,7 +43,7 @@
 
 | 库 | InfoSys 版本 | 估算 FB+FC | 状态 | 备注 |
 |---|---|---|---|---|
-| Tc2_EtherCAT | 现行 | ~80 | ⏳ pending | EtherCAT 主从配置 |
+| Tc2_EtherCAT | 109 ✅ done (v1.9.5) | ✅ done | EtherCAT 主从配置 + 诊断 + 状态机 + ADS/CoE/FoE/SoE/转换/Distributed Clocks (63 FB + 46 FC，含 21 obsolete) |
 | Tc2_TcpIp | 1.5.2 | 24 | ✅ done (24/24) | TF6310 TCP/UDP/TLS socket（19 FB + 4 FC + 1 GVL；9 DUT 仅引用） |
 | Tc2_SerialCom | 1.8.1 | 24 | ✅ done (24/24) | 串口通信 FB（收发/配置/后台通信/3964R+RK512）+ FC（ASC/CHR/错误转换）+ 版本 GVL；TF6340 |
 | Tc2_ModbusSrv | 1.6.4 | 21 | ✅ done (21/21) | Modbus TCP/UDP 主站读写 FB（10 TCP + 10 UDP + 版本 GVL；TF6250；从站服务端走配置器+ADS 非本库 FB） |

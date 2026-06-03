@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_EcGetScannedSlaves" Id="{d36de68a-708d-5655-9b90-6fda54f3e6d5}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_EcGetScannedSlaves
+VAR
+    fbScanSlaves        : FB_EcGetScannedSlaves;
+    bRequestScan        : BOOL := FALSE;        // 在线触发：HMI"扫描网络"按钮
+    arrScannedSlaves    : ARRAY[0..EC_MAX_SLAVES] OF ST_EcSlaveScannedData;
+    nScannedCount       : UINT;
+    bScanBusy           : BOOL;
+    bScanError          : BOOL;
+    nLastAdsErr         : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// Tc2_EtherCAT.FB_EcGetScannedSlaves 演示程序
+// =============================================================================
+// 场景：客户更换了一台 EL3008 后报"读不到"。HMI 上加"扫描网络"按钮调
+//       本 FB；现场维修按下后 PLC 实时给出 实际看到的从站清单（vendor /
+//       product / serial 都在），对比工程列表立即知道新硬件是否被识别。
+//
+// 价值：把 XAE 的 Scan Devices 功能搬到 HMI，免去现场必须带电脑。
+//
+// 验证步骤：
+//   1. Import 本文件，编译 → 登录；现场至少 1 从站
+//   2. 在线置 bRequestScan := TRUE：
+//        - bScanBusy 持续 TRUE 数秒（扫描耗时，与从站数成正比）
+//        - 完成后 nScannedCount 等于现场实际从站数
+//        - 展开 arrScannedSlaves[0]，vendorId / productCode / name 等字段应已填
+//   3. 拔掉一台从站后再触发：nScannedCount 应少 1
+//   4. 注意：本 FB 扫描耗时长，不要做周期调用；只在工程态触发
+// =============================================================================
+
+// tTimeout 设大一点，扫描可能需要几秒
+fbScanSlaves(
+    bExecute               := bRequestScan,
+    sNetId                 := '',
+    pArrEcScannedSlaveInfo := ADR(arrScannedSlaves),
+    cbBufLen               := SIZEOF(arrScannedSlaves),
+    tTimeout               := T#30S,
+    bBusy                  => bScanBusy,
+    bError                 => bScanError,
+    nErrId                 => nLastAdsErr,
+    nSlaves                => nScannedCount
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

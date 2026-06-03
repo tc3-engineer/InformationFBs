@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_EcSetMasterState" Id="{338f5a94-8525-5cef-9c79-e76586036234}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_EcSetMasterState
+VAR
+    fbSetMasterOp       : FB_EcSetMasterState;
+    bStartupRequestOp   : BOOL := FALSE;          // 上电启动时上升沿
+    wRequestOp          : WORD := EC_DEVICE_STATE_OP;
+    wCurrentState       : WORD;                   // 切换过程中可见的当前状态
+    bMasterReady        : BOOL;                   // bBusy 落沿 + bError = FALSE
+    bSetBusy            : BOOL;
+    bSetError           : BOOL;
+    nLastAdsErr         : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// Tc2_EtherCAT.FB_EcSetMasterState 演示程序
+// =============================================================================
+// 场景：上电启动序列：PLC 启动 → 调本 FB 等主站到 OP（最多 10 s）→ 完成
+//       后才放过业务程序去做后续动作（如轴使能、温度采集）。免去业务在
+//       主站半状态时跑出"PDO 不可用"奇怪错误。
+//
+// 价值："启动 OP 确认"封装成 1 行同步等待，不需要工程师自己写状态机轮询。
+//
+// 验证步骤：
+//   1. Import 本文件，编译 → 登录
+//   2. 用 FB_EcSetMasterState 把主站切到 PREOP 或 INIT 作为初始状态
+//   3. 在线脉冲 bStartupRequestOp := TRUE
+//        - bSetBusy 持续 TRUE 几百 ms ~ 数秒
+//        - wCurrentState 应可见过渡到 SAFEOP 再 OP
+//        - 切完后 bSetBusy 落回，bMasterReady = TRUE
+//   4. 若 tTimeout 默认 10s 不足（复杂网络），bSetError 置 TRUE
+// =============================================================================
+
+fbSetMasterOp(
+    sNetId    := '',
+    bExecute  := bStartupRequestOp,
+    tTimeout  := T#10S,
+    reqState  := wRequestOp,
+    bBusy     => bSetBusy,
+    bError    => bSetError,
+    nErrId    => nLastAdsErr,
+    currState => wCurrentState
+);
+
+bMasterReady := NOT bSetBusy AND NOT bSetError AND (wCurrentState = EC_DEVICE_STATE_OP);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

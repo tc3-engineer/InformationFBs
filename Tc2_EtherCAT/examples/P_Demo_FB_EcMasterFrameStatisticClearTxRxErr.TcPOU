@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_EcMasterFrameStatisticClearTxRxErr" Id="{f6bb254e-cb99-53f9-bffd-05cc50ba8f4e}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_EcMasterFrameStatisticClearTxRxErr
+VAR
+    fbClearMiniportErrs : FB_EcMasterFrameStatisticClearTxRxErr;
+    bRequestClearOnce   : BOOL := FALSE;
+    nLocalMasterDevID   : INT := 1;             // 单主站机典型 1；多主站机用 FB_EcGetAllMasters 拿
+    bClearBusy          : BOOL;
+    bClearError         : BOOL;
+    nLastAdsErr         : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// Tc2_EtherCAT.FB_EcMasterFrameStatisticClearTxRxErr 演示程序
+// =============================================================================
+// 场景：维修员怀疑某 IPC 主站网卡老化（Windows 设备管理器显示持续少量
+//       Tx Err 计数）。先清零 miniport 驱动错误计数，再观察 30 分钟若
+//       仍出现 → 网卡需换。免去重启主机才能拿基线。
+//
+// 价值：把"网卡是否健康"做成可观测对比测试。
+//
+// 验证步骤：
+//   1. Import 本文件，编译 → 登录
+//   2. 在线把 nLocalMasterDevID 设为目标主站 Device ID（用 FB_EcGetAllMasters 拿）
+//   3. 在线脉冲 bRequestClearOnce := TRUE：
+//        - bClearBusy 一两个周期后落回
+//        - nLastAdsErr = 0
+//   4. 现场或在 Windows 网卡设备管理器看 Tx/Rx 错误计数应已归 0
+// =============================================================================
+
+fbClearMiniportErrs(
+    sNetId         := '',
+    nEcMasterDevID := nLocalMasterDevID,
+    bExecute       := bRequestClearOnce,
+    tTimeout       := DEFAULT_ADS_TIMEOUT,
+    bBusy          => bClearBusy,
+    bError         => bClearError,
+    nErrId         => nLastAdsErr
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

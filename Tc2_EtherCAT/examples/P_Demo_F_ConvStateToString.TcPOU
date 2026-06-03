@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_F_ConvStateToString" Id="{9458ddc4-ece6-5391-9257-c850cf7cf360}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_F_ConvStateToString
+VAR
+    wStateWord          : WORD := 16#0008;        // 例如 OP
+    sStateText          : T_MaxString;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// Tc2_EtherCAT.F_ConvStateToString 演示程序
+// =============================================================================
+// 场景：HMI 显示主站状态 —— FB_EcGetMasterState 输出 WORD，本 FC 翻译
+//       成可读字符串供 HMI 直接绑（'OP ' / 'INIT ' 等）。
+//
+// 价值：底层位掩码 → 业务可读。
+//
+// 验证步骤：
+//   1. Import 本文件，编译 → 登录
+//   2. 用 FB_EcGetMasterState 把当前 state 写到 wStateWord
+//   3. 正常运行 wStateWord = 16#0008，sStateText 应为 'OP '（带尾空格）
+//   4. 在线临时改 wStateWord = 16#0001，sStateText 应为 'INIT '
+// =============================================================================
+
+sStateText := F_ConvStateToString(wStateWord);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

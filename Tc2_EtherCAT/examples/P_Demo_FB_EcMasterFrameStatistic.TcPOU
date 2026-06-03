@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_EcMasterFrameStatistic" Id="{c7a90576-29d7-5e45-b679-f1ae0e6430b1}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_EcMasterFrameStatistic
+VAR
+    fbReadFrameStats        : FB_EcMasterFrameStatistic;
+    bRequestReadOnce        : BOOL := FALSE;
+    nCyclicLostFrames       : UDINT;       // 累计丢失循环帧数
+    fCyclicFramesPerSecond  : LREAL;       // 当前 fps
+    nQueuedLostFrames       : UDINT;
+    fQueuedFramesPerSecond  : LREAL;
+    bReadBusy               : BOOL;
+    bReadError              : BOOL;
+    nLastAdsErr             : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// Tc2_EtherCAT.FB_EcMasterFrameStatistic 演示程序
+// =============================================================================
+// 场景：客户现场 EtherCAT 任务偶发丢周期，看不出原因。用本 FB 每秒读
+//       nLostFrames、把增量推 HMI，定位"每天 14:00 准时增长" → 那是
+//       车间另一台大功率设备启动的干扰窗口。
+//
+// 价值：把"偶发不稳"变成可观测时序数据，便于做 SCADA 报警。
+//
+// 验证步骤：
+//   1. Import 本文件，编译 → 登录
+//   2. 在线置 bRequestReadOnce := TRUE
+//        - bReadBusy 一两个周期后落回
+//        - fCyclicFramesPerSecond 应≈ 主站 task 周期倒数（1 ms task ≈ 1000）
+//        - nCyclicLostFrames 正常运行时为 0
+//   3. 故意拔插主站网线一次，再触发：nCyclicLostFrames 应大幅 +
+//   4. PLC 端做差值法做"过去 1 秒丢包率"
+// =============================================================================
+
+fbReadFrameStats(
+    sNetId                 := '',
+    bExecute               := bRequestReadOnce,
+    tTimeout               := DEFAULT_ADS_TIMEOUT,
+    bBusy                  => bReadBusy,
+    bError                 => bReadError,
+    nErrId                 => nLastAdsErr,
+    nLostFrames            => nCyclicLostFrames,
+    fFramesPerSecond       => fCyclicFramesPerSecond,
+    nLostQueuedFrames      => nQueuedLostFrames,
+    fQueuedFramesPerSecond => fQueuedFramesPerSecond
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

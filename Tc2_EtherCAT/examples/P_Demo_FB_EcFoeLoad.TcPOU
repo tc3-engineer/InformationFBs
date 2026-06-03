@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_EcFoeLoad" Id="{9738072b-6c9a-52a8-81b1-278a230240aa}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_EcFoeLoad
+VAR
+    fbFwUpdate          : FB_EcFoeLoad;
+    bStartFirmwareUpload: BOOL := FALSE;          // HMI"批量升级"按钮
+    nUpgradeSlaveAddr   : UINT := 1004;
+    sFirmwareFilePath   : T_MaxString := 'C:\FOE_Test\EL6751\ECATFW__EL6751_C6_V0030.efw';
+    nFwPassword         : DWORD := 0;
+    nUpgradeProgress    : UDINT;
+    nBytesWritten       : UDINT;
+    bUpgradeBusy        : BOOL;
+    bUpgradeError       : BOOL;
+    nLastAdsErr         : UDINT;
+    sExtraInfo          : T_MaxString;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// Tc2_EtherCAT.FB_EcFoeLoad 演示程序
+// =============================================================================
+// 场景：客户现场 100 台 EL6751 模块需要统一升级固件。维修员把 .efw 拷
+//       到 PLC 本机硬盘，HMI 点"批量升级"按钮，PLC 串行调本 FB 逐台
+//       升级。免去拆机 USB 烧录的工时。
+//
+// 价值：现场固件批量升级 PLC 化；本 FB 自动切 BOOTSTRAP → 升级 → 恢
+//       复，无需手动状态切换。
+//
+// 验证步骤：
+//   1. Import 本文件，编译 → 登录
+//   2. 把 .efw 文件拷到 PLC 本机；nUpgradeSlaveAddr 填该 EL6751 地址
+//   3. 在线脉冲 bStartFirmwareUpload := TRUE
+//        - bUpgradeBusy 持续 TRUE 数分钟（视固件大小）
+//        - nUpgradeProgress 应从 0 缓慢升到 100
+//        - 完成后 bUpgradeBusy 落回，nBytesWritten = 固件文件大小
+//   4. 中途绝对不可断电！否则从站固件可能损坏需返厂
+// =============================================================================
+
+fbFwUpdate(
+    sNetId     := '',
+    nSlaveAddr := nUpgradeSlaveAddr,
+    sPathName  := sFirmwareFilePath,
+    dwPass     := nFwPassword,
+    eMode      := eFoeMode_Write,
+    bExecute   := bStartFirmwareUpload,
+    tTimeout   := T#600S,                      // 大固件加 timeout
+    bBusy      => bUpgradeBusy,
+    bError     => bUpgradeError,
+    nErrId     => nLastAdsErr,
+    cbLoad     => nBytesWritten,
+    nProgress  => nUpgradeProgress,
+    sInfo      => sExtraInfo
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

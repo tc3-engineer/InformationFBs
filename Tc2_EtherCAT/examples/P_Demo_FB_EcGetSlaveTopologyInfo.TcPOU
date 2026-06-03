@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_EcGetSlaveTopologyInfo" Id="{03e78196-ba41-5cec-bab9-e4e467b2a47b}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_EcGetSlaveTopologyInfo
+VAR
+    fbReadTopology      : FB_EcGetSlaveTopologyInfo;
+    bRequestReadOnce    : BOOL := FALSE;
+    arrTopologyData     : ARRAY[0..EC_MAX_SLAVES] OF ST_TopologyDataEx;
+    nSlaveCount         : UINT;
+    bReadBusy           : BOOL;
+    bReadError          : BOOL;
+    nLastAdsErr         : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// Tc2_EtherCAT.FB_EcGetSlaveTopologyInfo 演示程序
+// =============================================================================
+// 场景：现场更换部件后接线变更，HMI 上加"拓扑核对"功能：调本 FB 拿实际
+//       网络拓扑（每从站对应一条 ST_TopologyDataEx，含端口连接关系），与
+//       工程拓扑做 diff，差异以高亮显示让维修员立即定位。
+//
+// 价值：把"装错线"问题在工程上线时就发现，免去运行后才报奇怪故障。也
+//       适合远程诊断 —— 工程师拿到拓扑 JSON 即可重建拓扑图。
+//
+// 验证步骤：
+//   1. Import 本文件，编译 → 登录；现场至少 2 从站串联
+//   2. 在线置 bRequestReadOnce := TRUE
+//        - bReadBusy 短暂为 TRUE 后落回
+//        - nSlaveCount 等于现场实际从站数
+//        - 展开 arrTopologyData[0]，应看到端口连接的下家从站地址
+//   3. 拔插某条线后再触发：对应端口连接字段应变化
+//   4. 注意：本 FB tTimeout 无默认值
+// =============================================================================
+
+fbReadTopology(
+    sNetId   := '',
+    pAddrBuf := ADR(arrTopologyData),
+    cbBufLen := SIZEOF(arrTopologyData),
+    bExecute := bRequestReadOnce,
+    tTimeout := DEFAULT_ADS_TIMEOUT,
+    bBusy    => bReadBusy,
+    bError   => bReadError,
+    nErrId   => nLastAdsErr,
+    nSlaves  => nSlaveCount
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

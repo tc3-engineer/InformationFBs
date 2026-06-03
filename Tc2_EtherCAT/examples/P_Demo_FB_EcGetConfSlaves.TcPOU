@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_EcGetConfSlaves" Id="{1e7c9c12-9b5d-5d57-afa9-2a42eea26ca2}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_EcGetConfSlaves
+VAR
+    fbReadConfSlaves    : FB_EcGetConfSlaves;
+    bRequestReadOnce    : BOOL := FALSE;
+    arrConfSlaves       : ARRAY[0..EC_MAX_SLAVES] OF ST_EcSlaveConfigData;
+    nConfiguredCount    : UINT;
+    bReadBusy           : BOOL;
+    bReadError          : BOOL;
+    nLastAdsErr         : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// Tc2_EtherCAT.FB_EcGetConfSlaves 演示程序
+// =============================================================================
+// 场景：新设备装配线上电自检：工程文件配置 12 台从站。本 FB 读出"工程
+//       期望的清单"，配合 FB_EcGetScannedSlaves 读"实际现场存在的清单"，
+//       PLC 端做 diff 直接判定"配置 vs 实际"是否一致。
+//
+// 价值：把"我应该有几台 vs 我实际有几台"的对账做成上电首检一行调用。免去
+//       工程师每次到现场逐台数 LED 灯。
+//
+// 验证步骤：
+//   1. Import 本文件，编译 → 登录
+//   2. 在线置 bRequestReadOnce := TRUE
+//        - bReadBusy 一两个周期后落回
+//        - nConfiguredCount 应等于 XAE 工程中配置的从站总数
+//        - 展开 arrConfSlaves[0]，应看到 vendorId / productCode / slaveAddr / name 已填
+//   3. 把现场某从站拔掉再触发：nConfiguredCount 仍 = 配置总数（本 FB 是配置视图）
+//      与 FB_EcGetScannedSlaves 对比可看到 diff
+// =============================================================================
+
+fbReadConfSlaves(
+    sNetId              := '',
+    pArrEcConfSlaveInfo := ADR(arrConfSlaves),
+    cbBufLen            := SIZEOF(arrConfSlaves),
+    bExecute            := bRequestReadOnce,
+    tTimeout            := DEFAULT_ADS_TIMEOUT,
+    bBusy               => bReadBusy,
+    bError              => bReadError,
+    nErrId              => nLastAdsErr,
+    nSlaves             => nConfiguredCount
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

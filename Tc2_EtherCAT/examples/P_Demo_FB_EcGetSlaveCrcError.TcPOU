@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_EcGetSlaveCrcError" Id="{fa61efdc-6360-595a-bbdd-57ed2636d82c}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_EcGetSlaveCrcError
+VAR
+    fbReadSlaveCrc      : FB_EcGetSlaveCrcError;
+    bRequestReadOnce    : BOOL := FALSE;
+    nTargetSlaveAddr    : UINT := 1001;          // 经 FB_EcGetAllSlaveAddr 拿到
+    stSlavePortCrc      : ST_EcCrcError;          // A/B/C 端口计数
+    bReadBusy           : BOOL;
+    bReadError          : BOOL;
+    nLastAdsErr         : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// Tc2_EtherCAT.FB_EcGetSlaveCrcError 演示程序
+// =============================================================================
+// 场景：FB_EcGetAllSlaveCrcErrors 报某 EK1100 汇总计数 = 5，需要进一步定位
+//       是 A / B / C 端口哪个有 CRC 错误。用本 FB 查具体端口，确定是上游
+//       (A) 还是下游 (B) 链路质量问题。
+//
+// 价值：把 CRC 故障精确到端口级，把"换网线"工作量从盲扫缩小到精准 1 条。
+//
+// 验证步骤：
+//   1. Import 本文件，编译 → 登录
+//   2. 用 FB_EcGetAllSlaveAddr 拿到目标 EK1100 的 nTargetSlaveAddr
+//   3. 在线置 bRequestReadOnce := TRUE：
+//        - bReadBusy 短暂为 TRUE 后落回
+//        - 展开 stSlavePortCrc，应看到 A/B/C 端口计数字段
+//   4. 故意抖动某条网线，再触发：对应端口计数应 +1
+// =============================================================================
+
+fbReadSlaveCrc(
+    sNetId     := '',
+    nSlaveAddr := nTargetSlaveAddr,
+    bExecute   := bRequestReadOnce,
+    tTimeout   := DEFAULT_ADS_TIMEOUT,
+    bBusy      => bReadBusy,
+    bError     => bReadError,
+    nErrId     => nLastAdsErr,
+    crcError   => stSlavePortCrc
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_EcGetSlaveIdentity" Id="{0b1fe583-31d6-5cd5-9157-6d80b6fd1e9e}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_EcGetSlaveIdentity
+VAR
+    fbReadIdentity      : FB_EcGetSlaveIdentity;
+    bRequestReadOnce    : BOOL := FALSE;
+    nTargetSlaveAddr    : UINT := 1001;
+    stSlaveIdentity     : ST_EcSlaveIdentity;     // vendorId / productCode / revision / serialNumber
+    bReadBusy           : BOOL;
+    bReadError          : BOOL;
+    nLastAdsErr         : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// Tc2_EtherCAT.FB_EcGetSlaveIdentity 演示程序
+// =============================================================================
+// 场景：装配线下线检验，每台机 PLC 启动后需要采集所有从站序列号，写入
+//       MES 建立"机器序列号 → 部件序列号"溯源表。用本 FB 逐台从站读取
+//       身份信息（vendorId、productCode、serialNumber）。
+//
+// 价值：自动化采集硬件身份。免去工程师拿读取器逐台扫码贴标签的工作量。
+//
+// 验证步骤：
+//   1. Import 本文件，编译 → 登录；现场至少 1 台从站
+//   2. 在线把 nTargetSlaveAddr 填某从站固定地址（用 FB_EcGetAllSlaveAddr 拿）
+//   3. 在线置 bRequestReadOnce := TRUE
+//        - bReadBusy 短暂为 TRUE 后落回
+//        - stSlaveIdentity.vendorId 应为该从站厂商 ID（Beckhoff = 16#00000002）
+//        - stSlaveIdentity.productCode 应为产品代码（如 EL3008 = 16#0BB83052）
+//        - stSlaveIdentity.serialNumber 大概率非 0（除非厂商未写 EEPROM）
+// =============================================================================
+
+fbReadIdentity(
+    sNetId     := '',
+    nSlaveAddr := nTargetSlaveAddr,
+    bExecute   := bRequestReadOnce,
+    tTimeout   := DEFAULT_ADS_TIMEOUT,
+    bBusy      => bReadBusy,
+    bError     => bReadError,
+    nErrId     => nLastAdsErr,
+    identity   => stSlaveIdentity
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

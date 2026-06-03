@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_F_ConvProductCodeToString" Id="{940cc89b-43b9-5dce-a793-41cbd49a15a4}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_F_ConvProductCodeToString
+VAR
+    fbGetIdentity       : FB_EcGetSlaveIdentity;
+    bRequestReadOnce    : BOOL := FALSE;
+    nTargetSlaveAddr    : UINT := 1001;
+    stIdentityRead      : ST_EcSlaveIdentity;
+    sProductCodeView    : T_MaxString;          // 如 'EL3008-0000-0017'
+    bReadBusy           : BOOL;
+    bReadError          : BOOL;
+    nLastAdsErr         : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// Tc2_EtherCAT.F_ConvProductCodeToString 演示程序
+// =============================================================================
+// 场景：HMI 从站清单页：每行显示"序号 + 产品代码 + 状态"。先用
+//       FB_EcGetSlaveIdentity 读 identity，再用本 FC 格式化产品代码字符
+//       串供 HMI 直接显示。
+//
+// 价值：HMI 直接绑字符串，免去手工拼接复杂的 productCode 表示。
+//
+// 验证步骤：
+//   1. Import 本文件，编译 → 登录
+//   2. nTargetSlaveAddr 设为 Beckhoff 从站地址
+//   3. 在线脉冲 bRequestReadOnce := TRUE
+//        - bReadBusy 一两个周期后落回
+//        - stIdentityRead 应填入身份信息
+//        - sProductCodeView 应为类似 'EL3008-0000-0017'
+// =============================================================================
+
+// 先异步读身份
+fbGetIdentity(
+    sNetId     := '',
+    nSlaveAddr := nTargetSlaveAddr,
+    bExecute   := bRequestReadOnce,
+    tTimeout   := DEFAULT_ADS_TIMEOUT,
+    bBusy      => bReadBusy,
+    bError     => bReadError,
+    nErrId     => nLastAdsErr,
+    identity   => stIdentityRead
+);
+
+// 同步 FC 把 identity 格式化成产品代码字符串
+IF NOT bReadBusy AND NOT bReadError THEN
+    sProductCodeView := F_ConvProductCodeToString(stIdentityRead);
+END_IF
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

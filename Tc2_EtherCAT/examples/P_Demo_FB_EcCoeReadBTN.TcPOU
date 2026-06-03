@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_EcCoeReadBTN" Id="{005166e2-b291-528b-b81d-f84425a06c09}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_EcCoeReadBTN
+VAR
+    fbCoeReadBtn        : FB_EcCoeReadBTN;
+    bRequestReadOnce    : BOOL := FALSE;
+    nTargetSlaveAddr    : UINT := 1001;
+    sBtnRead            : STRING(9);
+    bReadBusy           : BOOL;
+    bReadError          : BOOL;
+    nLastAdsErr         : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// Tc2_EtherCAT.FB_EcCoeReadBTN 演示程序
+// =============================================================================
+// 场景：从站故障返厂流程。HMI 上显示该从站 BTN，维修员对照填返厂申请。
+//       本 FB 实时取 BTN，免去拆机看背面贴的标签。
+//
+// 价值：内存友好的 BTN 单字段读取，运行态 CoE 路径（与 PLC 业务流量
+//       共用邮箱协议）。
+//
+// 验证步骤：
+//   1. Import 本文件，编译 → 登录
+//   2. nTargetSlaveAddr 设为带 BTN 对象 0xF083 的从站地址
+//   3. 在线置 bRequestReadOnce := TRUE
+//        - bReadBusy 短暂 TRUE 后落回
+//        - sBtnRead 应为 8 字符 BTN (如 '0002agdw')
+//   4. 不支持 BTN 的从站会返 CoE Abort 0x06020000
+// =============================================================================
+
+fbCoeReadBtn(
+    sNetId     := '',
+    nSlaveAddr := nTargetSlaveAddr,
+    bExecute   := bRequestReadOnce,
+    tTimeout   := T#5S,
+    bBusy      => bReadBusy,
+    bError     => bReadError,
+    nErrId     => nLastAdsErr,
+    sBTN       => sBtnRead
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

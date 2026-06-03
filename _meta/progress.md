@@ -963,3 +963,112 @@
 2026-06-03T00:00:00Z | Tc2_Database   | obsolete                                | FB_DBRecordSelect                        | verified | PDF + InfoSys cross-verified
 2026-06-03T00:00:00Z | Tc2_Database   | obsolete                                | FB_DBRecordSelect_EX                     | verified | PDF + InfoSys cross-verified
 2026-06-03T00:00:00Z | Tc2_Database   | obsolete                                | FB_DBStoredProceduresRecordReturn        | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_EtherCAT   | ads                                     | FB_EcReadBIC                             | verified | PDF single-source (not-on-infosys)
+2026-06-03T00:00:00Z | Tc2_EtherCAT   | ads                                     | FB_EcReadBTN                             | verified | PDF single-source (not-on-infosys)
+2026-06-03T00:00:00Z | Tc2_EtherCAT   | coe                                     | FB_CoERead_ByDriveRef                    | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_EtherCAT   | coe                                     | FB_CoEWrite_ByDriveRef                   | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_EtherCAT   | coe                                     | FB_EcCoESdoAbortCode                     | verified | PDF single-source (not-on-infosys)
+2026-06-03T00:00:00Z | Tc2_EtherCAT   | coe                                     | FB_EcCoeReadBIC                          | verified | PDF single-source (not-on-infosys)
+2026-06-03T00:00:00Z | Tc2_EtherCAT   | coe                                     | FB_EcCoeReadBTN                          | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_EtherCAT   | coe                                     | FB_EcCoeSdoRead                          | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_EtherCAT   | coe                                     | FB_EcCoeSdoReadEx                        | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_EtherCAT   | coe                                     | FB_EcCoeSdoWrite                         | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_EtherCAT   | coe                                     | FB_EcCoeSdoWriteEx                       | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_EtherCAT   | commands                                | FB_EcLogicalReadCmd                      | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_EtherCAT   | commands                                | FB_EcLogicalWriteCmd                     | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_EtherCAT   | commands                                | FB_EcPhysicalReadCmd                     | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_EtherCAT   | commands                                | FB_EcPhysicalWriteCmd                    | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_EtherCAT   | conversion                              | F_ConvBK1120CouplerStateToString         | verified | PDF single-source (not-on-infosys)
+2026-06-03T00:00:00Z | Tc2_EtherCAT   | conversion                              | F_ConvMasterDevStateToString             | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_EtherCAT   | conversion                              | F_ConvProductCodeToString                | verified | PDF single-source (not-on-infosys)
+2026-06-03T00:00:00Z | Tc2_EtherCAT   | conversion                              | F_ConvSlaveStateToBits                   | verified | PDF single-source (not-on-infosys)
+2026-06-03T00:00:00Z | Tc2_EtherCAT   | conversion                              | F_ConvSlaveStateToBitsEx                 | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_EtherCAT   | conversion                              | F_ConvSlaveStateToString                 | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_EtherCAT   | conversion                              | F_ConvStateToString                      | verified | PDF single-source (not-on-infosys)
+2026-06-03T00:00:00Z | Tc2_EtherCAT   | diagnostic                              | FB_EcGetAllMasters                       | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_EtherCAT   | diagnostic                              | FB_EcGetAllSlaveAbnormalStateChanges     | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_EtherCAT   | diagnostic                              | FB_EcGetAllSlaveAddr                     | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_EtherCAT   | diagnostic                              | FB_EcGetAllSlaveCrcErrors                | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_EtherCAT   | diagnostic                              | FB_EcGetAllSlavePresentStateChanges      | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_EtherCAT   | diagnostic                              | FB_EcGetAllSyncUnitSlaveAddr             | verified | PDF single-source (not-on-infosys)
+2026-06-03T00:00:00Z | Tc2_EtherCAT   | diagnostic                              | FB_EcGetConfSlaves                       | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_EtherCAT   | diagnostic                              | FB_EcGetLastProtErrInfo                  | verified | PDF single-source (not-on-infosys)
+2026-06-03T00:00:00Z | Tc2_EtherCAT   | diagnostic                              | FB_EcGetMasterDevState                   | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_EtherCAT   | diagnostic                              | FB_EcGetScannedSlaves                    | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_EtherCAT   | diagnostic                              | FB_EcGetSlaveCount                       | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_EtherCAT   | diagnostic                              | FB_EcGetSlaveCrcError                    | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_EtherCAT   | diagnostic                              | FB_EcGetSlaveCrcErrorEx                  | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_EtherCAT   | diagnostic                              | FB_EcGetSlaveIdentity                    | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_EtherCAT   | diagnostic                              | FB_EcGetSlaveTopologyInfo                | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_EtherCAT   | diagnostic                              | FB_EcMasterFrameCount                    | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_EtherCAT   | diagnostic                              | FB_EcMasterFrameStatistic                | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_EtherCAT   | diagnostic                              | FB_EcMasterFrameStatisticClearCRC        | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_EtherCAT   | diagnostic                              | FB_EcMasterFrameStatisticClearFrames     | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_EtherCAT   | diagnostic                              | FB_EcMasterFrameStatisticClearTxRxErr    | verified | PDF single-source (not-on-infosys)
+2026-06-03T00:00:00Z | Tc2_EtherCAT   | diagnostic                              | FB_EcMasterObjectID                      | verified | PDF single-source (not-on-infosys)
+2026-06-03T00:00:00Z | Tc2_EtherCAT   | diagnostic                              | F_CheckVendorId                          | verified | PDF single-source (not-on-infosys)
+2026-06-03T00:00:00Z | Tc2_EtherCAT   | diagnostic                              | F_EcGetLinkedTaskOfSyncUnit              | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_EtherCAT   | diagnostic                              | F_EcGetMailboxGatewayAddr                | verified | PDF single-source (not-on-infosys)
+2026-06-03T00:00:00Z | Tc2_EtherCAT   | diagnostic                              | F_EcGetSyncUnitName                      | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_EtherCAT   | distributed_clocks                      | ConvertDcTimeToPathPos                   | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_EtherCAT   | distributed_clocks                      | ConvertDcTimeToPos                       | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_EtherCAT   | distributed_clocks                      | ConvertPathPosToDcTime                   | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_EtherCAT   | distributed_clocks                      | ConvertPosToDcTime                       | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_EtherCAT   | distributed_clocks                      | DCTIME64_TO_DCTIME                       | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_EtherCAT   | distributed_clocks                      | DCTIME64_TO_DCTIMESTRUCT                 | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_EtherCAT   | distributed_clocks                      | DCTIME64_TO_FILETIME64                   | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_EtherCAT   | distributed_clocks                      | DCTIME64_TO_STRING                       | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_EtherCAT   | distributed_clocks                      | DCTIME64_TO_SYSTEMTIME                   | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_EtherCAT   | distributed_clocks                      | DCTIMESTRUCT_TO_DCTIME64                 | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_EtherCAT   | distributed_clocks                      | DCTIME_TO_DCTIME64                       | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_EtherCAT   | distributed_clocks                      | FB_EcDcTimeCtrl64                        | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_EtherCAT   | distributed_clocks                      | FB_EcExtSyncCalcTimeDiff64               | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_EtherCAT   | distributed_clocks                      | FB_EcExtSyncCheck64                      | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_EtherCAT   | distributed_clocks                      | FILETIME64_TO_DCTIME64                   | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_EtherCAT   | distributed_clocks                      | F_ConvExtTimeToDcTime64                  | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_EtherCAT   | distributed_clocks                      | F_ConvTcTimeToDcTime64                   | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_EtherCAT   | distributed_clocks                      | F_ConvTcTimeToExtTime64                  | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_EtherCAT   | distributed_clocks                      | F_GetActualDcTime64                      | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_EtherCAT   | distributed_clocks                      | F_GetCurDcTaskTime64                     | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_EtherCAT   | distributed_clocks                      | F_GetCurDcTickTime64                     | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_EtherCAT   | distributed_clocks                      | F_GetCurExtTime64                        | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_EtherCAT   | distributed_clocks                      | STRING_TO_DCTIME64                       | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_EtherCAT   | distributed_clocks                      | SYSTEMTIME_TO_DCTIME64                   | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_EtherCAT   | foe                                     | FB_EcFoeAccess                           | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_EtherCAT   | foe                                     | FB_EcFoeClose                            | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_EtherCAT   | foe                                     | FB_EcFoeLoad                             | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_EtherCAT   | foe                                     | FB_EcFoeOpen                             | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_EtherCAT   | foe                                     | FB_EcFoeReadFile                         | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_EtherCAT   | foe                                     | FB_EcFoeWriteFile                        | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_EtherCAT   | obsolete                                | DCTIME64_TO_FILETIME                     | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_EtherCAT   | obsolete                                | DCTIMESTRUCT_TO_DCTIME                   | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_EtherCAT   | obsolete                                | DCTIME_TO_DCTIMESTRUCT                   | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_EtherCAT   | obsolete                                | DCTIME_TO_FILETIME                       | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_EtherCAT   | obsolete                                | DCTIME_TO_STRING                         | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_EtherCAT   | obsolete                                | DCTIME_TO_SYSTEMTIME                     | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_EtherCAT   | obsolete                                | FB_EcDcTimeCtrl                          | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_EtherCAT   | obsolete                                | FB_EcExtSyncCalcTimeDiff                 | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_EtherCAT   | obsolete                                | FB_EcExtSyncCheck                        | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_EtherCAT   | obsolete                                | FILETIME_TO_DCTIME                       | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_EtherCAT   | obsolete                                | FILETIME_TO_DCTIME64                     | verified | PDF single-source (not-on-infosys)
+2026-06-03T00:00:00Z | Tc2_EtherCAT   | obsolete                                | F_ConvExtTimeToDcTime                    | verified | PDF single-source (not-on-infosys)
+2026-06-03T00:00:00Z | Tc2_EtherCAT   | obsolete                                | F_ConvTcTimeToDcTime                     | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_EtherCAT   | obsolete                                | F_ConvTcTimeToExtTime                    | verified | PDF single-source (not-on-infosys)
+2026-06-03T00:00:00Z | Tc2_EtherCAT   | obsolete                                | F_GetActualDcTime                        | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_EtherCAT   | obsolete                                | F_GetCurDcTaskTime                       | verified | PDF single-source (not-on-infosys)
+2026-06-03T00:00:00Z | Tc2_EtherCAT   | obsolete                                | F_GetCurDcTickTime                       | verified | PDF single-source (not-on-infosys)
+2026-06-03T00:00:00Z | Tc2_EtherCAT   | obsolete                                | F_GetCurExtTime                          | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_EtherCAT   | obsolete                                | F_GetVersionTcEtherCAT                   | verified | PDF single-source (not-on-infosys)
+2026-06-03T00:00:00Z | Tc2_EtherCAT   | obsolete                                | STRING_TO_DCTIME                         | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_EtherCAT   | obsolete                                | SYSTEMTIME_TO_DCTIME                     | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_EtherCAT   | soe                                     | FB_EcSoeRead                             | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_EtherCAT   | soe                                     | FB_EcSoeWrite                            | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_EtherCAT   | soe                                     | FB_SoERead_ByDriveRef                    | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_EtherCAT   | soe                                     | FB_SoEWrite_ByDriveRef                   | verified | PDF single-source (not-on-infosys)
+2026-06-03T00:00:00Z | Tc2_EtherCAT   | state_machine                           | FB_EcGetAllSlaveStates                   | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_EtherCAT   | state_machine                           | FB_EcGetMasterState                      | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_EtherCAT   | state_machine                           | FB_EcGetSlaveState                       | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_EtherCAT   | state_machine                           | FB_EcReqMasterState                      | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_EtherCAT   | state_machine                           | FB_EcReqSlaveState                       | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_EtherCAT   | state_machine                           | FB_EcSetMasterState                      | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_EtherCAT   | state_machine                           | FB_EcSetSlaveState                       | verified | PDF + InfoSys cross-verified

@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_EcSoeRead" Id="{4aec59d9-704e-5135-8518-f5af51c4c965}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_EcSoeRead
+VAR
+    fbReadVelCmd        : FB_EcSoeRead;
+    bRequestReadOnce    : BOOL := FALSE;
+    nAx5206SlaveAddr    : UINT := 1010;
+    wIdnVelCmd          : WORD := 15;            // S-0-0015 Velocity command value
+    nElementValue       : BYTE := 16#40;          // Value only
+    nDriveNumber        : BYTE := 0;
+    bUseInternalCmd     : BOOL := FALSE;
+    dwReceivedVel       : DWORD;
+    cbActualRead        : UDINT;
+    bReadBusy           : BOOL;
+    bReadError          : BOOL;
+    nLastAdsErr         : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// Tc2_EtherCAT.FB_EcSoeRead 演示程序
+// =============================================================================
+// 场景：AX5206 伺服驱动器读取 S-0-0015（Velocity Command Value）做轴速度
+//       监视。SoE 协议是 AX5xxx 系列原生支持，比 CoE 路径更直接。
+//
+// 价值：Sercos 标准协议访问驱动参数。AX5xxx 兼容首选。
+//
+// 验证步骤：
+//   1. Import 本文件，编译 → 登录
+//   2. nAx5206SlaveAddr 设为 AX5206 地址
+//   3. 在线置 bRequestReadOnce := TRUE
+//        - bReadBusy 短暂 TRUE 后落回
+//        - cbActualRead 应为 Value element 字节数
+//        - dwReceivedVel 应为当前轴的速度命令值（视单位）
+// =============================================================================
+
+fbReadVelCmd(
+    sNetId     := '',
+    nSlaveAddr := nAx5206SlaveAddr,
+    nIdn       := wIdnVelCmd,
+    nElement   := nElementValue,
+    nDriveNo   := nDriveNumber,
+    bCommand   := bUseInternalCmd,
+    pDstBuf    := ADR(dwReceivedVel),
+    cbBufLen   := SIZEOF(dwReceivedVel),
+    bExecute   := bRequestReadOnce,
+    tTimeout   := DEFAULT_ADS_TIMEOUT,
+    bBusy      => bReadBusy,
+    bError     => bReadError,
+    nErrId     => nLastAdsErr,
+    cbRead     => cbActualRead
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

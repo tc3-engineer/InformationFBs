@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_F_ConvSlaveStateToBitsEx" Id="{e759c762-eac7-5431-a259-0fe156e5f533}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_F_ConvSlaveStateToBitsEx
+VAR
+    stEk1122StateInput  : ST_EcSlaveState;
+    stStateBitsEx       : ST_EcSlaveStateBitsEx;     // 含 4 端口 link 扩展位
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// Tc2_EtherCAT.F_ConvSlaveStateToBitsEx 演示程序
+// =============================================================================
+// 场景：分支耦合器 EK1122 状态监视，需要看 D 端口是否连通（基础 Bits 版
+//       无 D 端口字段）。用本 Ex 版 4 端口完整诊断分支链路。
+//
+// 价值：4 端口精度诊断，分支耦合器专用。
+//
+// 验证步骤：
+//   1. Import 本文件，编译 → 登录
+//   2. 用 FB_EcGetSlaveState 把 EK1122 状态写到 stEk1122StateInput
+//   3. 正常运行时 stStateBitsEx 各 link bit 应为 TRUE
+//   4. 拔某条分支线后某个 link bit 应变为 FALSE
+// =============================================================================
+
+stStateBitsEx := F_ConvSlaveStateToBitsEx(stEk1122StateInput);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

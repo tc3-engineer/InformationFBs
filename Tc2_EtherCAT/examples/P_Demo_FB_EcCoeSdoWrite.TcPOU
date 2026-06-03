@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_EcCoeSdoWrite" Id="{8ac01e4e-ec17-5c1e-89d8-c1a372912aea}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_EcCoeSdoWrite
+VAR
+    fbWriteRangeMode    : FB_EcCoeSdoWrite;
+    bRequestWriteOnce   : BOOL := FALSE;
+    nEl3008SlaveAddr    : UINT := 1005;
+    wChannelSettings    : WORD := 16#8000;
+    nRangeModeSubIndex  : BYTE := 1;
+    nNewRangeMode       : UINT := 2;          // 例：2 = 0~20 mA
+    bWriteBusy          : BOOL;
+    bWriteError         : BOOL;
+    nLastAdsErr         : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// Tc2_EtherCAT.FB_EcCoeSdoWrite 演示程序
+// =============================================================================
+// 场景：换线时切换 EL3008 量程从 ±10V 改为 0~20mA。PLC 启动期调本 FB
+//       写 0x8000:01（Channel Settings），无需手动 XAE 改 ESI 重下工程。
+//       现场维修人员只需要在 HMI 上点"换量程"按钮。
+//
+// 价值：把"参数化配置"自动化，免去工程师每次换线下载工程。
+//
+// 验证步骤：
+//   1. Import 本文件，编译 → 登录；现场 EL3008 当前 SAFEOP 或 OP
+//   2. nEl3008SlaveAddr 设为 EL3008 地址
+//   3. 在线脉冲 bRequestWriteOnce := TRUE
+//        - bWriteBusy 短暂为 TRUE 后落回
+//        - nLastAdsErr = 0 → 写入成功
+//   4. 用 FB_EcCoeSdoRead 回读 0x8000:01 验证已改为新值
+//   5. 注意：某些量程改动需 SAFEOP→OP 重切才生效
+// =============================================================================
+
+fbWriteRangeMode(
+    sNetId     := '',
+    nSlaveAddr := nEl3008SlaveAddr,
+    nSubIndex  := nRangeModeSubIndex,
+    nIndex     := wChannelSettings,
+    pSrcBuf    := ADR(nNewRangeMode),
+    cbBufLen   := SIZEOF(nNewRangeMode),
+    bExecute   := bRequestWriteOnce,
+    tTimeout   := DEFAULT_ADS_TIMEOUT,
+    bBusy      => bWriteBusy,
+    bError     => bWriteError,
+    nErrId     => nLastAdsErr
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

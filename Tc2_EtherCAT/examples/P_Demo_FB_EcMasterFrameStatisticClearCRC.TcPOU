@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_EcMasterFrameStatisticClearCRC" Id="{d0b21910-154a-5734-b53b-67155091cedf}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_EcMasterFrameStatisticClearCRC
+VAR
+    fbClearAllCrc       : FB_EcMasterFrameStatisticClearCRC;
+    bRequestClearOnce   : BOOL := FALSE;            // 在线脉冲：HMI"重置 CRC"按钮
+    bClearBusy          : BOOL;
+    bClearError         : BOOL;
+    nLastAdsErr         : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// Tc2_EtherCAT.FB_EcMasterFrameStatisticClearCRC 演示程序
+// =============================================================================
+// 场景：维修员现场换完一根可疑 EtherCAT 网线后，HMI 上按"重置 CRC 计数"
+//       按钮调本 FB；后续 1 小时若 CRC 计数仍持续增长说明换错线或终端
+//       电阻问题，要求 0 起点重新观察。
+//
+// 价值：把"网线问题处理后验证"流程自动化；免去重启主站影响生产线节拍。
+//
+// 验证步骤：
+//   1. Import 本文件，编译 → 登录
+//   2. 先用 FB_EcGetAllSlaveCrcErrors 看当前各从站 CRC 总和（应非 0）
+//   3. 在线脉冲 bRequestClearOnce := TRUE
+//        - bClearBusy 一两个周期后落回
+//        - nLastAdsErr = 0
+//   4. 再调 FB_EcGetAllSlaveCrcErrors，所有从站 CRC 应清 0
+//   5. 后续运行新值仅累计"清零后"的增量，便于做"换线后验证"
+// =============================================================================
+
+fbClearAllCrc(
+    sNetId   := '',
+    bExecute := bRequestClearOnce,
+    tTimeout := DEFAULT_ADS_TIMEOUT,
+    bBusy    => bClearBusy,
+    bError   => bClearError,
+    nErrId   => nLastAdsErr
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

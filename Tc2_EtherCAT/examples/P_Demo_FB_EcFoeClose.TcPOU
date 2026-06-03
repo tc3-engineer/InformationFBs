@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_EcFoeClose" Id="{60416069-05c1-514d-92cc-823c49eb34f6}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_EcFoeClose
+VAR
+    fbFoeClose          : FB_EcFoeClose;
+    bRequestClose       : BOOL := FALSE;
+    hOpenedFoeHandle    : T_HFoe;          // 来自 FB_EcFoeOpen
+    bCloseBusy          : BOOL;
+    bCloseError         : BOOL;
+    nLastAdsErr         : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// Tc2_EtherCAT.FB_EcFoeClose 演示程序
+// =============================================================================
+// 场景：流式 FoE 读日志文件流程的最后一步 —— 关闭 Open 时拿到的句柄，
+//       释放从站邮箱资源，避免下次主站请求邮箱时被旧句柄占住。
+//
+// 价值：显式释放 FoE handle，避免句柄泄漏触发主站邮箱资源耗尽。
+//
+// 验证步骤：
+//   1. Import 本文件，编译 → 登录
+//   2. 先用 FB_EcFoeOpen 打开拿 hOpenedFoeHandle
+//   3. 用 FB_EcFoeAccess 读完所有分块（bEOF 为 TRUE）
+//   4. 在线脉冲 bRequestClose := TRUE
+//        - bCloseBusy 一两个周期后落回
+//        - nLastAdsErr = 0
+//        - hOpenedFoeHandle 失效，不能再用于 Access
+//   5. 即使 Access 中报错也要走本 FB 释放句柄
+// =============================================================================
+
+fbFoeClose(
+    hFoe     := hOpenedFoeHandle,
+    bExecute := bRequestClose,
+    tTimeout := DEFAULT_ADS_TIMEOUT,
+    bBusy    => bCloseBusy,
+    bError   => bCloseError,
+    nErrId   => nLastAdsErr
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

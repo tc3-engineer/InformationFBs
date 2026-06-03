@@ -111,7 +111,7 @@ def _vars_from_text(text: str) -> list[tuple[str, str]]:
         # Strip (* multi-line comments *) and // line comments. Done BEFORE
         # decl extraction so the `;` we hunt for is the real terminator, not
         # one buried inside a comment.
-        region = re.sub(r"\(\*.*?\*\)", "", region, flags=re.DOTALL)
+        region = re.sub(r"\(\*[\s\S]*?\*\s*\)", "", region, flags=re.DOTALL)
         region = re.sub(r"//.*$", "", region, flags=re.MULTILINE)
         # Join wrapped-type lines: if pypdf split a type across two lines
         # (e.g. "in : POINTER TO\nT_HUGE_INTEGER;"), the type token would
@@ -155,7 +155,7 @@ def _naked_method_params(section_text: str) -> list[tuple[str, str]]:
     if not m:
         return []
     body = m.group(1)
-    body = re.sub(r"\(\*.*?\*\)", "", body, flags=re.DOTALL)
+    body = re.sub(r"\(\*[\s\S]*?\*\s*\)", "", body, flags=re.DOTALL)
     body = re.sub(r"//.*$", "", body, flags=re.MULTILINE)
     body = _join_wrapped_decls(body)
     out: list[tuple[str, str]] = []
@@ -187,7 +187,7 @@ def _extract_defaults(section_text: str) -> dict[str, str]:
     out: dict[str, str] = {}
     for m in VAR_REGION_RE.finditer(section_text):
         region = m.group(1)
-        region = re.sub(r"\(\*.*?\*\)", "", region, flags=re.DOTALL)
+        region = re.sub(r"\(\*[\s\S]*?\*\s*\)", "", region, flags=re.DOTALL)
         region = re.sub(r"//.*$", "", region, flags=re.MULTILINE)
         region = _join_wrapped_decls(region)
         for dm in _DEFAULT_PAT.finditer(region):

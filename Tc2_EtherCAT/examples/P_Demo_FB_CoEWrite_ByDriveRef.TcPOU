@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_CoEWrite_ByDriveRef" Id="{e98e009b-848a-5043-bff1-c41e8c6027b5}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_CoEWrite_ByDriveRef
+VAR
+    fbWriteAccel        : FB_CoEWrite_ByDriveRef;
+    bRequestWriteOnce   : BOOL := FALSE;
+    stAxis1DriveRef     : ST_DriveRef;
+    wAccelObject        : WORD := 16#6083;          // Profile Acceleration
+    nAccelSubIndex      : BYTE := 0;
+    dwNewAcceleration   : DWORD := 50000;            // 单位 inc/s² 视 NC 配置
+    bWriteBusy          : BOOL;
+    bWriteError         : BOOL;
+    nAdsErr             : UINT;
+    nCanopenErr         : UINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// Tc2_EtherCAT.FB_CoEWrite_ByDriveRef 演示程序
+// =============================================================================
+// 场景：根据加工节拍动态调驱动加速度限值（0x6083 Profile Acceleration）。
+//       夜间小节拍降低加速度让机器更安静、白天大节拍提高加速度提产量。
+//       本 FB 实时写入无需停机。
+//
+// 价值：驱动参数运行时可调，无需停机重配。提产 / 降噪二选一不是大问题。
+//
+// 验证步骤：
+//   1. Import 本文件，编译 → 登录；NC 配置 + System Manager 链好 stAxis1DriveRef
+//   2. 在线把 dwNewAcceleration 设为目标加速度值
+//   3. 在线脉冲 bRequestWriteOnce := TRUE
+//        - bWriteBusy 短暂 TRUE 后落回
+//        - nAdsErr = 0 AND nCanopenErr = 0
+//   4. 用 FB_CoERead_ByDriveRef 回读 0x6083 验证已改
+//   5. 运动起来观察加减速曲线变化（NC Diagnostics）
+// =============================================================================
+
+fbWriteAccel(
+    stDriveRef      := stAxis1DriveRef,
+    nIndex          := wAccelObject,
+    nSubIndex       := nAccelSubIndex,
+    pSrcBuf         := ADR(dwNewAcceleration),
+    cbBufLen        := SIZEOF(dwNewAcceleration),
+    bExecute        := bRequestWriteOnce,
+    tTimeout        := T#5S,
+    bCompleteAccess := FALSE,
+    bBusy           => bWriteBusy,
+    bError          => bWriteError,
+    iAdsErrId       => nAdsErr,
+    iCANopenErrId   => nCanopenErr
+);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

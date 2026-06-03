@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_F_EcGetMailboxGatewayAddr" Id="{2ca5343d-9043-565e-87f4-0353276c6862}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_F_EcGetMailboxGatewayAddr
+VAR
+    fbReadMasterOid     : FB_EcMasterObjectID;
+    bRequestGetGateway  : BOOL := FALSE;
+    nLocalMasterOid     : OTCID;
+    aIpAddress          : T_IPv4AddrArr;
+    aMacAddress         : ARRAY[0..5] OF BYTE;
+    sIpAddress          : T_IPv4Addr;        // 转字符串后展示
+    sMacAddress         : T_MacAddr;
+    hrResult            : HRESULT;
+    bSuccess            : BOOL;
+    bReadOidBusy        : BOOL;
+    bReadOidError       : BOOL;
+    nLastAdsErr         : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// Tc2_EtherCAT.F_EcGetMailboxGatewayAddr 演示程序
+// =============================================================================
+// 场景：客户移动端 App 通过 EtherCAT Mailbox Gateway 连主站查 CoE 对象。
+//       HMI 显示二维码包含主站 IP，移动端 App 扫码即连。先用本 FC 拿到
+//       主站对应物理网卡的 IP / MAC，转字符串显示。
+//
+// 价值："应该连哪台 IP"做成运行时查询，免去硬编码同步问题。
+//
+// 验证步骤：
+//   1. Import 本文件，编译 → 登录；TwinCAT v3.1.4026.16+，Tc2_EtherCAT 3.7.1.0+
+//   2. 在线脉冲 bRequestGetGateway := TRUE 触发完整流程：
+//        - 第一阶段 fbReadMasterOid 读 OID，bReadOidBusy 一两个周期后落回
+//        - nLocalMasterOid 应为非 0
+//        - 第二阶段同步调本 FC，bSuccess 应为 TRUE
+//        - aIpAddress / aMacAddress 应填入主站网卡的真实地址
+//        - sIpAddress 应类似 '10.0.0.1'，sMacAddress 类似 '00-11-22-33-44-55'
+// =============================================================================
+
+// 阶段 1：异步取主站 OID（每周期调以推进 ADS 状态机）
+fbReadMasterOid(
+    sNetId      := '',
+    bExecute    := bRequestGetGateway,
+    tTimeout    := DEFAULT_ADS_TIMEOUT,
+    bBusy       => bReadOidBusy,
+    bError      => bReadOidError,
+    nErrId      => nLastAdsErr,
+    oidEcMaster => nLocalMasterOid
+);
+
+// 阶段 2：拿到 OID 后同步调本 FC 拿网卡 IP / MAC
+IF (NOT bReadOidBusy) AND (nLocalMasterOid <> 0) AND (NOT bReadOidError) THEN
+    hrResult := F_EcGetMailboxGatewayAddr(
+        oidEcMaster := nLocalMasterOid,
+        aIpAddress  => aIpAddress,
+        aMacAddress => aMacAddress
+    );
+    bSuccess := SUCCEEDED(hrResult);
+    IF bSuccess THEN
+        sIpAddress  := F_CreateIPv4Addr(aIpAddress);
+        sMacAddress := F_CreateMacAddr(aMacAddress, '-', FALSE);
+    END_IF
+END_IF
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

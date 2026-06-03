@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_EcGetLastProtErrInfo" Id="{26c40c0a-8c07-564b-9a87-54595a7bf218}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_EcGetLastProtErrInfo
+VAR
+    fbGetLastProtErr    : FB_EcGetLastProtErrInfo;
+    bRequestReadOnce    : BOOL := FALSE;
+    nFailedSlaveAddr    : UINT := 1001;                  // 报错从站地址
+    eFailedProtocol     : E_EcMbxProtType := eEcMbxProt_FoE;
+    stLastErrInfo       : ST_EcLastProtErrInfo;           // 输出
+    sLastErrDescription : T_MaxString;                    // 拆出来的可读字符串
+    bReadBusy           : BOOL;
+    bReadError          : BOOL;
+    nLastAdsErr         : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// Tc2_EtherCAT.FB_EcGetLastProtErrInfo 演示程序
+// =============================================================================
+// 场景：现场 FoE 固件升级失败，HMI 仅显示"FoE Write 失败"无法定位真实
+//       原因。在 FB_EcFoeWriteFile 报错后立即调用本 FB，把从站返回的扩展
+//       错误描述（"Disk full" / "Invalid PW" 等）取出来显示给现场维修。
+//
+// 价值：把厂商邮箱协议级错误信息透传给 HMI，免去抓包解码。
+//
+// 验证步骤：
+//   1. Import 本文件，编译 → 登录
+//   2. 在另一程序中故意触发一次 FoE 错误（如 FB_EcFoeWriteFile 写不存在的
+//      固件文件名），让某从站邮箱发生 FoE 错误
+//   3. 立即把 nFailedSlaveAddr 设为该从站地址、eFailedProtocol 设为
+//      eEcMbxProt_FoE，bRequestReadOnce := TRUE：
+//        - bReadBusy 一两个周期后落回
+//        - stLastErrInfo.nErrCode 应为非 0（FoE 错误码）
+//        - sLastErrDescription 应为厂商描述
+//   4. 注意：必须立即调，事后任何成功的 FoE 命令会清掉这个错误
+// =============================================================================
+
+fbGetLastProtErr(
+    sNetId     := '',
+    nSlaveAddr := nFailedSlaveAddr,
+    eProtocol  := eFailedProtocol,
+    bExecute   := bRequestReadOnce,
+    tTimeout   := DEFAULT_ADS_TIMEOUT,
+    bBusy      => bReadBusy,
+    bError     => bReadError,
+    nErrId     => nLastAdsErr,
+    info       => stLastErrInfo
+);
+
+// 错误描述是字节数组，转字符串方便 HMI 显示
+sLastErrDescription := BYTEARR_TO_MAXSTRING(stLastErrInfo.binDesc);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

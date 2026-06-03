@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_EcSetSlaveState" Id="{68ffa03c-ccf2-5892-accf-5b2bf2939d47}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_EcSetSlaveState
+VAR
+    fbSetSlaveBootstrap : FB_EcSetSlaveState;
+    bStartFirmwareUpdate: BOOL := FALSE;
+    nTargetSlaveAddr    : UINT := 1001;
+    wRequestBootstrap   : WORD := EC_DEVICE_STATE_BOOTSTRAP;   // 0x03
+    stCurrentSlaveState : ST_EcSlaveState;
+    bSlaveInBootstrap   : BOOL;
+    bSetBusy            : BOOL;
+    bSetError           : BOOL;
+    nLastAdsErr         : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// Tc2_EtherCAT.FB_EcSetSlaveState 演示程序
+// =============================================================================
+// 场景：FoE 固件升级流程第一步：把目标从站切到 BOOTSTRAP 模式。同步等到
+//       从站确实到达 BOOTSTRAP 才放过 FoE 写命令。本 FB 用同步等待版可以
+//       保证下一步 FB_EcFoeLoad 不会写到错误状态的从站。
+//
+// 价值：状态切换 + 同步等结果 1 行搞定。固件升级流程清晰免出错。
+//
+// 验证步骤：
+//   1. Import 本文件，编译 → 登录
+//   2. nTargetSlaveAddr 设为支持 FoE 固件升级的从站地址
+//   3. 在线脉冲 bStartFirmwareUpdate := TRUE
+//        - bSetBusy 持续 TRUE 几百 ms ~ 数秒
+//        - 切完后 bSetBusy 落回
+//        - stCurrentSlaveState.deviceState 应为 16#0003 (BOOTSTRAP)
+//        - bSlaveInBootstrap = TRUE
+//   4. 接下来可调 FB_EcFoeLoad 写新固件
+//   5. 完成后必须再用本 FB 切回 INIT 再 OP 让从站重新工作
+// =============================================================================
+
+fbSetSlaveBootstrap(
+    sNetId     := '',
+    nSlaveAddr := nTargetSlaveAddr,
+    bExecute   := bStartFirmwareUpdate,
+    tTimeout   := T#10S,
+    reqState   := wRequestBootstrap,
+    bBusy      => bSetBusy,
+    bError     => bSetError,
+    nErrId     => nLastAdsErr,
+    currState  => stCurrentSlaveState
+);
+
+bSlaveInBootstrap := NOT bSetBusy AND NOT bSetError
+                     AND (stCurrentSlaveState.deviceState = EC_DEVICE_STATE_BOOTSTRAP);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>
