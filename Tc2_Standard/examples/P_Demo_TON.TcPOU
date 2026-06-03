@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_TON" Id="{e2d625a8-d422-54c8-8b74-0b3f7143b43c}" SpecialFunc="None">
+  <POU Name="P_Demo_TON" Id="{3f4a0a65-84b1-59ce-b5db-7441c39b33d6}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_TON
 VAR
     fbStartupDelay : TON; // 接通延时定时器实例：用于电机启动按钮防抖

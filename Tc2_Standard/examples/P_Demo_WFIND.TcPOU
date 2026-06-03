@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_WFIND" Id="{df0069ac-d5a7-57a9-8b3b-d2835b30335b}" SpecialFunc="None">
+  <POU Name="P_Demo_WFIND" Id="{82e88d18-0625-5013-a75c-fe66510ad954}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_WFIND
 VAR
     sConfig   : WSTRING(255) := "IP：192.168.1.10，端口：502"; // 中文风格的配置串：用全角逗号分隔字段

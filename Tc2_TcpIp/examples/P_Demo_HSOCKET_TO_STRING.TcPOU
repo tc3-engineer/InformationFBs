@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_HSOCKET_TO_STRING" Id="{ef9fc6d1-a02e-596b-92d1-4c7a453767e5}" SpecialFunc="None">
+  <POU Name="P_Demo_HSOCKET_TO_STRING" Id="{1ffa7c73-7bae-583c-be1b-199ec3d8a54d}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_HSOCKET_TO_STRING
 VAR
     fbConnect       : FB_SocketConnect; // 先建连产生真实句柄，再 demo 字串转换

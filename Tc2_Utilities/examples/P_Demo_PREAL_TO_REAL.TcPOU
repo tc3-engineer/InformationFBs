@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_PREAL_TO_REAL" Id="{c7f8ae4c-35d4-51ca-94e2-db271698c015}" SpecialFunc="None">
+  <POU Name="P_Demo_PREAL_TO_REAL" Id="{f38b7574-6cdd-510c-beaa-3ef4b59ecd3e}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_PREAL_TO_REAL
 VAR
     fRealValue           : REAL := 3.14; // 模拟 wire 缓冲区中的 REAL 字段

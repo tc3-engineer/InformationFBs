@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_IOF_DeviceReset" Id="{99a026e4-c68a-5f6e-9969-edbe537b8f18}" SpecialFunc="None">
+  <POU Name="P_Demo_IOF_DeviceReset" Id="{59e9f3ec-464d-58d8-a1b1-d2bab6e0ef4a}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_IOF_DeviceReset
 VAR
     fbResetIoDevice   : IOF_DeviceReset; // I/O 设备复位 FB 实例

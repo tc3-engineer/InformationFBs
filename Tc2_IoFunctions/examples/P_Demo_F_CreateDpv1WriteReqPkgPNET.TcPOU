@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_F_CreateDpv1WriteReqPkgPNET" Id="{825ccbd1-d1fd-5afe-b035-c71d39107176}" SpecialFunc="None">
+  <POU Name="P_Demo_F_CreateDpv1WriteReqPkgPNET" Id="{77cb2b47-912d-59ea-b297-e734fe96ea5c}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_F_CreateDpv1WriteReqPkgPNET
 VAR
     aDpv1WriteReqBuffer   : ARRAY[1..240] OF BYTE; // 请求缓冲

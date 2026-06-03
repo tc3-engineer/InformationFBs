@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_MC_StepAbsoluteSwitchDetection" Id="{85a9cc91-92bc-5c54-b757-0d61e5757570}" SpecialFunc="None">
+  <POU Name="P_Demo_MC_StepAbsoluteSwitchDetection" Id="{7f79c6aa-d54b-5b3d-b59b-d5ce6198cff6}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_MC_StepAbsoluteSwitchDetection
 VAR
     fbStepAbsoluteSwitchDetection : MC_StepAbsoluteSwitchDetection;

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_F_UINT" Id="{8f708945-2058-5ca1-a31f-76adab87d0b5}" SpecialFunc="None">
+  <POU Name="P_Demo_F_UINT" Id="{6732c407-e886-55ce-b33e-a176b6d3fdf7}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_F_UINT
 VAR
     nRpm          : UINT := 1450; // 业务量（UINT）

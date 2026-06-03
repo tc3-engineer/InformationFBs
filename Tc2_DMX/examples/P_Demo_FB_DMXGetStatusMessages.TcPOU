@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_DMXGetStatusMessages" Id="{1f6969a5-4458-5004-a2cc-d3ced27274ab}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_DMXGetStatusMessages" Id="{6076ce96-3c1c-5699-b2e1-7f11be263e9a}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_DMXGetStatusMessages
 VAR
     fbGetStatusMsgs   : FB_DMXGetStatusMessages;      // 读设备状态消息

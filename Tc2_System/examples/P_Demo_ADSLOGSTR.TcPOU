@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_ADSLOGSTR" Id="{1191ce6a-1b22-5f49-9978-14e216eb20f6}" SpecialFunc="None">
+  <POU Name="P_Demo_ADSLOGSTR" Id="{50aba596-d5f6-509e-b91a-ddd4f7e478ab}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_ADSLOGSTR
 VAR
     bSFCError       : BOOL; // SFC 步超时信号

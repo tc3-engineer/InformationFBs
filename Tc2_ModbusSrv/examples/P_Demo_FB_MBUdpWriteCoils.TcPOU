@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_MBUdpWriteCoils" Id="{44559cfe-7f89-5710-813e-40d5140ffedd}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_MBUdpWriteCoils" Id="{7d031bb4-5e43-5dbb-af71-cdd5f7d7ed72}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_MBUdpWriteCoils
 VAR
     fbUdpWriteCoils: FB_MBUdpWriteCoils;

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_UInt64Or" Id="{7bfb83ba-723f-513a-9206-8087d3774ae1}" SpecialFunc="None">
+  <POU Name="P_Demo_UInt64Or" Id="{f494fc66-e59d-5520-9b92-15e9204fe18b}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_UInt64Or
 VAR
     uliFaultModuleA : T_ULARGE_INTEGER;; // 模块 A 故障字

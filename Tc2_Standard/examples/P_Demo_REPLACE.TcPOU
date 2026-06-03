@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_REPLACE" Id="{91498aee-9749-5a00-93ec-214b77526c94}" SpecialFunc="None">
+  <POU Name="P_Demo_REPLACE" Id="{60c62db2-8704-5da8-b64c-d7aa3fac6373}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_REPLACE
 VAR
     sLogLine    : STRING(255) := 'WARN_ Motor stalled'; // 原始日志：等级 'WARN_' + 消息体

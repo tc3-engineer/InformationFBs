@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_WREPLACE" Id="{f58931b4-726f-5a4c-a7d0-84b0b846b0e4}" SpecialFunc="None">
+  <POU Name="P_Demo_WREPLACE" Id="{6c6cb4aa-af9e-56a0-a76b-3730bfe510da}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_WREPLACE
 VAR
     sLogLine    : WSTRING(255) := "警告 电机异常"; // 原始中文日志：等级 + 空格 + 消息体

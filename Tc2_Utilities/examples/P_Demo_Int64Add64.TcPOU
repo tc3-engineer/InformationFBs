@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_Int64Add64" Id="{59efed3f-cc7b-5d08-8bd4-be6c5f418d6c}" SpecialFunc="None">
+  <POU Name="P_Demo_Int64Add64" Id="{0421705e-37af-5a57-94c0-aba067d581d7}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_Int64Add64
 VAR
     liAccum : T_LARGE_INTEGER;; // 累计差值

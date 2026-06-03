@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_NovRamReadWriteEx" Id="{833bf572-dee7-5bac-8328-5b0d39005f94}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_NovRamReadWriteEx" Id="{8e3f7c3f-828a-5e9a-a0dc-5226c3ea546d}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_NovRamReadWriteEx
 VAR
     fbNovRamAccessEx        : FB_NovRamReadWriteEx; // NOV-RAM 读写 Ex FB

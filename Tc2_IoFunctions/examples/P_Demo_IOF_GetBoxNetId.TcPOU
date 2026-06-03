@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_IOF_GetBoxNetId" Id="{c04eaaac-a79e-5864-90e9-beee862ad172}" SpecialFunc="None">
+  <POU Name="P_Demo_IOF_GetBoxNetId" Id="{19075f21-7a33-594e-9195-e1d4530dd36f}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_IOF_GetBoxNetId
 VAR
     fbLookupBoxNetId     : IOF_GetBoxNetId; // box AMS Net ID 查询 FB

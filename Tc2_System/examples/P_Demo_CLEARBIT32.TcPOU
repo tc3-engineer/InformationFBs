@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_CLEARBIT32" Id="{e17b1285-6af3-5682-bbf1-773cff051927}" SpecialFunc="None">
+  <POU Name="P_Demo_CLEARBIT32" Id="{96fe892f-5f11-58ca-94c7-f99c6d70e520}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_CLEARBIT32
 VAR
     dwStatusWord    : DWORD := 16#FFFFFFFF; // 初始状态字

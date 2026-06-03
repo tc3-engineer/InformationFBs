@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_GETCPUCOUNTER" Id="{46cc089f-ec85-5583-922d-d956bbb49783}" SpecialFunc="None">
+  <POU Name="P_Demo_GETCPUCOUNTER" Id="{3519190a-10c9-5f71-83d1-390865d6b86b}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_GETCPUCOUNTER
 VAR
     fbGETCPUCOUNTER : GETCPUCOUNTER; // GETCPUCOUNTER 实例

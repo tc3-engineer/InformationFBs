@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_F_RTrim" Id="{9c7f5fae-532f-56d7-847b-cc4909ccabc4}" SpecialFunc="None">
+  <POU Name="P_Demo_F_RTrim" Id="{57fb3c8a-62d8-51cd-b630-d22a160db1bd}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_F_RTrim
 VAR
     sRawInput : STRING(255) := sensor_id_42   ; // 模拟收到的原始字符串；在线写值改测试不同输入

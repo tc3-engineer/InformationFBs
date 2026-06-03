@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_FTR_Gaussian" Id="{e56e43d3-5dc4-5b67-b4b2-58addd569363}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_FTR_Gaussian" Id="{7cffde69-0215-5e27-93ec-862afdc103c6}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_FTR_Gaussian
 VAR
     fbFilter      : FB_FTR_Gaussian;                  // 被演示的滤波器实例

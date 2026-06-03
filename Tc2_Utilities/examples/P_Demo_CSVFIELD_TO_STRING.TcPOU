@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_CSVFIELD_TO_STRING" Id="{cba057ca-e459-5905-9d77-10450c25669e}" SpecialFunc="None">
+  <POU Name="P_Demo_CSVFIELD_TO_STRING" Id="{0c7085fb-acfc-5d78-9084-cb05c3ffd087}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_CSVFIELD_TO_STRING
 VAR
     sRawField   : STRING(255) := "PumpAlpha"; // 工业语义：CSV 原始字段

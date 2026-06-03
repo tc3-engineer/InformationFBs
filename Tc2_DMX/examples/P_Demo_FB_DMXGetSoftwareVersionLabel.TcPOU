@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_DMXGetSoftwareVersionLabel" Id="{88aeeff4-c3d5-5477-a798-ea2ab8319528}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_DMXGetSoftwareVersionLabel" Id="{4e63c198-6caa-51c9-b148-84ba72ad2644}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_DMXGetSoftwareVersionLabel
 VAR
     fbGetSwVersion    : FB_DMXGetSoftwareVersionLabel; // 读软件版本

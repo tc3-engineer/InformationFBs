@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FLOOR" Id="{19ca6bb9-c2f8-588d-b895-d354bd433e1a}" SpecialFunc="None">
+  <POU Name="P_Demo_FLOOR" Id="{a74b1022-a8ed-5eb7-b803-50907250378b}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FLOOR
 VAR
     lrAccumulatedPieces : LREAL := 35.7; // 本班次累计件数；在线写值模拟流量计读数

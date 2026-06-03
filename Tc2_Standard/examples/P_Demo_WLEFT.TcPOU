@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_WLEFT" Id="{2d369477-8a02-5533-8424-ccc09a609c23}" SpecialFunc="None">
+  <POU Name="P_Demo_WLEFT" Id="{c2a2d7a0-7048-5a0f-a800-9e048ffa742c}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_WLEFT
 VAR
     sOrderID  : WSTRING(255) := "客户A订单20260511_00123"; // 中文订单号：前 4 字符是部门编码

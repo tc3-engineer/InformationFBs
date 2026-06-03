@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_S_UPS_CX51x0" Id="{bc205aca-cfd8-5afb-b6aa-7cc9190f5a4b}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_S_UPS_CX51x0" Id="{0f9313fe-1577-54dc-9e26-8f6a9943ec4f}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_S_UPS_CX51x0
 VAR
     fbSUPS           : FB_S_UPS_CX51x0; // CX51x0 平台 1-second UPS 管家

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_STRING_TO_SYSTEMTIME" Id="{589fdd1c-217e-5deb-82bd-adb6e228b067}" SpecialFunc="None">
+  <POU Name="P_Demo_STRING_TO_SYSTEMTIME" Id="{09f529cf-1164-5407-8696-50ab9663362e}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_STRING_TO_SYSTEMTIME
 VAR
     sScheduleTime  : STRING(23) := '2026-05-11-12:34:56.789'; // 上位机下发的计划时间字符串

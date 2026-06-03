@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_F_ToCHR" Id="{eb893e6d-f525-59b6-83a8-1a80f595ab9f}" SpecialFunc="None">
+  <POU Name="P_Demo_F_ToCHR" Id="{7a18a0dd-e260-5f36-b53c-d5b13e439933}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_F_ToCHR
 VAR
     byAsciiCode : BYTE := 16#31; // ASCII 码 0x31 = '1'

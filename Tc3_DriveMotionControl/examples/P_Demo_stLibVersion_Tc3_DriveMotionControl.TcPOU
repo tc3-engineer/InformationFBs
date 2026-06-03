@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_stLibVersion_Tc3_DriveMotionControl" Id="{8d435aee-b835-5530-8480-58c74a2a7877}" SpecialFunc="None">
+  <POU Name="P_Demo_stLibVersion_Tc3_DriveMotionControl" Id="{3f7d0ccc-5c5a-5b08-b593-d54f686108d9}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_stLibVersion_Tc3_DriveMotionControl
 VAR
     bDmcVersionOK   : BOOL;        // 比对结果：≥1.5.5 即 TRUE

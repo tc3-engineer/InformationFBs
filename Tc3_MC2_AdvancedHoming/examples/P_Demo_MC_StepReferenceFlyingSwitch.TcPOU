@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_MC_StepReferenceFlyingSwitch" Id="{e8feba67-d995-5b5a-9e94-3facf51c7cc3}" SpecialFunc="None">
+  <POU Name="P_Demo_MC_StepReferenceFlyingSwitch" Id="{ba788dcf-7a0b-5df7-b64a-012e2d6dd78d}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_MC_StepReferenceFlyingSwitch
 VAR
     fbStepReferenceFlyingSwitch : MC_StepReferenceFlyingSwitch;

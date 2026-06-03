@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_AX2000_AXACT" Id="{dc944be3-fd3c-50b5-86df-3f1d20aedbba}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_AX2000_AXACT" Id="{380c6eab-4698-5f4d-8d24-d750b0890035}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_AX2000_AXACT
 VAR
     fbAx2000Action        : FB_AX2000_AXACT; // AX2000 动作 FB（必须循环调用）

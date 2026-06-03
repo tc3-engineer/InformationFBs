@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_BYTE_TO_OCTSTR" Id="{18d02f05-be0b-599a-832c-a42e56ceaa8d}" SpecialFunc="None">
+  <POU Name="P_Demo_BYTE_TO_OCTSTR" Id="{b8807ddb-eb1b-5cdd-94f3-aabf365b071c}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_BYTE_TO_OCTSTR
 VAR
     nValue     : BYTE := 43981; // 待转换的 BYTE 值；在线写值替换测试不同输入

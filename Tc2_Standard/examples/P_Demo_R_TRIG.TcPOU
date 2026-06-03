@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_R_TRIG" Id="{4f59f281-181a-5fdc-864b-59b2eb3805d9}" SpecialFunc="None">
+  <POU Name="P_Demo_R_TRIG" Id="{6f6143d9-a7a6-511f-8e0b-ba4dc253332c}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_R_TRIG
 VAR
     fbButtonEdge  : R_TRIG; // 上升沿检测器实例

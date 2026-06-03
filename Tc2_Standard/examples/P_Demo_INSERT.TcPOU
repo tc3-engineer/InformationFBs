@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_INSERT" Id="{bc0e7e12-a8ad-5934-add2-7baa868a0579}" SpecialFunc="None">
+  <POU Name="P_Demo_INSERT" Id="{886791fe-8096-563b-b3fc-81e39f6a0866}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_INSERT
 VAR
     sLogLine   : STRING(255) := 'INFO Motor started'; // 原始日志行：等级 + 消息体

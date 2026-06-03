@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_MID" Id="{2aeadc2a-7713-5e9b-aa4d-cb3f06ab545d}" SpecialFunc="None">
+  <POU Name="P_Demo_MID" Id="{75d642bc-eb85-5bf2-8a03-cecded45857a}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_MID
 VAR
     sConfig  : STRING(255) := 'IP:192.168.1.10,PORT:502'; // HMI 配置串：IP 段 + 逗号 + PORT 段

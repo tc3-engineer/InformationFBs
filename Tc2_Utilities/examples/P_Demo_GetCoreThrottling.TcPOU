@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_GetCoreThrottling" Id="{d268cf31-23a3-53be-b8a0-629a9dfb6dcb}" SpecialFunc="None">
+  <POU Name="P_Demo_GetCoreThrottling" Id="{81c05920-84dc-5b85-a47d-36d4db679d25}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_GetCoreThrottling
 VAR
     fbCBM                    : TC_CoreBoostMonitor; // TC_CoreBoostMonitor 实例

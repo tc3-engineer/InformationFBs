@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_F_RaiseException" Id="{d65fab84-150d-51a4-b160-eaf91d4eb3ec}" SpecialFunc="None">
+  <POU Name="P_Demo_F_RaiseException" Id="{eb737c1e-09f4-51c8-a0a7-29b04e9b5d7e}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_F_RaiseException
 VAR
     bTriggerAssertion : BOOL; // 在线写 TRUE 触发一次断言失败

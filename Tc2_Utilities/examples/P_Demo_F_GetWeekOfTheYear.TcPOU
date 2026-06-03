@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_F_GetWeekOfTheYear" Id="{bf0fb796-d49e-5bee-a025-a77daa8a8fc4}" SpecialFunc="None">
+  <POU Name="P_Demo_F_GetWeekOfTheYear" Id="{394f83fd-c1d0-59fe-b5a6-f3b706948592}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_F_GetWeekOfTheYear
 VAR
     dtProduction  : DATE_AND_TIME := DT#2026-05-11-08:00:00; // 投产日期

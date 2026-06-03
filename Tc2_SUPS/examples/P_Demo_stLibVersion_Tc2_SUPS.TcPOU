@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_stLibVersion_Tc2_SUPS" Id="{a2212072-0258-59a1-b712-7b929222363e}" SpecialFunc="None">
+  <POU Name="P_Demo_stLibVersion_Tc2_SUPS" Id="{dbcc8faf-176a-587c-ba07-8d12d2a0ce48}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_stLibVersion_Tc2_SUPS
 VAR
     stCurrentVersion  : ST_LibVersion; // 从 stLibVersion_Tc2_SUPS 拷贝到本地的版本副本（在线 monitor 查看各字段）

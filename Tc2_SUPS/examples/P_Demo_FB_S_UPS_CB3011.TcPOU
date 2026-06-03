@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_S_UPS_CB3011" Id="{979edaf2-d248-5c5a-a281-f5767380de11}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_S_UPS_CB3011" Id="{ddc9acb6-fc08-5004-90c1-a948497526e2}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_S_UPS_CB3011
 VAR
     fbSUPS         : FB_S_UPS_CB3011; // CB3011 平台 1-second UPS 管家

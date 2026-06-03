@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_F_ScanAmsNetIds" Id="{b079fa43-8680-50e4-836b-bc6320f52751}" SpecialFunc="None">
+  <POU Name="P_Demo_F_ScanAmsNetIds" Id="{d7b98a98-4a4d-503d-b3bf-a04dbea394b2}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_F_ScanAmsNetIds
 VAR
     sNetIdInput    : T_AmsNetID := '127.16.17.3.1.1'; // 操作员输入或配置文件读到的 NetID 字符串

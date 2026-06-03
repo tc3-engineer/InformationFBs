@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_Raise" Id="{f45466fe-20e3-55c5-9ca3-bf18a447dce2}" SpecialFunc="None">
+  <POU Name="P_Demo_Raise" Id="{956909f5-a27c-5d7b-b54a-eb64d63cce3d}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_Raise
 VAR
     fbAlarm               : FB_TcAlarm; // 电机过载报警实例

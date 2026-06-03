@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_PDATE_TO_DATE" Id="{64f153a6-ef48-5a37-b322-da24b380ba83}" SpecialFunc="None">
+  <POU Name="P_Demo_PDATE_TO_DATE" Id="{728f422f-abe9-5950-8928-01d6c8457a0c}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_PDATE_TO_DATE
 VAR
     dRealValue           : DATE := D#2026-05-11; // 模拟 wire 缓冲区中的 DATE 字段

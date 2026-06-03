@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_FileRingBuffer" Id="{fb681e03-c90c-5937-844b-e8b62a7e54c8}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_FileRingBuffer" Id="{75d8a641-09e6-5a8f-8b3c-9830c68417b4}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_FileRingBuffer
 VAR
     fbFB_FileRingBuffer : FB_FileRingBuffer; // FB_FileRingBuffer 实例

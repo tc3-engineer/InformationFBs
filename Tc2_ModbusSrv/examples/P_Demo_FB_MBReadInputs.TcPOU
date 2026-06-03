@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_MBReadInputs" Id="{5844c2fa-8368-583b-8c0c-771298a5bab3}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_MBReadInputs" Id="{41c798e4-9aa6-5851-989f-a2016f456915}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_MBReadInputs
 VAR
     fbReadInputs  : FB_MBReadInputs;

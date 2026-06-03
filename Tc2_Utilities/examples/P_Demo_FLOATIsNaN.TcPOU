@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FLOATIsNaN" Id="{e2ba526a-ae83-5143-93d4-b2e36503b48b}" SpecialFunc="None">
+  <POU Name="P_Demo_FLOATIsNaN" Id="{c4c82148-2394-5a2d-8d65-3430eb9643e2}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FLOATIsNaN
 VAR
     rDifferentialPressure : LREAL := 4.0; // 压差信号（在线写 -1.0 模拟传感器零漂）

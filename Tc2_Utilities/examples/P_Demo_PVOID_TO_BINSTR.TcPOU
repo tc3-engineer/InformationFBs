@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_PVOID_TO_BINSTR" Id="{082a860d-0e81-5db5-a576-87bbc660bb24}" SpecialFunc="None">
+  <POU Name="P_Demo_PVOID_TO_BINSTR" Id="{f4a9fadf-8a94-59e6-a8b7-6e7efeedc7f2}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_PVOID_TO_BINSTR
 VAR
     pTarget    : POINTER TO BYTE; // 测试用指针；演示中用 ADR(nProbe) 取实际地址

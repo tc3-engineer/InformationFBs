@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_PN_ReadStateOfDevices" Id="{7a6bdcdb-3e8e-5fb9-9b5f-2e2be119cfb8}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_PN_ReadStateOfDevices" Id="{b2f7dcda-8d6c-530e-9746-bb998475ff8d}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_PN_ReadStateOfDevices
 VAR
     fbReadState   : FB_PN_ReadStateOfDevices;

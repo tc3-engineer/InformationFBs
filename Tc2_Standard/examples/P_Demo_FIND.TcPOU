@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FIND" Id="{2225a5b8-61d4-5a2e-868b-10ac78adff1e}" SpecialFunc="None">
+  <POU Name="P_Demo_FIND" Id="{e5133551-88e5-54f3-bc37-b45e9e6652ea}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FIND
 VAR
     sConfig   : STRING(255) := 'IP:192.168.1.10,PORT:502'; // 配置串：IP 与 PORT 之间用逗号分隔

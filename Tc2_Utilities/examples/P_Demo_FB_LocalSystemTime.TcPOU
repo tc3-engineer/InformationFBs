@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_LocalSystemTime" Id="{877f6530-b367-58ab-80b0-9042a8a6dd49}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_LocalSystemTime" Id="{671f6030-edfd-57e8-8298-0d804d5a4814}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_LocalSystemTime
 VAR
     fbFB_LocalSystemTime : FB_LocalSystemTime; // FB_LocalSystemTime 实例

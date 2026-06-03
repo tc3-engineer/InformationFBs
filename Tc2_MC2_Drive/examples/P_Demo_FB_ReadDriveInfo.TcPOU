@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_ReadDriveInfo" Id="{834b933e-e3ed-54dc-a69a-bf30b38ab85b}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_ReadDriveInfo" Id="{d7afc1e4-ca91-5510-88e8-549cece44c69}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_ReadDriveInfo
 VAR
     fbReadInfo   : FB_ReadDriveInfo; // 读驱动器信息 FB 实例

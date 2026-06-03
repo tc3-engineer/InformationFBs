@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_Dpv1WritePNET" Id="{e9969d06-1fc7-5024-a03a-16de2a5d2f25}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_Dpv1WritePNET" Id="{8388633a-35a2-5dee-abe2-1789fed16f9e}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_Dpv1WritePNET
 VAR
     fbDpv1WritePNET          : FB_Dpv1WritePNET; // Profinet DPV1 写 FB

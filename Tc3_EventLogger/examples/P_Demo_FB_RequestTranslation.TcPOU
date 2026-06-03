@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_RequestTranslation" Id="{a4b7eec1-bf61-5aeb-8566-7b9428870fb5}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_RequestTranslation" Id="{96bd3895-2c3a-5a6b-8b02-e3fcb469a675}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_RequestTranslation
 VAR
     fbReq       : FB_RequestTranslation; // 请求 FB 实例

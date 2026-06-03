@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_DMXGetDMX512PersonalityDescription" Id="{9c94715c-aba1-5d02-b4b9-caa6da933c02}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_DMXGetDMX512PersonalityDescription" Id="{25534bf8-658c-5cc8-a60a-3be0fc30582a}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_DMXGetDMX512PersonalityDescription
 VAR
     fbGetPersDesc     : FB_DMXGetDMX512PersonalityDescription; // 读 personality 描述

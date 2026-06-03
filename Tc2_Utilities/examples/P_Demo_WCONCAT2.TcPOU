@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_WCONCAT2" Id="{c9268a0c-7662-5f92-b165-4ee55f52f14e}" SpecialFunc="None">
+  <POU Name="P_Demo_WCONCAT2" Id="{75e6bf84-c888-5d95-8c08-05f7075940fe}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_WCONCAT2
 VAR
     wsPrefix   : WSTRING(255) := "Pump Status: "; // 工业语义：HMI 多语言消息前缀

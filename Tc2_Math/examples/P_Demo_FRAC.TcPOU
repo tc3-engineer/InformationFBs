@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FRAC" Id="{d5ee93c4-c2c2-5166-afee-8625cc6d5eff}" SpecialFunc="None">
+  <POU Name="P_Demo_FRAC" Id="{26ebcbca-cbb0-502a-8d6d-8addfeab90ee}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FRAC
 VAR
     lrUnixTimeSec   : LREAL := 1715433600.5; // 外部送入的 Unix 秒（含小数）；在线写值模拟不同时间戳

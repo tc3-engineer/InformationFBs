@@ -169,10 +169,16 @@ def _rewrite_import_hints(text: str) -> str:
     return text
 
 
-def _stable_guid(name: str) -> str:
-    """Deterministic UUID5 from POU name so re-runs produce identical files."""
+def _stable_guid(name: str, library: str = "") -> str:
+    """Deterministic UUID5 from library + POU name so re-runs produce identical
+    files. The library is part of the namespace path because same-named FBs
+    appear across libraries (e.g. MC_Halt in Tc2_MC2 + Tc3_DriveMotionControl,
+    FB_SoEReset in Tc2_MC2_Drive + Tc2_NcDrive) — without the library qualifier
+    they collide and XAE refuses to load two POUs with the same Id.
+    """
     ns = uuid.UUID("6ba7b810-9dad-11d1-80b4-00c04fd430c8")  # DNS namespace
-    return "{" + str(uuid.uuid5(ns, f"tc3-libraries-kb/{name}")) + "}"
+    path = f"tc3-libraries-kb/{library}/{name}" if library else f"tc3-libraries-kb/{name}"
+    return "{" + str(uuid.uuid5(ns, path)) + "}"
 
 
 def convert(src: Path) -> str:
@@ -219,7 +225,12 @@ def convert(src: Path) -> str:
 
     impl_text = _extract_st_body(body)
 
-    pou_attrs = f'Name="{name}" Id="{_stable_guid(name)}" SpecialFunc="None"'
+    # Library qualifier from the source path: <Lib>/examples/<file>.xml
+    try:
+        library = src.parent.parent.name
+    except Exception:
+        library = ""
+    pou_attrs = f'Name="{name}" Id="{_stable_guid(name, library)}" SpecialFunc="None"'
     out = TCPLCOBJECT_HEAD
     out += f"  <POU {pou_attrs}>\n"
     out += f"    <Declaration><![CDATA[{decl_text}]]></Declaration>\n"

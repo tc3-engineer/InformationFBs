@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_SoEReset" Id="{55a14dce-ca55-56ad-8d8a-c76009f1456e}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_SoEReset" Id="{9dbd529b-12f7-5164-8b62-dbfde22cee1c}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_SoEReset
 VAR
     fbDriveReset  : FB_SoEReset;

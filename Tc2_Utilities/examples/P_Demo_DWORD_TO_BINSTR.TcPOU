@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_DWORD_TO_BINSTR" Id="{fcbf7414-fd3c-57d9-a9c3-37adbe94c08c}" SpecialFunc="None">
+  <POU Name="P_Demo_DWORD_TO_BINSTR" Id="{b5018035-6176-5d7e-8b32-37c7e0c27764}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_DWORD_TO_BINSTR
 VAR
     nValue     : DWORD := 43981; // 待转换的 DWORD 值；在线写值替换测试不同输入

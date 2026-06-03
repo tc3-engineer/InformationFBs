@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FindAndSplit" Id="{e4d8067f-dfb6-542a-ae19-128ea2840779}" SpecialFunc="None">
+  <POU Name="P_Demo_FindAndSplit" Id="{fde24a69-66af-53f5-80fb-3935f16906aa}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FindAndSplit
 VAR
     sNodeId : STRING(255) := 'ns=2;s=Pump.State'; // 工业语义：OPC UA NodeId

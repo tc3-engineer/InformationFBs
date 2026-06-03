@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_SocketConnect" Id="{2ac03af2-f09a-56d4-8747-ef95e508ae27}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_SocketConnect" Id="{4b26e6bd-3c1f-527f-964f-34feffdab812}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_SocketConnect
 VAR
     fbConnectToMes    : FB_SocketConnect; // 主动建连到 MES 服务器

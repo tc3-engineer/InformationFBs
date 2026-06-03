@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_CoEAX8000BrakeTest" Id="{3398c9eb-dc9b-5e21-b460-3ec2ee63fcdc}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_CoEAX8000BrakeTest" Id="{b1598427-8dd3-5178-b57b-4dc61f4a70bd}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_CoEAX8000BrakeTest
 VAR
     fbBrakeTest           : FB_CoEAX8000BrakeTest; // AX8000 抱闸测试 FB 实例

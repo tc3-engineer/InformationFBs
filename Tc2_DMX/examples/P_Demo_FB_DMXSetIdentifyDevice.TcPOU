@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_DMXSetIdentifyDevice" Id="{099c3999-926b-53e2-8084-072d029b61cb}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_DMXSetIdentifyDevice" Id="{20222167-e42d-589d-b525-a855eb6a256f}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_DMXSetIdentifyDevice
 VAR
     fbSetIdentify     : FB_DMXSetIdentifyDevice;      // 置 / 复位识别

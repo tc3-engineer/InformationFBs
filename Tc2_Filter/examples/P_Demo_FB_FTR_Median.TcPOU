@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_FTR_Median" Id="{2481900f-d856-5e48-84e1-e0c8c0e7553c}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_FTR_Median" Id="{1e853d25-de2f-5da6-8a10-b295dea36413}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_FTR_Median
 VAR
     fbFilter      : FB_FTR_Median;                  // 被演示的滤波器实例

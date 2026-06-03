@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_GetDPRAMInfo" Id="{73cb184d-5f82-593e-bc89-2f588fab6069}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_GetDPRAMInfo" Id="{68fd7ef2-2aa7-5214-bc21-ff57d3e355d4}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_GetDPRAMInfo
 VAR
     fbGetDpramInfo    : FB_GetDPRAMInfo; // NOV/DP-RAM 信息查询 FB

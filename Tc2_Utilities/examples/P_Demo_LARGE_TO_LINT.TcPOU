@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_LARGE_TO_LINT" Id="{6abdaa09-57b3-5b22-ba0a-70a1a315469d}" SpecialFunc="None">
+  <POU Name="P_Demo_LARGE_TO_LINT" Id="{379e3a66-21ac-5d0c-9604-2312d9f142de}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_LARGE_TO_LINT
 VAR
     liFromAds : T_LARGE_INTEGER;; // ADS 读回

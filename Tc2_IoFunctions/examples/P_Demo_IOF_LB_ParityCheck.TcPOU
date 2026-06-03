@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_IOF_LB_ParityCheck" Id="{77e3759a-f3c3-5b6f-8e99-940dcfd73331}" SpecialFunc="None">
+  <POU Name="P_Demo_IOF_LB_ParityCheck" Id="{d6a24570-0607-5849-986d-a08434525fa8}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_IOF_LB_ParityCheck
 VAR
     fbLightbusParityRead : IOF_LB_ParityCheck; // Lightbus 奇偶错读 FB

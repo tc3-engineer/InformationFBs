@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_MAXSTRING_TO_BYTEARR" Id="{9304c886-3291-559c-abdc-94135a059f7c}" SpecialFunc="None">
+  <POU Name="P_Demo_MAXSTRING_TO_BYTEARR" Id="{d14ecac8-a433-56ef-9804-5d7cf6a115d9}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_MAXSTRING_TO_BYTEARR
 VAR
     sTag    : STRING(255) := 'PumpAlpha-01'; // 工业语义：设备标签 STRING

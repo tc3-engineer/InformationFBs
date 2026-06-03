@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_TcEventBase" Id="{2f2ba52a-a28d-519f-87f0-c1fa5b0f6b4c}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_TcEventBase" Id="{55d2f055-8cb3-57d8-a742-0f8f15715b5c}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_TcEventBase
 VAR
     fbAlarm1 : FB_TcAlarm; // 事件 1（举例：用 FB_TcAlarm 持有）

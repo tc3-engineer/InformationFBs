@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_LWORD_TO_DECSTR" Id="{411a571d-548c-5c48-9aa6-7e942fe31218}" SpecialFunc="None">
+  <POU Name="P_Demo_LWORD_TO_DECSTR" Id="{8e3704ae-c6a6-580e-b7eb-5c2edbf06b06}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_LWORD_TO_DECSTR
 VAR
     nValue     : LWORD := 43981; // 待转换的 LWORD 值；在线写值替换测试不同输入

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_F_SINT" Id="{886df7b2-f1d8-59c7-9bb8-af58de89a81c}" SpecialFunc="None">
+  <POU Name="P_Demo_F_SINT" Id="{129e5eec-735a-5142-b7f2-66f45e6e997b}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_F_SINT
 VAR
     nTempOffset   : SINT := -12; // 业务量（SINT）

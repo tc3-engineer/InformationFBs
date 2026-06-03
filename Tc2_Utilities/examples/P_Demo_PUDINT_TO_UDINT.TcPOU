@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_PUDINT_TO_UDINT" Id="{154dd1f8-a545-50dc-9401-aa3cb6c3e98b}" SpecialFunc="None">
+  <POU Name="P_Demo_PUDINT_TO_UDINT" Id="{56b0df90-a07d-59fe-9517-5c11826f9857}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_PUDINT_TO_UDINT
 VAR
     nRealValue           : UDINT := 4000000000; // 模拟 wire 缓冲区中的 UDINT 字段

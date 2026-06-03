@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_PBOOL_TO_BOOL" Id="{9cd7e64c-a88d-5d0f-a0b4-37386362107b}" SpecialFunc="None">
+  <POU Name="P_Demo_PBOOL_TO_BOOL" Id="{841ed86e-0695-5a1d-8ec4-5f62137ee525}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_PBOOL_TO_BOOL
 VAR
     xRealValue           : BOOL := TRUE; // 模拟 wire 缓冲区中的 BOOL 字段

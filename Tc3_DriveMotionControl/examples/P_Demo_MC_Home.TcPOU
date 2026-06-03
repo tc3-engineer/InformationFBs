@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_MC_Home" Id="{f3ead42a-13a6-5a57-be3c-3c86ed1d86b6}" SpecialFunc="None">
+  <POU Name="P_Demo_MC_Home" Id="{c34315b8-d6c0-577b-8b61-aa700ce52ce0}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_MC_Home
 VAR
     fbHome          : MC_Home;      // 回零(参考运行) FB 实例

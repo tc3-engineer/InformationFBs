@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_stLibVersion_Tc2_System" Id="{0cfca44f-f951-5b8f-ae61-945a93dfafe1}" SpecialFunc="None">
+  <POU Name="P_Demo_stLibVersion_Tc2_System" Id="{6f3fefbe-904b-5d7b-af7e-bf30ea21370f}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_stLibVersion_Tc2_System
 VAR
     nLibMajor    : UINT; // 库主版本号

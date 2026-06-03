@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_Profiler" Id="{822cd653-349b-5e1a-a86c-14d64b921884}" SpecialFunc="None">
+  <POU Name="P_Demo_Profiler" Id="{4c5926f3-1d5b-565a-b67f-d5e5a07e2f81}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_Profiler
 VAR
     fbProfiler : Profiler; // Profiler 实例

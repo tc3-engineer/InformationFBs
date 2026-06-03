@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_TcEventFilter" Id="{9e3633cf-0a8c-5888-b6b4-c3582bc9ebb7}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_TcEventFilter" Id="{90648a8f-bb79-5056-979f-38ee15310da2}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_TcEventFilter
 VAR
     fbFilter    : FB_TcEventFilter; // 过滤器实例

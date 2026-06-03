@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_IOF_SER_ResetErr" Id="{4bd07568-b0bb-5f10-b366-662a1e147cfa}" SpecialFunc="None">
+  <POU Name="P_Demo_IOF_SER_ResetErr" Id="{f726527b-1d9b-5a54-a4c1-79e2343711e0}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_IOF_SER_ResetErr
 VAR
     fbSercosResetErr : IOF_SER_ResetErr; // SERCOS 全清错 FB

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_S_0_IDNs" Id="{d7bd307a-45f0-5fc0-84f4-eabb20b54d02}" SpecialFunc="None">
+  <POU Name="P_Demo_S_0_IDNs" Id="{6ef60776-94ca-577d-84b6-4970382f8770}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_S_0_IDNs
 VAR
     nIdnS00033 : WORD; // 拼出的 IDN：S-0-0033

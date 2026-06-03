@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_HOST_TO_BE16" Id="{fbccc2d8-ca58-523c-a519-53191ccaaf7e}" SpecialFunc="None">
+  <POU Name="P_Demo_HOST_TO_BE16" Id="{2894a4d4-5988-543e-9a9e-5506593401b9}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_HOST_TO_BE16
 VAR
     inProtocolField : WORD; // 协议帧里抓到的待转换字段

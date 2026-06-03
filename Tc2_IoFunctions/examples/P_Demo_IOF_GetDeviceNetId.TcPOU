@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_IOF_GetDeviceNetId" Id="{bdc7a909-b064-5d4d-bb30-b8d269f8067d}" SpecialFunc="None">
+  <POU Name="P_Demo_IOF_GetDeviceNetId" Id="{8f0e4d99-e4ac-5ce5-a0a4-3144d1dcd6d0}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_IOF_GetDeviceNetId
 VAR
     fbGetDeviceNetId  : IOF_GetDeviceNetId; // DeviceId → AMS Net ID

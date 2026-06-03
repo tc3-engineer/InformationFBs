@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_FileGets" Id="{1570bed4-ca5d-568b-a59c-e840dc076135}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_FileGets" Id="{86ff285f-4b54-50f6-b5ff-ab2271c61e86}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_FileGets
 VAR
     fbFileGets       : FB_FileGets; // FB_FileGets 实例

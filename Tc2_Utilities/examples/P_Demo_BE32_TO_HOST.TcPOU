@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_BE32_TO_HOST" Id="{9a6e84f8-74e8-5d6a-93ff-31560c46abc9}" SpecialFunc="None">
+  <POU Name="P_Demo_BE32_TO_HOST" Id="{cc01ed77-095c-5cc9-afa5-ee272ac53f49}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_BE32_TO_HOST
 VAR
     bResult : DWORD; // BE32_TO_HOST 的返回值

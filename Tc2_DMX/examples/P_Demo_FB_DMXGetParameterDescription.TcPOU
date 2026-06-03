@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_DMXGetParameterDescription" Id="{564351a6-0ee8-50d9-a6cb-35db4e1e65d9}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_DMXGetParameterDescription" Id="{53194bb8-f547-5ea0-bc22-c2c35c6ef349}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_DMXGetParameterDescription
 VAR
     fbGetParamDesc    : FB_DMXGetParameterDescription; // 读 PID 定义

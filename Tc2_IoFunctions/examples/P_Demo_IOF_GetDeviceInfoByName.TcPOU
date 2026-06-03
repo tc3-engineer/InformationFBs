@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_IOF_GetDeviceInfoByName" Id="{934c4922-7a61-5632-a713-62dccc254939}" SpecialFunc="None">
+  <POU Name="P_Demo_IOF_GetDeviceInfoByName" Id="{5e379796-e453-5d11-b8e7-e396f994577f}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_IOF_GetDeviceInfoByName
 VAR
     fbFetchDeviceInfo : IOF_GetDeviceInfoByName; // 一次取 DeviceId + NetId

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_GETCURTASKINDEX" Id="{c2a6e027-37ed-509b-8a65-7757e5f38cd4}" SpecialFunc="None">
+  <POU Name="P_Demo_GETCURTASKINDEX" Id="{2e5bb9ff-796b-5750-a60c-fc0b5f00f5eb}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_GETCURTASKINDEX
 VAR
     fbGETCURTASKINDEX : GETCURTASKINDEX; // GETCURTASKINDEX 实例

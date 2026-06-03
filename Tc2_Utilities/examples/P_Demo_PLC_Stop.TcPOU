@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_PLC_Stop" Id="{a19a681b-24a7-5c1c-9f69-b398cc58cbdc}" SpecialFunc="None">
+  <POU Name="P_Demo_PLC_Stop" Id="{1f744d1f-762c-59dc-8e17-8ae3431d841b}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_PLC_Stop
 VAR
     fbPLC_Stop : PLC_Stop; // PLC_Stop 实例

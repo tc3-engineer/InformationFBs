@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_SendMessageEx2" Id="{a828c01d-6af7-5f2a-a8a6-7a41697ff10b}" SpecialFunc="None">
+  <POU Name="P_Demo_SendMessageEx2" Id="{5a9d8e7f-1185-583c-844a-25cbf99201b2}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_SendMessageEx2
 VAR
     fbLogger       : FB_TcEventLogger; // EventLogger 实例

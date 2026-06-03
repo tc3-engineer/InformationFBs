@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_CoEDriveEnable" Id="{2983ac6c-9298-5780-ad62-e555522a9740}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_CoEDriveEnable" Id="{8a949617-e354-5ea1-aa63-2d206e2e1232}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_CoEDriveEnable
 VAR
     fbDriveEnable : FB_CoEDriveEnable; // CoE 驱动器使能 FB 实例

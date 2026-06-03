@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_FileSeek" Id="{a088a14b-1ee9-5f0f-bdd9-966cb5a04a4b}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_FileSeek" Id="{634a5648-13c1-5f82-9f9c-79fb7bb5607c}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_FileSeek
 VAR
     fbFileSeek   : FB_FileSeek; // FB_FileSeek 实例

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_EnumFindFileList" Id="{cf4b1640-b53e-52c9-9422-c59fd1396bd2}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_EnumFindFileList" Id="{e60ccb60-0f9a-5063-8b35-8e030120c752}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_EnumFindFileList
 VAR
     fbFB_EnumFindFileList : FB_EnumFindFileList; // FB_EnumFindFileList 实例

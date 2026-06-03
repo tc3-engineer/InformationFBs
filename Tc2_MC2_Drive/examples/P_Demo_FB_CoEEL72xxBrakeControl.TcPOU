@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_CoEEL72xxBrakeControl" Id="{52ab744b-a820-5ff5-906e-5a24dec8e1b7}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_CoEEL72xxBrakeControl" Id="{6b386a15-f407-5feb-a413-8fd32d84c501}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_CoEEL72xxBrakeControl
 VAR
     fbEL72xxBrake       : FB_CoEEL72xxBrakeControl; // EL72xx 手动抱闸控制 FB 实例

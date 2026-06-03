@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_NT_SetLocalTime" Id="{d7031182-4be0-5cfb-b92c-e7daa58ee919}" SpecialFunc="None">
+  <POU Name="P_Demo_NT_SetLocalTime" Id="{88f87f34-8aa1-57a1-a6c9-8ac3851a9500}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_NT_SetLocalTime
 VAR
     fbNT_SetLocalTime : NT_SetLocalTime; // NT_SetLocalTime 实例

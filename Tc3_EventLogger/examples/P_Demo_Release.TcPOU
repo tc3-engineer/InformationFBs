@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_Release" Id="{e82f0d65-cc41-5b09-9435-f3afb9878140}" SpecialFunc="None">
+  <POU Name="P_Demo_Release" Id="{e4be4dca-c61c-5a25-a2ac-451fc27d9567}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_Release
 VAR
     pfbAlarm        : POINTER TO FB_TcAlarm; // 动态分配的 alarm 实例指针（在本例外申请）

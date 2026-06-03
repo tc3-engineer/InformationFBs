@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_stLibVersion_Tc2_Coupler" Id="{984cd2ca-9af2-59d3-b70d-a7bffa4957b7}" SpecialFunc="None">
+  <POU Name="P_Demo_stLibVersion_Tc2_Coupler" Id="{cdefac33-fa3a-58b3-841a-4aa0082b8c0a}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_stLibVersion_Tc2_Coupler
 VAR
     nMajor               : INT; // 主版本号

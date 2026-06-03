@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_ModbusRtuMasterV2_Generic" Id="{2fff0c9b-de77-56d8-8358-c1e7cdb76961}" SpecialFunc="None">
+  <POU Name="P_Demo_ModbusRtuMasterV2_Generic" Id="{af7da954-30f1-5047-8623-7db24acee521}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_ModbusRtuMasterV2_Generic
 VAR
     fbModbusMaster : ModbusRtuMasterV2_Generic;       // 硬件无关主站

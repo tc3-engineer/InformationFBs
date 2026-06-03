@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_GetDongleSystemID" Id="{72154bfa-479e-5890-9f09-3155a8787293}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_GetDongleSystemID" Id="{362eb6c1-df6d-5c1f-86a9-b508eb8c0fc8}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_GetDongleSystemID
 VAR
     fbFB_GetDongleSystemID : FB_GetDongleSystemID; // FB_GetDongleSystemID 实例

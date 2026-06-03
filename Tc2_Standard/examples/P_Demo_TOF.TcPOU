@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_TOF" Id="{05babbf6-cae2-5833-a948-b47456b0c3ce}" SpecialFunc="None">
+  <POU Name="P_Demo_TOF" Id="{c7c6f0fe-da10-50e4-8a1e-5dcdf7870598}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_TOF
 VAR
     fbCoolDownDelay : TOF; // 断开延时定时器实例：电机停后风扇延时关

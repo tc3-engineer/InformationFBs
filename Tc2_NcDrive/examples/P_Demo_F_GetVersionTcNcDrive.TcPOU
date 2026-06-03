@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_F_GetVersionTcNcDrive" Id="{2eb4d776-e0bb-55bf-9883-2a9b2cd44b8b}" SpecialFunc="None">
+  <POU Name="P_Demo_F_GetVersionTcNcDrive" Id="{c5bbfb14-79df-5d17-b8ee-511d1eb68afb}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_F_GetVersionTcNcDrive
 VAR
     iMajor    : UINT; // 监视：主版本号

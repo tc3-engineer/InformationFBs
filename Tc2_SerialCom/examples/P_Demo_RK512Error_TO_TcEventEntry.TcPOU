@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_RK512Error_TO_TcEventEntry" Id="{2e3f6e32-389c-53d6-8fe3-df35a3fd998b}" SpecialFunc="None">
+  <POU Name="P_Demo_RK512Error_TO_TcEventEntry" Id="{021d0d73-1290-5c8a-8deb-08d18f6d908c}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_RK512Error_TO_TcEventEntry
 VAR
     fbRK512     : RK512;                        // 错误来源:RK512 协议功能块

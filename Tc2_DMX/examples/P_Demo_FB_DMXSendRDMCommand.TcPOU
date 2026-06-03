@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_DMXSendRDMCommand" Id="{bc0a4ef2-08cc-5028-bb1e-33ca19b0fcb1}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_DMXSendRDMCommand" Id="{994c4629-bc58-5c47-b29b-8f3c8cb9064b}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_DMXSendRDMCommand
 VAR
     fbSendRdm         : FB_DMXSendRDMCommand;         // 通用 RDM 命令发送

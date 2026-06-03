@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_GETBIT32" Id="{fb23fe8a-75f3-54ab-a6a0-778aa22d104f}" SpecialFunc="None">
+  <POU Name="P_Demo_GETBIT32" Id="{d36afc73-4db5-563e-a580-6eeffa386d22}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_GETBIT32
 VAR
     dwCommandWord : DWORD := 0; // HMI 写入的命令字

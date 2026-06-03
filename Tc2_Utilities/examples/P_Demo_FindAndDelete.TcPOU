@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FindAndDelete" Id="{d5fe72f6-df9e-53c4-a9f7-39e948897847}" SpecialFunc="None">
+  <POU Name="P_Demo_FindAndDelete" Id="{62a256ce-9a73-5081-93d8-ac4bc4672a3a}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FindAndDelete
 VAR
     sHtmlSrc : STRING(255) := 'Tank&lt;br&gt;level low&lt;/p&gt;'; // 工业语义：含 HTML 标签的原始报警串

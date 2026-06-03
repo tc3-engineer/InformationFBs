@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_MC_MoveRelative" Id="{94b634fd-00ea-5d23-a296-5259f3356f87}" SpecialFunc="None">
+  <POU Name="P_Demo_MC_MoveRelative" Id="{4934d8c4-9dbf-50b7-a304-e985dcf97695}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_MC_MoveRelative
 VAR
     fbStepFeed     : MC_MoveRelative; // 送料相对定位 FB 实例

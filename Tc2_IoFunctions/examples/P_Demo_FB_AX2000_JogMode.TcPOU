@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_AX2000_JogMode" Id="{0512c411-6fac-5393-a187-187e8ed7465c}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_AX2000_JogMode" Id="{277577b4-3bc3-56de-a5fc-2f9b05988928}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_AX2000_JogMode
 VAR
     fbAx2000Jog        : FB_AX2000_JogMode; // AX2000 点动 FB

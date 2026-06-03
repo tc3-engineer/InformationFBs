@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_F_USINT" Id="{d01346ea-0860-5fb5-aefd-b8824cc6bbe7}" SpecialFunc="None">
+  <POU Name="P_Demo_F_USINT" Id="{5772a86b-70ac-5688-ad46-d9221137b0e8}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_F_USINT
 VAR
     nPriority     : USINT := 5; // 业务量（USINT）

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_F_SwapRealEx" Id="{5fb1a1ae-023b-529c-a8e8-39dcf58eeaad}" SpecialFunc="None">
+  <POU Name="P_Demo_F_SwapRealEx" Id="{26aea0ee-a8e6-5688-9400-b6441f8b2e22}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_F_SwapRealEx
 VAR
     fTempFromBc : REAL := 12.34; // 工业语义：从 BC9000 读到的温度（Hi-Lo 颠倒）

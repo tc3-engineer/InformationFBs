@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_GetHostAddrByName" Id="{bc5dd784-46d7-5846-a8d9-52bd3f152dfa}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_GetHostAddrByName" Id="{b8764a3d-9d23-5d6a-bac2-91729390fa1b}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_GetHostAddrByName
 VAR
     fbFB_GetHostAddrByName : FB_GetHostAddrByName; // FB_GetHostAddrByName 实例

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_ASC" Id="{e4d47c80-f437-5bff-aa10-303cc26627a7}" SpecialFunc="None">
+  <POU Name="P_Demo_ASC" Id="{b5a16078-d6a8-544b-a404-94fbf39e75e4}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_ASC
 VAR
     fbSerialLine : SerialLineControl;           // 后台通信(用于真正发出字节)

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_F_GetTaskTime" Id="{7d3b376b-638c-5620-a140-d4316cc5ef7d}" SpecialFunc="None">
+  <POU Name="P_Demo_F_GetTaskTime" Id="{4d5e7046-08e9-5fee-890a-b4fcdbda18fb}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_F_GetTaskTime
 VAR
     ulTaskScheduledTime : ULINT; // 本周期开始时间戳

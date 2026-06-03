@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_UInt64Shr" Id="{3947d9fa-a42a-54df-9b59-bfb627d2760c}" SpecialFunc="None">
+  <POU Name="P_Demo_UInt64Shr" Id="{19dc6cda-ca17-58f9-adba-acb17fdfb134}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_UInt64Shr
 VAR
     uliRegister : T_ULARGE_INTEGER;; // 64 位寄存器

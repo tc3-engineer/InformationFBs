@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_NT_QuickShutdown" Id="{7104b954-c11e-54ef-b5c6-98da3b4e95a8}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_NT_QuickShutdown" Id="{6bf64cdf-043c-5b75-a3e5-23c4ae7743ff}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_NT_QuickShutdown
 VAR
     fbQuickShutdown         : FB_NT_QuickShutdown; // ⚠️ 内部用 FB：业务代码请改用 FB_S_UPS_*，不要独立调用本 FB

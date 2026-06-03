@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_NT_AbortShutdown" Id="{6a8af3ed-da91-5bb2-a3f4-1b6918f5f7cd}" SpecialFunc="None">
+  <POU Name="P_Demo_NT_AbortShutdown" Id="{31ecbf6b-c03a-5e44-9090-b0073df44545}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_NT_AbortShutdown
 VAR
     fbNT_AbortShutdown : NT_AbortShutdown; // NT_AbortShutdown 实例

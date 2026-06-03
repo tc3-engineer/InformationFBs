@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_DMXClearStatusId" Id="{64386ca4-84b2-5199-825c-1d1f4eefe324}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_DMXClearStatusId" Id="{1a381e92-6db3-5601-b5c4-f51031fed640}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_DMXClearStatusId
 VAR
     fbClearStatus     : FB_DMXClearStatusId;          // 清设备消息缓冲

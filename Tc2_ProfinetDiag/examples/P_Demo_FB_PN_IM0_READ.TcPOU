@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_PN_IM0_READ" Id="{2de35405-9313-5d8a-acb4-d917bcbd4afc}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_PN_IM0_READ" Id="{ebdcaaa6-c4e9-5413-b31d-aeaad833b83a}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_PN_IM0_READ
 VAR
     fbFB_PN_IM0_READ : FB_PN_IM0_READ;        // FB_PN_IM0_READ 实例

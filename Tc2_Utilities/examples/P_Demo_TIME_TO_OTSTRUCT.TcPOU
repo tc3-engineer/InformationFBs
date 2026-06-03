@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_TIME_TO_OTSTRUCT" Id="{ad2633b3-8b24-5859-8941-40dafff5b687}" SpecialFunc="None">
+  <POU Name="P_Demo_TIME_TO_OTSTRUCT" Id="{257a60e3-56f2-5be4-838c-db09a0dc07bd}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_TIME_TO_OTSTRUCT
 VAR
     tRuntime  : TIME := T#3d12h5m30s; // 设备累计运行时长（从 RTC 时基取）

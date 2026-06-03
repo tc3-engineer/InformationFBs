@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_SoEAX5000FirmwareUpdate" Id="{4fb9412a-8733-5700-b1e4-6ff7464293a8}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_SoEAX5000FirmwareUpdate" Id="{e8970ed4-71cb-5d64-a15c-ad7950cd0b76}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_SoEAX5000FirmwareUpdate
 VAR
     fbFwUpdate     : FB_SoEAX5000FirmwareUpdate;

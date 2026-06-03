@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_CoEAX8000DeletePositionOffset" Id="{dc734ba3-cf8a-5e8f-a756-83e01babd73e}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_CoEAX8000DeletePositionOffset" Id="{41c5d03d-749a-5e4f-b67e-fc7ef696b97f}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_CoEAX8000DeletePositionOffset
 VAR
     fbAX8000DelOffset : FB_CoEAX8000DeletePositionOffset; // AX8000 删位置偏置 FB 实例

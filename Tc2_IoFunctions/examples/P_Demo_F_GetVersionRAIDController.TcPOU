@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_F_GetVersionRAIDController" Id="{4ddb3759-9b13-5e48-8a2a-9cd94a4f03af}" SpecialFunc="None">
+  <POU Name="P_Demo_F_GetVersionRAIDController" Id="{942b2099-3648-5903-8250-910ef514e92b}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_F_GetVersionRAIDController
 VAR
     nMajor            : UINT := 0; // 主版本

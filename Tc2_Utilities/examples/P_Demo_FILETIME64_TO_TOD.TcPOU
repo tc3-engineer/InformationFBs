@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FILETIME64_TO_TOD" Id="{c524079b-f638-59a8-aed2-803db2fe8dd6}" SpecialFunc="None">
+  <POU Name="P_Demo_FILETIME64_TO_TOD" Id="{baf4cf5f-6815-59df-9af7-c5020661e24c}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FILETIME64_TO_TOD
 VAR
     ftNow           : T_FILETIME64; // 当前 T_FILETIME64（从 F_GetCurDateTime 或 F_GetSystemTime 拿）

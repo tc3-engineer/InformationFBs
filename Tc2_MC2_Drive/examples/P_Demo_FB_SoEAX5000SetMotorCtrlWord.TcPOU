@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_SoEAX5000SetMotorCtrlWord" Id="{4ae74759-6bde-5f89-a47b-665875e33ec1}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_SoEAX5000SetMotorCtrlWord" Id="{5295fc6c-9c3a-58cb-a04b-388b839c5ebf}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_SoEAX5000SetMotorCtrlWord
 VAR
     fbSetMotorCtrlWord : FB_SoEAX5000SetMotorCtrlWord; // 设 AX5000 电机控制字 FB 实例

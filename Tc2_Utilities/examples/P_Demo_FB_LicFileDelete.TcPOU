@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_LicFileDelete" Id="{05318bc3-e540-5e47-b842-106d1789535c}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_LicFileDelete" Id="{d818ba5e-0695-5d23-b71e-29bba03c5791}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_LicFileDelete
 VAR
     fbFB_LicFileDelete : FB_LicFileDelete; // FB_LicFileDelete 实例

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_LicFileGetStorageInfo" Id="{76ead8d2-dd3d-591b-af95-0f6a134f9c30}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_LicFileGetStorageInfo" Id="{b57ad1e9-43b8-5681-9a43-3460569a2a5e}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_LicFileGetStorageInfo
 VAR
     fbFB_LicFileGetStorageInfo : FB_LicFileGetStorageInfo; // FB_LicFileGetStorageInfo 实例

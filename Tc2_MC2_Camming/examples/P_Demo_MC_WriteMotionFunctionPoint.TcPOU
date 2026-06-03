@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_MC_WriteMotionFunctionPoint" Id="{0a5f8181-bf75-516b-9ccc-9549bcb6f6d9}" SpecialFunc="None">
+  <POU Name="P_Demo_MC_WriteMotionFunctionPoint" Id="{85b8ddca-ef59-5175-b4bb-90e78bdf9fb7}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_MC_WriteMotionFunctionPoint
 VAR
     fbAdjustPhasePoint : MC_WriteMotionFunctionPoint;

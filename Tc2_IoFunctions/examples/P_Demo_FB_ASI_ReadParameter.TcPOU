@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_ASI_ReadParameter" Id="{f4be7547-c5c4-5763-891d-354a34433d88}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_ASI_ReadParameter" Id="{510a353c-d032-5bb1-8aa7-fab5c9910915}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_ASI_ReadParameter
 VAR
     fbAsiReadParam      : FB_ASI_ReadParameter; // ASI slave 参数读 FB

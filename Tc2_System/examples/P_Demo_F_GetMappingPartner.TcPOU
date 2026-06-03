@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_F_GetMappingPartner" Id="{04e9b2cf-51b9-5388-93f7-7051a29d8f47}" SpecialFunc="None">
+  <POU Name="P_Demo_F_GetMappingPartner" Id="{2b4cc8b2-e873-53f9-a232-a8d6ce301933}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_F_GetMappingPartner
 VAR
     bMonitoredInput : BOOL; // 应当映射到某 EtherCAT DI 通道的关键输入

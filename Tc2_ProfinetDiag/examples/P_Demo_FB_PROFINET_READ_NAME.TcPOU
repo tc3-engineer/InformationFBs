@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_PROFINET_READ_NAME" Id="{63ffba06-c41a-56cd-bfe0-76f558cb2f9c}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_PROFINET_READ_NAME" Id="{b19f504b-c1ea-5282-9910-a8799ae46ce3}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_PROFINET_READ_NAME
 VAR
     fbReadName    : FB_PROFINET_READ_NAME;

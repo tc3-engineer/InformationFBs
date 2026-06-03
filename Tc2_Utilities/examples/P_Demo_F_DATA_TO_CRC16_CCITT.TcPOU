@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_F_DATA_TO_CRC16_CCITT" Id="{da7275f8-8a09-57aa-ac63-bdf80d68536c}" SpecialFunc="None">
+  <POU Name="P_Demo_F_DATA_TO_CRC16_CCITT" Id="{7aa851be-9254-5845-908e-6848dc237604}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_F_DATA_TO_CRC16_CCITT
 VAR
     aFrame    : ARRAY[0..63] OF BYTE; // 工业语义：收到的 64 字节帧

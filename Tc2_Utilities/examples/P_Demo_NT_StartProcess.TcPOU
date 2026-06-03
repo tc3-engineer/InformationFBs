@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_NT_StartProcess" Id="{32833634-eafd-53fd-aa6a-d54e0b3cbe89}" SpecialFunc="None">
+  <POU Name="P_Demo_NT_StartProcess" Id="{d7e41b28-d79a-5d43-a616-f55d03b449f9}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_NT_StartProcess
 VAR
     fbNT_StartProcess : NT_StartProcess; // NT_StartProcess 实例

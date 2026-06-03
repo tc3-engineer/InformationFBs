@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_IecCriticalSection" Id="{7479dba8-344a-5f24-97f1-300c39782a13}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_IecCriticalSection" Id="{460ee9d7-5c42-5f44-ad54-d4d30ce5725c}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_IecCriticalSection
 VAR
     fbFB_IecCriticalSection : FB_IecCriticalSection; // FB_IecCriticalSection 实例

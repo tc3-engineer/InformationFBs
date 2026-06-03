@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_WCHAR_TO_CHAR" Id="{f24a0c29-29e9-5379-8a50-0641dcd007e4}" SpecialFunc="None">
+  <POU Name="P_Demo_WCHAR_TO_CHAR" Id="{40cc0f29-00b6-5f6f-8a40-9f0f303106b0}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_WCHAR_TO_CHAR
 VAR
     sTextIn : WSTRING(1) := "A"; // 输入单字符 WSTRING(1)

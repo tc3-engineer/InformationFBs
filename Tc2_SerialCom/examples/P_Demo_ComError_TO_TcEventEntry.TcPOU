@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_ComError_TO_TcEventEntry" Id="{2ea2c25a-73fb-5240-a904-d9f9644a72f3}" SpecialFunc="None">
+  <POU Name="P_Demo_ComError_TO_TcEventEntry" Id="{53b8c792-4b1c-53e6-a20e-662833f8beb0}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_ComError_TO_TcEventEntry
 VAR
     fbSerialLine : SerialLineControl;           // 实际工程中错误来自它的 ErrorID

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_UInt32x32To64" Id="{4579e283-23d6-5285-9f1a-88569b12ddc8}" SpecialFunc="None">
+  <POU Name="P_Demo_UInt32x32To64" Id="{d80ec39d-544b-5216-9680-74933e33f0d8}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_UInt32x32To64
 VAR
     dwCycleCount : DWORD := 16#FFFFFFFF;; // 接近 32 位上限的周期数

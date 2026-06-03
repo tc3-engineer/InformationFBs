@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_RequestCauseRemedy" Id="{4b057e6b-2287-58ff-9244-cc07061090be}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_RequestCauseRemedy" Id="{b42a46da-dd27-5466-919c-678566e6faa1}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_RequestCauseRemedy
 VAR
     fbReq       : FB_RequestCauseRemedy; // 请求 FB 实例

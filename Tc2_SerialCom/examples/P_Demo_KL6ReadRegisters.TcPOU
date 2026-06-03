@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_KL6ReadRegisters" Id="{4684b250-787b-5594-81c1-1c5bb68471de}" SpecialFunc="None">
+  <POU Name="P_Demo_KL6ReadRegisters" Id="{11487394-3ff4-5e22-a61a-6ec6566d004b}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_KL6ReadRegisters
 VAR
     fbKL6Read    : KL6ReadRegisters;

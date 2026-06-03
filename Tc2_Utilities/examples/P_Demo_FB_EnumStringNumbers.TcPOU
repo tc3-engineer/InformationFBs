@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_EnumStringNumbers" Id="{4c79d4da-fc15-5cf9-a5e7-62ae16f9af17}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_EnumStringNumbers" Id="{b3089762-95dc-5d6c-833f-4151a92c00d2}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_EnumStringNumbers
 VAR
     fbFB_EnumStringNumbers : FB_EnumStringNumbers; // FB_EnumStringNumbers 实例

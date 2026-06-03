@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_IOF_GetBoxNameByAddr" Id="{9f4bd3a4-3e25-55a9-b28a-02e4d5236e90}" SpecialFunc="None">
+  <POU Name="P_Demo_IOF_GetBoxNameByAddr" Id="{cbce6ba2-ee2b-5386-bd8d-f48aa968e7fb}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_IOF_GetBoxNameByAddr
 VAR
     fbResolveBoxName    : IOF_GetBoxNameByAddr; // 站号 → 名字 FB 实例

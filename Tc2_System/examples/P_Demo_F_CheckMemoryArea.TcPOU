@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_F_CheckMemoryArea" Id="{26293a28-5281-5aef-9f1f-ed79db88e39d}" SpecialFunc="None">
+  <POU Name="P_Demo_F_CheckMemoryArea" Id="{a4f1db10-b4e1-58b9-a40f-26d8eb570298}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_F_CheckMemoryArea
 VAR
     nStaticCounter : USINT := 0; // 静态局部变量（编译期分配）

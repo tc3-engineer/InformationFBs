@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_WINSERT" Id="{4aaa8f27-f844-5e94-8d99-41e29861b42b}" SpecialFunc="None">
+  <POU Name="P_Demo_WINSERT" Id="{5b1c14c0-deb8-5b7e-ba85-53a742ec70b6}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_WINSERT
 VAR
     sLogLine   : WSTRING(255) := "信息 电机启动"; // 中文日志：等级 + 空格 + 消息体

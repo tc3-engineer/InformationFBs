@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_FormatString" Id="{bd61895c-712e-5fdc-a44f-48f8f68928bf}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_FormatString" Id="{27cea484-64c0-5461-80e0-e1382cdd50b4}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_FormatString
 VAR
     fbFB_FormatString : FB_FormatString; // FB_FormatString 实例

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_LEN" Id="{6f5cf2a2-70de-5519-9d52-6f1df5a38c53}" SpecialFunc="None">
+  <POU Name="P_Demo_LEN" Id="{f742d174-64c9-57cb-aa4e-3ec993dc748a}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_LEN
 VAR
     sUserInput : STRING(255); // HMI 输入框接收的用户文字（在线写值模拟）

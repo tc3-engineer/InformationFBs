@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_PMAXSTRING_TO_MAXSTRING" Id="{2a5332fb-82b5-5f02-b418-9a41e1656301}" SpecialFunc="None">
+  <POU Name="P_Demo_PMAXSTRING_TO_MAXSTRING" Id="{c82144e1-0a8b-5387-8881-14463e4a9db0}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_PMAXSTRING_TO_MAXSTRING
 VAR
     sRealValue           : T_MaxString := 'Hello T_MaxString'; // 模拟 wire 缓冲区中的 T_MaxString 字段

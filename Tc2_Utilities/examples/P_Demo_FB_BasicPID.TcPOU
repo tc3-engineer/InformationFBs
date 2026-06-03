@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_BasicPID" Id="{6c1250ab-047e-507a-a49c-af44a1953bde}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_BasicPID" Id="{d3125941-f083-5c24-9407-5d43ac7689c5}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_BasicPID
 VAR
     fbFB_BasicPID  : FB_BasicPID; // FB_BasicPID 实例

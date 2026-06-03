@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_F_ToUCase" Id="{e3349fde-9139-5aec-adcd-c3b1ca7fe8fd}" SpecialFunc="None">
+  <POU Name="P_Demo_F_ToUCase" Id="{add8c388-65c5-5c92-aefe-fc9a298ae441}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_F_ToUCase
 VAR
     sRawInput : STRING(255) := wp_alfa_2026; // 模拟收到的原始字符串；在线写值改测试不同输入

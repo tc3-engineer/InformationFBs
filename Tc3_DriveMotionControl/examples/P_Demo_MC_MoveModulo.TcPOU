@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_MC_MoveModulo" Id="{96222081-0900-5436-adae-8f4e19e69558}" SpecialFunc="None">
+  <POU Name="P_Demo_MC_MoveModulo" Id="{524d1707-a4e8-5fe2-a4f0-6ccfedaf7ce3}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_MC_MoveModulo
 VAR
     fbMoveMod       : MC_MoveModulo; // 模数定位 FB 实例

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_LcomplexAbs" Id="{ffceb8db-a523-523a-bd26-e5af6091519c}" SpecialFunc="None">
+  <POU Name="P_Demo_LcomplexAbs" Id="{0ac8818d-3494-5768-904a-4f701da9a1fa}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_LcomplexAbs
 VAR
     lcCurrent : LCOMPLEX;

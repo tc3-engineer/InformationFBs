@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_AmsLogger" Id="{cd880af8-9c84-5ae2-8c83-045463b2c4a3}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_AmsLogger" Id="{233d6542-057c-5127-88ea-7d12fead89ef}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_AmsLogger
 VAR
     fbFB_AmsLogger : FB_AmsLogger; // FB_AmsLogger 实例

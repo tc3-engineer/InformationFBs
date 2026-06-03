@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_DRAND" Id="{2546b6d8-73ea-525f-bf0e-b7fb483b4cc1}" SpecialFunc="None">
+  <POU Name="P_Demo_DRAND" Id="{ef2e9929-ac42-59c2-b7a1-b513408acf2d}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_DRAND
 VAR
     fbDRAND       : DRAND; // DRAND 实例

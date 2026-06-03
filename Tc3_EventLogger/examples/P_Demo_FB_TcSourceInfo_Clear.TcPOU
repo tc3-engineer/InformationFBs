@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_TcSourceInfo_Clear" Id="{6d86bf38-4074-51c1-bd34-c047b190ffd3}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_TcSourceInfo_Clear" Id="{7e457c85-c80b-5f70-88e0-367ebbd77927}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_TcSourceInfo_Clear
 VAR
     fbSrc        : FB_TcSourceInfo; // 源信息实例

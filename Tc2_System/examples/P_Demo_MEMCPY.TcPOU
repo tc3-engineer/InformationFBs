@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_MEMCPY" Id="{c9c21b5f-b268-54d3-b075-ea02c9480f4a}" SpecialFunc="None">
+  <POU Name="P_Demo_MEMCPY" Id="{134375d4-5be2-537f-845c-2995bdc0cef2}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_MEMCPY
 VAR
     aRawBuffer      : ARRAY[0..255] OF BYTE; // FB_FileRead 已填充的源缓冲区

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_BYTEARR_TO_MAXSTRING" Id="{c74543a4-4e11-5546-a05b-b4b9fa883965}" SpecialFunc="None">
+  <POU Name="P_Demo_BYTEARR_TO_MAXSTRING" Id="{e280334c-be58-582c-8384-b5e7fde4e10a}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_BYTEARR_TO_MAXSTRING
 VAR
     aSerialBuf : ARRAY[0..255] OF BYTE; // 串口接收缓冲

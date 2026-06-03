@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_MemBufferSplit" Id="{799990bd-09d6-510a-a3af-a83d619d3988}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_MemBufferSplit" Id="{0ff3c419-adcc-5d69-9a8d-af023b69700b}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_MemBufferSplit
 VAR
     fbFB_MemBufferSplit : FB_MemBufferSplit; // FB_MemBufferSplit 实例

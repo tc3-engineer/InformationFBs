@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_PVOID_TO_STRING" Id="{aa4ddd6b-c6db-5460-9f47-e2ffa33ad6b8}" SpecialFunc="None">
+  <POU Name="P_Demo_PVOID_TO_STRING" Id="{3190eb75-1051-50b3-b277-f34c8cfaa018}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_PVOID_TO_STRING
 VAR
     pSomeRef : POINTER TO BYTE; // 工业语义：要诊断的指针

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FIX16_TO_WORD" Id="{ace9a9f3-7e83-56ba-b7a5-8391241bcf22}" SpecialFunc="None">
+  <POU Name="P_Demo_FIX16_TO_WORD" Id="{85a64314-8216-536e-9fe2-5ad14a80910b}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FIX16_TO_WORD
 VAR
     fp8Kp    : T_FIX16;

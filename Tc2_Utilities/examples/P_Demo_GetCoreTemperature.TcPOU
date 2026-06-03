@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_GetCoreTemperature" Id="{6c28e446-fbed-5980-a3aa-2467e02d7c20}" SpecialFunc="None">
+  <POU Name="P_Demo_GetCoreTemperature" Id="{5376785e-a9a5-5675-bbb4-69b42184b678}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_GetCoreTemperature
 VAR
     fbCBM            : TC_CoreBoostMonitor; // TC_CoreBoostMonitor 实例

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_ADSRDWRT" Id="{96bbdd9a-3409-5204-a0c1-023a43497d33}" SpecialFunc="None">
+  <POU Name="P_Demo_ADSRDWRT" Id="{c8d43153-331b-5228-ade7-49d6e4a071ae}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_ADSRDWRT
 VAR
     fbADSRDWRT    : ADSRDWRT; // ADSRDWRT 实例

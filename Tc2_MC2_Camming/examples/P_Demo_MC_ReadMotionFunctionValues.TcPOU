@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_MC_ReadMotionFunctionValues" Id="{6ea6b2f1-608d-5187-a423-94072da225e3}" SpecialFunc="None">
+  <POU Name="P_Demo_MC_ReadMotionFunctionValues" Id="{2e008535-0096-5f53-901f-58e725f1bf10}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_MC_ReadMotionFunctionValues
 VAR
     fbSampleCamForHmi  : MC_ReadMotionFunctionValues;

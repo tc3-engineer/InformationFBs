@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_PTOD_TO_TOD" Id="{e06867e2-8e3b-5c4d-9872-7bc546ff867d}" SpecialFunc="None">
+  <POU Name="P_Demo_PTOD_TO_TOD" Id="{053602fb-fa33-5ad1-ae80-69b69e8c1c7f}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_PTOD_TO_TOD
 VAR
     todRealValue           : TOD := TOD#12:34:56; // 模拟 wire 缓冲区中的 TOD 字段

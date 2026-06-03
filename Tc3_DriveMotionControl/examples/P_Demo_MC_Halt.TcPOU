@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_MC_Halt" Id="{6280a5ad-f874-574a-8b49-b288fbfda51d}" SpecialFunc="None">
+  <POU Name="P_Demo_MC_Halt" Id="{ef93bb8c-5d87-5ed6-bc1e-0334c076b516}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_MC_Halt
 VAR
     fbHalt          : MC_Halt;      // 软停车(不锁轴) FB 实例

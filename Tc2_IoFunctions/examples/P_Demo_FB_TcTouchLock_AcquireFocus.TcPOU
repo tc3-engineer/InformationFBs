@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_TcTouchLock_AcquireFocus" Id="{24464ea3-904e-5f2b-b799-0c6915bdf398}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_TcTouchLock_AcquireFocus" Id="{afb01005-6050-5b3a-b0c8-ab374d3a3d98}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_TcTouchLock_AcquireFocus
 VAR
     fbAcquirePanelFocus    : FB_TcTouchLock_AcquireFocus; // 多触摸屏 focus FB

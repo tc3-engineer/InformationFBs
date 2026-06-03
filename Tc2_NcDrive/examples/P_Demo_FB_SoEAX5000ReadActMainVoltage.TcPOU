@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_SoEAX5000ReadActMainVoltage" Id="{478fe520-41c7-57a0-994b-bc456fbaf50d}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_SoEAX5000ReadActMainVoltage" Id="{efef17bf-32b0-52b6-8c57-4b9403ea43cf}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_SoEAX5000ReadActMainVoltage
 VAR
     fbReadMainVoltage : FB_SoEAX5000ReadActMainVoltage;

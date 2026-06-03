@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_MC_MoveVelocity" Id="{42941d42-8335-50d1-96ba-fe4409d26526}" SpecialFunc="None">
+  <POU Name="P_Demo_MC_MoveVelocity" Id="{9158791b-d504-54b3-ac11-e67c7a374fdb}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_MC_MoveVelocity
 VAR
     fbConveyorRun   : MC_MoveVelocity;

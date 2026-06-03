@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_Constants" Id="{dde1ace0-c1aa-533b-a45b-5041b32c8627}" SpecialFunc="None">
+  <POU Name="P_Demo_Constants" Id="{b037dcf5-16ba-5d0e-872c-d2d685cae783}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_Constants
 VAR
     nPlcPort            : UINT; // 本机 TC3 PLC 端口号

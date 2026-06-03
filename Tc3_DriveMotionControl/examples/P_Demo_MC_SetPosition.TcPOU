@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_MC_SetPosition" Id="{77c5efe5-e3a5-5dca-a4cf-2e013746e704}" SpecialFunc="None">
+  <POU Name="P_Demo_MC_SetPosition" Id="{c856a362-ef29-5c4e-bf15-ec6f0377b559}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_MC_SetPosition
 VAR
     fbSetPos        : MC_SetPosition; // 设置轴位置 FB 实例（重定义坐标，不动轴）

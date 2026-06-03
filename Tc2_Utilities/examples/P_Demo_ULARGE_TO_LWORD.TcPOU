@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_ULARGE_TO_LWORD" Id="{692e8cd3-424c-52e5-938e-ebeb79e194de}" SpecialFunc="None">
+  <POU Name="P_Demo_ULARGE_TO_LWORD" Id="{4f45563a-b775-5437-9d19-00696aae1133}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_ULARGE_TO_LWORD
 VAR
     uliStatus    : T_ULARGE_INTEGER;; // legacy 状态结构体

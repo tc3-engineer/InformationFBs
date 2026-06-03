@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_F_GetStructMemberAlignment" Id="{0ba9106d-61b7-5017-acc0-324b5891bedc}" SpecialFunc="None">
+  <POU Name="P_Demo_F_GetStructMemberAlignment" Id="{2c57c7b0-dddb-5224-85d4-673b13113664}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_F_GetStructMemberAlignment
 VAR
     nAlignBytes : BYTE; // 当前平台对齐字节数（1 / 2 / 4 / 8）

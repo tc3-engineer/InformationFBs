@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_SoEWrite" Id="{6bb2fc6c-f8b8-5864-869c-e8550b64e6d3}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_SoEWrite" Id="{c40a198c-8f5d-543c-a533-566fa1edac0f}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_SoEWrite
 VAR
     fbSoEWrite      : FB_SoEWrite; // SoE 写参数 FB 实例

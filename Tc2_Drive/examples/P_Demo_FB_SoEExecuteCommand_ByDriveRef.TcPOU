@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_SoEExecuteCommand_ByDriveRef" Id="{5eb95e1f-fbcb-5496-88b1-f4fdd362db44}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_SoEExecuteCommand_ByDriveRef" Id="{4e2a1a81-59cb-5daf-830e-2d34f936d824}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_SoEExecuteCommand_ByDriveRef
 VAR
     fbExecuteCommand : FB_SoEExecuteCommand_ByDriveRef; // SoE 命令执行 FB 实例

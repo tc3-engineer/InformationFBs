@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_CTU" Id="{39a8a566-578f-5d9f-a562-e0590fdca397}" SpecialFunc="None">
+  <POU Name="P_Demo_CTU" Id="{7ec432b2-325f-59a4-a731-93b87bda8b79}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_CTU
 VAR
     fbBoxCounter   : CTU; // 向上计数器实例：传送带满箱计数

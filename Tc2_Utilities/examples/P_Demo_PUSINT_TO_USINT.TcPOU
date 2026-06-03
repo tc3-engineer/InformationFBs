@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_PUSINT_TO_USINT" Id="{d3255bd8-a66f-5051-b93e-cbc4399607aa}" SpecialFunc="None">
+  <POU Name="P_Demo_PUSINT_TO_USINT" Id="{641bbdde-c42e-5e4a-8156-8f71f987260f}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_PUSINT_TO_USINT
 VAR
     nRealValue           : USINT := 200; // 模拟 wire 缓冲区中的 USINT 字段

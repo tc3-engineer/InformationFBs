@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_GetAlarmEx" Id="{4f8e63b5-36dc-5057-92c5-f6de056aa49f}" SpecialFunc="None">
+  <POU Name="P_Demo_GetAlarmEx" Id="{20988d84-0a6d-5a86-8161-db586d6a6950}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_GetAlarmEx
 VAR
     fbLogger     : FB_TcEventLogger; // EventLogger 实例

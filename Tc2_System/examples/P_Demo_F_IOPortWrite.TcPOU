@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_F_IOPortWrite" Id="{6f22ca44-f9bc-54d6-a900-246ded7067c9}" SpecialFunc="None">
+  <POU Name="P_Demo_F_IOPortWrite" Id="{ef86806e-0ca9-5364-99bb-96a18a15fe68}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_F_IOPortWrite
 VAR
     nPcSpeakerPort : UDINT := 16#61; // PC 蜂鉣器控制端口

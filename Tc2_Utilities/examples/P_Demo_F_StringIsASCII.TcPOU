@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_F_StringIsASCII" Id="{f1041ff1-aada-5627-8c69-8ca1eb6c12b6}" SpecialFunc="None">
+  <POU Name="P_Demo_F_StringIsASCII" Id="{17f6a693-e527-5826-b81f-d051429c90d0}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_F_StringIsASCII
 VAR
     sIncoming  : STRING(255) := 'Operator: John'; // 工业语义：上游收到的字符串（可能含非 ASCII）

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_SoEAX5000SetPositionOffset" Id="{6e311061-514a-532c-823d-fa3da809f4f8}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_SoEAX5000SetPositionOffset" Id="{0454ab29-5e1a-5827-8258-8f07123d521e}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_SoEAX5000SetPositionOffset
 VAR
     fbAX5000SetOffset   : FB_SoEAX5000SetPositionOffset; // AX5000 写位置偏置 FB 实例

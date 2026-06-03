@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_SETBIT32" Id="{d385aa68-5351-519c-a4c9-bafdab9e50b2}" SpecialFunc="None">
+  <POU Name="P_Demo_SETBIT32" Id="{2d829ef6-6432-5466-b3ca-cf1cc0d5c6d3}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_SETBIT32
 VAR
     bMotorReady  : BOOL := FALSE; // 电机就绪

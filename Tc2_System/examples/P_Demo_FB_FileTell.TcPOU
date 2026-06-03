@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_FileTell" Id="{f53b160c-f011-5ef7-9618-9b24f5e53c6f}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_FileTell" Id="{f507c257-aa0f-52f4-a336-e8ce9e472b99}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_FileTell
 VAR
     fbFileTell   : FB_FileTell; // FB_FileTell 实例

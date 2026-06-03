@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_F_ARGCPY" Id="{cad10d09-f866-5895-b573-353104415bdb}" SpecialFunc="None">
+  <POU Name="P_Demo_F_ARGCPY" Id="{f32797e9-db22-58bc-a829-9833c9378af9}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_F_ARGCPY
 VAR
     fAlarmTempLive     : LREAL := 0.0; // 实时温度（持续变化）

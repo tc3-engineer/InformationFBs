@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_SocketCloseAll" Id="{021e06a8-2338-5ced-abe7-e211f909c0e7}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_SocketCloseAll" Id="{b57b30ee-1d2a-583f-8c8e-eb977993b64b}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_SocketCloseAll
 VAR
     fbSocketCloseAll : FB_SocketCloseAll; // 启动期 socket 兜底清理实例

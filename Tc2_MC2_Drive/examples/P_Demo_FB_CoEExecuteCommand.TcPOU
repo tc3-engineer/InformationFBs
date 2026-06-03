@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_CoEExecuteCommand" Id="{6c0ab868-9b52-5566-9785-c01f2ac7c25b}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_CoEExecuteCommand" Id="{21aa808d-150a-53b8-84b3-d4da5bf6801d}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_CoEExecuteCommand
 VAR
     fbCoECmd    : FB_CoEExecuteCommand; // CoE 执行命令 FB 实例

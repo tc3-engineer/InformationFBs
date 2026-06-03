@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_ReadWriteTerminalReg" Id="{6d834a2b-4e90-5cc5-ba80-11735c39ddc7}" SpecialFunc="None">
+  <POU Name="P_Demo_ReadWriteTerminalReg" Id="{fa936327-5bcf-50ae-9abf-a2d17075c7ce}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_ReadWriteTerminalReg
 VAR
     fbTermReg               : ReadWriteTerminalReg; // 智能端子寄存器访问 FB 实例

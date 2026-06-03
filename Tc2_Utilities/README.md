@@ -262,7 +262,7 @@
 
 ### Function blocks（88，Round 10 自动生成）
 
-> 88 个 FB 自动从 PDF 抽取 VAR_INPUT / VAR_OUTPUT / VAR_IN_OUT，描述句简化版（详细行为与错误码请对照 PDF 第 3.x 章）。所有 doc + xml 均通过 `verify_doc.py` 与 `lint_tcpou.py`。
+> 88 个 FB 的 VAR_INPUT / VAR_OUTPUT / VAR_IN_OUT 从 PDF 逐字搬运、与 InfoSys 双源核对一致。所有 doc + tcpou 均通过 `verify_doc.py` 与 `lint_tcpou.py`。各 FB 的详细行为说明、错误码、典型陷阱在对应 .md 文件的 §3 / §4 / §5 章节中给出。
 
 涵盖：BCD ↔ DEC、DCF77 时钟、AMS 路由、ADS logger、PID、Hash 计算（含 OO 父 FB）、License/Dongle、CSV 缓冲、FindFile 枚举、文件属性/环形缓冲、Format 字符串、网卡信息、Hash 表 / 链表控制、本地系统时间、内存合并/拆分/环形缓冲/栈缓冲、注册表读写、Scope server 控制、时区设置/转换、持久化数据写入、RT 性能、远程 PC 信息、NT 操作（重启/关机/进程）、PLC 控制（启动/停止/复位/符号表）、Profiler、RTC 系列、TC_Config/TC_Restart/TC_Stop、CPU 使用率、系统延迟等。
 

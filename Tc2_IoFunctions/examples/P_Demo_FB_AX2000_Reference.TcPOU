@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_AX2000_Reference" Id="{d512bdb9-3841-5f2a-ad22-2820824830b8}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_AX2000_Reference" Id="{ad1b2a58-9765-59e8-8373-1d822077c58f}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_AX2000_Reference
 VAR
     fbAx2000Ref     : FB_AX2000_Reference; // AX2000 回零 FB

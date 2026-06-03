@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_GetSystemId" Id="{36154464-d290-5e33-9253-baf13a8e3e69}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_GetSystemId" Id="{93f66e4f-c2a5-51a2-adbc-3e013f796a2e}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_GetSystemId
 VAR
     fbFB_GetSystemId : FB_GetSystemId; // FB_GetSystemId 实例

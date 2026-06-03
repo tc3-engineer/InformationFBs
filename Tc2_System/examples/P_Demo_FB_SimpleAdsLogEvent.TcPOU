@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_SimpleAdsLogEvent" Id="{ac2e8383-0cc6-546d-9d07-b4e7eb8b9de0}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_SimpleAdsLogEvent" Id="{31ae51c3-f6c5-5107-a4e9-09da229178f7}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_SimpleAdsLogEvent
 VAR
     fbFB_SimpleAdsLogEvent : FB_SimpleAdsLogEvent; // FB_SimpleAdsLogEvent 实例

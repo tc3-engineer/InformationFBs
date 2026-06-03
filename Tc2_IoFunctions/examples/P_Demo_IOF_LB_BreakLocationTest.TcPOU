@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_IOF_LB_BreakLocationTest" Id="{3427b6c4-6e7e-5c97-9c4d-f5123a133662}" SpecialFunc="None">
+  <POU Name="P_Demo_IOF_LB_BreakLocationTest" Id="{d707f69b-c091-5f7c-8945-69d1ebdd10ee}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_IOF_LB_BreakLocationTest
 VAR
     fbLightbusBreakTest : IOF_LB_BreakLocationTest; // Lightbus 断纤定位 FB

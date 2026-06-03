@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_ModbusRtuMaster_KL6x22B" Id="{1788d488-e39b-5c43-927c-b87953c7efec}" SpecialFunc="None">
+  <POU Name="P_Demo_ModbusRtuMaster_KL6x22B" Id="{8ca89e3a-4a06-5604-a248-9d1d414926e3}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_ModbusRtuMaster_KL6x22B
 VAR
     fbModbusMaster : ModbusRtuMaster_KL6x22B;        // 旧版 KL6031/6041 端子主站（已废弃）

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_LEN2" Id="{c8516c7b-d5c3-5c7b-a545-77bb4d4c4544}" SpecialFunc="None">
+  <POU Name="P_Demo_LEN2" Id="{d940326e-f042-5987-9cd7-b11792d2e34a}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_LEN2
 VAR
     sLargeBuf : STRING(1024) := 'Logs accumulating...'; // 工业语义：长 STRING(1024) 日志缓冲

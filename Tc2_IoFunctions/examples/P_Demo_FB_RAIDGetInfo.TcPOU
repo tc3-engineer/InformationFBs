@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_RAIDGetInfo" Id="{8a328ab4-79c9-5aec-95cb-5175d9126357}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_RAIDGetInfo" Id="{563a6e4b-04b8-59db-b51b-52a00851abc8}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_RAIDGetInfo
 VAR
     fbGetRaidInfo     : FB_RAIDGetInfo; // RAID 控制器元信息 FB（仅一次）

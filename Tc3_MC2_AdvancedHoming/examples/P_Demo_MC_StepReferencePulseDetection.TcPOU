@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_MC_StepReferencePulseDetection" Id="{b16ec5bd-cdc8-5aba-9ff8-6924bc5811b8}" SpecialFunc="None">
+  <POU Name="P_Demo_MC_StepReferencePulseDetection" Id="{8e0fd0b6-75b9-5452-9957-80bd8ff27a5a}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_MC_StepReferencePulseDetection
 VAR
     fbStepReferencePulseDetection : MC_StepReferencePulseDetection;

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_GetUPSStatus" Id="{47ccc96c-daa4-51a6-94e1-fd6d2efa2c26}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_GetUPSStatus" Id="{a25cb9b7-4691-5a10-848a-c76db2c34659}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_GetUPSStatus
 VAR
     fbReadUpsStatus   : FB_GetUPSStatus; // UPS 状态读 FB（电平触发）

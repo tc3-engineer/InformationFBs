@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_CalcHashValue" Id="{371abd00-f757-5add-93f1-8efcf583c30c}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_CalcHashValue" Id="{0f9e7abd-3aff-5d11-98ae-0d8046ea7879}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_CalcHashValue
 VAR
     fbHashCalculator : FB_CalcHashValue; // FB 实例，复用做多次 hash

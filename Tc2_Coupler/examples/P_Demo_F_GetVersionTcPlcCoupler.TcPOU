@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_F_GetVersionTcPlcCoupler" Id="{f7b57a18-49fd-548e-92d8-ba05c19af1f2}" SpecialFunc="None">
+  <POU Name="P_Demo_F_GetVersionTcPlcCoupler" Id="{10519e87-a24e-598c-854c-b1785e9e6338}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_F_GetVersionTcPlcCoupler
 VAR
     nMajorOld         : UINT; // 老 obsolete 函数读 major（迁移期保留）

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_PSTRING_TO_STRING" Id="{56ea05b4-5b22-5b9e-9d57-cfb72587143a}" SpecialFunc="None">
+  <POU Name="P_Demo_PSTRING_TO_STRING" Id="{30901392-0f58-5a55-a171-72af52c7856c}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_PSTRING_TO_STRING
 VAR
     sRealValue           : STRING(80) := 'Hello PLC'; // 模拟 wire 缓冲区中的 STRING 字段

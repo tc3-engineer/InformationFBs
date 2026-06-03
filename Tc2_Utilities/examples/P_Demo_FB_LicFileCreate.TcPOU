@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_LicFileCreate" Id="{b8fe7845-8bd1-598d-b795-a3adc8ff5abe}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_LicFileCreate" Id="{030803aa-d061-59d1-8282-82bf72376a1f}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_LicFileCreate
 VAR
     fbFB_LicFileCreate : FB_LicFileCreate; // FB_LicFileCreate 实例

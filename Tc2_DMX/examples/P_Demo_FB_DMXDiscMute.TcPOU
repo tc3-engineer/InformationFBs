@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_DMXDiscMute" Id="{854c123b-7889-5727-b841-be37d4fe319f}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_DMXDiscMute" Id="{f33d0453-370a-5fb1-9787-7267bf48e5d7}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_DMXDiscMute
 VAR
     fbDiscMute        : FB_DMXDiscMute;               // 置位设备 mute 标志

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_WMID" Id="{786a5d2a-6346-5d95-ae1a-46eaf0ebc66d}" SpecialFunc="None">
+  <POU Name="P_Demo_WMID" Id="{39f0631c-3da5-5c16-b821-e960ea209882}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_WMID
 VAR
     sConfig  : WSTRING(255) := "IP：192.168.1.10，端口：502"; // 中文风格配置串

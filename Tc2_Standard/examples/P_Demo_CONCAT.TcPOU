@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_CONCAT" Id="{34ff2db8-9b7b-5b86-8d44-83178ed6837a}" SpecialFunc="None">
+  <POU Name="P_Demo_CONCAT" Id="{fcf51538-82cf-5d06-9038-a777871fb727}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_CONCAT
 VAR
     sAlarmPrefix : STRING(255) := 'ALARM: '; // 固定报警前缀，等级+冒号空格

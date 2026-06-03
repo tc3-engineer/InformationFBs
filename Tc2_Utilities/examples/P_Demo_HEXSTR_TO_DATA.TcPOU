@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_HEXSTR_TO_DATA" Id="{8ce49477-c862-5c4b-a7c0-961de31e5f52}" SpecialFunc="None">
+  <POU Name="P_Demo_HEXSTR_TO_DATA" Id="{c045b350-a886-5741-80e8-78f9224bca90}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_HEXSTR_TO_DATA
 VAR
     sHexIn  : STRING(64) := '01 23 AB CD'; // 工业语义：配置 hex 串

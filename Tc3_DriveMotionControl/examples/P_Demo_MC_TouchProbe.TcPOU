@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_MC_TouchProbe" Id="{98aa3b05-768d-5a78-b4e6-4c50b17b4f01}" SpecialFunc="None">
+  <POU Name="P_Demo_MC_TouchProbe" Id="{bd1e8bd2-43ae-5894-a677-5409d2a60298}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_MC_TouchProbe
 VAR
     fbTouchProbe    : MC_TouchProbe; // 测头采样 FB 实例

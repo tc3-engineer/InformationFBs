@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_PcWatchDog_BAPI" Id="{f17d413f-64a3-5a51-91d3-0d1548db5121}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_PcWatchDog_BAPI" Id="{e9cdfe58-9d52-5be9-aa01-925d09353a85}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_PcWatchDog_BAPI
 VAR
     fbPcWatchdogBapi     : FB_PcWatchDog_BAPI; // FB_PcWatchDog_BAPI 实例

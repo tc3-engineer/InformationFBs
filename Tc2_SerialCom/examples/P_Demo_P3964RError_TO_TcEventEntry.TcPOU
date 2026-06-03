@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_P3964RError_TO_TcEventEntry" Id="{6e530c52-b46b-5eef-afe8-704f6516db20}" SpecialFunc="None">
+  <POU Name="P_Demo_P3964RError_TO_TcEventEntry" Id="{be95f558-4d0e-558b-b1f8-df8136fc6a20}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_P3964RError_TO_TcEventEntry
 VAR
     fb3964R     : 3964R;                        // 错误来源:3964R 协议功能块

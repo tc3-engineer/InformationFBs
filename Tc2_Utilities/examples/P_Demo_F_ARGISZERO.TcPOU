@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_F_ARGISZERO" Id="{0a65bbb1-1377-5f7f-86fc-616d23728569}" SpecialFunc="None">
+  <POU Name="P_Demo_F_ARGISZERO" Id="{15d044a3-8f0e-53fb-86c6-73f89d390bab}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_F_ARGISZERO
 VAR
     nLiveValue     : INT := 42; // 业务值

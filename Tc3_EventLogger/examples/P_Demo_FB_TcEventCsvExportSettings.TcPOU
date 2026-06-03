@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_TcEventCsvExportSettings" Id="{198f2799-22e9-58fc-b453-528a3d6ffbf3}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_TcEventCsvExportSettings" Id="{b111082b-5d80-515a-839a-5a5ccb7363d4}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_TcEventCsvExportSettings
 VAR
     fbSettings  : FB_TcEventCsvExportSettings; // CSV 导出配置

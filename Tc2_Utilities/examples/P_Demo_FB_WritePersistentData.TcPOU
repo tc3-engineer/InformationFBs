@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_WritePersistentData" Id="{338ec4cb-40e9-5b34-8fb6-16d15db8f5b2}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_WritePersistentData" Id="{9bee6a35-f1af-5a06-b2f0-d6a0f026d01e}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_WritePersistentData
 VAR
     fbFB_WritePersistentData : FB_WritePersistentData; // FB_WritePersistentData 实例

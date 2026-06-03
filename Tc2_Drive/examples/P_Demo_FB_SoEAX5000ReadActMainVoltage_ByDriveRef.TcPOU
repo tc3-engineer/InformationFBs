@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_SoEAX5000ReadActMainVoltage_ByDriveRef" Id="{4fca023a-e07e-503d-84a6-12847f6262b6}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_SoEAX5000ReadActMainVoltage_ByDriveRef" Id="{ba66e0cb-26c6-53a9-9f4f-85a8475903a0}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_SoEAX5000ReadActMainVoltage_ByDriveRef
 VAR
     fbReadVoltage : FB_SoEAX5000ReadActMainVoltage_ByDriveRef; // 读 AX5000 主电源电压 FB 实例

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_INSERT2" Id="{db5457ef-e31c-523a-bde1-9d7e282104cd}" SpecialFunc="None">
+  <POU Name="P_Demo_INSERT2" Id="{d4fecb12-7e9f-5090-9691-17da45010224}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_INSERT2
 VAR
     sMessage   : STRING(255) := 'Pump alarm'; // 工业语义：原始日志消息

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_IOF_GetDeviceType" Id="{feb6b076-7743-5ca7-9650-6e5c39cfd70e}" SpecialFunc="None">
+  <POU Name="P_Demo_IOF_GetDeviceType" Id="{9cd23913-513d-5294-a563-3d2a532b2072}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_IOF_GetDeviceType
 VAR
     fbGetDeviceType : IOF_GetDeviceType; // 设备类型查询 FB

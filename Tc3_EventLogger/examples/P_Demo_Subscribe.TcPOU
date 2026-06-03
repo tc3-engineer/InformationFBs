@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_Subscribe" Id="{ca9bfbfc-1629-5386-af5b-ac3929222e76}" SpecialFunc="None">
+  <POU Name="P_Demo_Subscribe" Id="{094bb0d4-cea4-5beb-b0a0-42280676f0e1}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_Subscribe
 VAR
     fbListener  : FB_ListenerBase2; // listener 实例

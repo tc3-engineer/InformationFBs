@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_stLibVersion_Tc2_Utilities" Id="{54de6bf6-eb81-5706-a99a-19528ad83887}" SpecialFunc="None">
+  <POU Name="P_Demo_stLibVersion_Tc2_Utilities" Id="{8665fbae-5d91-5b15-ae41-0638178d1cee}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_stLibVersion_Tc2_Utilities
 VAR
     stCurrentLibVer : ST_LibVersion; // 运行时版本快照，HMI / 报表展示用

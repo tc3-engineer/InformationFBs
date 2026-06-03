@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_CSETBIT32" Id="{358b6b60-cbb1-548c-83aa-77b558f75625}" SpecialFunc="None">
+  <POU Name="P_Demo_CSETBIT32" Id="{5de3bf47-1f69-522b-934d-daf47ee9f760}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_CSETBIT32
 VAR
     aDigitalInputs : ARRAY[0..31] OF BOOL; // 32 个 DI 通道

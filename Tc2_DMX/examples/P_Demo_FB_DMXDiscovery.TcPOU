@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_DMXDiscovery" Id="{acba379c-3ada-5e8b-8a7b-3c13e92b5861}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_DMXDiscovery" Id="{f230f101-aacb-5040-aa49-9b18aad14995}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_DMXDiscovery
 VAR
     fbDmxDiscovery     : FB_DMXDiscovery;                  // 高层设备搜索（最多 50 台）

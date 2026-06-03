@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_ADSWRITE" Id="{36c9d4a0-7ce8-59fa-a039-d2aa228f75a6}" SpecialFunc="None">
+  <POU Name="P_Demo_ADSWRITE" Id="{7b49bf5a-4c67-536e-9425-b6b513be7104}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_ADSWRITE
 VAR
     fbADSWRITE    : ADSWRITE; // ADSWRITE 实例

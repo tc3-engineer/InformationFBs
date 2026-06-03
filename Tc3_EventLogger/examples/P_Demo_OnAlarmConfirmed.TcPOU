@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_OnAlarmConfirmed" Id="{84f8cd47-9c83-5030-88c8-bded09276d2c}" SpecialFunc="None">
+  <POU Name="P_Demo_OnAlarmConfirmed" Id="{2a9d569e-090f-51d9-b0d1-a968a1cf21ca}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_OnAlarmConfirmed
 VAR
     fbListener : FB_ListenerBase2; // listener 实例（实际工程使用子类）

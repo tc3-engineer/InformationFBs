@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_AX2000_Parameter" Id="{f53ec7e1-123b-5ddc-b8d0-5344222f07f2}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_AX2000_Parameter" Id="{b6a6f9a5-f2e6-50ed-83ee-1ab0507fef7d}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_AX2000_Parameter
 VAR
     fbAx2000Param        : FB_AX2000_Parameter; // AX2000 PKW 参数访问 FB

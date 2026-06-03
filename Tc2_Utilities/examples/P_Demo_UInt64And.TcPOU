@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_UInt64And" Id="{b5adfebe-c562-54fa-856b-684fe5bf34f9}" SpecialFunc="None">
+  <POU Name="P_Demo_UInt64And" Id="{a71ee21b-b323-5540-a0b2-7a84dbff00e1}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_UInt64And
 VAR
     uliStatus    : T_ULARGE_INTEGER;; // 状态寄存器（64 位）

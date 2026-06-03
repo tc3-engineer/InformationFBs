@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_SoEReset_ByDriveRef" Id="{75ef4e5b-73b6-50ae-9fdd-5cb36de0a346}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_SoEReset_ByDriveRef" Id="{9cd8e0e0-abc7-5a7d-8e3d-fcd35a3ed2b3}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_SoEReset_ByDriveRef
 VAR
     fbSoEReset    : FB_SoEReset_ByDriveRef; // SoE 驱动器复位 FB 实例

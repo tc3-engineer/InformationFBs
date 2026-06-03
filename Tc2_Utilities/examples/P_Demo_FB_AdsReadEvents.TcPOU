@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_AdsReadEvents" Id="{c167be6d-0e0c-51b5-9877-1b572f278104}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_AdsReadEvents" Id="{f1a596e1-7faa-58d1-b0d5-42234dda379f}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_AdsReadEvents
 VAR
     fbAdsReadEvents   : FB_AdsReadEvents; // FB 实例（已弃用；新代码用 Tc3_EventLogger）

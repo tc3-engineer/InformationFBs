@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_STRING_TO_WSTRING2" Id="{908ed01e-1244-5752-b3cb-cc061cfd16c3}" SpecialFunc="None">
+  <POU Name="P_Demo_STRING_TO_WSTRING2" Id="{59cf749a-3d9d-5017-8fe0-4e29189a1519}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_STRING_TO_WSTRING2
 VAR
     sLocal   : STRING(1024) := 'Long log line...'; // 工业语义：长 STRING

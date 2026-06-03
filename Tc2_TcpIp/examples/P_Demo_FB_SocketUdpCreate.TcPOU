@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_SocketUdpCreate" Id="{3fa37526-8156-5f24-b330-74a2f4d1b93d}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_SocketUdpCreate" Id="{690b6afc-6405-531f-b225-1e6fb648cde0}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_SocketUdpCreate
 VAR
     fbCreateDiscoverySocket : FB_SocketUdpCreate;

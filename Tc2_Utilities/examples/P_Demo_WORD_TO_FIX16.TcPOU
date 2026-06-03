@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_WORD_TO_FIX16" Id="{eb84e2ac-3d73-5061-8ef9-78fcb6d499d4}" SpecialFunc="None">
+  <POU Name="P_Demo_WORD_TO_FIX16" Id="{54235c9d-5171-540f-8d63-718752c27b6e}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_WORD_TO_FIX16
 VAR
     wFromSdo   : WORD := 2#0000110010000000;; // PDF 示例值 = 12.5 in Q8

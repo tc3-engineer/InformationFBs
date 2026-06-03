@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_DMXGetStatusIdDescription" Id="{bc650127-fb21-5450-8445-6237d68276a8}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_DMXGetStatusIdDescription" Id="{5d4efe8c-6a90-53fa-a252-087d78279d70}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_DMXGetStatusIdDescription
 VAR
     fbGetStatusDesc   : FB_DMXGetStatusIdDescription; // 状态 ID 转文本

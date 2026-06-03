@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_MODTURNS" Id="{c5180011-0e0e-59e9-805d-208fff358f5b}" SpecialFunc="None">
+  <POU Name="P_Demo_MODTURNS" Id="{b28bc15b-ea70-5302-a916-1b257bdd24aa}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_MODTURNS
 VAR
     lrAxisAbsPositionDeg : LREAL := 800.56; // 伺服累计绝对位置（度）；在线写值模拟编码器读数

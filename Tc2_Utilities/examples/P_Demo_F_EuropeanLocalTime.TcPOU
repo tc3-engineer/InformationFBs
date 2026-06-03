@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_F_EuropeanLocalTime" Id="{fee16c27-6d57-517a-8b2b-2e68b4ba0514}" SpecialFunc="None">
+  <POU Name="P_Demo_F_EuropeanLocalTime" Id="{e0a8ddf4-8cd8-5a4f-ae2a-6588721117cd}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_F_EuropeanLocalTime
 VAR
     stUTC             : TIMESTRUCT; // PLC 内部记录的 UTC 时间 (初始化通过在线手动赋值; 推荐字段：( wYear := 2026, wMonth := 5, wDay := 11, wHour := 10, wMinute := 0, wSecond := 0, wMilliseconds := 0 ))

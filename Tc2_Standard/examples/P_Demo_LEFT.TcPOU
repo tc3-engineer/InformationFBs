@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_LEFT" Id="{e42e9193-e4f4-5f09-bd70-50786f78c831}" SpecialFunc="None">
+  <POU Name="P_Demo_LEFT" Id="{8e41ba42-b349-5fb7-a86c-f95bdf631bc3}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_LEFT
 VAR
     sLogLine    : STRING(255) := 'ERROR Motor overcurrent'; // 日志行：固定 5 字符等级前缀 + 空格 + 消息体

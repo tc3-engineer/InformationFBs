@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_IOF_SER_SaveFlash" Id="{cc73ef1c-f502-5227-a366-f4c75f6e1867}" SpecialFunc="None">
+  <POU Name="P_Demo_IOF_SER_SaveFlash" Id="{aaffb6c4-ad20-5af7-9f83-452ac05400f4}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_IOF_SER_SaveFlash
 VAR
     fbSercosSaveFlash : IOF_SER_SaveFlash; // SERCOS 配置保存到 EEPROM FB

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_CreateDir" Id="{19ade2ca-ad66-509c-a804-141c7eaccb26}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_CreateDir" Id="{b42e64c4-0fe1-5e40-9248-8e7d529f52c7}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_CreateDir
 VAR
     fbCreateDir       : FB_CreateDir; // FB_CreateDir 实例

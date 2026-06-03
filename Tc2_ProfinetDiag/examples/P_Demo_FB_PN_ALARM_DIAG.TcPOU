@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_PN_ALARM_DIAG" Id="{17f225e8-b435-599f-a18e-8db5c4ef959e}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_PN_ALARM_DIAG" Id="{b10aebec-c9e8-5f65-bf4b-2cc62b956957}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_PN_ALARM_DIAG
 VAR
     fbAlarmDiag      : FB_PN_ALARM_DIAG;        // 诊断报警读取实例

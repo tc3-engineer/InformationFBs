@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_PINT_TO_INT" Id="{54a82e53-64da-56a4-93df-aa43c79f5cee}" SpecialFunc="None">
+  <POU Name="P_Demo_PINT_TO_INT" Id="{6e4044b7-3681-5db3-94e6-10fd0824f1c2}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_PINT_TO_INT
 VAR
     nRealValue           : INT := -12345; // 模拟 wire 缓冲区中的 INT 字段

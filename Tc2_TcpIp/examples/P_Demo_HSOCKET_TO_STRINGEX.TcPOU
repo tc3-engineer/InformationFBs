@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_HSOCKET_TO_STRINGEX" Id="{5ae9590b-ee2a-5c61-9d56-b67feea14339}" SpecialFunc="None">
+  <POU Name="P_Demo_HSOCKET_TO_STRINGEX" Id="{d33c305e-e964-5798-9aa6-8566a7cd00bb}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_HSOCKET_TO_STRINGEX
 VAR
     fbConnect       : FB_SocketConnect;

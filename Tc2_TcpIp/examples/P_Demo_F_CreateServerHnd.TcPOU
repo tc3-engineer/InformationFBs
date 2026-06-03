@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_F_CreateServerHnd" Id="{a66aa542-e780-514f-811c-5aaa482153b9}" SpecialFunc="None">
+  <POU Name="P_Demo_F_CreateServerHnd" Id="{deb635ec-ff04-5fa7-8b33-c9160fe8d30d}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_F_CreateServerHnd
 VAR
     hServer    : T_HSERVER; // 被本函数初始化的服务器句柄

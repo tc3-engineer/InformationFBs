@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_TcEventLogger" Id="{c1e0e4db-2cad-534a-a7fd-4807fe804b75}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_TcEventLogger" Id="{d6366cb2-360c-5c9c-941e-54158c40f665}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_TcEventLogger
 VAR
     fbLogger           : FB_TcEventLogger; // EventLogger 实例（实际工程用全局单例）

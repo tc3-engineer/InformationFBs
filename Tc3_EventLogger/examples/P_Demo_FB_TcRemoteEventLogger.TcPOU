@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_TcRemoteEventLogger" Id="{302f2a9a-e148-58a4-acb9-90089525f2b1}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_TcRemoteEventLogger" Id="{f84f7e18-c51f-53ce-aed6-9fea0bcac9b0}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_TcRemoteEventLogger
 VAR
     fbRemoteLogger : FB_TcRemoteEventLogger; // 远程 EventLogger 视图

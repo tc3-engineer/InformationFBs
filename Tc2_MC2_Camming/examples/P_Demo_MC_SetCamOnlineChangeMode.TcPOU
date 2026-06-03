@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_MC_SetCamOnlineChangeMode" Id="{bbba016c-7466-5e90-8a97-3b7cdb60a68e}" SpecialFunc="None">
+  <POU Name="P_Demo_MC_SetCamOnlineChangeMode" Id="{afca70a9-cd5f-5f7c-9b3b-14f724ac9e2d}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_MC_SetCamOnlineChangeMode
 VAR
     fbConfigCamActivation : MC_SetCamOnlineChangeMode;

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_ModbusRtuMasterV2_PcCOM" Id="{bfddaa00-758b-5f03-a28c-06e6646b6cc0}" SpecialFunc="None">
+  <POU Name="P_Demo_ModbusRtuMasterV2_PcCOM" Id="{5849f801-c2fd-5bda-abf2-4221d06c2fbe}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_ModbusRtuMasterV2_PcCOM
 VAR
     fbModbusMaster : ModbusRtuMasterV2_PcCOM;       // 串口 Modbus RTU 主站

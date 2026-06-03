@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_SET_PN_NAME" Id="{670727ff-b4d4-58dd-891b-aae13decd3bd}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_SET_PN_NAME" Id="{77bf23b4-3103-554c-8bb3-8521ca0cbc9a}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_SET_PN_NAME
 VAR
     fbSetName     : FB_SET_PN_NAME;

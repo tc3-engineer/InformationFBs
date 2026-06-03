@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_PTIME_TO_TIME" Id="{ed18ef31-a335-5ed3-9499-56eaa1ff7a30}" SpecialFunc="None">
+  <POU Name="P_Demo_PTIME_TO_TIME" Id="{8f9f4844-0f3a-5aa3-9bb2-b91a3b8ae53f}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_PTIME_TO_TIME
 VAR
     tRealValue           : TIME := T#1S500MS; // 模拟 wire 缓冲区中的 TIME 字段

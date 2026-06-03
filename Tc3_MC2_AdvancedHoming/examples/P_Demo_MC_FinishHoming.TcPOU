@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_MC_FinishHoming" Id="{0f4d62af-fb8e-5493-9053-9ab4ed727f94}" SpecialFunc="None">
+  <POU Name="P_Demo_MC_FinishHoming" Id="{01513378-58c0-5ee7-93d7-8598519d147f}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_MC_FinishHoming
 VAR
     fbFinishHoming : MC_FinishHoming;

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_CTUD" Id="{45b10d1d-34aa-5206-9f61-f82151abb0a4}" SpecialFunc="None">
+  <POU Name="P_Demo_CTUD" Id="{b4b639c3-2e9d-5b49-a3eb-07985c51501e}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_CTUD
 VAR
     fbStockCounter     : CTUD; // 双向计数器实例：仓库入出库计数

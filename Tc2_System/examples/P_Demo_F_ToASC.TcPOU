@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_F_ToASC" Id="{72741113-bf7b-5048-80ec-89e5d32fe8cc}" SpecialFunc="None">
+  <POU Name="P_Demo_F_ToASC" Id="{2c9410b4-d3a6-5a17-8c61-9274aad7b79c}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_F_ToASC
 VAR
     sCommand        : STRING := 'R'; // 操作员命令字符串

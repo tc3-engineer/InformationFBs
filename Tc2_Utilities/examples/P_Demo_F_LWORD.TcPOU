@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_F_LWORD" Id="{1de2ce49-dd10-5c3c-9a6a-beeea2138780}" SpecialFunc="None">
+  <POU Name="P_Demo_F_LWORD" Id="{88194469-d369-538a-986f-1db9a36f72b2}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_F_LWORD
 VAR
     nMacAddress   : LWORD := 16#01_23_45_67_89_AB; // 业务量（LWORD）

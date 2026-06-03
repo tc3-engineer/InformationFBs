@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_CoEAX8000ParkAxis" Id="{73c78f9c-97a6-5343-a9f3-c971a30791e3}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_CoEAX8000ParkAxis" Id="{f6da6836-904b-5ef8-a960-7b979f9c71f1}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_CoEAX8000ParkAxis
 VAR
     fbAX8000ParkAxis   : FB_CoEAX8000ParkAxis; // AX8000 驻留/释放 FB 实例

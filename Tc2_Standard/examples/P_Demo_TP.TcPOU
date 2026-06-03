@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_TP" Id="{3e56b968-6fa6-5830-8cfb-a921fc882b33}" SpecialFunc="None">
+  <POU Name="P_Demo_TP" Id="{00fe5a2f-eb24-581c-b639-507e57dbb072}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_TP
 VAR
     fbValvePulse       : TP; // 脉冲发生器实例：电磁阀定时开

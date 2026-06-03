@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_StringRingBuffer" Id="{68fc0439-4436-537b-b568-d97983e5ccf5}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_StringRingBuffer" Id="{e50ae125-7112-5484-a424-aa5ca7e87dc6}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_StringRingBuffer
 VAR
     fbFB_StringRingBuffer : FB_StringRingBuffer; // FB_StringRingBuffer 实例

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_SocketReceive" Id="{09205513-d055-5909-9da7-0c944cbbaf70}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_SocketReceive" Id="{9955069b-a92c-56c0-bd2d-078ea6c72f67}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_SocketReceive
 VAR
     fbConnectToScanner : FB_SocketConnect; // 先建连，给 Receive 提供一个真实句柄

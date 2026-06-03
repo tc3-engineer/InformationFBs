@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_ModbusRtuSlave_KL6x5B" Id="{e8e2ae10-78b7-5f0c-ba3d-8db7adae5e8e}" SpecialFunc="None">
+  <POU Name="P_Demo_ModbusRtuSlave_KL6x5B" Id="{ce9ef480-59f9-537c-8fb8-454c64b5a5de}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_ModbusRtuSlave_KL6x5B
 VAR
     fbModbusSlave : ModbusRtuSlave_KL6x5B;           // KL6001/6011/6021 端子 Modbus RTU 从站

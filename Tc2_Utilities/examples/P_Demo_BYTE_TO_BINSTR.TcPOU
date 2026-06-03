@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_BYTE_TO_BINSTR" Id="{84a6214b-d0ec-5ba7-a312-dce348517bac}" SpecialFunc="None">
+  <POU Name="P_Demo_BYTE_TO_BINSTR" Id="{de641c2c-ad72-5dae-8af2-64c365b35d34}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_BYTE_TO_BINSTR
 VAR
     nValue     : BYTE := 43981; // 待转换的 BYTE 值；在线写值替换测试不同输入

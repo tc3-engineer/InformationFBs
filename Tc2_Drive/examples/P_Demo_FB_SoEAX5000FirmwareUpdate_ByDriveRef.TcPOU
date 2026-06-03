@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_SoEAX5000FirmwareUpdate_ByDriveRef" Id="{48087ff2-0da3-5c94-b6ab-1e23ad472248}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_SoEAX5000FirmwareUpdate_ByDriveRef" Id="{a083af52-6171-5c99-876a-9c6bda40d53d}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_SoEAX5000FirmwareUpdate_ByDriveRef
 VAR
     fbFwUpdate    : FB_SoEAX5000FirmwareUpdate_ByDriveRef; // AX5000 固件更新 FB 实例

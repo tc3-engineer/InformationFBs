@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_KL320xConfig" Id="{289778c5-6174-5746-b90b-8dfa0e2255fa}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_KL320xConfig" Id="{4919fc14-6c33-5cbe-aca8-92f26dfe1dba}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_KL320xConfig
 VAR
     fbKl320x              : FB_KL320xConfig; // KL3201/3202/3204 配置 FB（每通道一个实例）

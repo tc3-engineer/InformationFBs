@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_ScopeServerControl" Id="{bf58cdf1-3bd6-58f4-b093-c42a74e59af4}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_ScopeServerControl" Id="{2aa3588d-b0fd-53d7-9798-2d5b7e29d84d}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_ScopeServerControl
 VAR
     fbFB_ScopeServerControl : FB_ScopeServerControl; // FB_ScopeServerControl 实例

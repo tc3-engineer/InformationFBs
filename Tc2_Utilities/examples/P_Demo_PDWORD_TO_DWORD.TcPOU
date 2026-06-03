@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_PDWORD_TO_DWORD" Id="{ec254121-c332-5fd5-97dc-8b8524185ca2}" SpecialFunc="None">
+  <POU Name="P_Demo_PDWORD_TO_DWORD" Id="{8cd0e0f2-8381-59ab-86bd-f97dc47e147d}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_PDWORD_TO_DWORD
 VAR
     nRealValue           : DWORD := 16#DEADBEEF; // 模拟 wire 缓冲区中的 DWORD 字段

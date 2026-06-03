@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_RK512" Id="{9d7d75a1-869b-5050-ba6f-d27aca0231d4}" SpecialFunc="None">
+  <POU Name="P_Demo_RK512" Id="{8b769775-5c8f-5a2b-aa98-d7333bd6dbb7}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_RK512
 VAR
     fbSerialLine : SerialLineControl;           // 底层硬件收发

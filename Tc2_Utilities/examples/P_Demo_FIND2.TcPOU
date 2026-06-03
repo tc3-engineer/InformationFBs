@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FIND2" Id="{e74c95a5-c5d4-56f6-8a85-8039de5e9178}" SpecialFunc="None">
+  <POU Name="P_Demo_FIND2" Id="{d5a255b2-49bf-52c9-a7b5-e3bad2abe4b0}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FIND2
 VAR
     sUaNode : STRING(255) := 'ns=2;s=Pump.State'; // 工业语义：OPC UA NodeId 字符串

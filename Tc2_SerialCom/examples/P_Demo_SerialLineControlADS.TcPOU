@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_SerialLineControlADS" Id="{58438541-fe16-58d7-b5f5-57e6c8a0c54a}" SpecialFunc="None">
+  <POU Name="P_Demo_SerialLineControlADS" Id="{a8163dce-02db-5181-92ad-f0bc2f723b68}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_SerialLineControlADS
 VAR
     fbSerialLineADS : SerialLineControlADS;     // 虚拟串口后台通信(走 ADS 服务器)

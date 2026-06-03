@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_MODABS" Id="{0bac05c5-dbed-56e1-94cc-48f969f67aaa}" SpecialFunc="None">
+  <POU Name="P_Demo_MODABS" Id="{894825cc-5dfa-5587-8344-5bcbe6ed96c8}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_MODABS
 VAR
     lrAxisAbsPositionDeg   : LREAL := 400.56; // 伺服轴累计绝对位置（度）；在线写值模拟编码器读数

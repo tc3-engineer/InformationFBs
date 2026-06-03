@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_F_GenerateHashValue" Id="{df93c58b-8617-5d96-9673-e01d5eabb98c}" SpecialFunc="None">
+  <POU Name="P_Demo_F_GenerateHashValue" Id="{06b5838e-9353-55e4-a6d6-0ec00d5154af}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_F_GenerateHashValue
 VAR
     aFirmware : ARRAY[0..1023] OF BYTE; // 工业语义：1 KB 固件区

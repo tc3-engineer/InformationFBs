@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_F_GetSystemTime" Id="{e31d31ed-4ece-58d9-8323-e289480e53cc}" SpecialFunc="None">
+  <POU Name="P_Demo_F_GetSystemTime" Id="{77f71735-7fc3-589f-be07-2a64df24e9db}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_F_GetSystemTime
 VAR
     ulNowFiletime     : ULINT; // 当前系统时间戳（100ns 自 1601-01-01 UTC）

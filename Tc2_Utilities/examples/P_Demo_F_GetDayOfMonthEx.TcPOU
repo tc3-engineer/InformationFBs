@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_F_GetDayOfMonthEx" Id="{ff155b01-c38b-5473-bf54-2894248567dc}" SpecialFunc="None">
+  <POU Name="P_Demo_F_GetDayOfMonthEx" Id="{bf9f8e08-db42-5aa8-b8cc-00f516f0bb80}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_F_GetDayOfMonthEx
 VAR
     wYear       : WORD := 2026; // 目标年份

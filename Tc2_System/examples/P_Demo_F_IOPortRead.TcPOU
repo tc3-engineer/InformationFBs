@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_F_IOPortRead" Id="{aec904ee-2802-5b1b-9dd0-96756150e90b}" SpecialFunc="None">
+  <POU Name="P_Demo_F_IOPortRead" Id="{0251c5a1-82f5-517c-8be1-143666f583f2}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_F_IOPortRead
 VAR
     nLptPortAddress : UDINT := 16#378; // LPT1 默认 I/O 端口地址

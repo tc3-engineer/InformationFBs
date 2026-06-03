@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FindAndReplace" Id="{9d9a6bf2-c6a9-5023-85cd-990bdb053135}" SpecialFunc="None">
+  <POU Name="P_Demo_FindAndReplace" Id="{7ec48926-b14e-51f2-b6ae-0ce8609d43c0}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FindAndReplace
 VAR
     sTemplate    : STRING(255) := '[{ts}] Pump alarm'; // 工业语义：日志模板含占位符 {ts}

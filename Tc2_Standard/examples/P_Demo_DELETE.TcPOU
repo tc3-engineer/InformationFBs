@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_DELETE" Id="{5bc3d914-eba3-5515-aeea-2886236dcb4d}" SpecialFunc="None">
+  <POU Name="P_Demo_DELETE" Id="{258acd53-78a4-5760-a6b4-4bef32601abe}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_DELETE
 VAR
     sRawFrame  : STRING(255) := 'STX|01|DATA|ETX'; // 来自串口的原始通讯帧，头部含 4 字节 'STX|'

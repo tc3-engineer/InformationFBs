@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_DMXGetManufacturerLabel" Id="{3b9f0471-5e3a-5820-912c-a9591c2548a0}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_DMXGetManufacturerLabel" Id="{2ad1050c-f4bf-5464-b1a2-e0fa77923191}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_DMXGetManufacturerLabel
 VAR
     fbGetManufLabel   : FB_DMXGetManufacturerLabel;   // 读厂商描述

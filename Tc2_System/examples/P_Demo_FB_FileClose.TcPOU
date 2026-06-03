@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_FileClose" Id="{b363e821-9c81-5ec1-b38f-338133457e47}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_FileClose" Id="{e27e6a00-2fda-5bbc-b15a-9370f125cf21}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_FileClose
 VAR
     fbFileClose   : FB_FileClose; // FB_FileClose 实例

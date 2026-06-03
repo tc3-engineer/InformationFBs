@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_IOF_SER_IDN_Write" Id="{b2573b24-9f9f-5dd8-9aaf-a7bd53a2d53c}" SpecialFunc="None">
+  <POU Name="P_Demo_IOF_SER_IDN_Write" Id="{9310ce2b-f224-5ba8-a5a4-023b9b4d40ed}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_IOF_SER_IDN_Write
 VAR
     fbSercosIdnWrite     : IOF_SER_IDN_Write; // SERCOS IDN 写 FB

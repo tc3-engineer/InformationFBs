@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_TC_CpuUsageEx" Id="{2490724f-7e23-599e-900f-c1d37d6d2ee2}" SpecialFunc="None">
+  <POU Name="P_Demo_TC_CpuUsageEx" Id="{5bfbf734-d484-526f-9640-7998b43157eb}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_TC_CpuUsageEx
 VAR
     fbTC_CpuUsageEx : TC_CpuUsageEx; // TC_CpuUsageEx 实例

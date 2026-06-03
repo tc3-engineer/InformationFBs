@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_DMXGetSlotInfo" Id="{00d4dc3f-7161-5190-af99-b79a14c2194c}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_DMXGetSlotInfo" Id="{4ce59bae-5938-53cc-b081-029648a7466f}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_DMXGetSlotInfo
 VAR
     fbGetSlotInfo     : FB_DMXGetSlotInfo;            // 读各槽功能信息

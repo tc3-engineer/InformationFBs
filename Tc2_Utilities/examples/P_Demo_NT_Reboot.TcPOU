@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_NT_Reboot" Id="{6317c508-fa75-5ad4-ba0b-6cc359d1031b}" SpecialFunc="None">
+  <POU Name="P_Demo_NT_Reboot" Id="{89de9095-7027-5ed4-9da8-f21980539dfa}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_NT_Reboot
 VAR
     fbNT_Reboot : NT_Reboot; // NT_Reboot 实例

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
-  <POU Name="P_Demo_FB_ASI_SlaveDiag" Id="{e04c6a73-ebb3-5584-b7d8-af55f7c16ee1}" SpecialFunc="None">
+  <POU Name="P_Demo_FB_ASI_SlaveDiag" Id="{d45098ba-f286-5880-8d5e-1ba468577ab6}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM P_Demo_FB_ASI_SlaveDiag
 VAR
     fbAsiSlaveDiag       : FB_ASI_SlaveDiag; // ASI slave 诊断 FB
