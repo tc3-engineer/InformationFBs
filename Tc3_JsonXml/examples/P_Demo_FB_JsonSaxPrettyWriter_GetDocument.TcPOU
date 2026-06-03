@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_JsonSaxPrettyWriter_GetDocument" Id="{15e53063-7fae-58ab-b182-fd4be88a8431}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_JsonSaxPrettyWriter_GetDocument
+VAR
+    fbParser : FB_JsonSaxPrettyWriter; // 父 FB 实例
+    hrErrorCode : HRESULT;
+    vRet : STRING(255); // 返回值监视
+    bTrigger : BOOL := FALSE; // 在线置 TRUE 触发一次调用
+    bTriggerPrev : BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：拼装完 DOM 后把整份 JSON 拷成 STRING 推到 MQTT broker。
+// 价值：一次调用拿到完整序列化字符串。
+// 验证：登录 PLC 在线写 bTrigger := TRUE 触发，monitor 返回值/输出参数。具体步骤见下方注释。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_JsonXml（References → Add library）
+//   3. 编译 → 登录 → 运行；按 verify 注释里给出的在线写值操作
+// =============================================================================
+
+// 上升沿触发一次方法调用并观察输出。
+IF bTrigger AND NOT bTriggerPrev THEN
+    vRet := fbParser.GetDocument(
+        hrErrorCode => hrErrorCode
+    );
+END_IF;
+bTriggerPrev := bTrigger;]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

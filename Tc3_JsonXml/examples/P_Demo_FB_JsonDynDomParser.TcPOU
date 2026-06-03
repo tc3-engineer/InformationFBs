@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_JsonDynDomParser" Id="{1d802bd6-4d49-5006-88d5-8abf532ac767}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_JsonDynDomParser
+VAR
+    fbFB_JsonDynDomParser : FB_JsonDynDomParser; // FB_JsonDynDomParser 实例
+    initStatus : HRESULT; // FB 初始化状态
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：MQTT 网关循环更新 JSON 文档（每秒拼一次发出去），不希望 router 内存随时间增长。
+// 价值：每次写操作自动回收旧内存，长时间运行内存占用稳定。
+// 验证：登录 PLC 在线写 bTrigger := TRUE 触发，monitor 返回值/输出参数。具体步骤见下方注释。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_JsonXml（References → Add library）
+//   3. 编译 → 登录 → 运行；按 verify 注释里给出的在线写值操作
+// =============================================================================
+
+// 实例化 + 监视 initStatus，确认 FB 内部已初始化完成。
+fbFB_JsonDynDomParser(
+    initStatus => initStatus
+);
+
+// 进一步用法：参看 examples 目录下 FB_JsonDomParser_ParseDocument / FB_JsonDomParser_GetBool 等方法演示。]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

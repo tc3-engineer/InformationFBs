@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_ITcJsonSaxHandler" Id="{54292349-073e-588b-b012-54cf1fef945e}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_ITcJsonSaxHandler
+VAR
+    fbITcJsonSaxHandler : ITcJsonSaxHandler; // ITcJsonSaxHandler 实例
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：自定义 SAX 解析处理逻辑（如过滤特定 key、累计统计）需要实现这个回调接口。
+// 价值：接口标准化让任何业务 FB 都能挂到 SAX reader 上，关注点解耦。
+// 验证：登录 PLC 在线写 bTrigger := TRUE 触发，monitor 返回值/输出参数。具体步骤见下方注释。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_JsonXml（References → Add library）
+//   3. 编译 → 登录 → 运行；按 verify 注释里给出的在线写值操作
+// =============================================================================
+
+// 实例化 + 监视 initStatus，确认 FB 内部已初始化完成。
+fbITcJsonSaxHandler();  // 实例化即可，无输入参数
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

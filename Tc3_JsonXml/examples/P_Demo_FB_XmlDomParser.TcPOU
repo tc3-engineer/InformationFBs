@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_XmlDomParser" Id="{014180a8-f100-58a7-b14f-2a5e7eddb543}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_XmlDomParser
+VAR
+    fbFB_XmlDomParser : FB_XmlDomParser; // FB_XmlDomParser 实例
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：读 TwinCAT 工程配置 XML、解析第三方 SCADA 的 XML 报文。
+// 价值：完整 DOM 操作含 XPath 风格查询；不必业务代码手写 SAX。
+// 验证：登录 PLC 在线写 bTrigger := TRUE 触发，monitor 返回值/输出参数。具体步骤见下方注释。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_JsonXml（References → Add library）
+//   3. 编译 → 登录 → 运行；按 verify 注释里给出的在线写值操作
+// =============================================================================
+
+// 实例化 + 监视 initStatus，确认 FB 内部已初始化完成。
+fbFB_XmlDomParser();  // 实例化即可，无输入参数
+
+// 进一步用法：参看 examples 目录下 FB_XmlDomParser_ParseDocument / FB_XmlDomParser_NodeName 等方法演示。]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -56,7 +56,7 @@
 
 | 库 | InfoSys 版本 | 估算 FB+FC | 状态 | 备注 |
 |---|---|---|---|---|
-| Tc3_JsonXml | 1.14.2 | ~50 | ⏳ pending | JSON/XML SAX+DOM |
+| Tc3_JsonXml | 1.14.2 | 337 | ✅ done (337/337) | JSON/XML SAX+DOM(8 FB + 327 method + 2 INTERFACE)。仓内单库最大体量。 |
 | Tc2_DataExchange | 1.2.2 | 3 | ✅ done (3/3) | 跨 PLC watchdog 数据交换 |
 | Tc3_Database | 27 ✅ done (v1.14.1) | ✅ done | TF6420 现代数据库访问（16 主 FB + 10 obsolete + 1 GVL）。覆盖 Configure/PLC-Expert/SQL-Expert/NoSQL 四种 mode + Mongo/DocDB/TimeSeries 适配。 |
 | Tc2_Database | 26 ✅ done (v1.2) | ✅ done | 旧版数据库 TS6420（19 FB + 5 obsolete + 1 FC + 1 GVL）。InfoSys 走 TF6420 TC3 兼容路径。 |

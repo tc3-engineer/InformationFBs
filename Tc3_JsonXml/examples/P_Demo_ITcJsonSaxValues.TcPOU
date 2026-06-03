@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_ITcJsonSaxValues" Id="{53b9aa16-a0a1-51bd-8474-7b446c3d2f79}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_ITcJsonSaxValues
+VAR
+    fbITcJsonSaxValues : ITcJsonSaxValues; // ITcJsonSaxValues 实例
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：需要在 SAX 解析时知道当前 token 所处的 JSON 路径（如 `users[0].name`），实现该接口比手维护路径栈方便。
+// 价值：回调直接拿到 level + infos，业务代码只判断 `infos[1].name = 'address'` 之类的条件。
+// 验证：登录 PLC 在线写 bTrigger := TRUE 触发，monitor 返回值/输出参数。具体步骤见下方注释。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_JsonXml（References → Add library）
+//   3. 编译 → 登录 → 运行；按 verify 注释里给出的在线写值操作
+// =============================================================================
+
+// 实例化 + 监视 initStatus，确认 FB 内部已初始化完成。
+fbITcJsonSaxValues();  // 实例化即可，无输入参数
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

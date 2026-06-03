@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_XmlDomParser_NodeAsBool" Id="{9aa9aa71-0ae8-5ad8-b0e1-3b4f5a3778c8}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_XmlDomParser_NodeAsBool
+VAR
+    fbParser : FB_XmlDomParser; // 父 FB 实例
+    n : SXmlNode;
+    vRet : BOOL; // 返回值监视
+    bTrigger : BOOL := FALSE; // 在线置 TRUE 触发一次调用
+    bTriggerPrev : BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：读取 XML 节点文本作为 PLC 数值类型用，如解析配置文件中的参数。
+// 价值：一次调用完成解析+类型转换，省去手写 StrToInt 等。
+// 验证：登录 PLC 在线写 bTrigger := TRUE 触发，monitor 返回值/输出参数。具体步骤见下方注释。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_JsonXml（References → Add library）
+//   3. 编译 → 登录 → 运行；按 verify 注释里给出的在线写值操作
+// =============================================================================
+
+// 上升沿触发一次方法调用并观察输出。
+IF bTrigger AND NOT bTriggerPrev THEN
+    vRet := fbParser.NodeAsBool(
+        n := n
+    );
+END_IF;
+bTriggerPrev := bTrigger;]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>
