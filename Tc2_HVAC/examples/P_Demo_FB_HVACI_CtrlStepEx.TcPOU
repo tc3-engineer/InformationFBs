@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_HVACI_CtrlStepEx" Id="{c65eabfa-0105-53fb-b9f0-1d3d7959647e}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_HVACI_CtrlStepEx
+VAR
+    fb : FB_HVACI_CtrlStepEx;                            // 被演示 FB 实例
+    eDataSecurityType_in : E_HVACDataSecurityType ;
+    bSetDefault_in : BOOL := FALSE;
+    bEnable_in : BOOL := FALSE;
+    rW_in : REAL := 0.0;
+    rX_in : REAL := 0.0;
+    iStartStep_in : INT := 0;
+    eCtrlMode_in : E_HVACCtrlMode ;
+    iManualStep_in : INT := 0;
+    bStepUp_in : BOOL := FALSE;
+    bStepDown_in : BOOL := FALSE;
+    bDirection_in : BOOL := FALSE;
+    iNumberOfStepInProfile_in : INT := 0;
+    bBlock_in : BOOL := FALSE;
+    bReset_in : BOOL := FALSE;
+    rHysteresisHigh_io : REAL := 0.0;
+    rHysteresisLow_io : REAL := 0.0;
+    udiSecDelayHigh_io : UDINT := 0;
+    udiSecDelayLow_io : UDINT := 0;
+    udiSecTiHigh_io : UDINT := 0;
+    udiSecTiLow_io : UDINT := 0;
+    rIntegralHigh_io : REAL := 0.0;
+    rIntegralLow_io : REAL := 0.0;
+    iStep_out : INT;
+    rI_Ctrl_out : REAL;
+    rE_out : REAL;
+    rW_High_out : REAL;
+    rW_Low_out : REAL;
+    b_rW_High_out : BOOL;
+    b_rW_Low_out : BOOL;
+    udiSecRT_DelayHigh_out : UDINT;
+    udiSecRT_DelayLow_out : UDINT;
+    bError_out : BOOL;
+    eErrorCode_out : E_HVACErrorCodes;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================================
+// Tc2_HVAC.FB_HVACI_CtrlStepEx 演示程序
+// ============================================================================
+// 场景：把本 FB 实例化到一个 PLC 程序里，每周期单次调用；按需要把 VAR_INPUT 与
+//       VAR_IN_OUT 接到工程信号；VAR_OUTPUT 写入对应监视变量。
+// 价值：使用本 FB 比手写状态机 / 控制算法节省大量代码；与 Tc2_HVAC 体系内其它 FB
+//       直接对接，命名 / 持久化 / 模式仲裁等约定一致。具体语义见 FB_HVACI_CtrlStepEx.md 主文档。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_HVAC（References → Add library）
+//   3. 编译 → 登录 → 运行
+//   4. 在线写各 *_in 输入信号触发 FB；在线 monitor *_out 引脚观察状态
+// ============================================================================
+
+fb(
+    eDataSecurityType := eDataSecurityType_in,
+    bSetDefault := bSetDefault_in,
+    bEnable := bEnable_in,
+    rW := rW_in,
+    rX := rX_in,
+    iStartStep := iStartStep_in,
+    eCtrlMode := eCtrlMode_in,
+    iManualStep := iManualStep_in,
+    bStepUp := bStepUp_in,
+    bStepDown := bStepDown_in,
+    bDirection := bDirection_in,
+    iNumberOfStepInProfile := iNumberOfStepInProfile_in,
+    bBlock := bBlock_in,
+    bReset := bReset_in,
+    rHysteresisHigh := rHysteresisHigh_io,
+    rHysteresisLow := rHysteresisLow_io,
+    udiSecDelayHigh := udiSecDelayHigh_io,
+    udiSecDelayLow := udiSecDelayLow_io,
+    udiSecTiHigh := udiSecTiHigh_io,
+    udiSecTiLow := udiSecTiLow_io,
+    rIntegralHigh := rIntegralHigh_io,
+    rIntegralLow := rIntegralLow_io,
+    iStep => iStep_out,
+    rI_Ctrl => rI_Ctrl_out,
+    rE => rE_out,
+    rW_High => rW_High_out,
+    rW_Low => rW_Low_out,
+    b_rW_High => b_rW_High_out,
+    b_rW_Low => b_rW_Low_out,
+    udiSecRT_DelayHigh => udiSecRT_DelayHigh_out,
+    udiSecRT_DelayLow => udiSecRT_DelayLow_out,
+    bError => bError_out,
+    eErrorCode => eErrorCode_out
+);]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_HVACPIDCtrl_Ex" Id="{58923996-8690-5b82-baa0-df93c49ee084}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_HVACPIDCtrl_Ex
+VAR
+    fb : FB_HVACPIDCtrl_Ex;                            // 被演示 FB 实例
+    eDataSecurityType_in : E_HVACDataSecurityType ;
+    bSetDefault_in : BOOL := FALSE;
+    bEnable_in : BOOL := FALSE;
+    rW_in : REAL := 0.0;
+    rX_in : REAL := 0.0;
+    tTaskCycleTime_in : TIME := T#0S;
+    uiCycleCall_in : UINT := 0;
+    bSetSyncValue_in : BOOL := FALSE;
+    rDeadRange_io : REAL := 0.0;
+    rSyncValue_io : REAL := 0.0;
+    bDirection_io : BOOL := FALSE;
+    rKp_io : REAL := 0.0;
+    tTi_io : TIME := T#0S;
+    tTv_io : TIME := T#0S;
+    tTd_io : TIME := T#0S;
+    rYMin_io : REAL := 0.0;
+    rYMax_io : REAL := 0.0;
+    tMinToMax_io : TIME := T#0S;
+    tMaxToMin_io : TIME := T#0S;
+    rY_out : REAL;
+    rXW_out : REAL;
+    bMaxLimit_out : BOOL;
+    bMinLimit_out : BOOL;
+    bDecLimit_out : BOOL;
+    bIncLimit_out : BOOL;
+    bActive_out : BOOL;
+    bARWactive_out : BOOL;
+    b2Ptactive_out : BOOL;
+    bError_out : BOOL;
+    eErrorCode_out : E_HVACErrorCodes;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================================
+// Tc2_HVAC.FB_HVACPIDCtrl_Ex 演示程序
+// ============================================================================
+// 场景：把本 FB 实例化到一个 PLC 程序里，每周期单次调用；按需要把 VAR_INPUT 与
+//       VAR_IN_OUT 接到工程信号；VAR_OUTPUT 写入对应监视变量。
+// 价值：使用本 FB 比手写状态机 / 控制算法节省大量代码；与 Tc2_HVAC 体系内其它 FB
+//       直接对接，命名 / 持久化 / 模式仲裁等约定一致。具体语义见 FB_HVACPIDCtrl_Ex.md 主文档。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_HVAC（References → Add library）
+//   3. 编译 → 登录 → 运行
+//   4. 在线写各 *_in 输入信号触发 FB；在线 monitor *_out 引脚观察状态
+// ============================================================================
+
+fb(
+    eDataSecurityType := eDataSecurityType_in,
+    bSetDefault := bSetDefault_in,
+    bEnable := bEnable_in,
+    rW := rW_in,
+    rX := rX_in,
+    tTaskCycleTime := tTaskCycleTime_in,
+    uiCycleCall := uiCycleCall_in,
+    bSetSyncValue := bSetSyncValue_in,
+    rDeadRange := rDeadRange_io,
+    rSyncValue := rSyncValue_io,
+    bDirection := bDirection_io,
+    rKp := rKp_io,
+    tTi := tTi_io,
+    tTv := tTv_io,
+    tTd := tTd_io,
+    rYMin := rYMin_io,
+    rYMax := rYMax_io,
+    tMinToMax := tMinToMax_io,
+    tMaxToMin := tMaxToMin_io,
+    rY => rY_out,
+    rXW => rXW_out,
+    bMaxLimit => bMaxLimit_out,
+    bMinLimit => bMinLimit_out,
+    bDecLimit => bDecLimit_out,
+    bIncLimit => bIncLimit_out,
+    bActive => bActive_out,
+    bARWactive => bARWactive_out,
+    b2Ptactive => b2Ptactive_out,
+    bError => bError_out,
+    eErrorCode => eErrorCode_out
+);]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

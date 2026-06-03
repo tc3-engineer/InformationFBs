@@ -1728,3 +1728,138 @@
 2026-06-03T00:00:00Z | Tc3_JsonXml    | i_tcjsonsaxvalues                       | OnStringValue                            | verified | PDF + InfoSys cross-verified
 2026-06-03T00:00:00Z | Tc3_JsonXml    | i_tcjsonsaxvalues                       | OnUdintValue                             | verified | PDF + InfoSys cross-verified
 2026-06-03T00:00:00Z | Tc3_JsonXml    | i_tcjsonsaxvalues                       | OnUlintValue                             | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_HVAC       | actuators                               | FB_HVAC2PointActuator                    | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | actuators                               | FB_HVAC3PointActuator                    | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | actuators                               | FB_HVACCirculationPump                   | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | actuators                               | FB_HVACCirculationPumpEx                 | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | actuators                               | FB_HVACMotor1Speed                       | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | actuators                               | FB_HVACMotor2Speed                       | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | actuators                               | FB_HVACMotor3Speed                       | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | actuators                               | FB_HVACMux8                              | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | actuators                               | FB_HVACMux8Ex                            | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | actuators                               | FB_HVACMux8_BOOL                         | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | actuators                               | FB_HVACRedundancyCtrl                    | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | actuators                               | FB_HVACRedundancyCtrlEx                  | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | analog_modules                          | FB_HVACAnalogInput                       | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | analog_modules                          | FB_HVACAnalogOutput                      | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | analog_modules                          | FB_HVACAnalogOutputEx                    | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | analog_modules                          | FB_HVACAnalogOutputEx2                   | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | analog_modules                          | FB_HVACAnalogTo3Point                    | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | analog_modules                          | FB_HVACConfigureKL32xx                   | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | analog_modules                          | FB_HVACScale                             | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | analog_modules                          | FB_HVACScaleXX                           | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | analog_modules                          | FB_HVACScale_nPoint                      | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | analog_modules                          | FB_HVACTemperatureCurve                  | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | analog_modules                          | FB_HVACTemperatureSensor                 | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | analog_modules                          | FB_HVACTemperatureSensorEx               | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | analog_modules                          | FB_HVACTemperatureSensorEx2              | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | backup_var                              | FB_HVACNOVRAM_XX                         | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | backup_var                              | FB_HVACPersistent_XX                     | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | controllers                             | FB_HVAC2PointCtrl                        | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | controllers                             | FB_HVACI_CtrlStep                        | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | controllers                             | FB_HVACI_CtrlStepEx                      | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | controllers                             | FB_HVACPIDCtrl                           | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | controllers                             | FB_HVACPIDCtrl_Ex                        | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | controllers                             | FB_HVACPowerRangeTable                   | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | functions                               | F_RoundLREAL                             | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | functions                               | F_RoundLREAL_EX                          | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | gvls                                    | HVAC_Constants                           | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | gvls                                    | HVAC_Parameter                           | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | room_air_conditioning                   | FB_BAREnergyLevel                        | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | room_air_conditioning                   | FB_BARFanCoil                            | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | room_air_conditioning                   | FB_BARFctSelection                       | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | room_air_conditioning                   | FB_BARSetpointRoom                       | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | room_controller                         | FB_BARPICtrl                             | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | room_lighting                           | FB_BARAutomaticLight                     | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | room_lighting                           | FB_BARConstantLightControl               | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | room_lighting                           | FB_BARDaylightControl                    | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | room_lighting                           | FB_BARLightActuator                      | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | room_lighting                           | FB_BARLightCircuit                       | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | room_lighting                           | FB_BARLightCircuitDim                    | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | room_lighting                           | FB_BARStairwellAutomatic                 | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | room_lighting                           | FB_BARTwilightAutomatic                  | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | room_sun_protection                     | FB_BARBlindPositionEntry                 | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | room_sun_protection                     | FB_BARDelayedHysteresis                  | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | room_sun_protection                     | FB_BARFacadeElementEntry                 | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | room_sun_protection                     | FB_BARReadFacadeElementList              | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | room_sun_protection                     | FB_BARReadShadingObjectsList             | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | room_sun_protection                     | FB_BARRollerBlind                        | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | room_sun_protection                     | FB_BARShadingCorrection                  | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | room_sun_protection                     | FB_BARShadingCorrectionSouth             | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | room_sun_protection                     | FB_BARShadingObjectsEntry                | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | room_sun_protection                     | FB_BARSunProtectionEx                    | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | room_sun_protection                     | FB_BARSunblindActuator                   | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | room_sun_protection                     | FB_BARSunblindActuatorEx                 | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | room_sun_protection                     | FB_BARSunblindEvent                      | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | room_sun_protection                     | FB_BARSunblindPrioritySwitch             | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | room_sun_protection                     | FB_BARSunblindScene                      | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | room_sun_protection                     | FB_BARSunblindSwitch                     | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | room_sun_protection                     | FB_BARSunblindThermoAutomatic            | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | room_sun_protection                     | FB_BARSunblindTwilightAutomatic          | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | room_sun_protection                     | FB_BARSunblindWeatherProtection          | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | room_sun_protection                     | FB_BARWithinRangeAzimuth                 | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | room_sun_protection                     | FB_BARWithinRangeElevation               | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | scheduler                               | FB_HVACScheduler1ch                      | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | scheduler                               | FB_HVACScheduler28TCHandling             | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | scheduler                               | FB_HVACScheduler28ch                     | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | scheduler                               | FB_HVACScheduler7TCHandling              | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | scheduler                               | FB_HVACScheduler7ch                      | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | scheduler                               | FB_HVACSchedulerPublicHolidays           | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | scheduler                               | FB_HVACSchedulerSpecialPeriods           | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | sequence_controllers                    | FB_HVAC2PointCtrlSequence                | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | sequence_controllers                    | FB_HVACBasicSequenceCtrl                 | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | sequence_controllers                    | FB_HVACMasterSequenceCtrl                | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | sequence_controllers                    | FB_HVACPIDCooling                        | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | sequence_controllers                    | FB_HVACPIDDehumidify                     | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | sequence_controllers                    | FB_HVACPIDEnergyRecovery                 | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | sequence_controllers                    | FB_HVACPIDHumidify                       | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | sequence_controllers                    | FB_HVACPIDMixedAir                       | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | sequence_controllers                    | FB_HVACPIDPreHeating                     | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | sequence_controllers                    | FB_HVACPIDReHeating                      | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | setpoint_modules                        | FB_HVACHeatingCurve                      | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | setpoint_modules                        | FB_HVACHeatingCurveEx                    | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | setpoint_modules                        | FB_HVACOutsideTempDamped                 | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | setpoint_modules                        | FB_HVACSetpointHeating                   | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | setpoint_modules                        | FB_HVACSetpointRamp                      | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | setpoint_modules                        | FB_HVACSummerCompensation                | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | special_functions                       | FB_HVACAirConditioning2Speed             | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | special_functions                       | FB_HVACAlarm                             | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | special_functions                       | FB_HVACAntiBlockingDamper                | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | special_functions                       | FB_HVACAntiBlockingPump                  | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | special_functions                       | FB_HVACBlink                             | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | special_functions                       | FB_HVACCmdCtrlSystem1Stage               | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | special_functions                       | FB_HVACCmdCtrlSystem2Stage               | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | special_functions                       | FB_HVACCmdCtrl_8                         | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | special_functions                       | FB_HVACConvertEnum                       | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | special_functions                       | FB_HVACEnthalpy                          | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | special_functions                       | FB_HVACFixedLimit                        | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | special_functions                       | FB_HVACFreezeProtectionHeater            | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | special_functions                       | FB_HVACMUX_INT_16                        | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | special_functions                       | FB_HVACMUX_INT_8                         | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | special_functions                       | FB_HVACMUX_REAL_16                       | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | special_functions                       | FB_HVACMUX_REAL_8                        | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | special_functions                       | FB_HVACOptimizedOff                      | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | special_functions                       | FB_HVACOptimizedOn                       | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | special_functions                       | FB_HVACOverwriteAnalog                   | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | special_functions                       | FB_HVACOverwriteDigital                  | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | special_functions                       | FB_HVACPWM                               | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | special_functions                       | FB_HVACPowerMeasurementKL3403            | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | special_functions                       | FB_HVACPowerMeasurementKL3403Ex          | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | special_functions                       | FB_HVACPriority_INT_16                   | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | special_functions                       | FB_HVACPriority_INT_8                    | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | special_functions                       | FB_HVACPriority_REAL_16                  | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | special_functions                       | FB_HVACPriority_REAL_8                   | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | special_functions                       | FB_HVACStartAirConditioning              | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | special_functions                       | FB_HVACSummerNightCooling                | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | special_functions                       | FB_HVACSummerNightCoolingEx              | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | special_functions                       | FB_HVACTempChangeFunction                | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | special_functions                       | FB_HVACTimeCon                           | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | special_functions                       | FB_HVACTimeConSec                        | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | special_functions                       | FB_HVACTimeConSecMs                      | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | special_functions                       | FB_HVACWork                              | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | system                                  | FB_HVACGetSystemTime                     | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | system                                  | FB_HVACNOVRAMDataHandling                | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | system                                  | FB_HVACPersistentDataFileCopy            | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | system                                  | FB_HVACPersistentDataHandling            | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | system                                  | FB_HVACSetLocalTime                      | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | system                                  | FB_HVACSystemTaskInfo                    | verified | chapter-overview + PDF single-source

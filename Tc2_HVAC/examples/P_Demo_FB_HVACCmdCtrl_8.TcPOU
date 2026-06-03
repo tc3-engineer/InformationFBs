@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_HVACCmdCtrl_8" Id="{9488f014-1e3f-5b0b-893e-197127c214ad}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_HVACCmdCtrl_8
+VAR
+    fb : FB_HVACCmdCtrl_8;                            // 被演示 FB 实例
+    eDST_in : E_HVACDataSecurityType ;
+    bEn_in : BOOL := FALSE;
+    bCmd_in : BOOL := FALSE;
+    bEvt1_in : BOOL := FALSE;
+    bEvt2_in : BOOL := FALSE;
+    bEvt3_in : BOOL := FALSE;
+    bEvt4_in : BOOL := FALSE;
+    bEvt5_in : BOOL := FALSE;
+    bEvt6_in : BOOL := FALSE;
+    bEvt7_in : BOOL := FALSE;
+    bEvt8_in : BOOL := FALSE;
+    bQ_Cmd_out : BOOL;
+    bQ1_out : BOOL;
+    bQ2_out : BOOL;
+    bQ3_out : BOOL;
+    bQ4_out : BOOL;
+    bQ5_out : BOOL;
+    bQ6_out : BOOL;
+    bQ7_out : BOOL;
+    bQ8_out : BOOL;
+    stState_out : ST_HVACCmdCtrl_8State;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================================
+// Tc2_HVAC.FB_HVACCmdCtrl_8 演示程序
+// ============================================================================
+// 场景：把本 FB 实例化到一个 PLC 程序里，每周期单次调用；按需要把 VAR_INPUT 与
+//       VAR_IN_OUT 接到工程信号；VAR_OUTPUT 写入对应监视变量。
+// 价值：使用本 FB 比手写状态机 / 控制算法节省大量代码；与 Tc2_HVAC 体系内其它 FB
+//       直接对接，命名 / 持久化 / 模式仲裁等约定一致。具体语义见 FB_HVACCmdCtrl_8.md 主文档。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_HVAC（References → Add library）
+//   3. 编译 → 登录 → 运行
+//   4. 在线写各 *_in 输入信号触发 FB；在线 monitor *_out 引脚观察状态
+// ============================================================================
+
+fb(
+    eDST := eDST_in,
+    bEn := bEn_in,
+    bCmd := bCmd_in,
+    bEvt1 := bEvt1_in,
+    bEvt2 := bEvt2_in,
+    bEvt3 := bEvt3_in,
+    bEvt4 := bEvt4_in,
+    bEvt5 := bEvt5_in,
+    bEvt6 := bEvt6_in,
+    bEvt7 := bEvt7_in,
+    bEvt8 := bEvt8_in,
+    bQ_Cmd => bQ_Cmd_out,
+    bQ1 => bQ1_out,
+    bQ2 => bQ2_out,
+    bQ3 => bQ3_out,
+    bQ4 => bQ4_out,
+    bQ5 => bQ5_out,
+    bQ6 => bQ6_out,
+    bQ7 => bQ7_out,
+    bQ8 => bQ8_out,
+    stState => stState_out
+);]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_BARSunblindPrioritySwitch" Id="{4b4242d8-a77a-59d8-bd33-91f37a4f9d23}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_BARSunblindPrioritySwitch
+VAR
+    fb : FB_BARSunblindPrioritySwitch;                            // 被演示 FB 实例
+    stSunblind_Prio1_in : ST_BARSunblind ;
+    stSunblind_Prio2_in : ST_BARSunblind ;
+    stSunblind_Prio3_in : ST_BARSunblind ;
+    stSunblind_Prio4_in : ST_BARSunblind ;
+    stSunblind_Prio5_in : ST_BARSunblind ;
+    stSunblind_Prio6_in : ST_BARSunblind ;
+    stSunblind_Prio7_in : ST_BARSunblind ;
+    stSunblind_Prio8_in : ST_BARSunblind ;
+    stSunblind_Prio9_in : ST_BARSunblind ;
+    stSunblind_out : ST_BARSunblind;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================================
+// Tc2_HVAC.FB_BARSunblindPrioritySwitch 演示程序
+// ============================================================================
+// 场景：把本 FB 实例化到一个 PLC 程序里，每周期单次调用；按需要把 VAR_INPUT 与
+//       VAR_IN_OUT 接到工程信号；VAR_OUTPUT 写入对应监视变量。
+// 价值：使用本 FB 比手写状态机 / 控制算法节省大量代码；与 Tc2_HVAC 体系内其它 FB
+//       直接对接，命名 / 持久化 / 模式仲裁等约定一致。具体语义见 FB_BARSunblindPrioritySwitch.md 主文档。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_HVAC（References → Add library）
+//   3. 编译 → 登录 → 运行
+//   4. 在线写各 *_in 输入信号触发 FB；在线 monitor *_out 引脚观察状态
+// ============================================================================
+
+fb(
+    stSunblind_Prio1 := stSunblind_Prio1_in,
+    stSunblind_Prio2 := stSunblind_Prio2_in,
+    stSunblind_Prio3 := stSunblind_Prio3_in,
+    stSunblind_Prio4 := stSunblind_Prio4_in,
+    stSunblind_Prio5 := stSunblind_Prio5_in,
+    stSunblind_Prio6 := stSunblind_Prio6_in,
+    stSunblind_Prio7 := stSunblind_Prio7_in,
+    stSunblind_Prio8 := stSunblind_Prio8_in,
+    stSunblind_Prio9 := stSunblind_Prio9_in,
+    stSunblind => stSunblind_out
+);]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

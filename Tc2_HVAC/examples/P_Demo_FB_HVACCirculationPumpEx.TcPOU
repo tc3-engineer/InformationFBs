@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_HVACCirculationPumpEx" Id="{71b83bda-fc8e-564f-b50b-14f5affea991}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_HVACCirculationPumpEx
+VAR
+    fb : FB_HVACCirculationPumpEx;                            // 被演示 FB 实例
+    eDataSecurityType_in : E_HVACDataSecurityType ;
+    bSetDefault_in : BOOL := FALSE;
+    bEnable_in : BOOL := FALSE;
+    bExternal_in : BOOL := FALSE;
+    eCtrlModeActuator_in : E_HVACActuatorMode ;
+    rOutsideTemp_in : REAL := 0.0;
+    rValvePosition_in : REAL := 0.0;
+    bFeedbPump_in : BOOL := FALSE;
+    bPumpProtec_in : BOOL := FALSE;
+    bManSwitch_in : BOOL := FALSE;
+    bCtrlVoltage_in : BOOL := FALSE;
+    bReset_in : BOOL := FALSE;
+    udiSecStopDelay_io : UDINT := 0;
+    udiSecFeedbPumpDelay_io : UDINT := 0;
+    rOutsideTempHighLimit_io : REAL := 0.0;
+    rOutsideTempLowLimit_io : REAL := 0.0;
+    rValvePositionLimitOn_io : REAL := 0.0;
+    rValvePositionLimitOff_io : REAL := 0.0;
+    eReqPump_io : E_HVACReqPump ;
+    bPump_out : BOOL;
+    byState_out : BYTE;
+    bReqExternal_out : BOOL;
+    bReqOutsideTemp_out : BOOL;
+    bReqValve_out : BOOL;
+    bStateManSwitch_out : BOOL;
+    udiSecRT_StopDelay_out : UDINT;
+    udiSecRT_FeedbPumpDelay_out : UDINT;
+    eStateModeActuator_out : E_HVACActuatorMode;
+    bError_out : BOOL;
+    byError_out : BYTE;
+    bErrorPumpProtec_out : BOOL;
+    bErrorFeedb_out : BOOL;
+    bInvalidParameter_out : BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================================
+// Tc2_HVAC.FB_HVACCirculationPumpEx 演示程序
+// ============================================================================
+// 场景：把本 FB 实例化到一个 PLC 程序里，每周期单次调用；按需要把 VAR_INPUT 与
+//       VAR_IN_OUT 接到工程信号；VAR_OUTPUT 写入对应监视变量。
+// 价值：使用本 FB 比手写状态机 / 控制算法节省大量代码；与 Tc2_HVAC 体系内其它 FB
+//       直接对接，命名 / 持久化 / 模式仲裁等约定一致。具体语义见 FB_HVACCirculationPumpEx.md 主文档。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_HVAC（References → Add library）
+//   3. 编译 → 登录 → 运行
+//   4. 在线写各 *_in 输入信号触发 FB；在线 monitor *_out 引脚观察状态
+// ============================================================================
+
+fb(
+    eDataSecurityType := eDataSecurityType_in,
+    bSetDefault := bSetDefault_in,
+    bEnable := bEnable_in,
+    bExternal := bExternal_in,
+    eCtrlModeActuator := eCtrlModeActuator_in,
+    rOutsideTemp := rOutsideTemp_in,
+    rValvePosition := rValvePosition_in,
+    bFeedbPump := bFeedbPump_in,
+    bPumpProtec := bPumpProtec_in,
+    bManSwitch := bManSwitch_in,
+    bCtrlVoltage := bCtrlVoltage_in,
+    bReset := bReset_in,
+    udiSecStopDelay := udiSecStopDelay_io,
+    udiSecFeedbPumpDelay := udiSecFeedbPumpDelay_io,
+    rOutsideTempHighLimit := rOutsideTempHighLimit_io,
+    rOutsideTempLowLimit := rOutsideTempLowLimit_io,
+    rValvePositionLimitOn := rValvePositionLimitOn_io,
+    rValvePositionLimitOff := rValvePositionLimitOff_io,
+    eReqPump := eReqPump_io,
+    bPump => bPump_out,
+    byState => byState_out,
+    bReqExternal => bReqExternal_out,
+    bReqOutsideTemp => bReqOutsideTemp_out,
+    bReqValve => bReqValve_out,
+    bStateManSwitch => bStateManSwitch_out,
+    udiSecRT_StopDelay => udiSecRT_StopDelay_out,
+    udiSecRT_FeedbPumpDelay => udiSecRT_FeedbPumpDelay_out,
+    eStateModeActuator => eStateModeActuator_out,
+    bError => bError_out,
+    byError => byError_out,
+    bErrorPumpProtec => bErrorPumpProtec_out,
+    bErrorFeedb => bErrorFeedb_out,
+    bInvalidParameter => bInvalidParameter_out
+);]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

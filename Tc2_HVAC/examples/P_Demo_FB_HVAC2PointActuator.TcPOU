@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_HVAC2PointActuator" Id="{6319cb31-db9c-5b93-a2e7-ddeaa56bf5bb}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_HVAC2PointActuator
+VAR
+    // ---- 被演示 FB 实例 ----
+    fb2PtValve              : FB_HVAC2PointActuator;            // 二位阀控制 FB
+
+    // ---- 工艺信号：新风机组冷盘管二位阀 ----
+    bUnitEnable             : BOOL := FALSE;                    // 机组总使能（HMI 写 TRUE）
+    bValveOpenCmd           : BOOL := FALSE;                    // 上位机开阀命令（在线写 TRUE 触发开阀）
+    eValveMode              : E_HVAC2PointActuatorMode
+                              := E_HVAC2PointActuatorMode.eHVAC2PointActuatorMode_Auto_BMS;
+    // ---- 硬件联锁信号（接 DI 端子） ----
+    bManualSwitchOk         : BOOL := TRUE;                     // 24V 手 / 自切到自动
+    bClosedFeedback         : BOOL := TRUE;                     // 初始：全关到位
+    bOpenedFeedback         : BOOL := FALSE;                    // 初始：未到全开
+    bCtrlVoltageOk          : BOOL := TRUE;                     // 控制电压 24V OK
+    bAcknowledgeFault       : BOOL := FALSE;                    // 故障复位按钮
+
+    // ---- 持久化参数（首次上电用 bSetDefault 写默认） ----
+    bSetDefaultParams       : BOOL := FALSE;                    // 调试期间用 R_TRIG 触发一次
+    bEnableFeedbackMonitor  : BOOL := TRUE;                     // 启用到位监测
+    tValveStrokeTime        : TIME := T#90S;                    // 二位阀典型 60-120s
+
+    // ---- 输出（在线 monitor） ----
+    bValveDrive             : BOOL;                              // 给阀门的 24V DO 信号
+    byValveStateBits        : BYTE;                              // 状态字
+    eValveCurrentMode       : E_HVAC2PointActuatorMode;
+    bStrokeTimeError        : BOOL;                              // 到位超时
+    bParameterError         : BOOL;                              // 参数非法
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// Tc2_HVAC.FB_HVAC2PointActuator 演示程序
+// =============================================================================
+// 场景：新风机组（AHU）冷水盘管二位电动阀。机组接收上位机开 / 关命令；现场配 24V
+//       手 / 自切换开关、控制电压监视继电器、阀门带全开 / 全关行程开关反馈。
+//
+// 价值：本 FB 一次性提供：自动 / 手动模式仲裁 + 硬件联锁 + 到位监测 + 故障锁存 + 参数
+//       持久化。对比手写：少写约 80-120 行状态机；联锁优先级（Manual / CtrlVoltage
+//       高于 BMS 命令）由 FB 内部保证，不会被误改。
+//
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_HVAC（References → Add library）
+//   3. 编译 → 登录 → 运行
+//   4. 在线写 bSetDefaultParams := TRUE → 下一周期写 FALSE（边沿触发一次默认值写入）
+//   5. 在线写 bUnitEnable := TRUE；bValveOpenCmd := TRUE
+//      → 观察 bValveDrive 应变 TRUE
+//      → byValveStateBits 应显示 bit0 = bit5 = 1（Enable 与 bOut 都置位）
+//   6. 手动模拟硬件联锁断开：把 bCtrlVoltageOk 写 FALSE
+//      → bValveDrive 应立即变 FALSE（控制电压联锁优先）
+//   7. 模拟到位超时：保持 bValveOpenCmd = TRUE 但 bOpenedFeedback 保持 FALSE
+//      → 经过 tValveStrokeTime（90s）后 bStrokeTimeError 应变 TRUE
+//      → 给 bAcknowledgeFault 一个 FALSE→TRUE→FALSE 脉冲，bStrokeTimeError 复位
+// =============================================================================
+
+// 持久化模式：本例子用 Idle，避免反复写盘。生产环境改 eHVACDataSecurityType_Persistent
+// 并务必在主程序里实例化 FB_HVACPersistentDataHandling 周期调用。
+fb2PtValve(
+    eDataSecurityType   := E_HVACDataSecurityType.eHVACDataSecurityType_Idle,
+    bSetDefault         := bSetDefaultParams,
+    bEnable             := bUnitEnable,
+    bIn                 := bValveOpenCmd,
+    eCtrlModeActuator   := eValveMode,
+    bManSwitch          := bManualSwitchOk,
+    bLimitSwitchClose   := bClosedFeedback,
+    bLimitSwitchOpen    := bOpenedFeedback,
+    bCtrlVoltage        := bCtrlVoltageOk,
+    bReset              := bAcknowledgeFault,
+    bEnableLimitSwitch  := bEnableFeedbackMonitor,
+    tStrokeTime         := tValveStrokeTime,
+    bOut                => bValveDrive,
+    byState             => byValveStateBits,
+    eStateModeActuator  => eValveCurrentMode,
+    bErrorLimitSwitch   => bStrokeTimeError,
+    bInvalidParameter   => bParameterError
+);]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

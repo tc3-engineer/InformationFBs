@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_HVACPowerRangeTable" Id="{6ffe3c29-3a2e-5b27-9803-4f644a8cb5b1}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_HVACPowerRangeTable
+VAR
+    fb : FB_HVACPowerRangeTable;                            // 被演示 FB 实例
+    eDataSecurityType_in : E_HVACDataSecurityType ;
+    bEnable_in : BOOL := FALSE;
+    iNumberOfProfiles_in : INT := 0;
+    iProfile_in : INT := 0;
+    iStep_in : INT := 0;
+    eCtrlModeProfile_in : E_HVACCtrlMode ;
+    iManualProfile_in : INT := 0;
+    eCtrlModeStep_in : E_HVACCtrlMode ;
+    iManualStep_in : INT := 0;
+    iNumberOfAggregates_in : INT := 0;
+    bReset_in : BOOL := FALSE;
+    arrPowerRangeTable_io : ARRAY [1..g_iMaxNumberOfProfiles,0..g_iMaxNumberOfSteps] OF ST_HVACPowerRange ;
+    bEnablePowerRangeTable_out : BOOL;
+    iNumberOfStepInProfile_out : INT;
+    iCurrentProfile_out : INT;
+    iCurrentStep_out : INT;
+    stI_Ctrl_out : ST_HVACI_Ctrl;
+    stAggregate1_out : ST_HVACAggregate;
+    stAggregate2_out : ST_HVACAggregate;
+    stAggregate3_out : ST_HVACAggregate;
+    stAggregate4_out : ST_HVACAggregate;
+    stAggregate5_out : ST_HVACAggregate;
+    stAggregate6_out : ST_HVACAggregate;
+    bError_out : BOOL;
+    eErrorCode_out : E_HVACErrorCodes;
+    iErrorPosArrayProfile_out : INT;
+    iErrorPosArrayStep_out : INT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================================
+// Tc2_HVAC.FB_HVACPowerRangeTable 演示程序
+// ============================================================================
+// 场景：把本 FB 实例化到一个 PLC 程序里，每周期单次调用；按需要把 VAR_INPUT 与
+//       VAR_IN_OUT 接到工程信号；VAR_OUTPUT 写入对应监视变量。
+// 价值：使用本 FB 比手写状态机 / 控制算法节省大量代码；与 Tc2_HVAC 体系内其它 FB
+//       直接对接，命名 / 持久化 / 模式仲裁等约定一致。具体语义见 FB_HVACPowerRangeTable.md 主文档。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_HVAC（References → Add library）
+//   3. 编译 → 登录 → 运行
+//   4. 在线写各 *_in 输入信号触发 FB；在线 monitor *_out 引脚观察状态
+// ============================================================================
+
+fb(
+    eDataSecurityType := eDataSecurityType_in,
+    bEnable := bEnable_in,
+    iNumberOfProfiles := iNumberOfProfiles_in,
+    iProfile := iProfile_in,
+    iStep := iStep_in,
+    eCtrlModeProfile := eCtrlModeProfile_in,
+    iManualProfile := iManualProfile_in,
+    eCtrlModeStep := eCtrlModeStep_in,
+    iManualStep := iManualStep_in,
+    iNumberOfAggregates := iNumberOfAggregates_in,
+    bReset := bReset_in,
+    arrPowerRangeTable := arrPowerRangeTable_io,
+    bEnablePowerRangeTable => bEnablePowerRangeTable_out,
+    iNumberOfStepInProfile => iNumberOfStepInProfile_out,
+    iCurrentProfile => iCurrentProfile_out,
+    iCurrentStep => iCurrentStep_out,
+    stI_Ctrl => stI_Ctrl_out,
+    stAggregate1 => stAggregate1_out,
+    stAggregate2 => stAggregate2_out,
+    stAggregate3 => stAggregate3_out,
+    stAggregate4 => stAggregate4_out,
+    stAggregate5 => stAggregate5_out,
+    stAggregate6 => stAggregate6_out,
+    bError => bError_out,
+    eErrorCode => eErrorCode_out,
+    iErrorPosArrayProfile => iErrorPosArrayProfile_out,
+    iErrorPosArrayStep => iErrorPosArrayStep_out
+);]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_HVACTempChangeFunction" Id="{7de43ca6-1bf2-5602-8d49-2238b4c6ff40}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_HVACTempChangeFunction
+VAR
+    fb : FB_HVACTempChangeFunction;                            // 被演示 FB 实例
+    bWrite_in : BOOL := FALSE;
+    rOutsideTemp_1_in : REAL := 0.0;
+    rRoomTempChange_1_in : REAL := 0.0;
+    rOutsideTemp_2_in : REAL := 0.0;
+    rRoomTempChange_2_in : REAL := 0.0;
+    rOutsideTemp_3_in : REAL := 0.0;
+    rRoomTempChange_3_in : REAL := 0.0;
+    rOutsideTemp_4_in : REAL := 0.0;
+    rRoomTempChange_4_in : REAL := 0.0;
+    rOutsideTemp_5_in : REAL := 0.0;
+    rRoomTempChange_5_in : REAL := 0.0;
+    rOutsideTemp_6_in : REAL := 0.0;
+    rRoomTempChange_6_in : REAL := 0.0;
+    rOutsideTemp_7_in : REAL := 0.0;
+    rRoomTempChange_7_in : REAL := 0.0;
+    rOutsideTemp_8_in : REAL := 0.0;
+    rRoomTempChange_8_in : REAL := 0.0;
+    rOutsideTemp_9_in : REAL := 0.0;
+    rRoomTempChange_9_in : REAL := 0.0;
+    rOutsideTemp_10_in : REAL := 0.0;
+    rRoomTempChange_10_in : REAL := 0.0;
+    bValid_out : BOOL;
+    udiErrorID_out : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================================
+// Tc2_HVAC.FB_HVACTempChangeFunction 演示程序
+// ============================================================================
+// 场景：把本 FB 实例化到一个 PLC 程序里，每周期单次调用；按需要把 VAR_INPUT 与
+//       VAR_IN_OUT 接到工程信号；VAR_OUTPUT 写入对应监视变量。
+// 价值：使用本 FB 比手写状态机 / 控制算法节省大量代码；与 Tc2_HVAC 体系内其它 FB
+//       直接对接，命名 / 持久化 / 模式仲裁等约定一致。具体语义见 FB_HVACTempChangeFunction.md 主文档。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_HVAC（References → Add library）
+//   3. 编译 → 登录 → 运行
+//   4. 在线写各 *_in 输入信号触发 FB；在线 monitor *_out 引脚观察状态
+// ============================================================================
+
+fb(
+    bWrite := bWrite_in,
+    rOutsideTemp_1 := rOutsideTemp_1_in,
+    rRoomTempChange_1 := rRoomTempChange_1_in,
+    rOutsideTemp_2 := rOutsideTemp_2_in,
+    rRoomTempChange_2 := rRoomTempChange_2_in,
+    rOutsideTemp_3 := rOutsideTemp_3_in,
+    rRoomTempChange_3 := rRoomTempChange_3_in,
+    rOutsideTemp_4 := rOutsideTemp_4_in,
+    rRoomTempChange_4 := rRoomTempChange_4_in,
+    rOutsideTemp_5 := rOutsideTemp_5_in,
+    rRoomTempChange_5 := rRoomTempChange_5_in,
+    rOutsideTemp_6 := rOutsideTemp_6_in,
+    rRoomTempChange_6 := rRoomTempChange_6_in,
+    rOutsideTemp_7 := rOutsideTemp_7_in,
+    rRoomTempChange_7 := rRoomTempChange_7_in,
+    rOutsideTemp_8 := rOutsideTemp_8_in,
+    rRoomTempChange_8 := rRoomTempChange_8_in,
+    rOutsideTemp_9 := rOutsideTemp_9_in,
+    rRoomTempChange_9 := rRoomTempChange_9_in,
+    rOutsideTemp_10 := rOutsideTemp_10_in,
+    rRoomTempChange_10 := rRoomTempChange_10_in,
+    bValid => bValid_out,
+    udiErrorID => udiErrorID_out
+);]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

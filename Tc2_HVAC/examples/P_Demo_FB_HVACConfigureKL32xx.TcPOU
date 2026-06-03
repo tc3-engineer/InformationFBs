@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_HVACConfigureKL32xx" Id="{dc088944-a1ae-57d5-98db-58fdff02cec7}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_HVACConfigureKL32xx
+VAR
+    fb : FB_HVACConfigureKL32xx;                            // 被演示 FB 实例
+    byStatusKL32xx_in : BYTE := 0;
+    iDataInKL32xx_in : INT := 0;
+    bSetSensor_in : BOOL := FALSE;
+    bScanSensor_in : BOOL := FALSE;
+    eSensorType_in : E_HVACSensorType ;
+    tTimeOut_in : TIME := T#0S;
+    bReady_out : BOOL;
+    byOutStatus_out : BYTE;
+    iOutDataIn_out : INT;
+    byCtrlKL32xx_out : BYTE;
+    iDataOutKL32xx_out : INT;
+    eBusTerminalKL32xx_out : E_HVACBusTerminal_KL32xx;
+    eStatusScanSensorType_out : E_HVACSensorType;
+    bErrorGeneral_out : BOOL;
+    byError_out : BYTE;
+    bErrorCommunication_out : BOOL;
+    bErrorBusTerminalNotSupported_out : BOOL;
+    bErrorSensorType_out : BOOL;
+    bErrorScanSensor_out : BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================================
+// Tc2_HVAC.FB_HVACConfigureKL32xx 演示程序
+// ============================================================================
+// 场景：把本 FB 实例化到一个 PLC 程序里，每周期单次调用；按需要把 VAR_INPUT 与
+//       VAR_IN_OUT 接到工程信号；VAR_OUTPUT 写入对应监视变量。
+// 价值：使用本 FB 比手写状态机 / 控制算法节省大量代码；与 Tc2_HVAC 体系内其它 FB
+//       直接对接，命名 / 持久化 / 模式仲裁等约定一致。具体语义见 FB_HVACConfigureKL32xx.md 主文档。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_HVAC（References → Add library）
+//   3. 编译 → 登录 → 运行
+//   4. 在线写各 *_in 输入信号触发 FB；在线 monitor *_out 引脚观察状态
+// ============================================================================
+
+fb(
+    byStatusKL32xx := byStatusKL32xx_in,
+    iDataInKL32xx := iDataInKL32xx_in,
+    bSetSensor := bSetSensor_in,
+    bScanSensor := bScanSensor_in,
+    eSensorType := eSensorType_in,
+    tTimeOut := tTimeOut_in,
+    bReady => bReady_out,
+    byOutStatus => byOutStatus_out,
+    iOutDataIn => iOutDataIn_out,
+    byCtrlKL32xx => byCtrlKL32xx_out,
+    iDataOutKL32xx => iDataOutKL32xx_out,
+    eBusTerminalKL32xx => eBusTerminalKL32xx_out,
+    eStatusScanSensorType => eStatusScanSensorType_out,
+    bErrorGeneral => bErrorGeneral_out,
+    byError => byError_out,
+    bErrorCommunication => bErrorCommunication_out,
+    bErrorBusTerminalNotSupported => bErrorBusTerminalNotSupported_out,
+    bErrorSensorType => bErrorSensorType_out,
+    bErrorScanSensor => bErrorScanSensor_out
+);]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

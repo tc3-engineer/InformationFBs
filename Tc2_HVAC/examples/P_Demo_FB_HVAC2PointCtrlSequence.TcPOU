@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_HVAC2PointCtrlSequence" Id="{5cfb3248-a8f6-53ac-9826-845c9cf3379d}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_HVAC2PointCtrlSequence
+VAR
+    fb : FB_HVAC2PointCtrlSequence;                            // 被演示 FB 实例
+    eDataSecurityType_in : E_HVACDataSecurityType ;
+    bSetDefault_in : BOOL := FALSE;
+    bEnable_in : BOOL := FALSE;
+    e2PointCtrlMode_in : E_HVAC2PointCtrlMode ;
+    bDirection_in : BOOL := FALSE;
+    rW_in : REAL := 0.0;
+    rX_in : REAL := 0.0;
+    iNumberOfSequences_in : INT := 0;
+    iMyNumberInSequence_in : INT := 0;
+    bReset_in : BOOL := FALSE;
+    rW_HighLimit_io : REAL := 0.0;
+    rW_LowLimit_io : REAL := 0.0;
+    tDelayIncreaseSequence_io : TIME := T#0S;
+    tDelayDecreaseSequence_io : TIME := T#0S;
+    tCtrl_I_Ti_HighLimit_io : TIME := T#0S;
+    tCtrl_I_Ti_LowLimit_io : TIME := T#0S;
+    rCtrl_I_HighLimit_io : REAL := 0.0;
+    rCtrl_I_LowLimit_io : REAL := 0.0;
+    iCurrentSequence_io : INT := 0;
+    bOut_out : BOOL;
+    bActiveCtrl_out : BOOL;
+    b_rW_Max_out : BOOL;
+    b_rW_Min_out : BOOL;
+    rE_out : REAL;
+    e2PointCtrlState_out : E_HVAC2PointCtrlMode;
+    st2PointCtrlSequence_out : ST_HVAC2PointCtrlSequence;
+    bError_out : BOOL;
+    eErrorCode_out : E_HVACErrorCodes;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================================
+// Tc2_HVAC.FB_HVAC2PointCtrlSequence 演示程序
+// ============================================================================
+// 场景：把本 FB 实例化到一个 PLC 程序里，每周期单次调用；按需要把 VAR_INPUT 与
+//       VAR_IN_OUT 接到工程信号；VAR_OUTPUT 写入对应监视变量。
+// 价值：使用本 FB 比手写状态机 / 控制算法节省大量代码；与 Tc2_HVAC 体系内其它 FB
+//       直接对接，命名 / 持久化 / 模式仲裁等约定一致。具体语义见 FB_HVAC2PointCtrlSequence.md 主文档。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_HVAC（References → Add library）
+//   3. 编译 → 登录 → 运行
+//   4. 在线写各 *_in 输入信号触发 FB；在线 monitor *_out 引脚观察状态
+// ============================================================================
+
+fb(
+    eDataSecurityType := eDataSecurityType_in,
+    bSetDefault := bSetDefault_in,
+    bEnable := bEnable_in,
+    e2PointCtrlMode := e2PointCtrlMode_in,
+    bDirection := bDirection_in,
+    rW := rW_in,
+    rX := rX_in,
+    iNumberOfSequences := iNumberOfSequences_in,
+    iMyNumberInSequence := iMyNumberInSequence_in,
+    bReset := bReset_in,
+    rW_HighLimit := rW_HighLimit_io,
+    rW_LowLimit := rW_LowLimit_io,
+    tDelayIncreaseSequence := tDelayIncreaseSequence_io,
+    tDelayDecreaseSequence := tDelayDecreaseSequence_io,
+    tCtrl_I_Ti_HighLimit := tCtrl_I_Ti_HighLimit_io,
+    tCtrl_I_Ti_LowLimit := tCtrl_I_Ti_LowLimit_io,
+    rCtrl_I_HighLimit := rCtrl_I_HighLimit_io,
+    rCtrl_I_LowLimit := rCtrl_I_LowLimit_io,
+    iCurrentSequence := iCurrentSequence_io,
+    bOut => bOut_out,
+    bActiveCtrl => bActiveCtrl_out,
+    b_rW_Max => b_rW_Max_out,
+    b_rW_Min => b_rW_Min_out,
+    rE => rE_out,
+    e2PointCtrlState => e2PointCtrlState_out,
+    st2PointCtrlSequence => st2PointCtrlSequence_out,
+    bError => bError_out,
+    eErrorCode => eErrorCode_out
+);]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>
