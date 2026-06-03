@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_BACnet_Globals" Id="{b98f8054-8108-5f85-ae8d-ad351cfac8ab}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_BACnet_Globals
+VAR
+    // 通过 BACnet_Globals.DefaultAdapter / DefaultServer 触发运行时方法
+    bSendTimeSyncOnce  : BOOL := FALSE;          // 单适配器项目用 default
+    bTimeSyncOk        : BOOL;
+    stMasterTime       : ST_BA_DateTime;
+
+    bForcePersistNow   : BOOL := FALSE;          // 用 SUPS 断电时触发
+    bSaveOk            : BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：单适配器项目（CX 控制器 + 单网卡 BACnet/IP），完全用库自带的
+//       DefaultAdapter / DefaultServer 工作，无需声明任何 FB_BACnet_Adapter
+//       / FB_BACnet_Server 实例。
+//       项目里只有两个运行时事件需要主动触发：
+//         A) 接到 NTP 校时回调时触发一次 BACnet 时间广播
+//         B) 接到 Tc2_SUPS 断电检测时触发一次 BACnet 持久化写盘
+// 价值：演示 BACnet_Globals 的最常见用法——把 Default* 当一等公民直接调
+//       方法，零样板声明，零样板调用。
+// 验证：1) 登录后写 bSendTimeSyncOnce := TRUE → bTimeSyncOk 应在同一周期变
+//       TRUE，BACnet Explorer 抓包应能看到 Time-Synchronization 广播帧。
+//       2) 写 bForcePersistNow := TRUE → bSaveOk = TRUE，TwinCAT boot 目录
+//       下 BACnetOnline_<Device 实例号>.bootdata 修改时间被刷新。
+//   注意：不要在本 POU 里再写 BACnet_Globals.DefaultAdapter(); 或
+//       BACnet_Globals.DefaultServer(); — 默认实例已由库内部循环调用，
+//       重复调度会被 BACnet supplement 报"多重对象访问"错误。
+// =============================================================================
+
+// ---- 主动触发一次时间广播（不要写 DefaultAdapter(); 这种重复调度） ----
+IF bSendTimeSyncOnce THEN
+    bSendTimeSyncOnce := FALSE;
+    bTimeSyncOk := BACnet_Globals.DefaultAdapter.TimeSync(
+                       pDateTime      := ADR(stMasterTime),
+                       bSendBroadcast := TRUE);
+END_IF
+
+// ---- 主动触发一次持久化写盘（UPS 断电检测场景） ----
+IF bForcePersistNow THEN
+    bForcePersistNow := FALSE;
+    bSaveOk := BACnet_Globals.DefaultServer.SavePersistentStackData();
+END_IF
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_Version" Id="{9f2c827a-713a-54fd-bc85-acc2dc6c717b}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_Version
+VAR
+    bChecked             : BOOL := FALSE;        // 启动期是否已比一次
+    bVersionMeetsMinReq  : BOOL := FALSE;        // 检查结果：满足最低要求？
+    sActualLibVersion    : STRING;               // 完整版本串供 HMI 显示
+    sExpectedMinVersion  : STRING := '1.1.2.0';  // 项目硬编码的最低要求版本
+END_VAR
+
+VAR CONSTANT
+    EXPECTED_MAJOR       : INT := 1;             // 项目要求 ≥ 1.1.2
+    EXPECTED_MINOR       : INT := 1;
+    EXPECTED_BUILD       : INT := 2;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：项目交付后维护人员升级了 TwinCAT，重新装的 Tc3_BACnetRev14 库版本
+//       可能不是项目设计时的版本；BACnet 持久化文件、对象数据库格式在小版本
+//       之间有兼容性边界，需要 PLC 自检"装的库 ≥ 项目最低要求"。
+// 价值：把"库版本检查"从工程师手工排查降级到"PLC 启动期一次性自检"，结果
+//       通过 bVersionMeetsMinReq + sActualLibVersion 推到 HMI 让运维肉眼比对。
+// 验证：1) 登录后看 bChecked 在第一个 PLC 周期变 TRUE 后保持。
+//       2) sActualLibVersion 应等于实际装的 Tc3_BACnetRev14 版本（PDF 头部
+//          所示 1.1.2）。
+//       3) bVersionMeetsMinReq 应为 TRUE。
+//       4) 如要测试"版本太低告警"：把 EXPECTED_MAJOR 改成 99，下载 → 重启
+//          PLC，应看到 bVersionMeetsMinReq = FALSE。
+// =============================================================================
+
+// ---- 仅启动期检查一次（避免每周期浪费 CPU） ----
+IF NOT bChecked THEN
+    bChecked := TRUE;
+
+    // 把完整版本串送 HMI 显示
+    sActualLibVersion := stLibVersion_Tc3_BACnetRev14.sVersion;
+
+    // 与项目最低要求三段对比（任意一段不满足即 FALSE）
+    bVersionMeetsMinReq :=
+            (stLibVersion_Tc3_BACnetRev14.iMajor > EXPECTED_MAJOR)
+        OR  (    stLibVersion_Tc3_BACnetRev14.iMajor = EXPECTED_MAJOR
+             AND stLibVersion_Tc3_BACnetRev14.iMinor > EXPECTED_MINOR)
+        OR  (    stLibVersion_Tc3_BACnetRev14.iMajor = EXPECTED_MAJOR
+             AND stLibVersion_Tc3_BACnetRev14.iMinor = EXPECTED_MINOR
+             AND stLibVersion_Tc3_BACnetRev14.iBuild >= EXPECTED_BUILD);
+END_IF
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

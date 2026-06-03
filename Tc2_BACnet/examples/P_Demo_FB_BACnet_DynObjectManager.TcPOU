@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_BACnet_DynObjectManager" Id="{c9aa5531-41b4-5553-8a86-7161f5c7faf9}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_BACnet_DynObjectManager
+VAR
+    // 动态对象管理器：开启自动循环调用 + 自动结束初始化
+    fbDynObjMgr        : FB_BACnet_DynObjectManager := (bCycleObjects := TRUE);
+
+    // HMI 触发标志：维护人员按"加点 / 清点"按钮
+    bCreatePoints      : BOOL := FALSE;
+    bClearAllPoints    : BOOL := FALSE;
+
+    // 动态对象指针（容器；__NEW 的实例地址写入这里）
+    pStructuredView    : POINTER TO FB_BACnet_View := 0;
+    pDynamicAV01       : POINTER TO FB_BACnet_AV   := 0;
+    pDynamicBV01       : POINTER TO FB_BACnet_BV   := 0;
+
+    // 模拟"温度数据来自外部"的过程值
+    fSimTemperature    : REAL := 21.5;
+    fbTimerSim         : TON;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：BACnet 楼控站上的"虚拟点"功能 — 维护员在 HMI 上按"加点"，PLC 程序
+//       动态在 BACnet 数据库里加一个 Analog Value（如"会议室临时温度"）+ 一
+//       个 Binary Value（如"会议室人在场标志"），都挂在新建的 Structured View
+//       下；按"清点"一次性删掉。
+// 价值：相比在变量区静态预留 ARRAY[0..1999] OF FB_BACnet_AV，本方案
+//       router memory 占用按实际使用计算（PDF §6.5 每对象 ≈ 20 KB），加点 /
+//       减点完全在线，无需停 PLC 重新激活配置。
+// 验证：
+//   1) 工程项目 Compiler Settings → 启用 DynamicCreation pragma（PDF §8 顶部
+//      明确要求）。
+//   2) 登录 → 等几个周期 fbDynObjMgr.Ready 变 TRUE。
+//   3) 在线写 bCreatePoints := TRUE，下一周期 fbDynObjMgr.CreatedObjects 应
+//      变为 3；pStructuredView / pDynamicAV01 / pDynamicBV01 三个指针应非 0。
+//   4) 用 BACnet Explorer 连本控制器，刷新对象树，应能看到名为 DynamicView
+//      的 Structured View 包含 DynamicAV01 (REAL 摄氏度) 与 DynamicBV01。
+//   5) DynamicAV01 的 Present_Value 应跟随 fSimTemperature 变化（5 秒周期）。
+//   6) 在线写 bClearAllPoints := TRUE，三个动态对象在 BACnet 树上立刻消失。
+// =============================================================================
+
+// ---- 动态对象管理器必须每周期调用 ----
+fbDynObjMgr();
+
+// ---- 5 秒生成一次模拟温度（演示动态对象的运行时数据通路） ----
+fbTimerSim(IN := NOT fbTimerSim.Q, PT := T#5S);
+IF fbTimerSim.Q THEN
+    fSimTemperature := fSimTemperature + 0.5;
+    IF fSimTemperature > 28.0 THEN
+        fSimTemperature := 18.0;
+    END_IF
+END_IF
+
+// ---- 只有 Ready 之后才能创建 / 删除对象 ----
+IF fbDynObjMgr.Ready THEN
+
+    // 上升沿触发 "建点" — 添加 View + AV + BV 三个动态对象
+    IF bCreatePoints THEN
+        bCreatePoints := FALSE;                  // 单次触发：立即清零
+
+        // 1) Structured View（容器，先建）
+        IF fbDynObjMgr.CreateObject(
+                pStructuredView,
+                E_BACnet_CreateObjType.eStructuredView,
+                BACnet_Globals.nBACnetInstId_Auto,
+                'DynamicView', 'HMI added virtual points', 0) THEN
+            ;                                    // 创建成功，无需额外属性
+        END_IF
+
+        // 2) Analog Value 挂在 View 下（用 \/ 前缀做 DPAD 拼名）
+        IF fbDynObjMgr.CreateObject(
+                pDynamicAV01,
+                E_BACnet_CreateObjType.eAnalogValue,
+                BACnet_Globals.nBACnetInstId_Auto,
+                '\/DynamicAV01',
+                '\/Meeting room temperature (virtual)',
+                pStructuredView) THEN
+            pDynamicAV01^.eUnit := E_BA_Unit.eTemperature_DegreesCelsius;
+            pDynamicAV01^.bEnPgm := TRUE;        // 允许 PLC 写 fValPgm 到 Present_Value
+        END_IF
+
+        // 3) Binary Value（人在场标志）
+        IF fbDynObjMgr.CreateObject(
+                pDynamicBV01,
+                E_BACnet_CreateObjType.eBinaryValue,
+                BACnet_Globals.nBACnetInstId_Auto,
+                '\/DynamicBV01',
+                '\/Meeting room occupancy (virtual)',
+                pStructuredView) THEN
+            pDynamicBV01^.sInactiveText := 'Empty';
+            pDynamicBV01^.sActiveText   := 'Occupied';
+        END_IF
+    END_IF
+
+    // ---- 给动态 AV 写当前温度（仅在已创建后） ----
+    IF pDynamicAV01 <> 0 THEN
+        pDynamicAV01^.fValPgm := fSimTemperature;
+    END_IF
+
+    // ---- 一次性清空所有动态对象 ----
+    IF bClearAllPoints THEN
+        bClearAllPoints := FALSE;
+        fbDynObjMgr.Reset();
+        pStructuredView := 0;
+        pDynamicAV01    := 0;
+        pDynamicBV01    := 0;
+    END_IF
+END_IF
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

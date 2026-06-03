@@ -837,3 +837,10 @@
 2026-06-02T00:00:00Z | Tc2_SerialCom  | functions                               | RK512Error_TO_TcEventEntry               | verified | PDF + InfoSys cross-verified
 2026-06-02T00:00:00Z | Tc2_SerialCom  | functions                               | SerialLineControlADSErr_TO_TcEventEntry  | verified | PDF + InfoSys cross-verified
 2026-06-02T00:00:00Z | Tc2_SerialCom  | global_constants                        | stLibVersion_Tc2_SerialCom               | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_BACnet     | client_dyn                              | FB_BACnet_DynObjectManager               | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_BACnet     | global_vars                             | BACnet_Globals                           | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_BACnet     | global_vars                             | BACnet_Param                             | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_BACnet     | global_vars                             | Version                                  | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_BACnet     | server                                  | FB_BACnet_Adapter                        | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_BACnet     | server                                  | FB_BACnet_Device                         | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_BACnet     | server                                  | FB_BACnet_Server                         | verified | PDF + InfoSys cross-verified

@@ -76,7 +76,7 @@
 | Tc3_MC2_AdvancedHoming | 1.7.7 | 16 | ✅ done (16/16) | 自定义回零（PLCopen Part 5；收尾 3 + 被动 flying 3 + step 10） |
 | Tc3_Vision | ~80 | ⏳ pending | 机器视觉 TF7xxx（走 TF7000-TF7810 别名） |
 | Tc2_Hydraulic | ~40 | ⏳ pending | 液压闭环（走 TF5810 别名） |
-| Tc2_BACnet | ~30 | ⏳ pending | 楼宇自动化（走 TF8020 别名） |
+| Tc2_BACnet | 7 ✅ infra (v1.1.2 / 真实库名 Tc3_BACnetRev14) | 🚧 partial | TF8020；7 个基础架构 FB/GVL 完成（Adapter/Server/Device/DynObjectManager + 3 GVL）。~60 个 BACnet 对象 FB（AI/AO/AV/BI/BO/BV/MI/MV/NC/Cal/Sched/TLog/EE/Loop/View 等 ×{无后缀,_IO,_ECAT,_Raw,_5P,_IO5P,_RAW5P} 变体）PDF/InfoSys 不按"每 FB 一节"展开而是按对象类型综述 + 命名规则统一描述，留 Wave-3 按对象类型分批生成。 |
 | Tc2_DALI | ~30 | ⏳ pending | 照明总线 |
 | Tc2_DMX | 34 ✅ done (34 FB, v1.8.1) | ✅ done | 舞台灯光 DMX512/RDM（主站/发现/RDM 参数/状态/EL6851；含 1 outdated FB） |
 | Tc2_KNXLib | ~30 | ❌ unavailable | KNX/EIB（PDF 404） |

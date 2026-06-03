@@ -258,8 +258,11 @@ _INFOSYS_TOPIC_RE = re.compile(
     # Beckhoff InfoSys uses several URL slugs depending on the library:
     #   tcplclib_<lower>            — most TwinCAT 3 libs (e.g. tcplclib_tc2_mc2)
     #   tcplclib<lower>             — some legacy / NC libs (e.g. tcplclibmc2_camming)
+    #   tf<n>_tc3_<lower>           — most TF product manuals (e.g. tf6310_tc3_tcp_ip)
+    #   tf<n>_<lower>               — some TF manuals omit the _tc3_ infix
+    #                                 (e.g. tf8020_bacnetrev14 — Tc2_BACnet)
     #   tf<digits>_tc3_<lower>      — TF function products (e.g. tf6310_tc3_tcpip → Tc2_TcpIp)
-    r"https?://infosys\.beckhoff\.com/content/\d+/(?:tcplclib[a-z0-9_]+|tf\d+_tc3_[a-z0-9_]+)/\d+\.html"
+    r"https?://infosys\.beckhoff\.com/content/\d+/(?:tcplclib[a-z0-9_]+|tf\d+(?:_tc3)?_[a-z0-9_]+)/\d+\.html"
 )
 _INFOSYS_CHECKED_OK_RE = re.compile(
     r"(?:✅\s*\d{4}-\d{2}-\d{2}|⚠️\s*not-on-infosys)"

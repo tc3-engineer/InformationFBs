@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_BACnet_Device" Id="{15f735f2-54c4-5291-8bbd-bf51febe7d56}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_BACnet_Device
+VAR
+    // 修改本机 BACnet Device 对象属性（条件触发模式，避免覆盖 BMS 改入值）
+    fbDevice                : FB_BACnet_Device;
+
+    // 在线编辑这三个字符串，然后置 bChangeRequested := TRUE 提交一次
+    sNewObjectName          : STRING := 'CX5240_Floor3_HVAC';
+    sNewDescription         : STRING := 'HVAC controller, Bldg A floor 3';
+    sNewLocation            : STRING := 'Bldg-A / Floor-3 / Cabinet-3.2';
+    bChangeRequested        : BOOL   := FALSE;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：交付现场维护人员在 HMI 上给这台 BACnet 控制器改名字（按楼层 / 机柜
+//       命名规范），但不能停机也不能让维护进 XAE 工程模式。
+// 价值：用本 FB 把 BACnet Device 对象的 ObjectName / Description / Location
+//       三个属性做成 HMI 可编辑表单：维护填好新值，按"应用"按钮提交，下一
+//       周期 BMS 重读这三条属性即可看到新值，完全无需停 PLC。
+// 验证：1) 登录 → 在线写 sNewObjectName / sNewDescription / sNewLocation 三
+//       个字段，再写 bChangeRequested := TRUE。2) 用 BACnet Explorer 连这台
+//       控制器，刷新 Device 对象 → 三个属性应已变为新值。3) 同时观察
+//       bChangeRequested 在调用瞬间自动回 FALSE（条件触发，不会重写 BMS 端
+//       回写的值）。
+// =============================================================================
+
+// ---- BACnet FB 必须每周期调用一次 ----
+fbDevice();
+
+// ---- 条件触发写入（PDF §6.3.1 推荐模式：避免周期写覆盖 BMS 端回写） ----
+IF bChangeRequested THEN
+    bChangeRequested := FALSE;                   // 条件清零（电平→脉冲转换）
+    fbDevice.sObjectName  := sNewObjectName;
+    fbDevice.sDescription := sNewDescription;
+    fbDevice.sLocation    := sNewLocation;
+END_IF
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_BACnet_Adapter" Id="{e8128e83-eeb8-5179-a923-4f8e91150a47}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_BACnet_Adapter
+VAR
+    // ----------------------------------------------------------------------
+    // BACnet 适配器（多适配器场景，绑定到 System Manager 中名为
+    // "Device 2 (BACnet IP)" 的 BACnet IP 设备）
+    // ----------------------------------------------------------------------
+    {attribute 'TcLinkTo' := '.BACnet_AmsNetId := TIID^Device 2 (BACnet IP)^Inputs^AmsNetId'}
+    fbBACnetAdapter   : FB_BACnet_Adapter;
+
+    // 时间主站功能：用 HMI 按钮触发把本机时间广播给楼内其它 BACnet 控制器
+    stTimeMaster      : ST_BA_DateTime;          // 待广播的"主站时间"
+    bSendTimeSyncReq  : BOOL := FALSE;           // 在线置 TRUE 触发一次广播
+    bTimeSyncOk       : BOOL;                    // TimeSync 方法返回值
+
+    // 网络扫描：发出 Who-Is，等 5 秒后读 GetScanResult
+    aScannedDevices   : ARRAY[0..199] OF ST_BACnetRM_ScanResult;
+    fbScanWaitTimer   : TON;                     // 5 秒等待
+    bStartNetScan     : BOOL := FALSE;           // 在线置 TRUE 启一次扫描
+    bScanInProgress   : BOOL := FALSE;           // 等待 GetScanResult 期间为 TRUE
+    nScannedCount     : DINT := -1;              // -1 = 尚未扫描或扫描出错
+
+    // 协议栈诊断：周期把内部诊断结构同步到全局，供 SCADA 抓
+    stStackDiag       : ST_BACnet_Diagnosis;
+    bReadDiagnosis    : BOOL := FALSE;
+    bDiagnosisOk      : BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：CX5240 控制器上线后既要做 BACnet 服务端（暴露 200+ 楼控对象），又要
+//       作为时间主站，每天 02:00 广播本地时间给楼内其它 BACnet 控制器；同时
+//       维护人员在 HMI 上点"扫描网段"按钮就能看到楼内还活着的 BACnet 设备。
+// 价值：不用 FB_BACnet_Adapter 时，扫描和时间同步要直接调底层 BACnet C SDK，
+//       工程师得理解 ASN.1 编码并自己拼 Who-Is 报文；用本 FB 把 3 个 BACnet
+//       基础服务（TimeSync / GetDiagnosis / StartScan+GetScanResult）封装成
+//       3 个 PLC 方法调用，且自带与 System Manager 的 AmsNetId 绑定。
+// 验证：登录后 1) 在线写 stTimeMaster := 当前真实时间，bSendTimeSyncReq := TRUE，
+//       观察 bTimeSyncOk = TRUE；用 BACnet Explorer 抓包应有 Time-Synchronization
+//       报文广播。2) 在线写 bStartNetScan := TRUE，5 秒后看 nScannedCount > 0，
+//       aScannedDevices[0..N-1] 含网段上其它 BACnet 设备的 Device ID + IP。
+//       3) 在线写 bReadDiagnosis := TRUE，stStackDiag 各字段被填。
+// =============================================================================
+
+// ---- 适配器必须每周期手动调用一次（默认适配器才由库内部自动调度） ----
+fbBACnetAdapter();
+
+// ---- 等待计时器：用于扫描 Who-Is → GetScanResult 之间的 5 秒等候 ----
+fbScanWaitTimer(IN := bScanInProgress, PT := T#5S);
+
+// ---- 时间同步（一次性方法：上升沿触发，调用一次即可） ----
+IF bSendTimeSyncReq THEN
+    bSendTimeSyncReq := FALSE;
+    bTimeSyncOk := fbBACnetAdapter.TimeSync(
+        pDateTime      := ADR(stTimeMaster),
+        bSendBroadcast := TRUE);
+END_IF
+
+// ---- 网络扫描（异步：StartScan 发起 → 5 秒后 GetScanResult 取结果） ----
+IF bStartNetScan THEN
+    bStartNetScan   := FALSE;
+    bScanInProgress := fbBACnetAdapter.StartScan();
+    nScannedCount   := -1;
+END_IF
+IF bScanInProgress AND fbScanWaitTimer.Q THEN
+    bScanInProgress := FALSE;
+    nScannedCount := fbBACnetAdapter.GetScanResult(
+        pBuffer     := ADR(aScannedDevices),
+        nMaxResults := 200);
+END_IF
+
+// ---- 读协议栈诊断（即 System Manager Diagnosis 选项卡同源数据） ----
+IF bReadDiagnosis THEN
+    bReadDiagnosis := FALSE;
+    bDiagnosisOk := fbBACnetAdapter.GetDiagnosis(ADR(stStackDiag));
+END_IF
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

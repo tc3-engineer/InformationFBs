@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_BACnet_Server" Id="{606ea73d-883e-52f1-b407-0f8ce179e77c}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_BACnet_Server
+VAR
+    // ----------------------------------------------------------------------
+    // 多 server 场景：左楼栋的 BACnet IP 服务端单独跑一个 FB_BACnet_Server
+    // 实例，绑定到它自己的 FB_BACnet_Adapter。System Manager 中要有名为
+    // "Device 2 (BACnet IP)" 的 BACnet IP 设备节点。
+    // ----------------------------------------------------------------------
+    {attribute 'TcLinkTo' := '.BACnet_AmsNetId := TIID^Device 2 (BACnet IP)^Inputs^AmsNetId'}
+    fbAdapterLeftBlock : FB_BACnet_Adapter;
+    fbServerLeftBlock  : FB_BACnet_Server := (Adapter := fbAdapterLeftBlock);
+
+    // ---- 与 Tc2_SUPS 联动的持久化触发标志 ----
+    bPowerLossDetected : BOOL := FALSE;          // 由外部断电检测 FB 在掉电瞬间置 TRUE
+    bSaveDone          : BOOL;                   // SavePersistentStackData 返回值
+
+    // ---- 启动同步方向：交付前可在线写 eInitForceFromPlc 调试 ----
+    eStartupMode       : E_BACnet_InitMode := E_BACnet_InitMode.eInitToPlc;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：一台 CX5240 跑左右两栋楼独立的 BACnet 服务端，左栋用本 server 实例。
+//       项目装 Tc2_SUPS 库，断电时 UPS FB 在 200 ms 内回调 PLC，把脏数据
+//       存盘后断电；本程序负责接到 UPS 回调后立刻触发 BACnet 持久化写盘
+//       （不依赖 supplement 的 30 分钟定时持久化，避免最近一次属性修改丢失）。
+// 价值：默认 BACnet_Globals.DefaultServer 只能用一个；多 server 场景必须显式
+//       声明 FB_BACnet_Server 并和适配器绑定。本演示同时展示了"断电时主动
+//       触发持久化"的工程实践，比依赖 30 分钟定时持久化少丢一次窗口期数据。
+// 验证：1) 登录后看 fbServerLeftBlock 在 PLC 内部状态机走起来（在 Watch 看
+//       内存字段非零）。2) 在线写 bPowerLossDetected := TRUE → bSaveDone =
+//       TRUE，TwinCAT boot 目录下 BACnetOnline_<本机 Device 实例号>.bootdata
+//       的修改时间应被刷新。3) 切换 eStartupMode 后做 Reset to Origin 验证
+//       初始化方向。
+// =============================================================================
+
+// ---- 多适配器场景下两个 FB 都必须每周期手动调用 ----
+fbAdapterLeftBlock();
+fbServerLeftBlock();
+
+// ---- 启动同步方向同步到 server 实例（在线改这个变量做调试切换） ----
+fbServerLeftBlock.eInitMode := eStartupMode;
+
+// ---- 断电时立刻触发一次持久化写盘 ----
+IF bPowerLossDetected THEN
+    bPowerLossDetected := FALSE;                 // 上升沿语义：处理后立刻清零
+    bSaveDone := fbServerLeftBlock.SavePersistentStackData();
+END_IF
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>
