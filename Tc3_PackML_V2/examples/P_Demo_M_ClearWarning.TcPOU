@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_M_ClearWarning" Id="{8426b3da-69d1-522b-88e3-a76daf8e2226}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_M_ClearWarning
+VAR
+    fbAdminAlarm  : PML_AdminAlarm;
+    fbAdminTime   : PML_AdminTime;
+    stAdmin       : ST_PMLa;
+    stStatus      : ST_PMLs;
+    bRecovered    : BOOL := FALSE;     // 液位回到正常——上升沿清除 warning
+    rtRecoverEdge : R_TRIG;
+    stTarget      : ST_Alarm := (Id := 100);
+    bClearOk      : BOOL;
+    bReset        : BOOL := FALSE;
+    stTimeOptions : ST_AdminTimeOptions;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc3_PackML_V2.M_ClearWarning 演示程序
+// ============================================================
+// 场景：补料后液位回到 60%——检测代码自动清除 低液位 warning，HMI 黄色提示消失。
+// 价值：自动清除让 HMI 始终反映当前需要操作员注意的事项，避免陈旧提示淹没。
+// 验证：假设有活动 warning Id=100。在线写 bRecovered := TRUE，
+//        Watch stAdmin.Warning[1].Trigger 应变 FALSE。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_PackML_V2（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方"验证"指引在线写值观察
+// ============================================================
+
+fbAdminTime(bReset := bReset, stOptions := stTimeOptions,
+            stAdmin := stAdmin, stStatus := stStatus);
+
+rtRecoverEdge(CLK := bRecovered);
+IF rtRecoverEdge.Q THEN
+    bClearOk := fbAdminAlarm.M_ClearWarning(
+        stAdmin   := stAdmin,
+        stWarning := stTarget
+    );
+END_IF
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

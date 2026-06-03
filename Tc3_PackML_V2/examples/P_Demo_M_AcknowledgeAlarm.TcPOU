@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_M_AcknowledgeAlarm" Id="{e06cc92e-0410-58d7-b7c8-c548d02f05ca}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_M_AcknowledgeAlarm
+VAR
+    fbAdminAlarm   : PML_AdminAlarm;
+    fbAdminTime    : PML_AdminTime;
+    stAdmin        : ST_PMLa;
+    stStatus       : ST_PMLs;
+    bAckBtn        : BOOL := FALSE;       // HMI 确认按钮
+    rtAckEdge      : R_TRIG;
+    stAckTarget    : ST_Alarm := (Id := 1001);   // 仅 Id 用于匹配
+    bAckSuccess    : BOOL;
+    bReset         : BOOL := FALSE;
+    stTimeOptions  : ST_AdminTimeOptions;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc3_PackML_V2.M_AcknowledgeAlarm 演示程序
+// ============================================================
+// 场景：操作员在 HMI 看到温度报警后按 确认 按钮，本方法把 Alarm[].Trigger 置 FALSE
+//       并写入 AckDateTime。报警条目仍留在 Alarm[] 数组（待清除归档）。
+// 价值：符合 ISA-18.2 报警管理标准的两阶段处理；AckDateTime 时间戳便于事后审计。
+// 验证：假设已通过 SetAlarm 设置了一条 Id=1001 报警。在线写 bAckBtn := TRUE→FALSE，
+//        Watch stAdmin.Alarm[1].Trigger 应变 FALSE 但 .Id 仍为 1001、AckDateTime[*] 不再为 0。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_PackML_V2（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方"验证"指引在线写值观察
+// ============================================================
+
+(* 周期推进时间——AckDateTime 来自 stAdmin.PlcDateTime *)
+fbAdminTime(bReset := bReset, stOptions := stTimeOptions,
+            stAdmin := stAdmin, stStatus := stStatus);
+
+(* HMI"确认"按钮上升沿触发一次 Acknowledge *)
+rtAckEdge(CLK := bAckBtn);
+IF rtAckEdge.Q THEN
+    bAckSuccess := fbAdminAlarm.M_AcknowledgeAlarm(
+        stAdmin := stAdmin,
+        stAlarm := stAckTarget    // 按 Id 找到对应活动 alarm
+    );
+END_IF
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

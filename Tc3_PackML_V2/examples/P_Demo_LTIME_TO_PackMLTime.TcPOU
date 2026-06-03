@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_LTIME_TO_PackMLTime" Id="{3a9d740a-aa5d-5ecb-8153-888f218af3c6}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_LTIME_TO_PackMLTime
+VAR
+    tInput          : LTIME := LTIME#1H30M;        // 演示用：1 小时 30 分钟时长
+    aPackMLDuration : ARRAY[0..6] OF DINT;          // 转换结果（在线观察）
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc3_PackML_V2.LTIME_TO_PackMLTime 演示程序
+// ============================================================
+// 场景：把 LTIME 类型的累计运行时长转成 PackML 7 元素数组写入 Admin PackTag。
+// 价值：标准化 LTIME → PackML 时长数组转换，避免手写时长拆解。
+// 验证：登录后看 aPackMLDuration[*]：tInput=LTIME#1H 应得 [0,0,0,1,0,0,0] 或类似。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_PackML_V2（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方"验证"指引在线写值观察
+// ============================================================
+
+(* 纯函数调用——单行完成 *)
+aPackMLDuration := LTIME_TO_PackMLTime(Input := tInput);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

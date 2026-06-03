@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_TIMESTRUCT_TO_PackMLTime" Id="{c9cff88a-14bc-5b30-8205-9eb7dcfa12f6}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_TIMESTRUCT_TO_PackMLTime
+VAR
+    tsInput     : TIMESTRUCT := (
+        wYear         := 2026,
+        wMonth        := 6,
+        wDayOfWeek    := 3,           // 星期 ——本函数不映射到数组
+        wDay          := 3,
+        wHour         := 14,
+        wMinute       := 30,
+        wSecond       := 0,
+        wMilliseconds := 123
+    );
+    aPackMLTime : ARRAY[0..6] OF DINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc3_PackML_V2.TIMESTRUCT_TO_PackMLTime 演示程序
+// ============================================================
+// 场景：Tc2_System.GetSystemTime 返回 TIMESTRUCT，转成 PackML 数组写报警时间戳。
+// 价值：毫秒精度的时刻转换标准函数，满足绝大多数 PackML 应用精度需求。
+// 验证：tsInput 各字段填好后 aPackMLTime[0..6] 应分别对应年/月/日/时/分/秒/毫秒。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_PackML_V2（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方"验证"指引在线写值观察
+// ============================================================
+
+aPackMLTime := TIMESTRUCT_TO_PackMLTime(Input := tsInput);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

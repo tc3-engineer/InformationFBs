@@ -68,7 +68,8 @@
 | 库 | 估算 FB+FC | 状态 | 适用场景 |
 |---|---|---|---|
 | Tc3_OPCUA / Tc3_IotBase | ~50 | ⏳ pending | 对外 IT 集成 |
-| Tc3_PackML_V2 / V3 | ~30 | ⏳ pending | 包装机械 OMAC |
+| Tc3_PackML_V2 | 25 ✅ done (v1.2.4) | ✅ done | OMAC PackML 包装机械（3 接口 + 5 FB + 9 PML_AdminAlarm 方法 + 8 转换 FC） |
+| Tc3_PackML_V3 | ~30 | ⏳ pending | OMAC PackML V3 升级版 |
 | Tc2_MC2_Camming | 6 | ✅ done (6/6) | 凸轮（走 TF5050 别名） |
 | Tc2_MC2_FlyingSaw | 4 | ✅ done (4/4) | 飞剪（走 TF5055 别名） |
 | Tc3_DriveMotionControl | 14 ✅ done (13 FB + 1 GVL, v1.5.5) | ✅ done | 简化伺服（MC_* 单轴运动，无 BufferMode，走 ST_*Options） |

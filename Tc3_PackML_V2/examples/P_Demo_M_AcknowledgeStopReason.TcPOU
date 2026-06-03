@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_M_AcknowledgeStopReason" Id="{e4e79f2f-ccdd-5ad0-9d93-e25f2a006285}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_M_AcknowledgeStopReason
+VAR
+    fbAdminAlarm  : PML_AdminAlarm;
+    fbAdminTime   : PML_AdminTime;
+    stAdmin       : ST_PMLa;
+    stStatus      : ST_PMLs;
+    bMesAck       : BOOL := FALSE;       // 模拟 MES 通过 ADS 触发确认
+    rtAckEdge     : R_TRIG;
+    stAckTarget   : ST_Alarm := (Id := 1);
+    bAckOk        : BOOL;
+    bReset        : BOOL := FALSE;
+    stTimeOptions : ST_AdminTimeOptions;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc3_PackML_V2.M_AcknowledgeStopReason 演示程序
+// ============================================================
+// 场景：MES 通过 ADS 调用本方法把已采走的 StopReason 标为已确认，避免下次重采。
+// 价值：AckDateTime 记录信息系统消费时刻，便于反查 MES 响应延迟。
+// 验证：假设已 Set 过一条 Id=1 StopReason。在线写 bMesAck := TRUE→FALSE。
+//        Watch stAdmin.StopReason[1].Trigger 应变 FALSE、AckDateTime[*] 不再为 0。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_PackML_V2（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方"验证"指引在线写值观察
+// ============================================================
+
+fbAdminTime(bReset := bReset, stOptions := stTimeOptions,
+            stAdmin := stAdmin, stStatus := stStatus);
+
+rtAckEdge(CLK := bMesAck);
+IF rtAckEdge.Q THEN
+    bAckOk := fbAdminAlarm.M_AcknowledgeStopReason(
+        stAdmin      := stAdmin,
+        stStopReason := stAckTarget
+    );
+END_IF
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

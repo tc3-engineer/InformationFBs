@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_ULINT_TO_PackMLTime" Id="{9bfacf86-f194-5d17-aa58-d4e310d1d788}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_ULINT_TO_PackMLTime
+VAR
+    (* 演示用：1 小时 = 3600_000_000_000 纳秒 *)
+    uliInput        : ULINT := ULINT#3600000000000;
+    aPackMLDuration : ARRAY[0..6] OF DINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc3_PackML_V2.ULINT_TO_PackMLTime 演示程序
+// ============================================================
+// 场景：把 EtherCAT 主站给的裸 ULINT 时长计数（约定纳秒单位）转成 PackML 数组。
+// 价值：处理无类型的裸时长计数值——接口适配场景必备转换。
+// 验证：uliInput=3600_000_000_000（1 小时纳秒）时 aPackMLDuration 应填出 1 小时。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_PackML_V2（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方"验证"指引在线写值观察
+// ============================================================
+
+aPackMLDuration := ULINT_TO_PackMLTime(Input := uliInput);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_M_SetAlarm" Id="{0f43e8e2-7dee-5491-b0b8-934c66cbeeac}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_M_SetAlarm
+VAR
+    fbAdminAlarm   : PML_AdminAlarm;
+    fbAdminTime    : PML_AdminTime;
+    stAdmin        : ST_PMLa;
+    stStatus       : ST_PMLs;
+    bFaultDetected : BOOL := FALSE;       // 模拟故障检测信号
+    rtFaultEdge    : R_TRIG;
+    stHighTempAlarm: ST_Alarm := (
+        Id       := 1001,
+        Value    := 85,
+        Message  := 'Outlet temperature exceeded 85C',
+        Category := 1
+    );
+    bSetSuccess    : BOOL;
+    bReset         : BOOL := FALSE;
+    stTimeOptions  : ST_AdminTimeOptions;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc3_PackML_V2.M_SetAlarm 演示程序
+// ============================================================
+// 场景：上料温度传感器超过阈值时上报一条 alarm 到 PackTags.Admin.Alarm[]。
+// 价值：一行调用完成 找空位+置触发+写时间戳+复制字段 的标准操作。
+// 验证：Watch stAdmin.Alarm[1].Trigger——在线写 bFaultDetected := TRUE 应立刻变 TRUE，
+//        DateTime[0]..[5] 应等于当前系统时间。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_PackML_V2（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方"验证"指引在线写值观察
+// ============================================================
+
+(* 周期推进时间统计——否则 alarm 时间戳全是 0 *)
+fbAdminTime(bReset := bReset, stOptions := stTimeOptions,
+            stAdmin := stAdmin, stStatus := stStatus);
+
+(* 故障检测上升沿才调 M_SetAlarm——否则每周期会覆盖数组 *)
+rtFaultEdge(CLK := bFaultDetected);
+IF rtFaultEdge.Q THEN
+    bSetSuccess := fbAdminAlarm.M_SetAlarm(stAdmin := stAdmin, stAlarm := stHighTempAlarm);
+END_IF
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_DCTIME64_TO_PackMLTime" Id="{09a0065a-da1c-5c90-9a87-4b8ce205e484}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_DCTIME64_TO_PackMLTime
+VAR
+    dctInput   : DCTIME64;                  // 通常来自 EtherCAT 主站时钟
+    aPackMLNow : ARRAY[0..6] OF DINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc3_PackML_V2.DCTIME64_TO_PackMLTime 演示程序
+// ============================================================
+// 场景：用 EtherCAT 分布式时钟（DC）替代本地 Windows 时间——
+//       多 PLC 协同时所有报警时间戳跨设备纳秒级一致。
+// 价值：EtherCAT DC 与 PackML 时间标准的桥接，多 PLC 同步场景必备。
+// 验证：需要 EtherCAT DC 同步已配置。读 F_GetSystemTime 等拿 DCTIME64，
+//        本例直接演示 API：dctInput 填 0 时 aPackMLNow 应得 2000-01-01。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_PackML_V2（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方"验证"指引在线写值观察
+// ============================================================
+
+(* 实际工程：dctInput := F_GetCurDcTaskTime64();（来自 Tc2_EtherCAT）
+   本例只演示函数 API——dctInput 默认 0 对应 2000-01-01 00:00:00 *)
+aPackMLNow := DCTIME64_TO_PackMLTime(Input := dctInput);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_PML_UnitModeConfig" Id="{6ba6c131-b3d4-5435-bc17-8230dc65d6f2}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_PML_UnitModeConfig
+VAR
+    fbModeCfg : PML_UnitModeConfig;
+    bRegistered : BOOL := FALSE;       // 一次性注册 latch
+    bError      : BOOL;                 // 注册结果（在线观察）
+    nErrorID    : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc3_PackML_V2.PML_UnitModeConfig 演示程序
+// ============================================================
+// 场景：在制药 CIP 清洗机上注册一个自定义 UnitMode 4 = Cleaning，
+//       禁用 Hold 类状态（清洗周期不允许暂停保持），
+//       只允许在 Stopped / Idle 切到/切走清洗模式。
+// 价值：把模式工艺约束（哪些状态可用、哪些状态可切换模式）配置化，不必硬编码到状态机。
+//       新工艺增加模式只需注册一次、不改主程序。
+// 验证：登录后该 FB 一上电运行即注册 Mode 4 = 'Cleaning'。把 bError 加入 Watch List：
+//        若 bError = FALSE 表示注册成功；尝试用 PML_UnitModeManager 在 Idle 态切到 Mode 4 应成功，
+//        切到 Execute 时切 Mode 4 会被 Manager 拒（验证 bDisable/bEnable 规则生效）。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_PackML_V2（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方"验证"指引在线写值观察
+// ============================================================
+
+(* 一次性注册自定义模式 Cleaning（编号 4）——用 latch 避免周期重复 *)
+IF NOT bRegistered THEN
+    fbModeCfg(
+        (* —— 模式编号与名称 —— *)
+        eMode                          := 4,
+        sName                          := 'Cleaning',
+        (* —— 禁用 PML 状态：清洗时不允许 Hold/Held/Unhold —— *)
+        bDisableClearing               := FALSE,
+        bDisableStarting               := FALSE,
+        bDisableSuspended              := TRUE,    // 清洗时禁用 Suspended 稳态
+        bDisableStopping               := FALSE,
+        bDisableAborting               := FALSE,
+        bDisableHolding                := TRUE,    // 禁用 Holding 过渡
+        bDisableHeld                   := TRUE,    // 禁用 Held 稳态（级联禁 Holding/Unholding）
+        bDisableUnholding              := TRUE,
+        bDisableSuspending             := TRUE,
+        bDisableUnsuspending           := TRUE,
+        bDisableResetting              := FALSE,
+        bDisableIdle                   := FALSE,
+        bDisableCompleting             := FALSE,
+        bDisableComplete               := FALSE,
+        (* —— 允许切换模式的稳态：仅 Stopped / Idle —— *)
+        bEnableUnitModeChangeStopped   := TRUE,
+        bEnableUnitModeChangeIdle      := TRUE,
+        bEnableUnitModeChangeSuspended := FALSE,
+        bEnableUnitModeChangeExecute   := FALSE,
+        bEnableUnitModeChangeAborted   := FALSE,
+        bEnableUnitModeChangeHeld      := FALSE,
+        bEnableUnitModeChangeComplete  := FALSE,
+        (* —— 输出回报 —— *)
+        bError                         => bError,
+        nErrorID                       => nErrorID
+    );
+    bRegistered := NOT bError;
+END_IF
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_M_ClearAlarm" Id="{a7df11d2-6601-52ba-92e4-69edc5791276}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_M_ClearAlarm
+VAR
+    fbAdminAlarm   : PML_AdminAlarm;
+    fbAdminTime    : PML_AdminTime;
+    stAdmin        : ST_PMLa;
+    stStatus       : ST_PMLs;
+    bClearBtn      : BOOL := FALSE;
+    rtClearEdge    : R_TRIG;
+    stClearTarget  : ST_Alarm := (Id := 1001);
+    bClearSuccess  : BOOL;
+    bReset         : BOOL := FALSE;
+    stTimeOptions  : ST_AdminTimeOptions;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc3_PackML_V2.M_ClearAlarm 演示程序
+// ============================================================
+// 场景：操作员在 HMI 按 清除 按钮把已确认的 alarm 移入 AlarmHistory 归档。
+//       归档后 Alarm[] 数组对应槽位释放，AlarmHistory[] 保留可查。
+// 价值：三阶段处理 Set → Ack → Clear 完整闭环；归档保留历史可被 MES 周期采集。
+// 验证：假设已 Ack 过一条 Id=1001 报警。在线写 bClearBtn := TRUE→FALSE，
+//        Watch stAdmin.Alarm[1].Id 应变 0 / Trigger=FALSE，
+//        stAdmin.AlarmHistory[1].Id 应变为 1001。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_PackML_V2（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方"验证"指引在线写值观察
+// ============================================================
+
+(* 保持时间新鲜（虽然 Clear 不写 DateTime，但与其他方法配合时一致性更好） *)
+fbAdminTime(bReset := bReset, stOptions := stTimeOptions,
+            stAdmin := stAdmin, stStatus := stStatus);
+
+(* HMI"清除"按钮上升沿触发一次 Clear——把 alarm 移入 AlarmHistory *)
+rtClearEdge(CLK := bClearBtn);
+IF rtClearEdge.Q THEN
+    bClearSuccess := fbAdminAlarm.M_ClearAlarm(
+        stAdmin := stAdmin,
+        stAlarm := stClearTarget
+    );
+END_IF
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

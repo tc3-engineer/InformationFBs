@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_DT_TO_PackMLTime" Id="{a6f17d26-3ebd-5325-830e-298151111ac7}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_DT_TO_PackMLTime
+VAR
+    dtInput     : DT := DT#2026-06-03-14:30:00;
+    aPackMLTime : ARRAY[0..6] OF DINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc3_PackML_V2.DT_TO_PackMLTime 演示程序
+// ============================================================
+// 场景：把 HMI 用户选择的 上次维护日期 DT 值转成 PackML 数组写入 PackTag。
+// 价值：IEC 标准 DT 类型与 PackML 时间数组直接互转——最常用的时刻转换。
+// 验证：dtInput := DT#2026-06-03-14:30:00 应得 aPackMLTime = [2026,6,3,14,30,0,0]。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_PackML_V2（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方"验证"指引在线写值观察
+// ============================================================
+
+aPackMLTime := DT_TO_PackMLTime(Input := dtInput);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

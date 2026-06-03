@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_I_UnitStateWaiting" Id="{71b976e4-fb38-589d-83ba-56aaa2bf60fb}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_I_UnitStateWaiting
+VAR
+    fbTempKeeper        : FB_DemoTempKeeper;        // 实现 I_UnitStateWaiting 的温控保持 FB
+    ipWaiting           : I_UnitStateWaiting;       // 暴露为子接口
+    bHoldRequest        : BOOL := FALSE;            // 演示用：模拟状态机处于 Held 时调 M_Held
+    bIdleRequest        : BOOL := FALSE;            // 演示用：模拟处于 Idle
+    nHoldTicks          : UDINT;                    // 观察 M_Held 被调次数
+    nIdleTicks          : UDINT;                    // 观察 M_Idle 被调次数
+    rCurrentTempC       : REAL;                     // 当前温度读数（在线查看 PID 输出）
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================
+// Tc3_PackML_V2.I_UnitStateWaiting 演示程序
+// ============================================================
+// 场景：演示在不需要全集 19 方法的场景下，单元 FB 仅实现 7 个 Waiting 稳态方法。
+//       本例展示一个温控保持模块——只在 Held/Idle/Stopped 等稳态做 PID 控温。
+// 价值：比直接实现 I_UnitState 节省 12 个空方法骨架；编译期约束 FB 只做维持类逻辑。
+// 验证：在线写 bHoldRequest := TRUE，观察 nHoldTicks 在每周期累加，
+//        说明 M_Held 被反复调用做 PID 控温维持。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_PackML_V2（References → Add library）
+//   3. 编译 → 登录 → 运行；按上方"验证"指引在线写值观察
+// ============================================================
+
+(* 把 fbTempKeeper 暴露为 I_UnitStateWaiting 接口——只关心稳态控制逻辑 *)
+ipWaiting := fbTempKeeper;
+
+(* 演示场景：模拟状态机停在 Held 或 Idle 稳态时，反复调用对应钩子 *)
+IF bHoldRequest THEN
+    ipWaiting.M_Held();          // 调 Held 钩子：内部做 PID 保温
+ELSIF bIdleRequest THEN
+    ipWaiting.M_Idle();          // 调 Idle 钩子：内部做"待命"逻辑
+END_IF
+
+(* 从 FB 读出在线计数器和当前温度——便于观察控制效果 *)
+nHoldTicks    := fbTempKeeper.GetHoldTicks();
+nIdleTicks    := fbTempKeeper.GetIdleTicks();
+rCurrentTempC := fbTempKeeper.GetCurrentTempC();
+
+(* 注意：FB_DemoTempKeeper 需要您在 PLC 项目里另建——
+   声明 IMPLEMENTS I_UnitStateWaiting、7 个方法。M_Held 里做 PID
+   控温到 60°C 维持，M_Idle 里关加热器、M_Aborted 里强制断电等。 *)
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>
