@@ -26,5 +26,6 @@
 ```
 2026-06-02T00:00:00Z | Tc2_NC | * | 库为 stub：仅 AXIS_REF / PTP 数据结构。TF50x0_TC3_NC_PTP_EN.pdf 是 NC PTP 引擎配置手册（NC 配置 / 参数 / 控制环），无 PLC API 章节；InfoSys 无 tcplclib_tc2_nc 主页。所有 NC 控制 FB 实际由以下库提供：MC_*（Tc2_MC2 ✅）/ FB_SoE*（Tc2_NcDrive ✅）/ Tc2_NCI ⏳。无独立 doc 可写。
 2026-06-02T00:00:00Z | Tc2_EthernetIP | * | 库为 stub：TF6280_EtherNet_IP_Adapter_EN.pdf 是配置型产品手册，正文 0 个 FB_ token、无 "PLC API"/"Function blocks" 章节（章节仅 Configuration / Properties / Diagnostic history）。EtherNet/IP 适配器在 XAE 中配置映射，PLC 侧直接读写过程映像，无独立 PLC 库 FB。同 Tc2_NC 处理。
+2026-06-03T00:00:00Z | Tc2_Lighting | * | TF8050 不是 PLC 库 FB API 范式，而是预配置 Lighting Solution 应用包（BA_LS + BA_LS_Dali_Communication 两个 PROGRAM POU + 参数表 + Excel 配置 + 触屏可视化）。Programming 章节(95-99 页 / 5 页)只列两个 PROGRAM 的参数表(nNumberOfDaliLines / sCoupler_*_DaliLines / sBackupData_Pin 等)，无可重用 FB。实际 DALI 总线 FB 由 Tc2_DALI 提供。
 ```
 
