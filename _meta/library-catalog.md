@@ -67,7 +67,8 @@
 
 | 库 | 估算 FB+FC | 状态 | 适用场景 |
 |---|---|---|---|
-| Tc3_OPCUA / Tc3_IotBase | ~50 | ⏳ pending | 对外 IT 集成 |
+| Tc3_OPCUA | 18 ✅ done (v1.3.0) | ✅ done | TF6100 OPC UA Client(2 Tc2_OpcUa server + 16 Tc3_PLCopen_OpcUa client FBs) |
+| Tc3_IotBase | ~25 | ⏳ pending | TF6701 IoT MQTT 基础库 |
 | Tc3_PackML_V2 | 25 ✅ done (v1.2.4) | ✅ done | OMAC PackML 包装机械（3 接口 + 5 FB + 9 PML_AdminAlarm 方法 + 8 转换 FC） |
 | Tc3_PackML_V3 | 32 ✅ done (v1.0.0, 2025-08-25) | ✅ done | OMAC PackML V3 升级版（2 接口 + 5 FB + 17 PMLAdminAlarm 方法 + 8 转换 FC）。FB_PML* 命名前缀；Alarm 方法 9→17 扩展；StopReason 容器从数组改单值。28/32 ⚠️ not-on-infosys（库新发布,InfoSys 公网索引尚未完整）。 |
 | Tc2_MC2_Camming | 6 | ✅ done (6/6) | 凸轮（走 TF5050 别名） |

@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_UA_ConnectGetStatus" Id="{f7c1c7aa-06eb-5582-9bb2-8cef28e6c34e}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_UA_ConnectGetStatus
+VAR
+    fbCheckMesSession   : UA_ConnectGetStatus;        // 健康监控 FB
+    fbCheckTrigger      : TON;                         // 周期触发器 1 秒
+    bCheckTriggerOut    : BOOL;                        // 周期脉冲
+
+    hMesConnection      : DWORD;                       // 业务会话句柄（由 UA_Connect 设置）
+    bIncludeServiceLevel: BOOL := FALSE;               // 在线置 TRUE 切换深度检查
+    tStatusTimeout      : TIME := T#3S;
+
+    // —— 输出 ——
+    eConnectionStatus   : E_UAConnectionStatus;        // 业务层会话状态
+    eMesServerState     : E_UAServerState;             // 远端 Server 状态
+    nMesServiceLevel    : BYTE;                        // 仅 bIncludeServiceLevel = TRUE 时刷新
+    bStatusDone         : BOOL;
+    bStatusBusy         : BOOL;
+    bStatusError        : BOOL;
+    nStatusErrorId      : DWORD;
+
+    // —— 业务侧锁存量 ——
+    bSessionHealthy     : BOOL;                        // ConnectionStatus = Connected
+    bServerRunning      : BOOL;                        // ServerState = Running
+    bAllowedToWrite     : BOOL;                        // 业务侧写权（合成）
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：CX 控制器与工厂 MES 建立的 OPC UA 会话需要长寿命运行（数月不断）。
+//       网络抖动 / Server 重启 / NAT 会话表过期都可能让会话「假活」——句柄
+//       看上去还在但实际已废。本 demo 用 UA_ConnectGetStatus 每秒探活一次
+//       (默认不开 GetServiceLevel 保持低开销)；业务侧根据 ConnectionStatus +
+//       ServerState 合成 bAllowedToWrite 写权位，避免在 Server Suspended/Test
+//       状态下产生错误的工单状态写入。
+//
+// 价值：用最低开销（不发额外 OPC UA 流量）秒级粒度感知会话健康；区分本地
+//       PLCopen 模块视角的 ConnectionStatus 和远端 Server 自报的 ServerState，
+//       业务侧只在「双绿灯」时允许写。
+//
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU
+//   2. 引用 Tc3_PLCopen_OpcUa（版本 ≥ 3.2.11.0 才有本 FB）
+//   3. 先用 P_Demo_UA_Connect.TcPOU 建一条会话，把得到的 ConnectionHdl 抄到
+//      本程序 hMesConnection（在线写值）
+//   4. 编译 → 登录 → 运行
+//   5. 在线监视：每 1 秒 bStatusDone 闪一下；正常工作时
+//      eConnectionStatus = Connected (0)，eMesServerState = Running (0)，
+//      bSessionHealthy / bServerRunning / bAllowedToWrite 应稳定 TRUE
+//   6. 把网线拔掉 5 秒后插回来：eConnectionStatus 应短暂跳到 ConnectionError
+//      (1)，bSessionHealthy 翻 FALSE；恢复后状态机检测应回到 Connected
+//   7. 在线置 bIncludeServiceLevel := TRUE：nMesServiceLevel 应填入 0-255 的
+//      Server 自评分（OPC UA 标准节点 Server_ServiceLevel）
+//   8. 把 hMesConnection 改成 0（无效句柄）：bStatusError = TRUE，
+//      nStatusErrorId 应为 0xE4DD0112 (UAC_E_INVALIDHDL)
+// =============================================================================
+
+// 周期触发器：每 1 秒 bCheckTriggerOut 高一个 PLC 周期
+fbCheckTrigger(IN := NOT bCheckTriggerOut, PT := T#1S, Q => bCheckTriggerOut);
+
+// 单次调用：所有 VAR_INPUT 显式赋值
+fbCheckMesSession(
+    Execute          := bCheckTriggerOut,
+    ConnectionHdl    := hMesConnection,
+    GetServiceLevel  := bIncludeServiceLevel,
+    Timeout          := tStatusTimeout,
+    Done             => bStatusDone,
+    Busy             => bStatusBusy,
+    Error            => bStatusError,
+    ErrorID          => nStatusErrorId,
+    ConnectionStatus => eConnectionStatus,
+    ServerState      => eMesServerState,
+    ServiceLevel     => nMesServiceLevel
+);
+
+// 业务合成：仅当本地视角 + 远端 Server 都「绿灯」才允许业务写。
+// - bDone 仅维持一周期；用 bStatusError 否决也能避免误判（Error 时输出无效）
+IF bStatusDone AND NOT bStatusError THEN
+    bSessionHealthy := (eConnectionStatus = Connected);
+    bServerRunning  := (eMesServerState = Running);
+END_IF;
+
+bAllowedToWrite := bSessionHealthy AND bServerRunning;
+
+// 工程化提醒：生产代码里 bSessionHealthy = FALSE 时应触发「重连状态机」——
+// 先 UA_Disconnect 旧句柄，等几秒，UA_Connect 取新句柄。本 demo 只演示状态
+// 查询本身，重连状态机参看 P_Demo_UA_Connect.TcPOU。
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

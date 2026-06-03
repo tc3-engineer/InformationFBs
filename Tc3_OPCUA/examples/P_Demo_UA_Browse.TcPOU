@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_UA_Browse" Id="{8637ac21-6b74-5d67-97bf-76f3767f9ff2}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_UA_Browse
+VAR
+    fbBrowseObjects     : UA_Browse;
+    bRequestBrowse      : BOOL := FALSE;             // 在线置 TRUE 触发一次 Browse
+    hMesConnection      : DWORD;                     // 由 UA_Connect 设置
+
+    stBrowseFromRoot    : ST_UABrowseDescription;    // PROGRAM 头部初始化
+    nContinuationIn     : DWORD;                     // 分批拉取游标（首次 = 0）
+    tBrowseTimeout      : TIME := T#10S;             // PDF 无默认，调用方必须给
+
+    aBrowseResults      : ARRAY[1..50] OF ST_UAReferenceDescription;  // 缓冲数组，PROGRAM 级保活
+
+    // —— 输出 ——
+    bBrowseDone         : BOOL;
+    bBrowseBusy         : BOOL;
+    bBrowseError        : BOOL;
+    nBrowseErrorId      : DWORD;
+    nContinuationOut    : DWORD;                     // 非 0 = 还有更多数据
+    nResultCount        : UDINT;                     // 本次返回条数
+
+    bInitDone           : BOOL := FALSE;
+    nTotalBrowsed       : UDINT;                      // 累计浏览到的节点数（含多批）
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：调试期间需要快速摸清远端 TwinCAT OPC UA Server 暴露了哪些节点，又不
+//       想开 UaExpert（例如 Linux 控制器上无 GUI）。本 demo 从 OPC UA 标准
+//       ObjectRoot (i=84) 出发做一次 Browse 列出第一层全部对象节点，结果存入
+//       本地 aBrowseResults 数组供 HMI 显示，并演示 ContinuationPoint 分批拉
+//       取的处理逻辑。
+//
+// 价值：替代「手工开 UaExpert / UaModeler 浏览节点树」的工程流程，把发现 / 配
+//       置 / 调试动作下放到 PLC 程序；可与自动化工具联动（如生成 SCADA 监控
+//       点配置）。同时演示了 ContinuationPoint 的正确使用——大 Server 不会拉
+//       一半就停。
+//
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU
+//   2. 引用 Tc3_PLCopen_OpcUa；先跑通 UA_Connect 拿 hMesConnection
+//   3. 编译 → 登录 → 运行
+//   4. 在线脉冲 bRequestBrowse := TRUE：1-2 秒后 bBrowseDone = TRUE；
+//      nResultCount 应给出 ObjectRoot 下的引用数（TwinCAT Server 通常 3-5 条：
+//      Objects、Types、Views 等）；aBrowseResults[1..nResultCount] 包含每条目
+//      的 stBrowseName（如 'Objects'）和 stNodeId
+//   5. 若 nContinuationOut ≠ 0：业务侧应再次触发本 FB 把它传到 nContinuationIn
+//      读下一批；本 demo 简单累加到 nTotalBrowsed
+//   6. 改 stBrowseFromRoot.stStartingNodeId 指向 aBrowseResults[1].stNodeId.stNodeID
+//      的 Objects 节点，重新触发：会得到 Objects 下的应用对象列表（含 Beckhoff
+//      PLC namespace 入口）
+// =============================================================================
+
+// —— 一次性初始化 BrowseDescription：从 ObjectRoot 出发，正向，列所有 NodeClass ——
+// PDF §5.2.2.13 建议的默认配置：Forward + Hierarchical + IncludeSubtypes +
+// All NodeClass + Full ResultMask
+IF NOT bInitDone THEN
+    // ObjectRoot: namespace 0, identifier "i=84" 的数字形式但 PLCopen 用 NumericIdentifier 字符串
+    stBrowseFromRoot.stStartingNodeId.nNamespaceIndex := 0;
+    stBrowseFromRoot.stStartingNodeId.sIdentifier     := '84';
+    stBrowseFromRoot.stStartingNodeId.eIdentifierType := eUAIdentifierType_Numeric;
+
+    stBrowseFromRoot.eDirection := eUABD_Forward;
+
+    // Hierarchical 引用类型 (NodeID i=33, ns=0)
+    stBrowseFromRoot.stReferenceTypeId.nNamespaceIndex := 0;
+    stBrowseFromRoot.stReferenceTypeId.sIdentifier     := '33';
+    stBrowseFromRoot.stReferenceTypeId.eIdentifierType := eUAIdentifierType_Numeric;
+
+    stBrowseFromRoot.bIncludeSubtypes := TRUE;
+    stBrowseFromRoot.eNodeClass       := eUANCM_All;       // 不过滤 NodeClass
+    stBrowseFromRoot.eResultMask      := eUABRM_All;       // 返回全部字段
+
+    bInitDone := TRUE;
+END_IF;
+
+// —— 单次调用：所有 VAR_INPUT/IN_OUT 显式赋值 ——
+fbBrowseObjects(
+    Execute               := bRequestBrowse,
+    ConnectionHdl         := hMesConnection,
+    BrowseDescription     := stBrowseFromRoot,
+    ContinuationPointIn   := nContinuationIn,
+    Timeout               := tBrowseTimeout,
+    ReferenceDescriptions := ADR(aBrowseResults),
+    Done                  => bBrowseDone,
+    Busy                  => bBrowseBusy,
+    Error                 => bBrowseError,
+    ErrorID               => nBrowseErrorId,
+    ContinuationPointOut  => nContinuationOut,
+    cbBrowseResultCnt     => nResultCount
+);
+
+// —— 分批拉取处理：成功一次后累加计数；若有继续游标则下个周期自动继续 ——
+IF bBrowseDone AND NOT bBrowseError THEN
+    nTotalBrowsed := nTotalBrowsed + nResultCount;
+    // 传递游标到下一次调用；nContinuationOut = 0 表示已读完，下一次回到首页
+    nContinuationIn := nContinuationOut;
+END_IF;
+
+// 工程化提醒：递归 Browse 工具必须加深度上限 + visited NodeID 集合，否则 OPC
+// UA namespace 允许出现环，Browse 不去环会死循环。本 demo 仅演示单层浏览，
+// 递归框架交给业务侧实现。
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

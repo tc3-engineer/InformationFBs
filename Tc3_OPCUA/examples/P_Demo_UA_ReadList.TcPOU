@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_UA_ReadList" Id="{b3d59854-dcaf-5d09-b8ec-89de551ddb59}" SpecialFunc="None">
+    <Declaration><![CDATA[{attribute 'pack_mode' := '0'}
+TYPE ST_MesDataPack :
+STRUCT
+    fTankLevel     : LREAL;            // 8 字节
+    fPressure      : LREAL;            // 8 字节
+    fTemperature   : LREAL;            // 8 字节
+    fFlowRate      : LREAL;            // 8 字节
+    iCurrentOrderId : INT;             // 2 字节
+END_STRUCT
+END_TYPE
+PROGRAM P_Demo_UA_ReadList
+VAR
+    fbBatchReadMes      : UA_ReadList;
+    fbReadTrigger       : TON;                       // 周期触发器 5 秒
+    bReadTriggerOut     : BOOL;
+    bRequestBatchRead   : BOOL;
+
+    hMesConnection      : DWORD;                      // 由 UA_Connect 设置
+    aNodeHdls           : ARRAY[1..nMaxNodeIDsInList] OF DWORD;  // 由 UA_NodeGetHandleList 设置
+
+    // 每节点的属性配置：全部读 Value 属性，不切 IndexRange
+    aReadAttrInfos      : ARRAY[1..nMaxNodeIDsInList] OF ST_UANodeAdditionalInfo;
+    // 每节点数据大小
+    aBytesPerNode       : ARRAY[1..nMaxNodeIDsInList] OF UDINT;
+    // 连续接收缓冲（结构体已加 {pack_mode := '0'} 取消对齐填充，总大小 = 8*4 + 2 = 34）
+    stMesDataPack       : ST_MesDataPack;
+    nTotalReadSize      : UDINT;
+    nNodeCount          : UINT := 5;
+    tBatchReadTimeout   : TIME := T#3S;
+
+    // —— 输出 ——
+    bBatchReadDone      : BOOL;
+    bBatchReadBusy      : BOOL;
+    bBatchReadError     : BOOL;
+    nBatchReadErrorId   : UDINT;
+    nBytesReceived      : UDINT;
+
+    bInitDone           : BOOL := FALSE;
+    nSuccessfulReads    : UDINT;
+    i                   : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：CX 控制器从远端 MES Server 周期采集 5 个生产数据：液位 LREAL、压力
+//       LREAL、温度 LREAL、流量 LREAL、订单号 INT。本 demo 演示 UA_ReadList
+//       的完整正确用法：连续缓冲布局 (用 pack_mode = 0 取消对齐填充) + 每节点
+//       属性配置数组 + 周期触发批量读。
+//
+// 价值：从 5 次 UA_Read 往返压缩到 1 次 UA_ReadList 往返；周期任务执行时间
+//       从数百毫秒压到几十毫秒；OPC UA 网络流量降 5 倍。这是「数据采集层」的
+//       工业标准做法。
+//
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU
+//   2. 引用 Tc3_PLCopen_OpcUa；目标 Server 端 MAIN 程序有 fTankLevel:LREAL /
+//      fPressure:LREAL / fTemperature:LREAL / fFlowRate:LREAL /
+//      iCurrentOrderId:INT 这 5 个变量
+//   3. 先跑通 UA_Connect + UA_GetNamespaceIndex + UA_NodeGetHandleList 拿到
+//      ConnectionHdl + 5 个节点句柄，把句柄抄到 aNodeHdls[1..5]
+//   4. 编译 → 登录 → 运行
+//   5. 在线监视：每 5 秒 bBatchReadDone 闪一下；stMesDataPack 5 个字段应填入
+//      Server 当前值；nBytesReceived 应 = 34（4*8 + 2）；nSuccessfulReads 累计
+//   6. 在 Server 端在线写 fTankLevel := 99.9 + iCurrentOrderId := 555：下个周期
+//      stMesDataPack 应同步变化
+//   7. 把 aNodeHdls[3] 改成 0：bBatchReadError = TRUE，nBatchReadErrorId 应为
+//      0xE4DD0116（本 FB 不区分到具体哪个节点失败）
+// =============================================================================
+
+// —— 一次性初始化：所有节点读 Value 属性，记录每节点大小，算总大小 ——
+IF NOT bInitDone THEN
+    FOR i := 1 TO nNodeCount DO
+        aReadAttrInfos[i].eAttributeID     := eUAAI_Value;
+        aReadAttrInfos[i].nIndexRangeCount := 0;
+    END_FOR;
+
+    // 每节点数据大小（按 ST_MesDataPack 字段顺序）
+    aBytesPerNode[1] := 8;  // fTankLevel  LREAL
+    aBytesPerNode[2] := 8;  // fPressure   LREAL
+    aBytesPerNode[3] := 8;  // fTemperature LREAL
+    aBytesPerNode[4] := 8;  // fFlowRate   LREAL
+    aBytesPerNode[5] := 2;  // iCurrentOrderId INT
+
+    // 总大小必须 = SUM(aBytesPerNode[1..nNodeCount])，结构体 pack_mode='0' 保证字节连续无填充
+    nTotalReadSize := aBytesPerNode[1] + aBytesPerNode[2] + aBytesPerNode[3]
+                    + aBytesPerNode[4] + aBytesPerNode[5];
+
+    bInitDone := TRUE;
+END_IF;
+
+// —— 周期触发：5 秒一次 ——
+fbReadTrigger(IN := NOT bReadTriggerOut, PT := T#5S, Q => bReadTriggerOut);
+bRequestBatchRead := bReadTriggerOut;
+
+// —— 单次调用：所有 VAR_INPUT 显式赋值 ——
+// pVariable 指向结构体首地址，所有节点数据连续写入对应字段
+fbBatchReadMes(
+    Execute       := bRequestBatchRead,
+    ConnectionHdl := hMesConnection,
+    NodeHdlCount  := nNodeCount,
+    NodeHdls      := aNodeHdls,
+    stNodeAddInfo := aReadAttrInfos,
+    pVariable     := ADR(stMesDataPack),
+    cbData        := aBytesPerNode,
+    cbDataTotal   := nTotalReadSize,
+    Timeout       := tBatchReadTimeout,
+    Done          => bBatchReadDone,
+    Busy          => bBatchReadBusy,
+    Error         => bBatchReadError,
+    ErrorID       => nBatchReadErrorId,
+    cbData_R      => nBytesReceived
+);
+
+// 成功计数（用作业务侧「数据新鲜度」指示）
+IF bBatchReadDone AND NOT bBatchReadError THEN
+    nSuccessfulReads := nSuccessfulReads + 1;
+END_IF;
+
+// 工程化提醒：UA_ReadList 整体 Error 时无法精细到具体哪个节点失败（与
+// UA_NodeGetHandleList 不同，本 FB 没 per-node ErrorIDs）。生产代码常常：
+// ① 启动期用 UA_Read 单独验证每个节点；② 运行期再上 UA_ReadList；③ 检测到
+// 整体 Error 时降级回 UA_Read 单独诊断。
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

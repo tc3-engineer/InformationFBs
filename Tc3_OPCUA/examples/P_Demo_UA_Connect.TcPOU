@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_UA_Connect" Id="{b47ce510-2436-512d-91e0-8ced59d82abb}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_UA_Connect
+VAR
+    fbStartupCleanup    : UA_Disconnect;             // 启动期清除幽灵会话用
+    fbConnectToMesUa    : UA_Connect;                // 主体：建会话到 MES 的 OPC UA Server
+    bRequestConnect     : BOOL := FALSE;             // 在线置 TRUE 触发一次建会话
+    bRequestCleanup     : BOOL := FALSE;             // 在线脉冲触发启动清理
+    sMesEndpoint        : STRING(MAX_STRING_LENGTH)  // 目标 endpoint
+                        := 'opc.tcp://192.168.10.50:4840';
+
+    stMesSessionCfg     : ST_UASessionConnectInfo;   // 会话配置（在 PROGRAM 头部初始化）
+
+    // —— UA_Connect 输出 ——
+    hMesConnection      : DWORD;                      // 会话句柄（成功后供后续 FB 使用）
+    bConnectDone        : BOOL;
+    bConnectBusy        : BOOL;
+    bConnectError       : BOOL;
+    nConnectErrorId     : DWORD;
+
+    // —— 启动清理 FB 输出（只用作收尾，不展开）——
+    bCleanupDone        : BOOL;
+    bCleanupBusy        : BOOL;
+    bCleanupError       : BOOL;
+    nCleanupErrorId     : DWORD;
+
+    bInitDone           : BOOL := FALSE;              // 一次性初始化标志
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：CX 控制器作为 OPC UA Client 连到工厂 MES 的 OPC UA Server
+//       (opc.tcp://192.168.10.50:4840) 读取生产订单。本 demo 演示 UA_Connect
+//       的完整正确用法：① 启动期先用 UA_Disconnect(0) 清理上次 PLC 程序
+//       Reset 留下的幽灵会话；② 在线触发 UA_Connect 建一条新会话；③ 拿到
+//       ConnectionHdl 后供后续 UA_Browse / UA_Read / UA_Write 使用。
+//
+// 价值：演示 PLC 启动期清理 + 一次性建会话 + 正确的 Timeout 联动配置（ADS
+//       Timeout > 2 × OPC UA tConnectTimeout）。生产代码可基于本 demo 加上
+//       自动重连状态机（断了就 UA_Disconnect → 等 5 秒 → UA_Connect）。
+//
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU
+//   2. 引用 Tc3_PLCopen_OpcUa（References → Add library）；在 I/O 区添加
+//      OPC UA Virtual Device 并把它的 AMS Net ID 写入 Tc3_PLCopen_OpcUa 库
+//      参数列表的 sNetId（TF6100 v2.x+ 强制要求）
+//   3. 准备一个可达的 OPC UA Server（可用 UaModeler / open62541 quick start
+//      在 192.168.10.50:4840 起一个 demo server，或改 sMesEndpoint 指向你的 server）
+//   4. 编译 → 登录 → 运行
+//   5. 在线脉冲 bRequestCleanup := TRUE：1-2 秒后 bCleanupDone = TRUE，启动期
+//      清理结束；bInitDone 自动置 TRUE 防止重复
+//   6. 在线脉冲 bRequestConnect := TRUE：bConnectBusy 短暂 TRUE，3-12 秒内：
+//      - 成功：bConnectDone = TRUE，hMesConnection ≠ 0，bConnectError = FALSE
+//      - 失败：bConnectError = TRUE，看 nConnectErrorId（0xE4DD0110 = 目标不
+//        可达；0xE4DD0102 = 安全协商失败；0x6 = 没配 Virtual Device）
+//   7. 把 sMesEndpoint 改成一个不可达 IP（'opc.tcp://192.0.2.1:4840'）再次
+//      触发：约 7-10 秒后报 0xE4DD0110 或 0xE4DD0111
+// =============================================================================
+
+// —— 一次性会话配置：匿名访问 + 默认 Best Available 安全 ——
+IF NOT bInitDone THEN
+    stMesSessionCfg.sApplicationName     := 'Tc3OpcUa_Demo_Client';
+    stMesSessionCfg.eSecurityMode        := eUASecurityMsgMode_BestAvailable;
+    stMesSessionCfg.eSecurityPolicyUri   := eUASecurityPolicy_BestAvailable;
+    stMesSessionCfg.eTransportProfileUri := eUATransportProfileUri_UATcp;
+    stMesSessionCfg.stUserIdentTokenType.eUserIdentTokenType := eUAUITT_Anonymous;
+    stMesSessionCfg.tSessionTimeout      := T#30S;
+    stMesSessionCfg.tConnectTimeout      := T#5S;
+    bInitDone := TRUE;
+END_IF;
+
+// —— 阶段 1：启动清理（ConnectionHdl := 0 → 断开本 client 全部既有会话）——
+// PDF §5.2.3.4 明确：传 0 句柄会断开所有连接，专门用作启动清理。
+fbStartupCleanup(
+    Execute       := bRequestCleanup,
+    ConnectionHdl := 0,
+    Timeout       := T#5S,
+    Done          => bCleanupDone,
+    Busy          => bCleanupBusy,
+    Error         => bCleanupError,
+    ErrorID       => nCleanupErrorId
+);
+
+// —— 阶段 2：建会话 ——
+// Timeout = 12s 是 tConnectTimeout (5s) 的 2.4 倍，满足 PDF 推荐
+fbConnectToMesUa(
+    Execute            := bRequestConnect,
+    ServerUrl          := sMesEndpoint,
+    SessionConnectInfo := stMesSessionCfg,
+    Timeout            := T#12S,
+    ConnectionHdl      => hMesConnection,
+    Done               => bConnectDone,
+    Busy               => bConnectBusy,
+    Error              => bConnectError,
+    ErrorID            => nConnectErrorId
+);
+
+// 工程化提醒：生产代码里把 fbConnectToMesUa 包在「连接状态机」里，根据
+// hMesConnection / bConnectError 自动决策重连；不要让业务层裸调本 FB。
+// 业务层只关心 hMesConnection > 0 时可读写。
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

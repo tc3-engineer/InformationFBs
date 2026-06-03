@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_UA_MethodReleaseHandle" Id="{6ecdffcf-5486-5b35-b5af-8bd44544617e}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_UA_MethodReleaseHandle
+VAR
+    fbReleaseStartOrder  : UA_MethodReleaseHandle;
+
+    bRequestReleaseMth   : BOOL := FALSE;          // 在线置 TRUE 触发释放
+    hMesConnection       : DWORD;                   // 由 UA_Connect 设置
+    hStartOrderMethod    : DWORD;                   // 要释放的方法句柄
+    tReleaseMthTimeout   : TIME := T#3S;
+
+    // —— 输出 ——
+    bReleaseMthDone      : BOOL;
+    bReleaseMthBusy      : BOOL;
+    bReleaseMthError     : BOOL;
+    nReleaseMthErrorId   : UDINT;
+
+    bMethodReleased      : BOOL;                    // 业务锁存：方法句柄已确认释放
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：业务停机流程中需要把上电时取得的 OPC UA 方法句柄 hStartOrderMethod
+//       还给 Server。和节点句柄释放同理，如果直接 Disconnect 不显式释放，
+//       Server 兜底清理但 PLC 端 hStartOrderMethod 变量残留陈旧值——下一次启
+//       动若复用，第一次 UA_MethodCall 会拿 UAC_E_INVAL_NODEMETHOD_HDL。
+//
+// 价值：演示「规范停机」中 MethodHdl 的显式释放 + PLC 端句柄变量清零。
+//
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU
+//   2. 引用 Tc3_PLCopen_OpcUa
+//   3. 先用 P_Demo_UA_Connect + P_Demo_UA_MethodGetHandle 跑通到拿到方法句柄；
+//      把 ConnectionHdl / MethodHdl 抄到本程序
+//   4. 编译 → 登录 → 运行
+//   5. 在线脉冲 bRequestReleaseMth := TRUE：100-200 ms 后 bReleaseMthDone = TRUE；
+//      bMethodReleased → TRUE；hStartOrderMethod 被业务侧清零
+//   6. 再次脉冲（句柄已 0）：可能报 0xE4DD0119 (UAC_E_INVAL_NODEMETHOD_HDL)，
+//      业务忽略此错误继续走 Disconnect 即可
+// =============================================================================
+
+// 单次调用：所有 VAR_INPUT 显式赋值
+fbReleaseStartOrder(
+    Execute       := bRequestReleaseMth,
+    ConnectionHdl := hMesConnection,
+    MethodHdl     := hStartOrderMethod,
+    Timeout       := tReleaseMthTimeout,
+    Done          => bReleaseMthDone,
+    Busy          => bReleaseMthBusy,
+    Error         => bReleaseMthError,
+    ErrorID       => nReleaseMthErrorId
+);
+
+// 释放成功后立即把 PLC 端句柄变量清零
+IF bReleaseMthDone AND NOT bReleaseMthError THEN
+    hStartOrderMethod := 0;
+    bMethodReleased   := TRUE;
+END_IF;
+
+// 工程化提醒：生产代码停机流程：业务 Stop → 等 Idle → 循环 UA_NodeReleaseHandle
+// (List) → 循环本 FB 释放方法句柄 → UA_Disconnect → 清零所有句柄变量。
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

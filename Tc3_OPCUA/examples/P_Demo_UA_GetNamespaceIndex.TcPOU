@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_UA_GetNamespaceIndex" Id="{ae38ed18-8696-513c-91ab-c269d50727f7}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_UA_GetNamespaceIndex
+VAR
+    fbResolvePlc1Ns   : UA_GetNamespaceIndex;   // 解析 PLC1 业务 namespace
+    bRequestResolve   : BOOL := FALSE;          // 在线置 TRUE 触发一次解析
+    hMesConnection    : DWORD;                  // 由 UA_Connect 设置
+
+    // 目标 namespace URI：TwinCAT OPC UA Server 第一个 PLC runtime 默认 URI
+    sPlc1NamespaceUri : STRING(MAX_STRING_LENGTH)
+                      := 'urn:BeckhoffAutomation:Ua:PLC1';
+    tResolveTimeout   : TIME := T#3S;
+
+    // —— 输出 ——
+    nPlc1NsIndex      : UINT;                    // 解析得到的索引，存给后续 FB 使用
+    bResolveDone      : BOOL;
+    bResolveBusy      : BOOL;
+    bResolveError     : BOOL;
+    nResolveErrorId   : DWORD;
+
+    // —— 业务侧锁存 ——
+    bNamespaceReady   : BOOL;                    // 后续 NodeID 构造可以放心用 nPlc1NsIndex
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：MES OPC UA 集成场景下，控制器先 UA_Connect 建会话，再用本 FB 把目标
+//       业务 namespace URI 'urn:BeckhoffAutomation:Ua:PLC1' 解析为 namespace
+//       index（Server 端动态分配，每次 Server 启动可能变）。拿到 index 后业务
+//       代码构造 ST_UANodeID 时填到 nNamespaceIndex 字段。
+//
+// 价值：消除了 PLC 客户端硬编码 namespace index 的脆弱性——Server 重启后
+//       namespace 顺序若变化，重连流程跑一遍本 FB 自动适配。生产代码应把
+//       结果存到 GVL 全局结构供整个项目使用。
+//
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU
+//   2. 引用 Tc3_PLCopen_OpcUa；先用 P_Demo_UA_Connect.TcPOU 建一条会话，
+//      把 ConnectionHdl 抄到本程序 hMesConnection（在线写值）
+//   3. 编译 → 登录 → 运行
+//   4. 在线脉冲 bRequestResolve := TRUE：100-500 ms 内 bResolveDone = TRUE，
+//      nPlc1NsIndex 应填入 Server 当前的索引值（TwinCAT OPC UA Server 默认是 4，
+//      自定义 namespace 多的 Server 可能是更大数；用 UaExpert 浏览
+//      Server_NamespaceArray 节点确认）
+//   5. bNamespaceReady 应锁存为 TRUE
+//   6. 把 sPlc1NamespaceUri 改成错误 URI（如 'urn:wrong'）再次脉冲：
+//      bResolveError = TRUE，nResolveErrorId 应为 0xE4DD0109 (UAC_E_NSNAME_NOTFOUND)
+//   7. 把 hMesConnection 改成 0：报 0xE4DD0112 (UAC_E_INVALIDHDL)
+// =============================================================================
+
+// 单次调用：所有 VAR_INPUT 显式赋值
+fbResolvePlc1Ns(
+    Execute        := bRequestResolve,
+    ConnectionHdl  := hMesConnection,
+    NamespaceUri   := sPlc1NamespaceUri,
+    Timeout        := tResolveTimeout,
+    NamespaceIndex => nPlc1NsIndex,
+    Done           => bResolveDone,
+    Busy           => bResolveBusy,
+    Error          => bResolveError,
+    ErrorID        => nResolveErrorId
+);
+
+// 锁存：只在解析成功时把就绪位拉起，业务代码看 bNamespaceReady 决定是否
+// 能开始用 nPlc1NsIndex 构造 NodeID。出错时不刷新（保留上次成功值给业务）。
+IF bResolveDone AND NOT bResolveError THEN
+    bNamespaceReady := TRUE;
+END_IF;
+
+// 工程化提醒：生产代码里通常多次调本 FB 解析多个 URI（用户 PLC1、Custom
+// Companion Spec、第三方 namespace 等），全部存到 GVL 结构；重连时清零
+// bNamespaceReady 强制重新解析。
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

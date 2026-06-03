@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_UA_MethodCall" Id="{c5c82c7e-455b-5f2d-8263-5702076eba23}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_UA_MethodCall
+VAR
+    fbCallStartOrder    : UA_MethodCall;
+
+    bRequestCall        : BOOL := FALSE;            // 在线置 TRUE 触发一次方法调用
+    hMesConnection      : DWORD;                     // 由 UA_Connect 设置
+    hStartOrderMethod   : DWORD;                     // 由 UA_MethodGetHandle 设置
+
+    // —— 输入参数：StartOrder(nOrderId : DINT; sRecipe : STRING) : BOOL ——
+    // 输入 ArgInfo 数组：每个参数一项
+    aInputArgInfos      : ARRAY[1..2] OF ST_UAMethodArgInfo;
+    // 定长输入：DINT 4 字节（nOrderId）
+    nInputOrderId       : DINT := 12345;
+    // 变长输入：STRING（sRecipe）
+    sInputRecipe        : STRING(80) := 'RecipeA_Default';
+
+    // —— 输出参数：BOOL 返回值（操作是否成功）——
+    aOutputArgInfos     : ARRAY[1..1] OF ST_UAMethodArgInfo;
+    // 输出缓冲布局（PDF §5.2.3.7）：DINT 数量 + 4 字节保留 + ArgInfo + 数据
+    // 1 个 BOOL 输出：DINT(4) + reserved(4) + ST_UAMethodArgInfo(~20) + BOOL(1) ≈ 32 字节
+    aOutputBuffer       : ARRAY[1..64] OF BYTE;
+
+    tCallTimeout        : TIME := T#10S;             // 远端可能慢，给 10 秒
+
+    // —— 输出 ——
+    bCallDone           : BOOL;
+    bCallBusy           : BOOL;
+    bCallError          : BOOL;
+    nCallErrorId        : UDINT;
+    nBytesReceived      : UDINT;
+
+    bInitDone           : BOOL := FALSE;
+    nCallsSucceeded     : UDINT;                      // 累计成功次数
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：PLC 客户端通过 OPC UA 调远端 MES Server 的方法启动订单：
+//       'GVL.fbOrderMgr.StartOrder(nOrderId:=12345, sRecipe:='RecipeA_Default')
+//        : BOOL'。返回 TRUE 表示 MES 接受订单。本 demo 演示 UA_MethodCall 的
+//       完整正确用法：ArgInfo 数组构造 + 定长 / 变长输入缓冲组装 + 输出缓冲
+//       布局解析。
+//
+// 价值：本 FB 是全库最复杂的（15 输入），演示工业 RPC 标准模式。生产代码可
+//       基于本 demo 把每个常用方法封装成简洁的辅助 FB。
+//
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU
+//   2. 引用 Tc3_PLCopen_OpcUa；目标 Server 端有 FB_OrderMgr 含
+//      METHOD StartOrder(nOrderId:DINT; sRecipe:STRING):BOOL；GVL 有
+//      实例 fbOrderMgr
+//   3. 先跑通 UA_Connect + UA_GetNamespaceIndex + UA_MethodGetHandle，把
+//      ConnectionHdl / MethodHdl 抄到本程序
+//   4. 编译 → 登录 → 运行
+//   5. 在线脉冲 bRequestCall := TRUE：1-3 秒后 bCallDone = TRUE，
+//      nBytesReceived 应在 30+ 字节；nCallsSucceeded += 1
+//   6. 用 MEMCPY 解析 aOutputBuffer：偏移 0 = nOutputCount(DINT)=1；偏移 12
+//      左右 = 实际 BOOL 返回值；解析后看 MES 是否接受订单
+//   7. 把 hStartOrderMethod 改成 0：bCallError = TRUE，nCallErrorId 应为
+//      0xE4DD0119 (UAC_E_INVAL_NODEMETHOD_HDL)
+//   8. 把 nInputOrderId 改成 Server 不接受的范围（如负数）：可能得
+//      0xE4DD0120 (UAC_E_CALL_FAILED_INVALIDARG)
+// =============================================================================
+
+// —— 一次性 ArgInfo 数组初始化 ——
+IF NOT bInitDone THEN
+    // 输入参数 1：nOrderId : DINT（标量、定长 4 字节）
+    aInputArgInfos[1].DataType  := eUAType_Int32;
+    aInputArgInfos[1].ValueRank := -1;             // -1 = 标量
+    aInputArgInfos[1].nLenData  := 4;
+
+    // 输入参数 2：sRecipe : STRING（标量、变长，nLenData 实际字节数 + 1 含 NUL）
+    aInputArgInfos[2].DataType  := eUAType_String;
+    aInputArgInfos[2].ValueRank := -1;
+    aInputArgInfos[2].nLenData  := TO_DINT(LEN(sInputRecipe)) + 1;
+
+    // 输出参数 1：BOOL（标量、定长 1 字节）
+    // nLenData 必填：告诉 FB 给该输出参数预留 1 字节
+    aOutputArgInfos[1].DataType  := eUAType_Boolean;
+    aOutputArgInfos[1].ValueRank := -1;
+    aOutputArgInfos[1].nLenData  := 1;
+
+    bInitDone := TRUE;
+END_IF;
+
+// —— 单次调用：所有 VAR_INPUT 显式赋值 ——
+// 定长输入指向 nInputOrderId（PROGRAM 级变量，异步保活）
+// 变长输入指向 sInputRecipe（PROGRAM 级变量）
+// 输出缓冲指向 aOutputBuffer（PROGRAM 级数组）
+fbCallStartOrder(
+    Execute                  := bRequestCall,
+    ConnectionHdl            := hMesConnection,
+    MethodHdl                := hStartOrderMethod,
+    nNumberOfInputArguments  := 2,
+    pInputArgInfo            := ADR(aInputArgInfos),
+    cbInputArgInfo           := SIZEOF(aInputArgInfos),
+    pInputArgData            := ADR(nInputOrderId),
+    cbInputArgData           := SIZEOF(nInputOrderId),
+    pInputWriteData          := ADR(sInputRecipe),
+    cbInputWriteData         := TO_UDINT(LEN(sInputRecipe)) + 1,
+    nNumberOfOutputArguments := 1,
+    pOutputArgInfo           := ADR(aOutputArgInfos),
+    cbOutputArgInfo          := SIZEOF(aOutputArgInfos),
+    pOutputArgInfoAndData    := ADR(aOutputBuffer),
+    cbOutputArgInfoAndData   := SIZEOF(aOutputBuffer),
+    Timeout                  := tCallTimeout,
+    cbRead_R                 => nBytesReceived,
+    Done                     => bCallDone,
+    Busy                     => bCallBusy,
+    Error                    => bCallError,
+    ErrorID                  => nCallErrorId
+);
+
+// —— 成功后解析输出缓冲 ——
+IF bCallDone AND NOT bCallError THEN
+    nCallsSucceeded := nCallsSucceeded + 1;
+    // 业务侧用 MEMCPY 按 PDF §5.2.3.7 布局抽取：
+    //   偏移 0..3       : nOutputCount (DINT)
+    //   偏移 4..7       : 4 字节保留
+    //   偏移 8..(8+SIZEOF(ST_UAMethodArgInfo))  : 输出参数 ArgInfo
+    //   偏移 +N        : 实际数据
+    // 本 demo 略去解析代码，业务侧按需添加 MEMCPY 抽取 BOOL 返回值。
+END_IF;
+
+// 工程化提醒：本 FB 复杂度高；推荐做法是把每个常用方法封装成专用辅助 FB，
+// 业务层只看「输入业务字段 → 等 Done → 取输出业务字段」三段式调用。
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

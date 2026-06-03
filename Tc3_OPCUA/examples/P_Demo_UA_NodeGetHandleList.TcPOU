@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_UA_NodeGetHandleList" Id="{a5747129-98af-510f-8f2a-8b42a28d5522}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_UA_NodeGetHandleList
+VAR
+    fbGetMesNodes      : UA_NodeGetHandleList;
+
+    bRequestBatchGet   : BOOL := FALSE;             // 在线置 TRUE 触发一次批量取
+    hMesConnection     : DWORD;                      // 由 UA_Connect 设置
+    nMesPlc1NsIndex    : UINT;                       // 由 UA_GetNamespaceIndex 设置
+
+    // 要批量取的 5 个节点；nMaxNodeIDsInList 默认 10，5 个在内
+    aTargetNodeIds     : ARRAY[1..nMaxNodeIDsInList] OF ST_UANodeID;
+    nNodesToGet        : UINT := 5;
+    tBatchTimeout      : TIME := T#5S;
+
+    // —— 输出 ——
+    aResultHdls        : ARRAY[1..nMaxNodeIDsInList] OF DWORD;
+    aResultErrs        : ARRAY[1..nMaxNodeIDsInList] OF DWORD;
+    nBatchBytesRead    : UDINT;
+    bBatchDone         : BOOL;
+    bBatchBusy         : BOOL;
+    bBatchError        : BOOL;
+    nBatchErrorId      : DWORD;
+
+    // 业务侧统计
+    nSucceededNodes    : UDINT;
+    nFailedNodes       : UDINT;
+    bAllNodesReady     : BOOL;
+    bInitDone          : BOOL := FALSE;
+
+    i                  : UDINT;                       // 遍历循环索引
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：CX 控制器从远端 MES Server 采集 5 个生产数据节点（液位、压力、温度、
+//       流量、订单号）。启动期一次批量取齐句柄供后续 UA_ReadList 周期读用，
+//       替代 5 次串行 UA_NodeGetHandle 的 5 次往返。
+//
+// 价值：从 5 次往返压缩到 1 次往返；启动期时间从数秒压到一两次往返时间；演示
+//       批量调用的「部分失败」处理（某个 NodeID 拼错时不影响其他节点解析）。
+//
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU
+//   2. 引用 Tc3_PLCopen_OpcUa；目标 Server 端 PLC 有 MAIN.fTankLevel / fPressure
+//      / fTemperature / fFlowRate / iCurrentOrderId 5 个变量
+//   3. 先跑通 UA_Connect + UA_GetNamespaceIndex，把 ConnectionHdl /
+//      NamespaceIndex 抄到本程序
+//   4. 编译 → 登录 → 运行
+//   5. 在线脉冲 bRequestBatchGet := TRUE：500-1000 ms 后 bBatchDone = TRUE；
+//      aResultHdls[1..5] 应填入非 0 句柄；nSucceededNodes = 5，bAllNodesReady = TRUE
+//   6. 把 aTargetNodeIds[3].sIdentifier 改成 'MAIN.fNotExist' 重新触发：
+//      bBatchError = TRUE 但 [1][2][4][5] 仍成功；aResultErrs[3] = 0xE4DD0113；
+//      nSucceededNodes = 4、nFailedNodes = 1
+// =============================================================================
+
+// —— 一次性 NodeID 数组构造 ——
+IF NOT bInitDone THEN
+    aTargetNodeIds[1].nNamespaceIndex := nMesPlc1NsIndex;
+    aTargetNodeIds[1].sIdentifier     := 'MAIN.fTankLevel';
+    aTargetNodeIds[1].eIdentifierType := eUAIdentifierType_String;
+
+    aTargetNodeIds[2].nNamespaceIndex := nMesPlc1NsIndex;
+    aTargetNodeIds[2].sIdentifier     := 'MAIN.fPressure';
+    aTargetNodeIds[2].eIdentifierType := eUAIdentifierType_String;
+
+    aTargetNodeIds[3].nNamespaceIndex := nMesPlc1NsIndex;
+    aTargetNodeIds[3].sIdentifier     := 'MAIN.fTemperature';
+    aTargetNodeIds[3].eIdentifierType := eUAIdentifierType_String;
+
+    aTargetNodeIds[4].nNamespaceIndex := nMesPlc1NsIndex;
+    aTargetNodeIds[4].sIdentifier     := 'MAIN.fFlowRate';
+    aTargetNodeIds[4].eIdentifierType := eUAIdentifierType_String;
+
+    aTargetNodeIds[5].nNamespaceIndex := nMesPlc1NsIndex;
+    aTargetNodeIds[5].sIdentifier     := 'MAIN.iCurrentOrderId';
+    aTargetNodeIds[5].eIdentifierType := eUAIdentifierType_String;
+
+    bInitDone := TRUE;
+END_IF;
+
+// —— 单次调用：所有 VAR_INPUT 显式赋值 ——
+fbGetMesNodes(
+    Execute       := bRequestBatchGet,
+    ConnectionHdl := hMesConnection,
+    NodeIDCount   := nNodesToGet,
+    NodeIDs       := aTargetNodeIds,
+    Timeout       := tBatchTimeout,
+    NodeHdls      => aResultHdls,
+    NodeErrorIDs  => aResultErrs,
+    cbData_R      => nBatchBytesRead,
+    Done          => bBatchDone,
+    Busy          => bBatchBusy,
+    Error         => bBatchError,
+    ErrorID       => nBatchErrorId
+);
+
+// —— 部分失败处理：遍历每节点结果 ——
+IF bBatchDone THEN
+    nSucceededNodes := 0;
+    nFailedNodes    := 0;
+    FOR i := 1 TO nNodesToGet DO
+        IF aResultErrs[i] = 0 THEN
+            nSucceededNodes := nSucceededNodes + 1;
+        ELSE
+            nFailedNodes := nFailedNodes + 1;
+            // 业务侧据此重试单节点（用 UA_NodeGetHandle 单节点版本）
+        END_IF;
+    END_FOR;
+    bAllNodesReady := (nFailedNodes = 0);
+END_IF;
+
+// 工程化提醒：生产代码通常把 aResultHdls 直接喂给 UA_ReadList 周期批量读
+// （配套 ARRAY[1..N] OF ST_UANodeAdditionalInfo + 单一连续缓冲区）。
+// 失败节点用 UA_NodeGetHandle 单独重试，避免整批失败重做。
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

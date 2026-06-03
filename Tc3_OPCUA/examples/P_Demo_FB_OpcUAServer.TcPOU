@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_OpcUAServer" Id="{d42f1592-4f5a-5966-be5c-5d0702c205bf}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_OpcUAServer
+VAR
+    fbOpcUaServerCtrl   : FB_OpcUAServer;        // legacy Tc2_OpcUa 库的 Server 管理 FB
+    eOperation          : E_OpcUAServerOption    // 在线写入选定操作
+                        := eOPCUAServerOption_ServerInfo;
+    bTriggerOperation   : BOOL := FALSE;         // 在线置 TRUE 触发一次操作
+    sServerAmsNetId     : T_AmsNetId := '';      // 本机 Server 用空串
+    tAdsTimeout         : TIME := T#5S;          // ADS 超时（PDF 推荐 ≥ 2 倍连接超时）
+
+    stServerStats       : ST_OpcUAServerInfo;    // 仅 ServerInfo 模式有意义
+    bOperationBusy      : BOOL;                  // 操作进行中标志
+    bOperationError     : BOOL;                  // 操作失败标志
+    nLastErrorId        : UDINT;                 // ADS / OPC UA Client 错误码
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：CX 控制器同时跑 TF6100 OPC UA Server 给 MES 推数据。运维需要从 PLC
+//       侧主动查 Server 健康状态（当前会话数、累计被拒数）以及在紧急情况下
+//       重启 OPC UA 接口（例如证书过期补发后让客户端重新握手）。本 demo 用单
+//       一 FB 实例覆盖三种最常用的操作：ServerInfo（默认，监控统计）、Restart
+//       （重启 OPC UA 接口）、Shutdown（紧急关停）。
+//
+// 价值：替代「远程登录控制器 → 重启 Windows 服务 → 等几十秒」这条传统运维链
+//       路。把动作下放到 PLC 程序，HMI 一键即触发，并可与业务联动（例如检测
+//       到第三方客户端连续 N 次安全拒绝时自动 Shutdown）。
+//
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU
+//   2. 引用 Tc2_OpcUa（References → Add library）；确认目标机已装 TF6100
+//      Runtime 并 TcOpcUaServer.exe 正在运行
+//   3. 编译 → 登录 → 运行
+//   4. 在线监视：保持 eOperation = eOPCUAServerOption_ServerInfo，按
+//      bTriggerOperation := TRUE 一次；几毫秒后看 bOperationBusy 落回 FALSE、
+//      bOperationError = FALSE，stServerStats.nCurrentSessionCount 应等于
+//      当前连进 OPC UA Server 的客户端数（用 UaExpert 等连一个上去观察增减）
+//   5. 把 eOperation 改成 eOPCUAServerOption_Restart，再次 bTriggerOperation
+//      := TRUE：所有 UaExpert 等客户端会被踢开，几秒后可重新连上
+//   6. 危险动作演示：eOperation 改为 eOPCUAServerOption_Shutdown 后触发，
+//      OPC UA 接口被关；此后无法再用本 FB 把它启回来（PDF §5.1.2.1 警告），
+//      只能 kill TcOpcUaServer.exe + 重启 TwinCAT 系统服务才能恢复 — 演示环
+//      境下慎用
+// =============================================================================
+
+// 单次调用：所有 VAR_INPUT 显式赋值；bExecute 用电平触发即可（FB 内部走上升沿）
+fbOpcUaServerCtrl(
+    sNetId              := sServerAmsNetId,
+    bExecute            := bTriggerOperation,
+    eOpcUAServerOption  := eOperation,
+    tTimeout            := tAdsTimeout,
+    stOpcUAServerInfo   => stServerStats,
+    bBusy               => bOperationBusy,
+    bError              => bOperationError,
+    nErrorId            => nLastErrorId
+);
+
+// 工程化提醒：操作完成（bBusy 落沿）后通常把 bTriggerOperation 拉回 FALSE，
+// 为下一次操作准备；本 demo 留给在线手工复位以便观察 bError / nLastErrorId
+// 保持到下一次触发。
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

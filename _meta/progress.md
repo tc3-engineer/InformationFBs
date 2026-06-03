@@ -1934,3 +1934,21 @@
 2026-06-03T00:00:00Z | Tc2_DALI       | part102_power_control                   | FB_DALIV2StairwellDimmer                 | verified | PDF + InfoSys library-root (per-FB topic not on InfoSys)
 2026-06-03T00:00:00Z | Tc2_DALI       | part102_settings                        | FB_DALIV2GetSettings                     | verified | PDF + InfoSys library-root (per-FB topic not on InfoSys)
 2026-06-03T00:00:00Z | Tc2_DALI       | part202_emergency_high                  | FB_DALIV2EmergencyLightingDT             | verified | PDF + InfoSys library-root (per-FB topic not on InfoSys)
+2026-06-03T00:00:00Z | Tc3_OPCUA      | tc2_opcua                               | FB_OpcUAServer                           | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_OPCUA      | tc2_opcua                               | FB_OpcUAServerGetStatus                  | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_OPCUA      | tc3_plcopen_opcua                       | UA_Browse                                | verified | PDF single-source (not-on-infosys)
+2026-06-03T00:00:00Z | Tc3_OPCUA      | tc3_plcopen_opcua                       | UA_Connect                               | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_OPCUA      | tc3_plcopen_opcua                       | UA_ConnectGetStatus                      | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_OPCUA      | tc3_plcopen_opcua                       | UA_Disconnect                            | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_OPCUA      | tc3_plcopen_opcua                       | UA_GetNamespaceIndex                     | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_OPCUA      | tc3_plcopen_opcua                       | UA_HistoryUpdate                         | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_OPCUA      | tc3_plcopen_opcua                       | UA_MethodCall                            | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_OPCUA      | tc3_plcopen_opcua                       | UA_MethodGetHandle                       | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_OPCUA      | tc3_plcopen_opcua                       | UA_MethodReleaseHandle                   | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_OPCUA      | tc3_plcopen_opcua                       | UA_NodeGetHandle                         | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_OPCUA      | tc3_plcopen_opcua                       | UA_NodeGetHandleList                     | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_OPCUA      | tc3_plcopen_opcua                       | UA_NodeReleaseHandle                     | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_OPCUA      | tc3_plcopen_opcua                       | UA_NodeReleaseHandleList                 | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_OPCUA      | tc3_plcopen_opcua                       | UA_Read                                  | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_OPCUA      | tc3_plcopen_opcua                       | UA_ReadList                              | verified | PDF single-source (not-on-infosys)
+2026-06-03T00:00:00Z | Tc3_OPCUA      | tc3_plcopen_opcua                       | UA_Write                                 | verified | PDF + InfoSys cross-verified
