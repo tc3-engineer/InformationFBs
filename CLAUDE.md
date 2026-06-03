@@ -131,6 +131,20 @@ verify_doc.py 现在检的不仅是 VAR 一致性，还包括：
 3. 进度记录：每完成一篇追加一行到 `_meta/progress.md`
 4. 索引同步：每完成一批立即更新 `<library>/README.md` 与 `_meta/library-catalog.md`
 
+## 自主推动协议（2026-06-03，用户授权 standing order）
+
+用户已授权 Claude **自主推动项目至全部库完成**，无需逐步征求许可。运作模式：
+
+1. **PR 自动合并**：所有由 Claude 创建的 PR，待自验证（`verify_doc.py` + `lint_tcpou.py` 全 PASS）+ 主控复检通过 + 无未解决 review comments 后，**直接 `mcp__github__merge_pull_request`**。无 CI workflow 配置（`get_check_runs` 总返回 0）属预期，不阻塞合并。
+2. **PR review comments**：若有（如 Codex 自动 review）→ 投入即修，修后回复，再合并。无未解决线程才合。
+3. **分支生命周期**：本仓只有 `main` + 当前活跃工作分支 `claude/great-gauss-VuKkM` 两条。合并后立即同步本地 main、删工作分支；下一波再 `git checkout -b claude/great-gauss-VuKkM` 续接。**永远不开多条并行分支**。
+4. **波次推进**：合并一波即启动下一波，按"中小体量优先稳定推进 → 巨型库拆波处理"原则选库。每波 6-8 个 Opus agent 并行（`Agent` tool, model=opus, subagent_type=general-purpose），共用 `/tmp/wave_brief.md` 作业 brief，agent 间路径完全隔离。
+5. **agent 边界（铁律，不许放松）**：每个 agent 只允许写 `<自己的库>/**` + 可选 `_meta/tools/_<lower_lib>_*.py`；**禁止 git 操作 / 禁止改共享 meta**（`progress.md` / `library-catalog.md` / `blocked.md` / `CLAUDE.md` / `_templates/**` / 公共工具 `parse_toc.py` / `verify_doc.py` / `extract_section.py` / `fetch_pdf.py` / `infosys_fetch.py` / `lint_tcpou.py`）。主控统一集成。
+6. **集成与复检**：每个 agent 完成 → 主控**独立**跑 `verify_doc` 全篇 + `lint_tcpou` 全例程 + 占位短语扫描 + 抽查 InfoSys URL 真实性 + 双源差异点对账，全绿后 `git add <Lib>/ _meta/progress.md _meta/library-catalog.md _meta/tools/_<lib>_*.py`（**绝不 `-A`**，避免抓到其他 agent 在制品）→ commit → push。
+7. **质量审计周期**：每完成 1 波 + 每 5-10 个库做一次全仓审计：`lint_tcpou --check-unique` GUID 唯一性、charter 占位短语黑名单（`（详见 PDF）` / `请对照 PDF 第` / `见上方功能简述` 等）、英文整句残留、元信息 10 行必填、TcPOU 例程可运行性（如 Filter 的 Configure 模式）。发现问题→全局修复→广回归→提 PR。
+8. **stub / unavailable 库的判定**：PDF 正文 `FB_` token=0 且无 "PLC API"/"Function blocks" 章节 → 记入 `_meta/blocked.md` 的 no-plc-api 段，catalog 标 ⚠️ no-plc-api，不浪费 agent 工时。
+9. **何时回头问用户**：① 发现需要破坏性回退既有已合并工作；② 工具改动会影响 >50% 文档且不确定方向；③ 库归属判定有歧义（如某 FB 属于 X 还是 Y）；④ PDF URL 全失效需要手工提供；⑤ 用户的指令前置假设与现状冲突。其他情况一路推到全完成。
+
 ## 文档模板
 
 `_templates/fb-template.md`（文档主体）与 `_templates/tcpou-program.xml`（例程，TwinCAT 3 原生 `.TcPOU` 骨架）。
