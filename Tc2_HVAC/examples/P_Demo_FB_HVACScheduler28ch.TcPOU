@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_HVACScheduler28ch" Id="{e8c04fcd-8362-5be6-a833-105ae1f7ef89}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_HVACScheduler28ch
+VAR
+    fb : FB_HVACScheduler28ch;                            // 被演示 FB 实例
+    eDataSecurityType_in : E_HVACDataSecurityType ;
+    bSetDefault_in : BOOL := FALSE;
+    bEnable_in : BOOL := FALSE;
+    dtSystemTime_in : DT ;
+    uiOffsetBefore_in : UINT := 0;
+    bReset_in : BOOL := FALSE;
+    bOutput_out : BOOL;
+    bEdgeOn_out : BOOL;
+    bEdgeOff_out : BOOL;
+    tNextOn_out : TIME;
+    tNextOff_out : TIME;
+    bInvalidParameter_out : BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================================
+// Tc2_HVAC.FB_HVACScheduler28ch 演示程序
+// ============================================================================
+// 场景：把本 FB 实例化到一个 PLC 程序里，每周期单次调用；按需要把 VAR_INPUT 与
+//       VAR_IN_OUT 接到工程信号；VAR_OUTPUT 写入对应监视变量。
+// 价值：使用本 FB 比手写状态机 / 控制算法节省大量代码；与 Tc2_HVAC 体系内其它 FB
+//       直接对接，命名 / 持久化 / 模式仲裁等约定一致。具体语义见 FB_HVACScheduler28ch.md 主文档。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_HVAC（References → Add library）
+//   3. 编译 → 登录 → 运行
+//   4. 在线写各 *_in 输入信号触发 FB；在线 monitor *_out 引脚观察状态
+// ============================================================================
+
+fb(
+    eDataSecurityType := eDataSecurityType_in,
+    bSetDefault := bSetDefault_in,
+    bEnable := bEnable_in,
+    dtSystemTime := dtSystemTime_in,
+    uiOffsetBefore := uiOffsetBefore_in,
+    bReset := bReset_in,
+    bOutput => bOutput_out,
+    bEdgeOn => bEdgeOn_out,
+    bEdgeOff => bEdgeOff_out,
+    tNextOn => tNextOn_out,
+    tNextOff => tNextOff_out,
+    bInvalidParameter => bInvalidParameter_out
+);]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

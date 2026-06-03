@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_JsonDomParser_IsFalse" Id="{7e370998-2a3e-5244-9496-ce381cf81dbe}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_JsonDomParser_IsFalse
+VAR
+    fbParser : FB_JsonDomParser; // 父 FB 实例
+    v : SJsonValue;
+    vRet : BOOL; // 返回值监视
+    bTrigger : BOOL := FALSE; // 在线置 TRUE 触发一次调用
+    bTriggerPrev : BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：对解析后的不可信 JSON 数据做类型验证（如校验外部下发字段是否真是 False 类型）。
+// 价值：避免 Get* 在类型不匹配时返回未定义值导致后续计算异常。
+// 验证：登录 PLC 在线写 bTrigger := TRUE 触发，monitor 返回值/输出参数。具体步骤见下方注释。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_JsonXml（References → Add library）
+//   3. 编译 → 登录 → 运行；按 verify 注释里给出的在线写值操作
+// =============================================================================
+
+// 上升沿触发一次方法调用并观察输出。
+IF bTrigger AND NOT bTriggerPrev THEN
+    vRet := fbParser.IsFalse(
+        v := v
+    );
+END_IF;
+bTriggerPrev := bTrigger;]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

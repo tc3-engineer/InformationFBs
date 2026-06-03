@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_DALIV2Terminate" Id="{6dab48ca-483d-5e2c-9b77-feb7c17a704b}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_DALIV2Terminate
+VAR
+    fbFB_DALIV2Terminate        : FB_DALIV2Terminate;
+    stCommandBuffer : ST_DALIV2CommandBuffer;
+
+    bTrigger        : BOOL;
+    nLampAddr        : BYTE := 0;
+
+
+    bBusy           : BOOL;
+    bErr            : BOOL;
+    nErrId          : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：结束寻址模式。
+//
+// 价值：调试清理用。
+//
+// 验证步骤：
+//   1. 先用 P_Demo_FB_DALIV2Initialise 让灯具进入寻址模式。
+//   2. 在线 bTrigger 触发本 FB；等 bBusy 回 FALSE。
+//   3. 灯具应立即退出寻址模式，普通调光命令恢复响应。
+// =============================================================================
+fbFB_DALIV2Terminate(
+    bStart           := bTrigger,
+    nAddr            := nLampAddr,
+    eAddrType        := eDALIV2AddrTypeShort,
+    eCommandPriority := eDALIV2CommandPriorityMiddle,
+    stCommandBuffer  := stCommandBuffer
+);
+
+bBusy  := fbFB_DALIV2Terminate.bBusy;
+bErr   := fbFB_DALIV2Terminate.bError;
+nErrId := fbFB_DALIV2Terminate.nErrorId;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

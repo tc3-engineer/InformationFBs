@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_DALIV2Dimmer1Switch" Id="{e20ae81d-d50a-5f9b-b03a-4f8d0698233c}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_DALIV2Dimmer1Switch
+VAR
+    fbDimmer1Switch  : FB_DALIV2Dimmer1Switch;
+    stCommandBuffer  : ST_DALIV2CommandBuffer;        // 共享给 KL68x1 通信 FB
+
+    // —— 业务化按钮 / 数值输入 ——
+    bRoomPanelButton : BOOL;                          // 房间面板单按钮（短按开关 / 长按调光）
+    bForceOn         : BOOL;                          // HMI 强制开灯
+    bForceOff        : BOOL;                          // HMI / 消防联动强制关灯
+    bHmiSetLevel     : BOOL;                          // HMI "确认设亮度" 按钮
+    nHmiTargetLevel  : BYTE := 200;                   // HMI 设的目标亮度 (0..254)
+
+    // —— 调光配置（房间一组灯，组 #5）——
+    nGroupAddr       : BYTE := 5;                     // 灯组号 5
+    nMasterShortAddr : BYTE := 12;                    // 组内 short addr 12 作 master
+    nMinDimLevel     : BYTE := 100;                   // 调光下限（~10%，避免几乎全黑）
+    nMaxDimLevel     : BYTE := 254;                   // 调光上限（100%）
+
+    // —— 监控 ——
+    nActualLevel     : BYTE;                          // 当前实际亮度（HMI 显示）
+    bBusy            : BOOL;                          // 命令派发中
+    bErr             : BOOL;                          // 命令出错
+    nErr             : UDINT;                         // 错误号
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：办公区房间 #5 灯组（约 8 个 DALI 镇流器，组号 5）。墙面单按钮接到
+//       PLC 的 bRoomPanelButton 输入：短按一下开 / 关，长按渐进调光，长按
+//       到顶 / 到底停 500 ms 方便锁定，松开按钮保持当前亮度。同时 HMI 上
+//       也能强制开 / 关、或直接拖滑块设到指定亮度。
+//
+// 价值：替代约 100 行手写的按钮短按 / 长按识别 + 调光状态机 + DALI 命令排
+//       队代码。一个 FB 实例 + 几行 VAR 即覆盖楼宇照明面板 80% UX 需求。
+//
+// 验证步骤：
+//   1. 先在另一程序 P_Demo_FB_KL6821Communication 里把通信链建好，
+//      stCommandBuffer 在本程序和那个程序之间共享（同一 VAR）。
+//   2. 在 SysMgr 把 KL6821 端子物理 IO 链好，引用 Tc2_DALI 库，编译，
+//      登录，运行。
+//   3. 等 fbKL6821Communication.bLineIsInitialized = TRUE。
+//   4. 在线写 bRoomPanelButton := TRUE 保持 ~200 ms 后写 FALSE（模拟短按）
+//      → 灯应开 / 关切换；如果原本关灯（亮度 0）现在开到 nOnValueWithout-
+//      MemoryMode = 200（约 80% 亮度）。
+//   5. 在线写 bRoomPanelButton := TRUE 保持 > 400 ms 不动 → 灯进入调光，
+//      nActualLevel 应在 100..254 之间往返；到 254 时停 500 ms 再回弹下降。
+//   6. 调光中途短暂写 FALSE 再写 TRUE 模拟"短松一下" → 调光方向反转。
+//   7. 写 nHmiTargetLevel := 150，然后 bHmiSetLevel 一次上升沿 → 灯立即调
+//      到 150（约 60% 亮度），nActualLevel 应该刷到 150。
+//   8. 写 bForceOff := TRUE 一次上升沿 → 灯关。
+//   9. 故障注入：把 nGroupAddr 改为 30（不存在的组）→ bErr = TRUE，
+//      nErr 显示设备无响应错误。
+// =============================================================================
+
+// 单次完整调用：所有 VAR_INPUT 显式赋值
+fbDimmer1Switch(
+    bSwitchDimm                := bRoomPanelButton,        // 主按钮
+    bOn                        := bForceOn,                // HMI 强制开
+    bOff                       := bForceOff,               // HMI / 联动强制关
+    bSetDimmValue              := bHmiSetLevel,            // HMI 确认按钮
+    nDimmValue                 := nHmiTargetLevel,         // HMI 目标亮度
+    tSwitchOverTime            := T#400MS,                 // 长按 400 ms 进调光
+    tCycleDelay                := T#500MS,                 // 边界停 500 ms
+    bMemoryModeOn              := TRUE,                    // 下次开灯回到上次亮度
+    nOnValueWithoutMemoryMode  := 200,                     // 备用开灯亮度（约 80%）
+    nAddr                      := nGroupAddr,
+    eAddrType                  := eDALIV2AddrTypeGroup,    // 组寻址（控整组灯）
+    nMasterDevAddr             := nMasterShortAddr,        // 组内 master
+    nMinLevelMasterDev         := nMinDimLevel,
+    nMaxLevelMasterDev         := nMaxDimLevel,
+    tCycleActualLevelMasterDev := T#1S,                    // 每秒后台查 master 亮度
+    stCommandBuffer            := stCommandBuffer
+);
+
+nActualLevel := fbDimmer1Switch.nActualLevelMasterDev;
+bBusy        := fbDimmer1Switch.bBusy;
+bErr         := fbDimmer1Switch.bError;
+nErr         := fbDimmer1Switch.nErrorId;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

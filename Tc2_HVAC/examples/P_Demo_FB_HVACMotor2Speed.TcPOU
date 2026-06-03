@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_HVACMotor2Speed" Id="{a0b4948b-e8af-5ac2-9a17-5bf4617d22a6}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_HVACMotor2Speed
+VAR
+    fb : FB_HVACMotor2Speed;                            // 被演示 FB 实例
+    eDataSecurityType_in : E_HVACDataSecurityType ;
+    bSetDefault_in : BOOL := FALSE;
+    bEnable_in : BOOL := FALSE;
+    bAutoSpeed1_in : BOOL := FALSE;
+    bAutoSpeed2_in : BOOL := FALSE;
+    eCtrlModeActuator_in : E_HVACActuatorMode ;
+    bMotorProtecSpeed1_in : BOOL := FALSE;
+    bMotorProtecSpeed2_in : BOOL := FALSE;
+    bFeedbContactorSpeed1_in : BOOL := FALSE;
+    bFeedbContactorSpeed2_in : BOOL := FALSE;
+    bFeedbProcess_in : BOOL := FALSE;
+    bRepairSwitch_in : BOOL := FALSE;
+    bManSwitch_in : BOOL := FALSE;
+    bCtrlVoltage_in : BOOL := FALSE;
+    bReset_in : BOOL := FALSE;
+    tStartDelay_io : TIME := T#0S;
+    tStopDelay_io : TIME := T#0S;
+    tDelayFeedbContactorSpeed1_io : TIME := T#0S;
+    tDelayFeedbContactorSpeed2_io : TIME := T#0S;
+    tFeedbProcessTimer_io : TIME := T#0S;
+    tDelayFeedbProcess_io : TIME := T#0S;
+    tDelaySpeed1_io : TIME := T#0S;
+    tDelaySpeed1ToSpeed2_io : TIME := T#0S;
+    tDelaySpeed2ToSpeed1_io : TIME := T#0S;
+    bMotorSpeed1_out : BOOL;
+    bMotorSpeed2_out : BOOL;
+    byState_out : BYTE;
+    bStateAutoSpeed1_out : BOOL;
+    bStateAutoSpeed2_out : BOOL;
+    bStateRepairSwitch_out : BOOL;
+    bStateManSwitch_out : BOOL;
+    eStateModeActuator_out : E_HVACActuatorMode;
+    bErrorGeneral_out : BOOL;
+    byError_out : BYTE;
+    bErrorMotorprotecSpeed1_out : BOOL;
+    bErrorMotorprotecSpeed2_out : BOOL;
+    bErrorFeedbContactorSpeed1_out : BOOL;
+    bErrorFeedbContactorSpeed2_out : BOOL;
+    bErrorFeedbProcess_out : BOOL;
+    bInvalidParameter_out : BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================================
+// Tc2_HVAC.FB_HVACMotor2Speed 演示程序
+// ============================================================================
+// 场景：把本 FB 实例化到一个 PLC 程序里，每周期单次调用；按需要把 VAR_INPUT 与
+//       VAR_IN_OUT 接到工程信号；VAR_OUTPUT 写入对应监视变量。
+// 价值：使用本 FB 比手写状态机 / 控制算法节省大量代码；与 Tc2_HVAC 体系内其它 FB
+//       直接对接，命名 / 持久化 / 模式仲裁等约定一致。具体语义见 FB_HVACMotor2Speed.md 主文档。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_HVAC（References → Add library）
+//   3. 编译 → 登录 → 运行
+//   4. 在线写各 *_in 输入信号触发 FB；在线 monitor *_out 引脚观察状态
+// ============================================================================
+
+fb(
+    eDataSecurityType := eDataSecurityType_in,
+    bSetDefault := bSetDefault_in,
+    bEnable := bEnable_in,
+    bAutoSpeed1 := bAutoSpeed1_in,
+    bAutoSpeed2 := bAutoSpeed2_in,
+    eCtrlModeActuator := eCtrlModeActuator_in,
+    bMotorProtecSpeed1 := bMotorProtecSpeed1_in,
+    bMotorProtecSpeed2 := bMotorProtecSpeed2_in,
+    bFeedbContactorSpeed1 := bFeedbContactorSpeed1_in,
+    bFeedbContactorSpeed2 := bFeedbContactorSpeed2_in,
+    bFeedbProcess := bFeedbProcess_in,
+    bRepairSwitch := bRepairSwitch_in,
+    bManSwitch := bManSwitch_in,
+    bCtrlVoltage := bCtrlVoltage_in,
+    bReset := bReset_in,
+    tStartDelay := tStartDelay_io,
+    tStopDelay := tStopDelay_io,
+    tDelayFeedbContactorSpeed1 := tDelayFeedbContactorSpeed1_io,
+    tDelayFeedbContactorSpeed2 := tDelayFeedbContactorSpeed2_io,
+    tFeedbProcessTimer := tFeedbProcessTimer_io,
+    tDelayFeedbProcess := tDelayFeedbProcess_io,
+    tDelaySpeed1 := tDelaySpeed1_io,
+    tDelaySpeed1ToSpeed2 := tDelaySpeed1ToSpeed2_io,
+    tDelaySpeed2ToSpeed1 := tDelaySpeed2ToSpeed1_io,
+    bMotorSpeed1 => bMotorSpeed1_out,
+    bMotorSpeed2 => bMotorSpeed2_out,
+    byState => byState_out,
+    bStateAutoSpeed1 => bStateAutoSpeed1_out,
+    bStateAutoSpeed2 => bStateAutoSpeed2_out,
+    bStateRepairSwitch => bStateRepairSwitch_out,
+    bStateManSwitch => bStateManSwitch_out,
+    eStateModeActuator => eStateModeActuator_out,
+    bErrorGeneral => bErrorGeneral_out,
+    byError => byError_out,
+    bErrorMotorprotecSpeed1 => bErrorMotorprotecSpeed1_out,
+    bErrorMotorprotecSpeed2 => bErrorMotorprotecSpeed2_out,
+    bErrorFeedbContactorSpeed1 => bErrorFeedbContactorSpeed1_out,
+    bErrorFeedbContactorSpeed2 => bErrorFeedbContactorSpeed2_out,
+    bErrorFeedbProcess => bErrorFeedbProcess_out,
+    bInvalidParameter => bInvalidParameter_out
+);]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

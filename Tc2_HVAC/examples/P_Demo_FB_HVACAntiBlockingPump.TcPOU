@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_HVACAntiBlockingPump" Id="{6a1e5b01-e7d5-505f-9c9c-dc7414ff85c5}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_HVACAntiBlockingPump
+VAR
+    fb : FB_HVACAntiBlockingPump;                            // 被演示 FB 实例
+    eDataSecurityType_in : E_HVACDataSecurityType ;
+    bSetDefault_in : BOOL := FALSE;
+    bEnable_in : BOOL := FALSE;
+    bDisable_in : BOOL := FALSE;
+    bIn_in : BOOL := FALSE;
+    dtSystemTime_in : DT ;
+    bReset_in : BOOL := FALSE;
+    eAntiBlockingMode_io : E_HVACAntiBlockingMode ;
+    iHoursDowntime_io : INT := 0;
+    iDayWeekly_io : INT := 0;
+    iHour_io : INT := 0;
+    iMinute_io : INT := 0;
+    iLengthImpulse_io : INT := 0;
+    bOut_out : BOOL;
+    bOutAndAntiBlocking_out : BOOL;
+    bQAntiBlocking_out : BOOL;
+    bInvalidParameter_out : BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================================
+// Tc2_HVAC.FB_HVACAntiBlockingPump 演示程序
+// ============================================================================
+// 场景：把本 FB 实例化到一个 PLC 程序里，每周期单次调用；按需要把 VAR_INPUT 与
+//       VAR_IN_OUT 接到工程信号；VAR_OUTPUT 写入对应监视变量。
+// 价值：使用本 FB 比手写状态机 / 控制算法节省大量代码；与 Tc2_HVAC 体系内其它 FB
+//       直接对接，命名 / 持久化 / 模式仲裁等约定一致。具体语义见 FB_HVACAntiBlockingPump.md 主文档。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_HVAC（References → Add library）
+//   3. 编译 → 登录 → 运行
+//   4. 在线写各 *_in 输入信号触发 FB；在线 monitor *_out 引脚观察状态
+// ============================================================================
+
+fb(
+    eDataSecurityType := eDataSecurityType_in,
+    bSetDefault := bSetDefault_in,
+    bEnable := bEnable_in,
+    bDisable := bDisable_in,
+    bIn := bIn_in,
+    dtSystemTime := dtSystemTime_in,
+    bReset := bReset_in,
+    eAntiBlockingMode := eAntiBlockingMode_io,
+    iHoursDowntime := iHoursDowntime_io,
+    iDayWeekly := iDayWeekly_io,
+    iHour := iHour_io,
+    iMinute := iMinute_io,
+    iLengthImpulse := iLengthImpulse_io,
+    bOut => bOut_out,
+    bOutAndAntiBlocking => bOutAndAntiBlocking_out,
+    bQAntiBlocking => bQAntiBlocking_out,
+    bInvalidParameter => bInvalidParameter_out
+);]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_HVACSummerNightCoolingEx" Id="{21c5d1d7-a0e8-59ad-8c70-b8502685dae3}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_HVACSummerNightCoolingEx
+VAR
+    fb : FB_HVACSummerNightCoolingEx;                            // 被演示 FB 实例
+    eDataSecurityType_in : E_HVACDataSecurityType ;
+    bSetDefault_in : BOOL := FALSE;
+    bEnable_in : BOOL := FALSE;
+    rOutsideTemp_in : REAL := 0.0;
+    rRoomTemp_in : REAL := 0.0;
+    rSetpointRoomTemp_in : REAL := 0.0;
+    bReset_in : BOOL := FALSE;
+    rMinimumOutsideTemp_io : REAL := 0.0;
+    rDifferOutsideTempRoomTempOn_io : REAL := 0.0;
+    rDifferOutsideTempRoomTempOff_io : REAL := 0.0;
+    rDifferRoomTempSetpointRoomTempOn_io : REAL := 0.0;
+    udiSecMaxRuntime_io : UDINT := 0;
+    bOn_out : BOOL;
+    bStateDifferOutsideTempMinOutsideTemp_out : BOOL;
+    rStateDifferOutsideTempMinOutsideTemp_out : REAL;
+    bStateDifferRoomTempOutsideTemp_out : BOOL;
+    rStateDifferRoomTempOutsideTemp_out : REAL;
+    bStateDifferRoomTempSetpointRoomTemp_out : BOOL;
+    rStateDifferRoomTempSetpointRoomTemp_out : REAL;
+    udiSecRT_MaxRuntime_out : UDINT;
+    bInvalidParameter_out : BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================================
+// Tc2_HVAC.FB_HVACSummerNightCoolingEx 演示程序
+// ============================================================================
+// 场景：把本 FB 实例化到一个 PLC 程序里，每周期单次调用；按需要把 VAR_INPUT 与
+//       VAR_IN_OUT 接到工程信号；VAR_OUTPUT 写入对应监视变量。
+// 价值：使用本 FB 比手写状态机 / 控制算法节省大量代码；与 Tc2_HVAC 体系内其它 FB
+//       直接对接，命名 / 持久化 / 模式仲裁等约定一致。具体语义见 FB_HVACSummerNightCoolingEx.md 主文档。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_HVAC（References → Add library）
+//   3. 编译 → 登录 → 运行
+//   4. 在线写各 *_in 输入信号触发 FB；在线 monitor *_out 引脚观察状态
+// ============================================================================
+
+fb(
+    eDataSecurityType := eDataSecurityType_in,
+    bSetDefault := bSetDefault_in,
+    bEnable := bEnable_in,
+    rOutsideTemp := rOutsideTemp_in,
+    rRoomTemp := rRoomTemp_in,
+    rSetpointRoomTemp := rSetpointRoomTemp_in,
+    bReset := bReset_in,
+    rMinimumOutsideTemp := rMinimumOutsideTemp_io,
+    rDifferOutsideTempRoomTempOn := rDifferOutsideTempRoomTempOn_io,
+    rDifferOutsideTempRoomTempOff := rDifferOutsideTempRoomTempOff_io,
+    rDifferRoomTempSetpointRoomTempOn := rDifferRoomTempSetpointRoomTempOn_io,
+    udiSecMaxRuntime := udiSecMaxRuntime_io,
+    bOn => bOn_out,
+    bStateDifferOutsideTempMinOutsideTemp => bStateDifferOutsideTempMinOutsideTemp_out,
+    rStateDifferOutsideTempMinOutsideTemp => rStateDifferOutsideTempMinOutsideTemp_out,
+    bStateDifferRoomTempOutsideTemp => bStateDifferRoomTempOutsideTemp_out,
+    rStateDifferRoomTempOutsideTemp => rStateDifferRoomTempOutsideTemp_out,
+    bStateDifferRoomTempSetpointRoomTemp => bStateDifferRoomTempSetpointRoomTemp_out,
+    rStateDifferRoomTempSetpointRoomTemp => rStateDifferRoomTempSetpointRoomTemp_out,
+    udiSecRT_MaxRuntime => udiSecRT_MaxRuntime_out,
+    bInvalidParameter => bInvalidParameter_out
+);]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

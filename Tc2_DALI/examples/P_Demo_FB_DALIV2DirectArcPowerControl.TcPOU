@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_DALIV2DirectArcPowerControl" Id="{3cf5e0bc-405c-5225-ad10-c289751e7079}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_DALIV2DirectArcPowerControl
+VAR
+    fbDAPC           : FB_DALIV2DirectArcPowerControl;
+    stCommandBuffer  : ST_DALIV2CommandBuffer;
+
+    bTrigger         : BOOL;                          // 上升沿触发一次 DAPC
+    nDimAddr         : BYTE := 12;                    // 目标单灯 short addr
+    nAddrType        : E_DALIV2AddrType := eDALIV2AddrTypeShort;
+    nTargetLevel     : BYTE := 200;                   // 目标亮度（DALI 索引）
+
+    bBusy            : BOOL;
+    bErr             : BOOL;
+    nErrId           : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：HMI 数值滑块调光——操作员在画面上拖一个 0..254 的滑块设亮度，按
+//       "应用" 按钮（bTrigger 上升沿）把当前 nTargetLevel 直接 DAPC 给单
+//       灯 short addr 12 （或组 / 广播）。也用于自动化场景里的"定时把某盏
+//       灯设到指定亮度"等场合。
+//
+// 价值：DAPC 是 DALI 协议最核心、最频繁使用的命令；本 FB 把字节级 frame
+//       构造、地址编码、排队、错误处理全部封装成一行调用。替代约 50 行手
+//       写代码。
+//
+// 验证步骤：
+//   1. 先把 P_Demo_FB_KL6821Communication 工程跑起来，stCommandBuffer 在
+//      本程序和它之间共享（同一全局 / 同一程序内变量）。
+//   2. 引用 Tc2_DALI 库，编译，登录，运行。
+//   3. 等 fbKL6821Communication.bLineIsInitialized = TRUE。
+//   4. 在线写 nTargetLevel := 200，然后 bTrigger 一次上升沿 → DALI 短地
+//      址 12 灯应在灯具 FADE TIME 时间内调到 200 亮度（默认 FADE TIME = 4
+//      即 2.83 秒）。
+//   5. 写 nTargetLevel := 0，bTrigger 上升沿 → 灯应关灭。
+//   6. 写 nAddrType := eDALIV2AddrTypeBroadcast，nTargetLevel := 128，
+//      bTrigger → 整条 DALI 线的所有灯都跳到亮度 128（约物理 10%）。
+//   7. 故障注入：写 nDimAddr := 60（不存在的短地址）→ bErr = TRUE，
+//      nErrId 显示设备无响应错误。
+//   8. 想看"瞬时跳变"效果：先用 FB_DALIV2SetFadeTime 把目标灯 FADE TIME
+//      设为 0，然后再 DAPC——亮度变化几乎瞬时（仍受 DALI 帧时间 ~14 ms
+//      限制）。
+// =============================================================================
+// 单次完整调用：bStart 上升沿触发，bBusy 期间忽略后续上升沿
+fbDAPC(
+    bStart           := bTrigger,
+    nAddr            := nDimAddr,
+    eAddrType        := nAddrType,
+    eCommandPriority := eDALIV2CommandPriorityMiddle,
+    nArcPowerLevel   := nTargetLevel,
+    stCommandBuffer  := stCommandBuffer
+);
+
+bBusy  := fbDAPC.bBusy;
+bErr   := fbDAPC.bError;
+nErrId := fbDAPC.nErrorId;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

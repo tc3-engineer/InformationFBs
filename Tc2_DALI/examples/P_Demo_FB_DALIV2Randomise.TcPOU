@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_DALIV2Randomise" Id="{5cd9e533-7733-5a21-ad26-fc0e2e242061}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_DALIV2Randomise
+VAR
+    fbFB_DALIV2Randomise        : FB_DALIV2Randomise;
+    stCommandBuffer : ST_DALIV2CommandBuffer;
+
+    bTrigger        : BOOL;
+    nLampAddr        : BYTE := 0;
+
+
+    bBusy           : BOOL;
+    bErr            : BOOL;
+    nErrId          : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：生成所有寻址模式灯具的随机地址。
+//
+// 价值：底层寻址命令。
+//
+// 验证步骤：
+//   1. 通信 FB 跑起；编译；登录。
+//   2. 先用 P_Demo_FB_DALIV2Initialise 让灯进入寻址模式。
+//   3. 在线 bTrigger 触发本 FB；等 bBusy 回 FALSE。
+//   4. 用 P_Demo_FB_DALIV2QueryRandomAddress 应能读到非零的 24-bit 随机地址。
+// =============================================================================
+fbFB_DALIV2Randomise(
+    bStart           := bTrigger,
+    nAddr            := nLampAddr,
+    eAddrType        := eDALIV2AddrTypeShort,
+    eCommandPriority := eDALIV2CommandPriorityMiddle,
+    stCommandBuffer  := stCommandBuffer
+);
+
+bBusy  := fbFB_DALIV2Randomise.bBusy;
+bErr   := fbFB_DALIV2Randomise.bError;
+nErrId := fbFB_DALIV2Randomise.nErrorId;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_DALIV2GetSettings" Id="{caea2c28-56fe-5c78-99f3-6aba37d39e6b}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_DALIV2GetSettings
+VAR
+    fbFB_DALIV2GetSettings        : FB_DALIV2GetSettings;
+    stCommandBuffer : ST_DALIV2CommandBuffer;
+
+    bTrigger        : BOOL;
+    nLampAddr        : BYTE := 0;
+    bStartRead       : BOOL;
+    bAbortRead       : BOOL;
+    stSettings       : ST_DALIV2DeviceSettings;
+    bReadDone        : BOOL;
+
+    bBusy           : BOOL;
+    bErr            : BOOL;
+    nErrId          : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：上线验收：读 short addr 0 灯具的全部配置寄存器。
+//
+// 价值：一次拿全 ~30 项配置，HMI / 验收。
+//
+// 验证步骤：
+//   1. 通信 FB 跑起；编译；登录。
+//   2. 在线 bStartRead 一次上升沿；fb.bBusy 应 TRUE 约 1 秒。
+//   3. bDone = TRUE 后检查 stSettings 各字段：MAX VALUE / MIN VALUE / FADE TIME / 短地址等。
+//   4. 与设计文档对比；不符项列入整改清单。
+// =============================================================================
+fbFB_DALIV2GetSettings(
+    bStart           := bStartRead,
+    bAbort           := bAbortRead,
+    nAddr            := nLampAddr,
+    eAddrType        := eDALIV2AddrTypeShort,
+    eCommandPriority := eDALIV2CommandPriorityLow,
+    stCommandBuffer  := stCommandBuffer
+);
+
+bBusy  := fbFB_DALIV2GetSettings.bBusy;
+bErr   := fbFB_DALIV2GetSettings.bError;
+nErrId := fbFB_DALIV2GetSettings.nErrorId;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

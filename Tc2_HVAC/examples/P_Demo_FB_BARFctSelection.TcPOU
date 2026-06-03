@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_BARFctSelection" Id="{3cfa90cd-ac7f-5b1d-b84e-525971ca45ec}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_BARFctSelection
+VAR
+    fb : FB_BARFctSelection;                            // 被演示 FB 实例
+    eDataSecurityType_in : E_HVACDataSecurityType ;
+    bSetDefault_in : BOOL := FALSE;
+    bEnable_in : BOOL := FALSE;
+    bPipeSystem_in : BOOL := FALSE;
+    bFeedbHeatMedium_in : BOOL := FALSE;
+    bFeedbCoolMedium_in : BOOL := FALSE;
+    bDewPoint_in : BOOL := FALSE;
+    rRoomTemp_in : REAL := 0.0;
+    uiChangeOverDelay_io : UINT := 0;
+    eCtrlFct_out : E_BARCtrlFct;
+    uiReqHeating_out : UINT;
+    uiReqCooling_out : UINT;
+    udiRT_ChangeOverDelay_out : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================================
+// Tc2_HVAC.FB_BARFctSelection 演示程序
+// ============================================================================
+// 场景：把本 FB 实例化到一个 PLC 程序里，每周期单次调用；按需要把 VAR_INPUT 与
+//       VAR_IN_OUT 接到工程信号；VAR_OUTPUT 写入对应监视变量。
+// 价值：使用本 FB 比手写状态机 / 控制算法节省大量代码；与 Tc2_HVAC 体系内其它 FB
+//       直接对接，命名 / 持久化 / 模式仲裁等约定一致。具体语义见 FB_BARFctSelection.md 主文档。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_HVAC（References → Add library）
+//   3. 编译 → 登录 → 运行
+//   4. 在线写各 *_in 输入信号触发 FB；在线 monitor *_out 引脚观察状态
+// ============================================================================
+
+fb(
+    eDataSecurityType := eDataSecurityType_in,
+    bSetDefault := bSetDefault_in,
+    bEnable := bEnable_in,
+    bPipeSystem := bPipeSystem_in,
+    bFeedbHeatMedium := bFeedbHeatMedium_in,
+    bFeedbCoolMedium := bFeedbCoolMedium_in,
+    bDewPoint := bDewPoint_in,
+    rRoomTemp := rRoomTemp_in,
+    uiChangeOverDelay := uiChangeOverDelay_io,
+    eCtrlFct => eCtrlFct_out,
+    uiReqHeating => uiReqHeating_out,
+    uiReqCooling => uiReqCooling_out,
+    udiRT_ChangeOverDelay => udiRT_ChangeOverDelay_out
+);]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

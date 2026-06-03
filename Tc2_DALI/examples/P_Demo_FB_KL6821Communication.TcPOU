@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_KL6821Communication" Id="{a728c91e-7f01-573a-adbd-69697ac156c7}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_KL6821Communication
+VAR
+    // —— DALI 端子配置 + 通信 FB ——
+    fbKL6821Config          : FB_KL6821Config;            // 端子参数化（KBus WD / DI / 电源）
+    fbKL6821Communication   : FB_KL6821Communication;     // DALI 命令调度核心
+    stCommandBuffer         : ST_DALIV2CommandBuffer;     // 所有上层命令 FB 共享的命令缓冲区
+
+    // —— SysMgr 链到 KL6821 真实过程映像 ——
+    stTerminalIn  AT %I*    : ST_KL6821InData;            // KL6821 → PLC 字节区
+    stTerminalOut AT %Q*    : ST_KL6821OutData;           // PLC → KL6821 字节区
+
+    // —— Config FB 与 Communication FB 之间的内部桥（不接物理 IO）——
+    stBridgeIn              : ST_KL6821InData;
+    stBridgeOut             : ST_KL6821OutData;
+
+    // —— 控制位（HMI 在线写）——
+    bStartConfig            : BOOL := TRUE;               // 默认上电就配置端子
+    bResetMaxDemand         : BOOL;                        // 上升沿清最大占用记录
+    bResetOverflow          : BOOL;                        // 上升沿清溢出计数
+    bResetImageLock         : BOOL;                        // 上升沿解锁过程映像（DI 触发后）
+
+    // —— 监控输出（HMI / 在线观察）——
+    arrBufDemand            : ARRAY[0..2] OF BYTE;        // [0]high [1]mid [2]low 当前占用率
+    arrBufMaxDemand         : ARRAY[0..2] OF BYTE;        // 历史最大占用率
+    arrBufOverflow          : ARRAY[0..2] OF UINT;        // 溢出累计
+    bLineBusy               : BOOL;                        // 调度核心忙
+    bLineReady              : BOOL;                        // 初始化完成（HMI 等待此位再下发命令）
+    bDI1Active              : BOOL;                        // 端子 DI1 触发中
+    bDI2Active              : BOOL;                        // 端子 DI2 触发中
+    bImageLocked            : BOOL;                        // 过程映像被锁
+    bCollision              : BOOL;                        // DALI 总线冲突
+    bPowerFail              : BOOL;                        // 端子 DALI 电源故障
+    bDALIShort              : BOOL;                        // DALI 短路
+    nLastErrorId            : UDINT;                       // 最近一次错误号
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：CX 工控机 + KL6821 K-Bus 端子接 DALI 总线，控制楼宇 / 工厂照明镇流
+//       器、LED 驱动、应急灯具等。本程序是 DALI 子系统的"入口"——所有上
+//       层 FB_DALIV2* 命令 FB（调光 / 设场景 / 应急测试 / 颜色控制 等）都
+//       通过共享的 stCommandBuffer 把命令排给本通信 FB，由本 FB 按三个优
+//       先级队列下发到 KL6821。
+//
+// 价值：把 DALI 物理层时序、命令排队、三优先级调度、端子层错误（短路 /
+//       电源故障 / 冲突）全部封装。不用本 FB 要写约 500 行 KL6821 字节级
+//       DALI 主机驱动；用它后上层应用直接 fbAddToGroup(bStart:=...) 即可。
+//
+// 验证步骤：
+//   1. 在 System Manager 把 KL6821 输入字节区链到 stTerminalIn，输出字节
+//      区链到 stTerminalOut；本 FB 与 fbKL6821Config 必须在同一 PLC 任务，
+//      并且这个任务必须比上层命令 FB 的任务快（理想 2 ms / 上限 6 ms）。
+//   2. 引用 Tc2_DALI 库，编译，登录，运行。
+//   3. 在线观察：上电后 1-2 个周期内 bLineReady 应从 FALSE 变 TRUE。
+//      bImageLocked 应为 FALSE，arrBufOverflow 全 0。
+//   4. 按一下 KL6821 端子的 DI1 → bDI1Active = TRUE 且 bImageLocked = TRUE
+//      （端子上预配置的 DALI 命令已自动发出，但 PLC 侧过程映像被锁）。
+//   5. 给 bResetImageLock 一次上升沿（在线写 TRUE 再写 FALSE）→ bImageLocked
+//      回 FALSE。
+//   6. 把 DALI 双线短接看 bDALIShort → TRUE、nLastErrorId = 16#0006。
+//   7. 长期挂机，若 arrBufOverflow 任一元素 > 0 说明命令密度过高或本 FB 任务
+//      节拍过慢——把上层命令 FB 的并发降下来或缩短本 FB 任务节拍。
+// =============================================================================
+
+// —— 第一步：调用配置 FB（必须先于通信 FB；二者在同一任务）——
+fbKL6821Config(
+    bConfigurate           := bStartConfig,
+    eCommandKBusWatchdog   := eDALIV2CommandDoNothing,
+    eCommandDI1RisingEdge  := eDALIV2CommandOff,
+    eCommandDI1FallingEdge := eDALIV2CommandDoNothing,
+    eCommandDI2RisingEdge  := eDALIV2CommandRecallMaxLevel,
+    eCommandDI2FallingEdge := eDALIV2CommandDoNothing,
+    ePowerSupplyMode       := eDALIV2PowerSupplyModeOn,
+    stInDataTerminal       := stTerminalIn,
+    stOutDataTerminal      := stTerminalOut,
+    stInData               := stBridgeIn,
+    stOutData              := stBridgeOut
+);
+
+// —— 第二步：每周期无条件调用通信 FB（不要放进 IF 分支）——
+fbKL6821Communication(
+    bResetMaximumDemandCounter := bResetMaxDemand,
+    bResetOverflowCounter      := bResetOverflow,
+    bResetInactiveProcessImage := bResetImageLock,
+    nOptions                    := 0,
+    stInData                    := stBridgeIn,
+    stOutData                   := stBridgeOut,
+    stCommandBuffer             := stCommandBuffer
+);
+
+// —— 把输出镜像到顶层 VAR，方便 HMI / 在线观察 ——
+arrBufDemand    := fbKL6821Communication.arrBufferDemandMeter;
+arrBufMaxDemand := fbKL6821Communication.arrBufferMaximumDemandMeter;
+arrBufOverflow  := fbKL6821Communication.arrBufferOverflowCounter;
+bLineBusy       := fbKL6821Communication.bLineIsBusy;
+bLineReady      := fbKL6821Communication.bLineIsInitialized;
+bDI1Active      := fbKL6821Communication.bDigitalInput1Active;
+bDI2Active      := fbKL6821Communication.bDigitalInput2Active;
+bImageLocked    := fbKL6821Communication.bProcessImageInactive;
+bCollision      := fbKL6821Communication.bCollisionError;
+bPowerFail      := fbKL6821Communication.bPowerSupplyError;
+bDALIShort      := fbKL6821Communication.bShortCircuit;
+nLastErrorId    := fbKL6821Communication.nErrorId;
+
+// 上层命令 FB（FB_DALIV2*）放在更慢的任务里，它们的 stCommandBuffer 输入都
+// 连到本程序的 stCommandBuffer 这一变量，详见各上层 FB 的例程文件。
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

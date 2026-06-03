@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_JsonSaxReader_Parse" Id="{c6601ac9-a610-504f-99e6-9b9ba476767d}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_JsonSaxReader_Parse
+VAR
+    fbParser : FB_JsonSaxReader; // 父 FB 实例
+    ipHdl : ITcJsonSaxHandler;
+    sJson : STRING(255);
+    hrErrorCode : HRESULT;
+    vRet : BOOL; // 返回值监视
+    bTrigger : BOOL := FALSE; // 在线置 TRUE 触发一次调用
+    bTriggerPrev : BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：解析超大 JSON 日志（>1MB），全文 DOM 会爆 router 内存。
+// 价值：事件驱动按 token 流处理，内存与文档大小无关。
+// 验证：登录 PLC 在线写 bTrigger := TRUE 触发，monitor 返回值/输出参数。具体步骤见下方注释。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_JsonXml（References → Add library）
+//   3. 编译 → 登录 → 运行；按 verify 注释里给出的在线写值操作
+// =============================================================================
+
+// 上升沿触发一次方法调用并观察输出。
+IF bTrigger AND NOT bTriggerPrev THEN
+    vRet := fbParser.Parse(
+        ipHdl := ipHdl,
+        sJson := sJson,
+        hrErrorCode => hrErrorCode
+    );
+END_IF;
+bTriggerPrev := bTrigger;]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

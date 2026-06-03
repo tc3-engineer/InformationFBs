@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_DALIV2SetSystemFailureLevel" Id="{0b38b5f1-f656-5884-82e8-17f8f3622780}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_DALIV2SetSystemFailureLevel
+VAR
+    fbFB_DALIV2SetSystemFailureLevel        : FB_DALIV2SetSystemFailureLevel;
+    stCommandBuffer : ST_DALIV2CommandBuffer;
+
+    bTrigger        : BOOL;
+    nLampAddr        : BYTE := 0;
+
+    nNewFailureLevel : BYTE := 254;
+
+    bBusy           : BOOL;
+    bErr            : BOOL;
+    nErrId          : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：应急照明：把 SYSTEM FAILURE LEVEL 设为 254，总线断时灯全亮。
+//
+// 价值：灯具内置的故障保险，PLC 失效时仍保证安全照明。
+//
+// 验证步骤：
+//   1. 通信 FB 跑起；编译；登录。
+//   2. 在线 bTrigger 一次上升沿；等 bBusy 回 FALSE。
+//   3. 用 P_Demo_FB_DALIV2QuerySystemFailureLevel 查 → 应为 254。
+//   4. 实测：把 KL6821 拔下来或断 K-Bus，等 ~400 ms → 灯具应自动全亮到 254。
+// =============================================================================
+fbFB_DALIV2SetSystemFailureLevel(
+    bStart           := bTrigger,
+    nAddr            := nLampAddr,
+    eAddrType        := eDALIV2AddrTypeShort,
+    eCommandPriority := eDALIV2CommandPriorityMiddle,
+    nFailureLevel    := nNewFailureLevel,
+    stCommandBuffer  := stCommandBuffer
+);
+
+bBusy  := fbFB_DALIV2SetSystemFailureLevel.bBusy;
+bErr   := fbFB_DALIV2SetSystemFailureLevel.bError;
+nErrId := fbFB_DALIV2SetSystemFailureLevel.nErrorId;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

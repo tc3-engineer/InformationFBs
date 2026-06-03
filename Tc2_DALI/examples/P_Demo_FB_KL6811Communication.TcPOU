@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_KL6811Communication" Id="{4f4e3ce2-a085-595d-a16e-6680cf6bc4a7}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_KL6811Communication
+VAR
+    fbKL6811Comm     : FB_KL6811Communication;       // KL6811 DALI 命令调度
+    stCommandBuffer  : ST_DALIV2CommandBuffer;        // 与上层命令 FB 共享
+
+    // —— SysMgr 链 KL6811 真实过程映像 ——
+    stTerminalIn  AT %I* : ST_KL6811InData;
+    stTerminalOut AT %Q* : ST_KL6811OutData;
+
+    // 内部桥（不接物理 IO）
+    stBridgeIn       : ST_KL6811InData;
+    stBridgeOut      : ST_KL6811OutData;
+
+    bResetMaxDemand  : BOOL;                          // 上升沿清最大占用
+    bResetOverflow   : BOOL;                          // 上升沿清溢出计数
+
+    // 监控
+    arrDemand        : ARRAY[0..2] OF BYTE;
+    arrMaxDemand     : ARRAY[0..2] OF BYTE;
+    arrOverflow      : ARRAY[0..2] OF UINT;
+    bLineBusy        : BOOL;
+    bLineReady       : BOOL;
+    bErr             : BOOL;
+    nErr             : BYTE;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：老 KL6811 K-Bus DALI 端子。本程序是 KL6811 DALI 子系统在 PLC 侧的命
+//       令调度核心，等价于 P_Demo_FB_KL6821Communication 但接 KL6811 端子。
+//       工程已经投入运行不便换硬件 / 仅做基础调光不需要 IEC 62386 扩展场景。
+//
+// 价值：把 DALI 1.0 物理层时序、命令排队、三优先级调度封装。上层 FB_DALIV2*
+//       命令 FB 共享 stCommandBuffer 即可下发命令；新工程建议优先 KL6821。
+//
+// 验证步骤：
+//   1. SysMgr 链 KL6811 输入字节到 stTerminalIn，输出字节到 stTerminalOut；
+//      本 FB 与 FB_KL6811ConfigNew 在同一 PLC 任务，节拍 ≤ 6 ms。
+//   2. 引用 Tc2_DALI 库，编译，登录，运行。
+//   3. 上电后 bLineReady 应在 1-2 个周期内从 FALSE 变 TRUE。
+//   4. 用配套的上层命令 FB 例程（如 P_Demo_FB_DALIV2DirectArcPowerControl）下
+//      发一个调光命令，观察 arrDemand[1]（middle 缓冲区）短暂上升又回落。
+//   5. 长期挂机看 arrOverflow 全 0；若非 0 说明命令密度太高需缩短任务节拍。
+// =============================================================================
+
+// 注：完整工程需在本 FB 之前调用 FB_KL6811ConfigNew 配置端子，把 ConfigNew
+//     的 stInData / stOutData 输出连到本 FB 的 stDALIInData / stDALIOutData。
+//     本例为简化只展示通信 FB 调用——实际工程必须配 ConfigNew。
+
+fbKL6811Comm(
+    bResetMaximumDemandCounter := bResetMaxDemand,
+    bResetOverflowCounter      := bResetOverflow,
+    stDALIInData               := stBridgeIn,
+    stDALIOutData              := stBridgeOut,
+    stCommandBuffer            := stCommandBuffer
+);
+
+arrDemand    := fbKL6811Comm.arrBufferDemandMeter;
+arrMaxDemand := fbKL6811Comm.arrBufferMaximumDemandMeter;
+arrOverflow  := fbKL6811Comm.arrBufferOverflowCounter;
+bLineBusy    := fbKL6811Comm.bLineIsBusy;
+bLineReady   := fbKL6811Comm.bLineIsInitialized;
+bErr         := fbKL6811Comm.bError;
+nErr         := fbKL6811Comm.nErrorId;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

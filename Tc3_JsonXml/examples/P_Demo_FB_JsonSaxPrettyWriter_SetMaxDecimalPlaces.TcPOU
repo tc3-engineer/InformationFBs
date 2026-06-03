@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_JsonSaxPrettyWriter_SetMaxDecimalPlaces" Id="{2b7dc1a4-0138-5041-aafc-b3f4eb112fb8}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_JsonSaxPrettyWriter_SetMaxDecimalPlaces
+VAR
+    fbParser : FB_JsonSaxPrettyWriter; // 父 FB 实例
+    decimalPlaces : DINT;
+    vRet : HRESULT; // 返回值监视
+    bTrigger : BOOL := FALSE; // 在线置 TRUE 触发一次调用
+    bTriggerPrev : BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：把 LREAL 浮点序列化精度从默认改成 6 位（适合工程数据）或 17 位（适合无损往返）。
+// 价值：一次调用改变全局序列化精度。
+// 验证：登录 PLC 在线写 bTrigger := TRUE 触发，monitor 返回值/输出参数。具体步骤见下方注释。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_JsonXml（References → Add library）
+//   3. 编译 → 登录 → 运行；按 verify 注释里给出的在线写值操作
+// =============================================================================
+
+// 上升沿触发一次方法调用并观察输出。
+IF bTrigger AND NOT bTriggerPrev THEN
+    vRet := fbParser.SetMaxDecimalPlaces(
+        decimalPlaces := decimalPlaces
+    );
+END_IF;
+bTriggerPrev := bTrigger;]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

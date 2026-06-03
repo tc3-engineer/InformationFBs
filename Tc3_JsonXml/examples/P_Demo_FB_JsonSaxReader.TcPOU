@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_JsonSaxReader" Id="{22c1ff8f-9efd-5a31-bc8c-e3317ac55a9f}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_JsonSaxReader
+VAR
+    fbFB_JsonSaxReader : FB_JsonSaxReader; // FB_JsonSaxReader 实例
+    initStatus : HRESULT; // FB 初始化状态
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：解析超大 JSON 日志（几 MB 起），全文加载 DOM 会爆 router 内存。
+// 价值：事件驱动的回调机制按 token 流处理，内存占用只与嵌套深度相关而非文档大小。
+// 验证：登录 PLC 在线写 bTrigger := TRUE 触发，monitor 返回值/输出参数。具体步骤见下方注释。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_JsonXml（References → Add library）
+//   3. 编译 → 登录 → 运行；按 verify 注释里给出的在线写值操作
+// =============================================================================
+
+// 实例化 + 监视 initStatus，确认 FB 内部已初始化完成。
+fbFB_JsonSaxReader(
+    initStatus => initStatus
+);
+
+// 进一步用法：参看 examples 目录下 FB_JsonSaxReader_Parse 演示。]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

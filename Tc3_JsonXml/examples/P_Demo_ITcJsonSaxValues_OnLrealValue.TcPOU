@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_ITcJsonSaxValues_OnLrealValue" Id="{4904810d-166e-51ad-b960-ad821c60ef9a}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_ITcJsonSaxValues_OnLrealValue
+VAR
+    // 接口方法演示框架：通过自定义 FB 实现 ITcJsonSaxValues，挂到 FB_JsonSaxReader 上
+    fbSaxReader : FB_JsonSaxReader; // 解析器
+    sJson : STRING(1023) := '{"a": 1, "b": true}'; // 测试 JSON
+    bStart : BOOL := FALSE; // 在线置 TRUE 触发一次解析
+    bStartPrev : BOOL;
+    bResult : BOOL; // 解析结果
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：SAX 解析到 LrealValue 时业务代码的处理入口，常见用法包括只关心特定字段、做事件过滤、统计 token 数等。
+// 价值：实现该回调让业务关注点和 SAX 解析器解耦，不必自己维护扫描器状态机。
+// 验证：登录 PLC 在线写 bTrigger := TRUE 触发，monitor 返回值/输出参数。具体步骤见下方注释。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_JsonXml（References → Add library）
+//   3. 编译 → 登录 → 运行；按 verify 注释里给出的在线写值操作
+// =============================================================================
+
+// 接口方法本身由 FB_JsonSaxReader 在解析过程中回调；演示通过启动解析触发该回调链。
+// 业务代码需要：
+//   a) 创建一个自定义 FB（如 FB_MyJsonHandler）implements ITcJsonSaxValues
+//   b) 在该 FB 里实现所有 OnXxx 方法（包括 OnLrealValue）
+//   c) 把实例传给 fbSaxReader.Parse() 的 ipHandler 参数
+// 本演示只示意调用入口；实际项目里 ipHandler 不会是 0。
+IF bStart AND NOT bStartPrev THEN
+    // 占位：实际项目应传入实现 ITcJsonSaxValues 的自定义 FB 实例
+    // bResult := fbSaxReader.Parse(sJson := sJson, ipHandler := myHandler);
+    bResult := FALSE; // 演示用占位
+END_IF;
+bStartPrev := bStart;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

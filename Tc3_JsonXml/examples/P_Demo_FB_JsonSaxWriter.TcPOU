@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_JsonSaxWriter" Id="{54f3d704-4032-51f8-a1a6-80884c07d169}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_JsonSaxWriter
+VAR
+    fbFB_JsonSaxWriter : FB_JsonSaxWriter; // FB_JsonSaxWriter 实例
+    initStatus : HRESULT; // FB 初始化状态
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：PLC 周期拼装一份 JSON 推给 MQTT broker；体积越小越好。
+// 价值：流式构造无中间 DOM，输出紧凑无空白，带宽节省 ~30%。
+// 验证：登录 PLC 在线写 bTrigger := TRUE 触发，monitor 返回值/输出参数。具体步骤见下方注释。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_JsonXml（References → Add library）
+//   3. 编译 → 登录 → 运行；按 verify 注释里给出的在线写值操作
+// =============================================================================
+
+// 实例化 + 监视 initStatus，确认 FB 内部已初始化完成。
+fbFB_JsonSaxWriter(
+    initStatus => initStatus
+);
+
+// 进一步用法：参看 examples 目录下 FB_JsonSaxWriter_StartObject / FB_JsonSaxWriter_AddKeyString 等方法演示。]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

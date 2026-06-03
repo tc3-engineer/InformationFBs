@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_DALIV2SetMaxLevel" Id="{ecda6a02-e7bc-508b-9228-75c3364676ff}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_DALIV2SetMaxLevel
+VAR
+    fbFB_DALIV2SetMaxLevel        : FB_DALIV2SetMaxLevel;
+    stCommandBuffer : ST_DALIV2CommandBuffer;
+
+    bTrigger        : BOOL;
+    nLampAddr        : BYTE := 0;
+
+    nNewMaxLevel     : BYTE := 200;
+
+    bBusy           : BOOL;
+    bErr            : BOOL;
+    nErrId          : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：路灯节能：把灯具 MAX VALUE 设为 200，限制最大亮度约 80%。
+//
+// 价值：运行时直接修改灯具寄存器；改完失电保护。
+//
+// 验证步骤：
+//   1. 通信 FB 跑起；编译；登录。
+//   2. 在线 bTrigger 一次上升沿；等 bBusy 回 FALSE。
+//   3. 用 P_Demo_FB_DALIV2QueryMaxLevel 查 short addr 0 → MAX 应等于 200。
+//   4. 用 P_Demo_FB_DALIV2RecallMaxLevel 触发全亮 → 灯应只到 200 而不是 254。
+// =============================================================================
+fbFB_DALIV2SetMaxLevel(
+    bStart           := bTrigger,
+    nAddr            := nLampAddr,
+    eAddrType        := eDALIV2AddrTypeShort,
+    eCommandPriority := eDALIV2CommandPriorityMiddle,
+    nMaxLevel        := nNewMaxLevel,
+    stCommandBuffer  := stCommandBuffer
+);
+
+bBusy  := fbFB_DALIV2SetMaxLevel.bBusy;
+bErr   := fbFB_DALIV2SetMaxLevel.bError;
+nErrId := fbFB_DALIV2SetMaxLevel.nErrorId;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_DALIV2SetDTR0" Id="{2163d1d9-e469-52e8-aa21-367eab0a3e16}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_DALIV2SetDTR0
+VAR
+    fbFB_DALIV2SetDTR0        : FB_DALIV2SetDTR0;
+    stCommandBuffer : ST_DALIV2CommandBuffer;
+
+    bTrigger        : BOOL;
+    nLampAddr        : BYTE := 0;
+
+    nDTR0Value       : BYTE := 100;
+
+    bBusy           : BOOL;
+    bErr            : BOOL;
+    nErrId          : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：直接写 short addr 0 的 DTR0 为 100，可后续用 STORE 命令固化为某属性。
+//
+// 价值：底层 DTR0 操作。
+//
+// 验证步骤：
+//   1. 通信 FB 跑起；编译；登录。
+//   2. 在线 bTrigger 一次上升沿；等 bBusy 回 FALSE。
+//   3. 用 P_Demo_FB_DALIV2QueryContentDTR0 → 应读出 100。
+// =============================================================================
+fbFB_DALIV2SetDTR0(
+    bStart           := bTrigger,
+    nAddr            := nLampAddr,
+    eAddrType        := eDALIV2AddrTypeShort,
+    eCommandPriority := eDALIV2CommandPriorityMiddle,
+    nValue           := nDTR0Value,
+    stCommandBuffer  := stCommandBuffer
+);
+
+bBusy  := fbFB_DALIV2SetDTR0.bBusy;
+bErr   := fbFB_DALIV2SetDTR0.bError;
+nErrId := fbFB_DALIV2SetDTR0.nErrorId;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

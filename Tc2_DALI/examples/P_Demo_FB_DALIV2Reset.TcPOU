@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_DALIV2Reset" Id="{45165203-eb65-524b-b43d-47dcc4acb238}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_DALIV2Reset
+VAR
+    fbFB_DALIV2Reset        : FB_DALIV2Reset;
+    stCommandBuffer : ST_DALIV2CommandBuffer;
+
+    bTrigger        : BOOL;
+    nLampAddr        : BYTE := 0;
+
+
+    bBusy           : BOOL;
+    bErr            : BOOL;
+    nErrId          : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：DALI 工程上线第一步——对整网广播一次 Reset 让所有灯回到出厂状态，准备重新规划寻址和分组。
+//
+// 价值：一次广播代替手动复位每盏灯。
+//
+// 验证步骤：
+//   1. 先跑通信 FB；编译运行；等 bLineIsInitialized。
+//   2. 把 eAddrType 改为 eDALIV2AddrTypeBroadcast（默认 Short 仅复位 nLampAddr 灯）。
+//   3. 在线 bTrigger 一次上升沿；等 bBusy 回 FALSE。
+//   4. 等 500 ms 让灯具完成 EEPROM 操作。
+//   5. 所有灯应跳到 POWER ON LEVEL 默认值（254 即全亮）；短地址全部被清——
+//      再用 P_Demo_FB_DALIV2QueryControlGearPresent 试任何 short addr 都查不到。
+//   6. 然后用 P_Demo_FB_DALIV2AddressingRandomAddressing 重新寻址。
+// =============================================================================
+fbFB_DALIV2Reset(
+    bStart           := bTrigger,
+    nAddr            := nLampAddr,
+    eAddrType        := eDALIV2AddrTypeShort,
+    eCommandPriority := eDALIV2CommandPriorityMiddle,
+    stCommandBuffer  := stCommandBuffer
+);
+
+bBusy  := fbFB_DALIV2Reset.bBusy;
+bErr   := fbFB_DALIV2Reset.bError;
+nErrId := fbFB_DALIV2Reset.nErrorId;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_F_RoundLREAL_EX" Id="{d269be2f-8ff9-5fbe-830f-08cb09d8ece2}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_F_RoundLREAL_EX
+VAR
+    lrResult : LREAL;                       // 函数返回值（本库 F_Round* 系列均返回 LREAL）
+    Name_in : Type ;
+    lrIN_in : LREAL := 0.0;
+    iPrecision_in : INT := 0;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================================
+// Tc2_HVAC.F_RoundLREAL_EX 演示程序
+// ============================================================================
+// 场景：把本 FC 按表达式形式调用：返回值赋给本 PRG 的局部变量供监视。FC 是
+//       无状态纯函数，可在任何 PRG / FB / METHOD 中按值调用；多任务并行安全。
+// 价值：一行调用替代手写表达式；本 FC 内部使用编译器 LROUND / LTRUNC 等内置原语，
+//       性能最优。具体语义见 F_RoundLREAL_EX.md 主文档。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_HVAC（References → Add library）
+//   3. 编译 → 登录 → 运行
+//   4. 在线写 *_in 输入；在线 monitor 返回值变量观察结果
+// ============================================================================
+
+lrResult := F_RoundLREAL_EX(
+    Name := Name_in,
+    lrIN := lrIN_in,
+    iPrecision := iPrecision_in
+);]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

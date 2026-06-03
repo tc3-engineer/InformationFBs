@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_BARSunblindThermoAutomatic" Id="{c26b51af-d404-5a49-bb98-113f8c05546c}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_BARSunblindThermoAutomatic
+VAR
+    fb : FB_BARSunblindThermoAutomatic;                            // 被演示 FB 实例
+    eDataSecurityType_in : E_HVACDataSecurityType ;
+    bEnable_in : BOOL := FALSE;
+    uiBrightness_in : UINT := 0;
+    bPresence_in : BOOL := FALSE;
+    lrActRoomTemperature_in : LREAL := 0.0;
+    uiBrightnessActivateValue_io : UINT := 0;
+    uiBrightnessDeactivateValue_io : UINT := 0;
+    uiActivateDelay_io : UINT := 0;
+    uiDeactivateDelay_io : UINT := 0;
+    bComfortHeatingAsSwitchPointCooling_io : BOOL := FALSE;
+    bComfortCoolingAsSwitchPointHeating_io : BOOL := FALSE;
+    uiPositionHeatingMode_io : UINT := 0;
+    iAngleHeatingMode_io : INT := 0;
+    uiPositionCoolingMode_io : UINT := 0;
+    iAngleCoolingMode_io : INT := 0;
+    stSunblind_out : ST_BARSunblind;
+    bActive_out : BOOL;
+    uiRemainingTimeActivate_out : UINT;
+    uiRemainingTimeDeactivate_out : UINT;
+    bHeating_out : BOOL;
+    bCooling_out : BOOL;
+    lrUpperSwitchPointHeating_out : LREAL;
+    lrLowerSwitchPointHeating_out : LREAL;
+    lrUpperSwitchPointCooling_out : LREAL;
+    lrLowerSwitchPointCooling_out : LREAL;
+    bError_out : BOOL;
+    udiErrorId_out : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================================
+// Tc2_HVAC.FB_BARSunblindThermoAutomatic 演示程序
+// ============================================================================
+// 场景：把本 FB 实例化到一个 PLC 程序里，每周期单次调用；按需要把 VAR_INPUT 与
+//       VAR_IN_OUT 接到工程信号；VAR_OUTPUT 写入对应监视变量。
+// 价值：使用本 FB 比手写状态机 / 控制算法节省大量代码；与 Tc2_HVAC 体系内其它 FB
+//       直接对接，命名 / 持久化 / 模式仲裁等约定一致。具体语义见 FB_BARSunblindThermoAutomatic.md 主文档。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_HVAC（References → Add library）
+//   3. 编译 → 登录 → 运行
+//   4. 在线写各 *_in 输入信号触发 FB；在线 monitor *_out 引脚观察状态
+// ============================================================================
+
+fb(
+    eDataSecurityType := eDataSecurityType_in,
+    bEnable := bEnable_in,
+    uiBrightness := uiBrightness_in,
+    bPresence := bPresence_in,
+    lrActRoomTemperature := lrActRoomTemperature_in,
+    uiBrightnessActivateValue := uiBrightnessActivateValue_io,
+    uiBrightnessDeactivateValue := uiBrightnessDeactivateValue_io,
+    uiActivateDelay := uiActivateDelay_io,
+    uiDeactivateDelay := uiDeactivateDelay_io,
+    bComfortHeatingAsSwitchPointCooling := bComfortHeatingAsSwitchPointCooling_io,
+    bComfortCoolingAsSwitchPointHeating := bComfortCoolingAsSwitchPointHeating_io,
+    uiPositionHeatingMode := uiPositionHeatingMode_io,
+    iAngleHeatingMode := iAngleHeatingMode_io,
+    uiPositionCoolingMode := uiPositionCoolingMode_io,
+    iAngleCoolingMode := iAngleCoolingMode_io,
+    stSunblind => stSunblind_out,
+    bActive => bActive_out,
+    uiRemainingTimeActivate => uiRemainingTimeActivate_out,
+    uiRemainingTimeDeactivate => uiRemainingTimeDeactivate_out,
+    bHeating => bHeating_out,
+    bCooling => bCooling_out,
+    lrUpperSwitchPointHeating => lrUpperSwitchPointHeating_out,
+    lrLowerSwitchPointHeating => lrLowerSwitchPointHeating_out,
+    lrUpperSwitchPointCooling => lrUpperSwitchPointCooling_out,
+    lrLowerSwitchPointCooling => lrLowerSwitchPointCooling_out,
+    bError => bError_out,
+    udiErrorId => udiErrorId_out
+);]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

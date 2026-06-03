@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_DALIV2StoreActualLevelInDTR0" Id="{5fe8e2c1-4f61-5902-8b17-b424a3b53eff}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_DALIV2StoreActualLevelInDTR0
+VAR
+    fbFB_DALIV2StoreActualLevelInDTR0        : FB_DALIV2StoreActualLevelInDTR0;
+    stCommandBuffer : ST_DALIV2CommandBuffer;
+
+    bTrigger        : BOOL;
+    nLampAddr        : BYTE := 0;
+
+
+    bBusy           : BOOL;
+    bErr            : BOOL;
+    nErrId          : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：用户调好亮度后存为场景的第一步：把当前亮度存到 DTR0。
+//
+// 价值：灯具内一气呵成读 + 存，省去两次命令。
+//
+// 验证步骤：
+//   1. 通信 FB 跑起；编译；登录。
+//   2. 先用 P_Demo_FB_DALIV2DirectArcPowerControl 把 short addr 0 调到 150。
+//   3. 调用本 FB 一次上升沿；等 bBusy 回 FALSE。
+//   4. 用 P_Demo_FB_DALIV2QueryContentDTR0 → 应读出 150。
+// =============================================================================
+fbFB_DALIV2StoreActualLevelInDTR0(
+    bStart           := bTrigger,
+    nAddr            := nLampAddr,
+    eAddrType        := eDALIV2AddrTypeShort,
+    eCommandPriority := eDALIV2CommandPriorityMiddle,
+    stCommandBuffer  := stCommandBuffer
+);
+
+bBusy  := fbFB_DALIV2StoreActualLevelInDTR0.bBusy;
+bErr   := fbFB_DALIV2StoreActualLevelInDTR0.bError;
+nErrId := fbFB_DALIV2StoreActualLevelInDTR0.nErrorId;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

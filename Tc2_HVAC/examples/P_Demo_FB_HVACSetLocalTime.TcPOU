@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_HVACSetLocalTime" Id="{abcc53ea-c089-5d7e-ab8d-7e59d62f265b}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_HVACSetLocalTime
+VAR
+    fb : FB_HVACSetLocalTime;                            // 被演示 FB 实例
+    sNetId_in : T_AmsNetId ;
+    bSetLocalTime_in : BOOL := FALSE;
+    uiYear_in : UINT := 0;
+    uiMonth_in : UINT := 0;
+    uiDay_in : UINT := 0;
+    uiHour_in : UINT := 0;
+    uiMinute_in : UINT := 0;
+    uiSecond_in : UINT := 0;
+    bEnableStruct_in : BOOL := FALSE;
+    stSystemtime_in : TIMESTRUCT ;
+    tTimeout_in : TIME := T#0S;
+    bBusy_out : BOOL;
+    bError_out : BOOL;
+    udiErrorId_out : UDINT;
+    bInvalidParameter_out : BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================================
+// Tc2_HVAC.FB_HVACSetLocalTime 演示程序
+// ============================================================================
+// 场景：把本 FB 实例化到一个 PLC 程序里，每周期单次调用；按需要把 VAR_INPUT 与
+//       VAR_IN_OUT 接到工程信号；VAR_OUTPUT 写入对应监视变量。
+// 价值：使用本 FB 比手写状态机 / 控制算法节省大量代码；与 Tc2_HVAC 体系内其它 FB
+//       直接对接，命名 / 持久化 / 模式仲裁等约定一致。具体语义见 FB_HVACSetLocalTime.md 主文档。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_HVAC（References → Add library）
+//   3. 编译 → 登录 → 运行
+//   4. 在线写各 *_in 输入信号触发 FB；在线 monitor *_out 引脚观察状态
+// ============================================================================
+
+fb(
+    sNetId := sNetId_in,
+    bSetLocalTime := bSetLocalTime_in,
+    uiYear := uiYear_in,
+    uiMonth := uiMonth_in,
+    uiDay := uiDay_in,
+    uiHour := uiHour_in,
+    uiMinute := uiMinute_in,
+    uiSecond := uiSecond_in,
+    bEnableStruct := bEnableStruct_in,
+    stSystemtime := stSystemtime_in,
+    tTimeout := tTimeout_in,
+    bBusy => bBusy_out,
+    bError => bError_out,
+    udiErrorId => udiErrorId_out,
+    bInvalidParameter => bInvalidParameter_out
+);]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

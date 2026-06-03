@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_DALIV2EmergencyLightingDT" Id="{53cf039d-6380-5180-a2a2-959ff261a34f}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_DALIV2EmergencyLightingDT
+VAR
+    fbFB_DALIV2EmergencyLightingDT        : FB_DALIV2EmergencyLightingDT;
+    stCommandBuffer : ST_DALIV2CommandBuffer;
+
+    bTrigger        : BOOL;
+    bStartTest       : BOOL;
+    bAbortTest       : BOOL;
+    nLampAddr        : BYTE := 0;
+    bTestDone        : BOOL;
+    bTestPass        : BOOL;
+    nDurationMin     : UINT;
+
+    bBusy           : BOOL;
+    bErr            : BOOL;
+    nErrId          : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：商场应急照明年检：触发 short addr 0 应急灯做 60 分钟 Duration Test。
+//
+// 价值：自动化应急照明测试，满足法规审计要求。
+//
+// 验证步骤：
+//   1. 通信 FB 跑起；编译；登录；应急灯连主电正常充电。
+//   2. 在线 bStartTest 一次上升沿；bBusy 应保持 TRUE 60 分钟。
+//   3. 过程中观察灯具应切到应急模式（与主电断开）持续亮。
+//   4. bDone = TRUE 后读 bTestPass：TRUE = 电池容量合格。
+//   5. nDurationDoneMinutes 应等于 60；若 < 60 = 电池容量不足。
+//   6. 记录 bTestPass + 测试时间到审计日志。
+// =============================================================================
+fbFB_DALIV2EmergencyLightingDT(
+    bStart           := bStartTest,
+    bAbort           := bAbortTest,
+    nDurationMinutes := 60,
+    nAddr            := nLampAddr,
+    eAddrType        := eDALIV2AddrTypeShort,
+    stCommandBuffer  := stCommandBuffer
+);
+
+bBusy  := fbFB_DALIV2EmergencyLightingDT.bBusy;
+bErr   := fbFB_DALIV2EmergencyLightingDT.bError;
+nErrId := fbFB_DALIV2EmergencyLightingDT.nErrorId;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

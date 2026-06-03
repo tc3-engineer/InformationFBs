@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_JsonDomParser" Id="{acd19192-a3d8-5f2b-913a-6d002a07902d}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_JsonDomParser
+VAR
+    fbFB_JsonDomParser : FB_JsonDomParser; // FB_JsonDomParser 实例
+    initStatus : HRESULT; // FB 初始化状态
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：工控机与上位系统/云平台之间通过 JSON 交换配方、生产数据；需要随机读写 JSON 节点。
+// 价值：一次解析进 DOM 后任意路径都能 O(log) 访问，比每次重扫字符串快得多。
+// 验证：登录 PLC 在线写 bTrigger := TRUE 触发，monitor 返回值/输出参数。具体步骤见下方注释。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_JsonXml（References → Add library）
+//   3. 编译 → 登录 → 运行；按 verify 注释里给出的在线写值操作
+// =============================================================================
+
+// 实例化 + 监视 initStatus，确认 FB 内部已初始化完成。
+fbFB_JsonDomParser(
+    initStatus => initStatus
+);
+
+// 进一步用法：参看 examples 目录下 FB_JsonDomParser_ParseDocument / FB_JsonDomParser_GetBool 等方法演示。]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

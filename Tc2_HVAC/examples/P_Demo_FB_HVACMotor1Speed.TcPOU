@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_HVACMotor1Speed" Id="{a6705ebb-e15a-5f85-8985-aa84eb8682f8}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_HVACMotor1Speed
+VAR
+    fb : FB_HVACMotor1Speed;                            // 被演示 FB 实例
+    eDataSecurityType_in : E_HVACDataSecurityType ;
+    bSetDefault_in : BOOL := FALSE;
+    bEnable_in : BOOL := FALSE;
+    bAuto_in : BOOL := FALSE;
+    eCtrlModeActuator_in : E_HVACActuatorMode ;
+    bMotorProtec_in : BOOL := FALSE;
+    bFeedbContactor_in : BOOL := FALSE;
+    bFeedbProcess_in : BOOL := FALSE;
+    bRepairSwitch_in : BOOL := FALSE;
+    bManSwitch_in : BOOL := FALSE;
+    bCtrlVoltage_in : BOOL := FALSE;
+    bReset_in : BOOL := FALSE;
+    tStartDelay_io : TIME := T#0S;
+    tStopDelay_io : TIME := T#0S;
+    tDelayFeedbContactor_io : TIME := T#0S;
+    tFeedbProcessTimer_io : TIME := T#0S;
+    tDelayFeedbProcess_io : TIME := T#0S;
+    bMotor_out : BOOL;
+    byState_out : BYTE;
+    bStateAuto_out : BOOL;
+    bStateRepairSwitch_out : BOOL;
+    bStateManSwitch_out : BOOL;
+    eStateModeActuator_out : E_HVACActuatorMode;
+    bErrorGeneral_out : BOOL;
+    byError_out : BYTE;
+    bErrorMotorprotec_out : BOOL;
+    bErrorFeedbContactor_out : BOOL;
+    bErrorFeedbProcess_out : BOOL;
+    bInvalidParameter_out : BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================================
+// Tc2_HVAC.FB_HVACMotor1Speed 演示程序
+// ============================================================================
+// 场景：把本 FB 实例化到一个 PLC 程序里，每周期单次调用；按需要把 VAR_INPUT 与
+//       VAR_IN_OUT 接到工程信号；VAR_OUTPUT 写入对应监视变量。
+// 价值：使用本 FB 比手写状态机 / 控制算法节省大量代码；与 Tc2_HVAC 体系内其它 FB
+//       直接对接，命名 / 持久化 / 模式仲裁等约定一致。具体语义见 FB_HVACMotor1Speed.md 主文档。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_HVAC（References → Add library）
+//   3. 编译 → 登录 → 运行
+//   4. 在线写各 *_in 输入信号触发 FB；在线 monitor *_out 引脚观察状态
+// ============================================================================
+
+fb(
+    eDataSecurityType := eDataSecurityType_in,
+    bSetDefault := bSetDefault_in,
+    bEnable := bEnable_in,
+    bAuto := bAuto_in,
+    eCtrlModeActuator := eCtrlModeActuator_in,
+    bMotorProtec := bMotorProtec_in,
+    bFeedbContactor := bFeedbContactor_in,
+    bFeedbProcess := bFeedbProcess_in,
+    bRepairSwitch := bRepairSwitch_in,
+    bManSwitch := bManSwitch_in,
+    bCtrlVoltage := bCtrlVoltage_in,
+    bReset := bReset_in,
+    tStartDelay := tStartDelay_io,
+    tStopDelay := tStopDelay_io,
+    tDelayFeedbContactor := tDelayFeedbContactor_io,
+    tFeedbProcessTimer := tFeedbProcessTimer_io,
+    tDelayFeedbProcess := tDelayFeedbProcess_io,
+    bMotor => bMotor_out,
+    byState => byState_out,
+    bStateAuto => bStateAuto_out,
+    bStateRepairSwitch => bStateRepairSwitch_out,
+    bStateManSwitch => bStateManSwitch_out,
+    eStateModeActuator => eStateModeActuator_out,
+    bErrorGeneral => bErrorGeneral_out,
+    byError => byError_out,
+    bErrorMotorprotec => bErrorMotorprotec_out,
+    bErrorFeedbContactor => bErrorFeedbContactor_out,
+    bErrorFeedbProcess => bErrorFeedbProcess_out,
+    bInvalidParameter => bInvalidParameter_out
+);]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

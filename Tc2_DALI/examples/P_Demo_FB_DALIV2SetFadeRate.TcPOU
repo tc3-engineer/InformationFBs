@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_DALIV2SetFadeRate" Id="{f593257b-7a67-52e6-963a-6917dbff55e6}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_DALIV2SetFadeRate
+VAR
+    fbFB_DALIV2SetFadeRate        : FB_DALIV2SetFadeRate;
+    stCommandBuffer : ST_DALIV2CommandBuffer;
+
+    bTrigger        : BOOL;
+    nLampAddr        : BYTE := 0;
+
+    nNewFadeRate     : BYTE := 7;
+
+    bBusy           : BOOL;
+    bErr            : BOOL;
+    nErrId          : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：演出脚本切到慢渐变段，把灯组 short addr 0 的 FADE RATE 设为 13（约 0.7 步/秒，极慢）。
+//
+// 价值：运行时直接修改灯具寄存器；改完失电保护。
+//
+// 验证步骤：
+//   1. 通信 FB 跑起；编译；登录。
+//   2. 在线 bTrigger 一次上升沿；等 bBusy 回 FALSE。
+//   3. 用 P_Demo_FB_DALIV2QueryFadeTimeFadeRate 查 short addr 0 → FADE RATE 应等于 13。
+//   4. 用 P_Demo_FB_DALIV2Up 触发逐步加亮——亮度变化速率应明显比默认 (7) 慢。
+// =============================================================================
+fbFB_DALIV2SetFadeRate(
+    bStart           := bTrigger,
+    nAddr            := nLampAddr,
+    eAddrType        := eDALIV2AddrTypeShort,
+    eCommandPriority := eDALIV2CommandPriorityMiddle,
+    nFadeRate        := nNewFadeRate,
+    stCommandBuffer  := stCommandBuffer
+);
+
+bBusy  := fbFB_DALIV2SetFadeRate.bBusy;
+bErr   := fbFB_DALIV2SetFadeRate.bError;
+nErrId := fbFB_DALIV2SetFadeRate.nErrorId;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

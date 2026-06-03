@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_HVACStartAirConditioning" Id="{d26c4e73-32ba-55fc-89a2-fdf5ec289637}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_HVACStartAirConditioning
+VAR
+    fb : FB_HVACStartAirConditioning;                            // 被演示 FB 实例
+    eDataSecurityType_in : E_HVACDataSecurityType ;
+    bSetDefault_in : BOOL := FALSE;
+    iStartSeqWinter_in : INT := 0;
+    iStartSeqSummer_in : INT := 0;
+    bTimeScheduler_in : BOOL := FALSE;
+    bNightCooling_in : BOOL := FALSE;
+    bFreezeProtec_in : BOOL := FALSE;
+    bOverHeatingProtec_in : BOOL := FALSE;
+    rOutsideTemp_in : REAL := 0.0;
+    rReturnWaterTemp_in : REAL := 0.0;
+    rSupplyAirTemp_in : REAL := 0.0;
+    rReturnAirTemp_in : REAL := 0.0;
+    bDampersFeedbOpen_in : BOOL := FALSE;
+    bEmergencyStop_in : BOOL := FALSE;
+    bReset_in : BOOL := FALSE;
+    eConvection_io : E_HVACConvectionMode ;
+    tDelaySupplyVent_io : TIME := T#0S;
+    tDelayExhaustVent_io : TIME := T#0S;
+    tDelayTempCtrl_io : TIME := T#0S;
+    rDifferenceTemp_io : REAL := 0.0;
+    tDelayLimitCtrl_io : TIME := T#0S;
+    rPreRinseOutsideTemp_io : REAL := 0.0;
+    rPreRinseLimitTemp_io : REAL := 0.0;
+    tPreRinseMaxTime_io : TIME := T#0S;
+    iCurrentSequence_io : INT := 0;
+    eModeSeqCtrl_out : E_HVACSequenceCtrlMode;
+    bPreRinse_out : BOOL;
+    bDampersOpen_out : BOOL;
+    bSupplyVentilation_out : BOOL;
+    bExhaustVentilation_out : BOOL;
+    bStartPIDControllers_out : BOOL;
+    bEnableLimitCtrl_out : BOOL;
+    bErrorGeneral_out : BOOL;
+    bErrorNoHotWater_out : BOOL;
+    bErrorDampers_out : BOOL;
+    byError_out : BYTE;
+    bInvalidParameter_out : BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// ============================================================================
+// Tc2_HVAC.FB_HVACStartAirConditioning 演示程序
+// ============================================================================
+// 场景：把本 FB 实例化到一个 PLC 程序里，每周期单次调用；按需要把 VAR_INPUT 与
+//       VAR_IN_OUT 接到工程信号；VAR_OUTPUT 写入对应监视变量。
+// 价值：使用本 FB 比手写状态机 / 控制算法节省大量代码；与 Tc2_HVAC 体系内其它 FB
+//       直接对接，命名 / 持久化 / 模式仲裁等约定一致。具体语义见 FB_HVACStartAirConditioning.md 主文档。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_HVAC（References → Add library）
+//   3. 编译 → 登录 → 运行
+//   4. 在线写各 *_in 输入信号触发 FB；在线 monitor *_out 引脚观察状态
+// ============================================================================
+
+fb(
+    eDataSecurityType := eDataSecurityType_in,
+    bSetDefault := bSetDefault_in,
+    iStartSeqWinter := iStartSeqWinter_in,
+    iStartSeqSummer := iStartSeqSummer_in,
+    bTimeScheduler := bTimeScheduler_in,
+    bNightCooling := bNightCooling_in,
+    bFreezeProtec := bFreezeProtec_in,
+    bOverHeatingProtec := bOverHeatingProtec_in,
+    rOutsideTemp := rOutsideTemp_in,
+    rReturnWaterTemp := rReturnWaterTemp_in,
+    rSupplyAirTemp := rSupplyAirTemp_in,
+    rReturnAirTemp := rReturnAirTemp_in,
+    bDampersFeedbOpen := bDampersFeedbOpen_in,
+    bEmergencyStop := bEmergencyStop_in,
+    bReset := bReset_in,
+    eConvection := eConvection_io,
+    tDelaySupplyVent := tDelaySupplyVent_io,
+    tDelayExhaustVent := tDelayExhaustVent_io,
+    tDelayTempCtrl := tDelayTempCtrl_io,
+    rDifferenceTemp := rDifferenceTemp_io,
+    tDelayLimitCtrl := tDelayLimitCtrl_io,
+    rPreRinseOutsideTemp := rPreRinseOutsideTemp_io,
+    rPreRinseLimitTemp := rPreRinseLimitTemp_io,
+    tPreRinseMaxTime := tPreRinseMaxTime_io,
+    iCurrentSequence := iCurrentSequence_io,
+    eModeSeqCtrl => eModeSeqCtrl_out,
+    bPreRinse => bPreRinse_out,
+    bDampersOpen => bDampersOpen_out,
+    bSupplyVentilation => bSupplyVentilation_out,
+    bExhaustVentilation => bExhaustVentilation_out,
+    bStartPIDControllers => bStartPIDControllers_out,
+    bEnableLimitCtrl => bEnableLimitCtrl_out,
+    bErrorGeneral => bErrorGeneral_out,
+    bErrorNoHotWater => bErrorNoHotWater_out,
+    bErrorDampers => bErrorDampers_out,
+    byError => byError_out,
+    bInvalidParameter => bInvalidParameter_out
+);]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

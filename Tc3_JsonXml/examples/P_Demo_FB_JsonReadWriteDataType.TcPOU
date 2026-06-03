@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_JsonReadWriteDataType" Id="{956b7781-1283-5558-a40f-96f654331cff}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_JsonReadWriteDataType
+VAR
+    fbFB_JsonReadWriteDataType : FB_JsonReadWriteDataType; // FB_JsonReadWriteDataType 实例
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：控制系统配方数据存为结构体，需要把整个结构体一次性转 JSON 上传 / 接收 JSON 后整体回写。
+// 价值：通过符号信息全自动转换；增删字段不用改 JSON 序列化代码，加 `attribute` 即可。
+// 验证：登录 PLC 在线写 bTrigger := TRUE 触发，monitor 返回值/输出参数。具体步骤见下方注释。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_JsonXml（References → Add library）
+//   3. 编译 → 登录 → 运行；按 verify 注释里给出的在线写值操作
+// =============================================================================
+
+// 实例化 + 监视 initStatus，确认 FB 内部已初始化完成。
+fbFB_JsonReadWriteDataType();  // 实例化即可，无输入参数
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

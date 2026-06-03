@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_JwtEncode" Id="{bba86a7b-f912-5c0e-b3c5-54e24593f170}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_JwtEncode
+VAR
+    fbFB_JwtEncode : FB_JwtEncode; // FB_JwtEncode 实例
+    bExecute : BOOL;
+    sHeaderAlg : STRING(46);
+    sPayload : STRING(1023);
+    sKeyFilePath : STRING(511);
+    tTimeout : TIME;
+    pKey : PVOID;
+    nKeySize : UDINT;
+    nJwtSize : UDINT;
+    sJwt : STRING(255);
+    bBusy : BOOL;
+    bError : BOOL;
+    hrErrorCode : HRESULT;
+    initStatus : HRESULT; // FB 初始化状态
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：PLC 直接对接 AWS IoT Core / Azure IoT Hub 的 OAuth2 Bearer Token 认证，需要本地生成签名 JWT。
+// 价值：一次调用完成 base64url + RS256 签名；私钥保留在 PLC 文件系统，不需暴露到外部服务。
+// 验证：登录 PLC 在线写 bTrigger := TRUE 触发，monitor 返回值/输出参数。具体步骤见下方注释。
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc3_JsonXml（References → Add library）
+//   3. 编译 → 登录 → 运行；按 verify 注释里给出的在线写值操作
+// =============================================================================
+
+// 实例化 + 监视 initStatus，确认 FB 内部已初始化完成。
+fbFB_JwtEncode(
+    bExecute := bExecute,
+    sHeaderAlg := sHeaderAlg,
+    sPayload := sPayload,
+    sKeyFilePath := sKeyFilePath,
+    tTimeout := tTimeout,
+    pKey := pKey,
+    nKeySize := nKeySize,
+    nJwtSize := nJwtSize,
+    sJwt := sJwt,
+    bBusy => bBusy,
+    bError => bError,
+    hrErrorCode => hrErrorCode,
+    initStatus => initStatus
+);
+
+// 验证流程：把测试私钥放到 C:\TwinCAT\test_key.pem，把 sJwt 指向 256 字节缓冲，写 bExecute := TRUE 触发；
+// 在 bBusy 变 FALSE 后观察 sJwt 是否出现合法 base64url 三段式（A.B.C）字符串。]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

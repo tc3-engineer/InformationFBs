@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_DALIV2RemoveFromGroup" Id="{b667b100-dd04-5573-8540-7be0ae4e9148}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_DALIV2RemoveFromGroup
+VAR
+    fbFB_DALIV2RemoveFromGroup        : FB_DALIV2RemoveFromGroup;
+    stCommandBuffer : ST_DALIV2CommandBuffer;
+
+    bTrigger        : BOOL;
+    nLampAddr        : BYTE := 0;
+
+    nGroupToRemove   : BYTE := 1;
+
+    bBusy           : BOOL;
+    bErr            : BOOL;
+    nErrId          : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：把 short addr 5 从走廊照明组（组 1）中移除——准备把它划入其它组。
+//
+// 价值：运行时灵活调整 DALI 分组，不需要重置灯具。
+//
+// 验证步骤：
+//   1. P_Demo_FB_KL6821Communication 先跑起来共享 stCommandBuffer。
+//   2. 编译，登录，运行；等通信 FB bLineIsInitialized = TRUE。
+//   3. 调用前先用 P_Demo_FB_DALIV2QueryGroups0UpTo7 看 short addr 5 当前组位图，确认 bit 1 已置。
+//   4. 在线 bTrigger 一次上升沿；等 bBusy 回 FALSE。
+//   5. 再查组位图——bit 1 应已清除，其它 bit 保留。
+// =============================================================================
+fbFB_DALIV2RemoveFromGroup(
+    bStart           := bTrigger,
+    nAddr            := nLampAddr,
+    eAddrType        := eDALIV2AddrTypeShort,
+    eCommandPriority := eDALIV2CommandPriorityMiddle,
+    nGroup           := nGroupToRemove,
+    stCommandBuffer  := stCommandBuffer
+);
+
+bBusy  := fbFB_DALIV2RemoveFromGroup.bBusy;
+bErr   := fbFB_DALIV2RemoveFromGroup.bError;
+nErrId := fbFB_DALIV2RemoveFromGroup.nErrorId;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

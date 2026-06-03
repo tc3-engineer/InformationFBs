@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_DALIV2SetPowerOnLevel" Id="{dfe5a8fd-dfb7-5514-971b-5f3db73fb222}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_DALIV2SetPowerOnLevel
+VAR
+    fbFB_DALIV2SetPowerOnLevel        : FB_DALIV2SetPowerOnLevel;
+    stCommandBuffer : ST_DALIV2CommandBuffer;
+
+    bTrigger        : BOOL;
+    nLampAddr        : BYTE := 0;
+
+    nNewPowerOnLevel : BYTE := 150;
+
+    bBusy           : BOOL;
+    bErr            : BOOL;
+    nErrId          : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：办公楼夜间来电恢复希望中等亮度，把 POWER ON LEVEL 设为 150。
+//
+// 价值：运行时直接修改灯具寄存器；改完失电保护。
+//
+// 验证步骤：
+//   1. 通信 FB 跑起；编译；登录。
+//   2. 在线 bTrigger 一次上升沿；等 bBusy 回 FALSE。
+//   3. 用 P_Demo_FB_DALIV2QueryPowerOnLevel 查 → 应为 150。
+//   4. 真实验证需断开灯具 220V 再上电——重新通电后灯应直接到 150 而非 254。
+// =============================================================================
+fbFB_DALIV2SetPowerOnLevel(
+    bStart           := bTrigger,
+    nAddr            := nLampAddr,
+    eAddrType        := eDALIV2AddrTypeShort,
+    eCommandPriority := eDALIV2CommandPriorityMiddle,
+    nPowerOnLevel    := nNewPowerOnLevel,
+    stCommandBuffer  := stCommandBuffer
+);
+
+bBusy  := fbFB_DALIV2SetPowerOnLevel.bBusy;
+bErr   := fbFB_DALIV2SetPowerOnLevel.bError;
+nErrId := fbFB_DALIV2SetPowerOnLevel.nErrorId;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

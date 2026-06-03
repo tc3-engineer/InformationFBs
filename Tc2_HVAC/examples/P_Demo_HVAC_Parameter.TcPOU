@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_HVAC_Parameter" Id="{b9b9b9b9-1234-5678-9abc-2d3d4d5d6d7d}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_HVAC_Parameter
+VAR
+    // ---- 把库提供的容量上限读到本地变量供 HMI 显示 ----
+    iMaxSequences        : INT;
+    iMaxSteps            : INT;
+    iMaxProfiles         : INT;
+    iMaxScalePoints      : INT;
+    iMaxFacadeRows       : INT;
+    iMaxFacadeColumns    : INT;
+
+    // ---- 工程容量配置（应该 <= 上面对应的上限） ----
+    iUserSequenceCount   : INT := 8;     // 工程实际用了几段序列控制
+    bConfigOk            : BOOL;          // 配置是否合法（<= 库支持的上限）
+
+    // ---- 字符串大小演示 ----
+    udiMaxStringSize     : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// Tc2_HVAC.HVAC_Parameter (GVL) 演示程序
+// =============================================================================
+// 场景：HMI 配置界面需要把「序列段数」「立面元素数」「遮阳场景数」等上限值对齐库
+//       的实际支持。直接读 GVL 上限就能让 HMI 自动适应不同库版本。
+//
+// 价值：避免工程师查 PDF 找上限值；库升级后这些常量自动跟随，HMI 显示无需重新编
+//       译；防止用户在 HMI 配错超过库支持的值。
+//
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU 文件
+//   2. 引用 Tc2_HVAC（References → Add library）
+//   3. 编译 → 登录 → 运行
+//   4. 在线 monitor iMaxSequences 应为 16（PDF §5.3.2 列出的默认值）
+//   5. 在线 monitor bConfigOk 应为 TRUE（iUserSequenceCount = 8 <= 16）
+//   6. 改 iUserSequenceCount := 20（超出 16），bConfigOk 应变 FALSE
+// =============================================================================
+
+// 把库的容量上限读到本地变量（带 Tc2_HVAC. 库名前缀避免命名冲突）
+iMaxSequences      := Tc2_HVAC.g_iMaxNumberOfSequences;       // 16
+iMaxSteps          := Tc2_HVAC.g_iMaxNumberOfSteps;           // 32
+iMaxProfiles       := Tc2_HVAC.g_iMaxNumberOfProfiles;        // 16
+iMaxScalePoints    := Tc2_HVAC.g_iMaxNoOfScale_nPoint;        // 60
+iMaxFacadeRows     := Tc2_HVAC.iRowsPerFacade;                 // 10
+iMaxFacadeColumns  := Tc2_HVAC.iColumnsPerFacade;              // 20
+udiMaxStringSize   := Tc2_HVAC.g_udiMaxSizeOfString;           // 256
+
+// 配置合法性检查：用户配的段数必须在库支持范围内
+bConfigOk :=     (iUserSequenceCount >= Tc2_HVAC.g_iMinNumberOfSequences)
+             AND (iUserSequenceCount <= Tc2_HVAC.g_iMaxNumberOfSequences);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

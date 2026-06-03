@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_DALIV2SetFadeTime" Id="{0f4a0bc3-46fd-5a8b-ad57-04badef390e1}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_DALIV2SetFadeTime
+VAR
+    fbFB_DALIV2SetFadeTime        : FB_DALIV2SetFadeTime;
+    stCommandBuffer : ST_DALIV2CommandBuffer;
+
+    bTrigger        : BOOL;
+    nLampAddr        : BYTE := 0;
+
+    nNewFadeTime     : BYTE := 4;
+
+    bBusy           : BOOL;
+    bErr            : BOOL;
+    nErrId          : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：电影院散场场景：把 FADE TIME 设为 8（对应 8 秒）；然后 DAPC 让灯渐亮。
+//
+// 价值：运行时直接修改灯具寄存器；改完失电保护。
+//
+// 验证步骤：
+//   1. 通信 FB 跑起；编译；登录。
+//   2. 在线 bTrigger 一次上升沿；等 bBusy 回 FALSE。
+//   3. 用 P_Demo_FB_DALIV2QueryFadeTimeFadeRate 查 short addr 0 → FADE TIME 应等于 8。
+//   4. 然后用 P_Demo_FB_DALIV2DirectArcPowerControl 给 short addr 0 设 DAPC=200 → 灯应用 8 秒渐变到目标。
+// =============================================================================
+fbFB_DALIV2SetFadeTime(
+    bStart           := bTrigger,
+    nAddr            := nLampAddr,
+    eAddrType        := eDALIV2AddrTypeShort,
+    eCommandPriority := eDALIV2CommandPriorityMiddle,
+    nFadeTime        := nNewFadeTime,
+    stCommandBuffer  := stCommandBuffer
+);
+
+bBusy  := fbFB_DALIV2SetFadeTime.bBusy;
+bErr   := fbFB_DALIV2SetFadeTime.bError;
+nErrId := fbFB_DALIV2SetFadeTime.nErrorId;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

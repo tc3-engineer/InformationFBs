@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_DALIV2StairwellDimmer" Id="{bcc28700-0114-5084-a375-cdb3f638f0b0}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_DALIV2StairwellDimmer
+VAR
+    fbFB_DALIV2StairwellDimmer        : FB_DALIV2StairwellDimmer;
+    stCommandBuffer : ST_DALIV2CommandBuffer;
+
+    bTrigger        : BOOL;
+    bStairButton     : BOOL;
+    nGroupAddr       : BYTE := 3;
+    bLightIsOn       : BOOL;
+    bWarningPhase    : BOOL;
+
+    bBusy           : BOOL;
+    bErr            : BOOL;
+    nErrId          : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：公寓楼梯灯：按按钮亮 3 分钟，警告 20 秒后关。
+//
+// 价值：替代复杂状态机代码；用户体验完整。
+//
+// 验证步骤：
+//   1. 通信 FB 跑起；编译；登录。
+//   2. 在线 bStairButton 一次上升沿。
+//   3. bLightIsOn 应立即 TRUE；灯组应全亮。
+//   4. 等 3 分钟，bWarningPhase 应 TRUE，灯应暗到 100。
+//   5. 再等 20 秒，bLightIsOn = bWarningPhase = FALSE，灯关。
+//   6. 警告期内再按一次 bStairButton → 应回到 ON 重新计 3 分钟。
+// =============================================================================
+fbFB_DALIV2StairwellDimmer(
+    bStart           := bStairButton,
+    tOnTime          := T#3M,
+    nOnValue         := 254,
+    tWarnTime        := T#20S,
+    nWarnValue       := 100,
+    nAddr            := nGroupAddr,
+    eAddrType        := eDALIV2AddrTypeGroup,
+    stCommandBuffer  := stCommandBuffer
+);
+
+bBusy  := fbFB_DALIV2StairwellDimmer.bBusy;
+bErr   := fbFB_DALIV2StairwellDimmer.bError;
+nErrId := fbFB_DALIV2StairwellDimmer.nErrorId;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

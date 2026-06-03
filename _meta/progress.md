@@ -1391,3 +1391,546 @@
 2026-06-03T00:00:00Z | Tc3_BA2_Common | validation                              | F_BA_IsMeasuringElementValid             | verified | PDF + InfoSys cross-verified
 2026-06-03T00:00:00Z | Tc3_BA2_Common | validation                              | F_BA_IsUnitValid                         | verified | PDF + InfoSys cross-verified
 2026-06-03T00:00:00Z | Tc3_BA2_Common | validation                              | F_BA_IsWeekdayValid                      | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | AddArrayMember                           | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | AddBase64Member                          | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | AddBoolMember                            | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | AddDateTimeMember                        | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | AddDcTimeMember                          | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | AddDoubleMember                          | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | AddFileTimeMember                        | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | AddHexBinaryMember                       | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | AddInt64Member                           | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | AddIntMember                             | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | AddJsonMember                            | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | AddNullMember                            | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | AddObjectMember                          | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | AddStringMember                          | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | AddUint64Member                          | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | AddUintMember                            | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | ArrayBegin                               | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | ArrayEnd                                 | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | ClearArray                               | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | CopyDocument                             | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | CopyFrom                                 | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | CopyJson                                 | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | CopyString                               | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | ExceptionRaised                          | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | FB_JsonDomParser                         | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | FindMember                               | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | FindMemberPath                           | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | GetArraySize                             | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | GetArrayValue                            | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | GetArrayValueByIdx                       | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | GetBase64                                | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | GetBool                                  | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | GetDateTime                              | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | GetDcTime                                | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | GetDocument                              | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | GetDocumentLength                        | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | GetDocumentRoot                          | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | GetDouble                                | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | GetFileTime                              | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | GetHexBinary                             | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | GetInt                                   | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | GetInt64                                 | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | GetJson                                  | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | GetJsonLength                            | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | GetMaxDecimalPlaces                      | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | GetMemberName                            | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | GetMemberValue                           | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | GetString                                | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | GetStringLength                          | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | GetType                                  | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | GetUint                                  | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | GetUint64                                | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | HasMember                                | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | IsArray                                  | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | IsBase64                                 | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | IsBool                                   | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | IsDouble                                 | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | IsFalse                                  | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | IsHexBinary                              | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | IsISO8601TimeFormat                      | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | IsInt                                    | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | IsInt64                                  | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | IsNull                                   | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | IsNumber                                 | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | IsObject                                 | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | IsString                                 | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | IsTrue                                   | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | IsUint                                   | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | IsUint64                                 | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | LoadDocumentFromFile                     | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | MemberBegin                              | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | MemberEnd                                | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | NewDocument                              | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | NextArray                                | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | NextMember                               | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | ParseDocument                            | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | PushbackBase64Value                      | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | PushbackBoolValue                        | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | PushbackCopyValue                        | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | PushbackDateTimeValue                    | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | PushbackDcTimeValue                      | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | PushbackDoubleValue                      | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | PushbackFileTimeValue                    | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | PushbackHexBinaryValue                   | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | PushbackInt64Value                       | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | PushbackIntValue                         | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | PushbackJsonValue                        | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | PushbackNullValue                        | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | PushbackStringValue                      | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | PushbackUint64Value                      | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | PushbackUintValue                        | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | RemoveAllMembers                         | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | RemoveArray                              | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | RemoveMember                             | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | RemoveMemberByName                       | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | SaveDocumentToFile                       | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | SetAdsProvider                           | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | SetArray                                 | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | SetBase64                                | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | SetBool                                  | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | SetDateTime                              | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | SetDcTime                                | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | SetDouble                                | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | SetFileTime                              | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | SetHexBinary                             | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | SetInt                                   | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | SetInt64                                 | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | SetJson                                  | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | SetMaxDecimalPlaces                      | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | SetNull                                  | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | SetObject                                | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | SetString                                | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | SetUint                                  | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | SetUint64                                | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondomparser                        | Swap                                     | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsondyndomparser                     | FB_JsonDynDomParser                      | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsonreadwritedatatype                | AddJsonKeyPropertiesFromSymbol           | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsonreadwritedatatype                | AddJsonKeyValueFromSymbol                | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsonreadwritedatatype                | AddJsonValueFromSymbol                   | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsonreadwritedatatype                | CopyJsonStringFromSymbol                 | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsonreadwritedatatype                | CopyJsonStringFromSymbolProperties       | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsonreadwritedatatype                | CopySymbolNameByAddress                  | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsonreadwritedatatype                | FB_JsonReadWriteDataType                 | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsonreadwritedatatype                | GetDataTypeNameByAddress                 | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsonreadwritedatatype                | GetJsonFromSymbol                        | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsonreadwritedatatype                | GetJsonStringFromSymbol                  | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsonreadwritedatatype                | GetJsonStringFromSymbolProperties        | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsonreadwritedatatype                | GetSizeJsonStringFromSymbol              | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsonreadwritedatatype                | GetSizeJsonStringFromSymbolProperties    | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsonreadwritedatatype                | GetSymbolNameByAddress                   | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsonreadwritedatatype                | SetSymbolFromJson                        | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsonsaxprettywriter                  | AddBase64                                | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsonsaxprettywriter                  | AddBool                                  | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsonsaxprettywriter                  | AddDateTime                              | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsonsaxprettywriter                  | AddDcTime                                | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsonsaxprettywriter                  | AddDint                                  | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsonsaxprettywriter                  | AddFileTime                              | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsonsaxprettywriter                  | AddHexBinary                             | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsonsaxprettywriter                  | AddKey                                   | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsonsaxprettywriter                  | AddKeyBool                               | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsonsaxprettywriter                  | AddKeyDateTime                           | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsonsaxprettywriter                  | AddKeyDcTime                             | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsonsaxprettywriter                  | AddKeyFileTime                           | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsonsaxprettywriter                  | AddKeyLreal                              | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsonsaxprettywriter                  | AddKeyNull                               | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsonsaxprettywriter                  | AddKeyNumber                             | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsonsaxprettywriter                  | AddKeyString                             | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsonsaxprettywriter                  | AddLint                                  | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsonsaxprettywriter                  | AddLreal                                 | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsonsaxprettywriter                  | AddNull                                  | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsonsaxprettywriter                  | AddRawArray                              | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsonsaxprettywriter                  | AddRawObject                             | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsonsaxprettywriter                  | AddReal                                  | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsonsaxprettywriter                  | AddString                                | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsonsaxprettywriter                  | AddUdint                                 | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsonsaxprettywriter                  | AddUlint                                 | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsonsaxprettywriter                  | CopyDocument                             | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsonsaxprettywriter                  | EndArray                                 | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsonsaxprettywriter                  | EndObject                                | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsonsaxprettywriter                  | FB_JsonSaxPrettyWriter                   | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsonsaxprettywriter                  | GetDocument                              | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsonsaxprettywriter                  | GetDocumentLength                        | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsonsaxprettywriter                  | GetMaxDecimalPlaces                      | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsonsaxprettywriter                  | ResetDocument                            | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsonsaxprettywriter                  | SetFormatOptions                         | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsonsaxprettywriter                  | SetIndent                                | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsonsaxprettywriter                  | SetMaxDecimalPlaces                      | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsonsaxprettywriter                  | StartArray                               | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsonsaxprettywriter                  | StartObject                              | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsonsaxreader                        | DecodeBase64                             | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsonsaxreader                        | DecodeDateTime                           | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsonsaxreader                        | DecodeDcTime                             | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsonsaxreader                        | DecodeFileTime                           | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsonsaxreader                        | DecodeHexBinary                          | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsonsaxreader                        | FB_JsonSaxReader                         | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsonsaxreader                        | IsBase64                                 | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsonsaxreader                        | IsHexBinary                              | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsonsaxreader                        | IsISO8601TimeFormat                      | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsonsaxreader                        | Parse                                    | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsonsaxreader                        | ParseValues                              | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsonsaxwriter                        | AddBase64                                | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsonsaxwriter                        | AddBool                                  | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsonsaxwriter                        | AddDateTime                              | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsonsaxwriter                        | AddDcTime                                | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsonsaxwriter                        | AddDint                                  | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsonsaxwriter                        | AddFileTime                              | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsonsaxwriter                        | AddHexBinary                             | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsonsaxwriter                        | AddKey                                   | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsonsaxwriter                        | AddKeyBool                               | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsonsaxwriter                        | AddKeyDateTime                           | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsonsaxwriter                        | AddKeyDcTime                             | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsonsaxwriter                        | AddKeyFileTime                           | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsonsaxwriter                        | AddKeyLreal                              | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsonsaxwriter                        | AddKeyNull                               | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsonsaxwriter                        | AddKeyNumber                             | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsonsaxwriter                        | AddKeyString                             | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsonsaxwriter                        | AddLint                                  | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsonsaxwriter                        | AddLreal                                 | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsonsaxwriter                        | AddNull                                  | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsonsaxwriter                        | AddRawArray                              | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsonsaxwriter                        | AddRawObject                             | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsonsaxwriter                        | AddReal                                  | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsonsaxwriter                        | AddString                                | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsonsaxwriter                        | AddUdint                                 | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsonsaxwriter                        | AddUlint                                 | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsonsaxwriter                        | CopyDocument                             | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsonsaxwriter                        | EndArray                                 | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsonsaxwriter                        | EndObject                                | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsonsaxwriter                        | FB_JsonSaxWriter                         | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsonsaxwriter                        | GetDocument                              | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsonsaxwriter                        | GetDocumentLength                        | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsonsaxwriter                        | GetMaxDecimalPlaces                      | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsonsaxwriter                        | ResetDocument                            | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsonsaxwriter                        | SetMaxDecimalPlaces                      | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsonsaxwriter                        | StartArray                               | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_jsonsaxwriter                        | StartObject                              | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_xmldomparser                         | AppendAttribute                          | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_xmldomparser                         | AppendAttributeAsBool                    | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_xmldomparser                         | AppendAttributeAsDouble                  | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_xmldomparser                         | AppendAttributeAsFloat                   | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_xmldomparser                         | AppendAttributeAsInt                     | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_xmldomparser                         | AppendAttributeAsLint                    | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_xmldomparser                         | AppendAttributeAsUint                    | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_xmldomparser                         | AppendAttributeAsUlint                   | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_xmldomparser                         | AppendAttributeCopy                      | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_xmldomparser                         | AppendChild                              | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_xmldomparser                         | AppendChildAsBool                        | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_xmldomparser                         | AppendChildAsDouble                      | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_xmldomparser                         | AppendChildAsFloat                       | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_xmldomparser                         | AppendChildAsInt                         | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_xmldomparser                         | AppendChildAsLint                        | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_xmldomparser                         | AppendChildAsUint                        | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_xmldomparser                         | AppendChildAsUlint                       | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_xmldomparser                         | AppendCopy                               | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_xmldomparser                         | AppendNode                               | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_xmldomparser                         | Attribute                                | verified | infer-from-naming-convention (PDF same-name TOC ambiguity)
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_xmldomparser                         | AttributeAsBool                          | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_xmldomparser                         | AttributeAsDouble                        | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_xmldomparser                         | AttributeAsFloat                         | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_xmldomparser                         | AttributeAsInt                           | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_xmldomparser                         | AttributeAsLint                          | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_xmldomparser                         | AttributeAsUint                          | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_xmldomparser                         | AttributeAsUlint                         | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_xmldomparser                         | AttributeBegin                           | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_xmldomparser                         | AttributeFromIterator                    | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_xmldomparser                         | AttributeName                            | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_xmldomparser                         | AttributeText                            | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_xmldomparser                         | Attributes                               | verified | infer-from-naming-convention (PDF same-name TOC ambiguity)
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_xmldomparser                         | Begin                                    | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_xmldomparser                         | BeginByName                              | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_xmldomparser                         | Child                                    | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_xmldomparser                         | ChildByAttribute                         | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_xmldomparser                         | ChildByAttributeAndName                  | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_xmldomparser                         | ChildByName                              | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_xmldomparser                         | Children                                 | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_xmldomparser                         | ChildrenByName                           | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_xmldomparser                         | ClearIterator                            | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_xmldomparser                         | Compare                                  | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_xmldomparser                         | CopyAttributeText                        | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_xmldomparser                         | CopyDocument                             | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_xmldomparser                         | CopyNodeText                             | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_xmldomparser                         | CopyNodeXml                              | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_xmldomparser                         | FB_XmlDomParser                          | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_xmldomparser                         | FirstNodeByPath                          | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_xmldomparser                         | GetAttributeTextLength                   | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_xmldomparser                         | GetDocumentLength                        | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_xmldomparser                         | GetDocumentNode                          | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_xmldomparser                         | GetNodeTextLength                        | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_xmldomparser                         | GetNodeXmlLength                         | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_xmldomparser                         | GetRootNode                              | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_xmldomparser                         | InsertAttribute                          | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_xmldomparser                         | InsertAttributeCopy                      | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_xmldomparser                         | InsertChild                              | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_xmldomparser                         | InsertCopy                               | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_xmldomparser                         | IsEnd                                    | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_xmldomparser                         | LoadDocumentFromFile                     | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_xmldomparser                         | NewDocument                              | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_xmldomparser                         | Next                                     | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_xmldomparser                         | NextAttribute                            | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_xmldomparser                         | NextByName                               | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_xmldomparser                         | NextSibling                              | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_xmldomparser                         | NextSiblingByName                        | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_xmldomparser                         | Node                                     | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_xmldomparser                         | NodeAsBool                               | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_xmldomparser                         | NodeAsDouble                             | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_xmldomparser                         | NodeAsFloat                              | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_xmldomparser                         | NodeAsInt                                | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_xmldomparser                         | NodeAsLint                               | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_xmldomparser                         | NodeAsUint                               | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_xmldomparser                         | NodeAsUlint                              | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_xmldomparser                         | NodeName                                 | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_xmldomparser                         | NodeText                                 | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_xmldomparser                         | ParseDocument                            | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_xmldomparser                         | RemoveChild                              | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_xmldomparser                         | RemoveChildByName                        | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_xmldomparser                         | SaveDocumentToFile                       | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_xmldomparser                         | SetAdsProvider                           | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_xmldomparser                         | SetAttribute                             | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_xmldomparser                         | SetAttributeAsBool                       | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_xmldomparser                         | SetAttributeAsDouble                     | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_xmldomparser                         | SetAttributeAsFloat                      | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_xmldomparser                         | SetAttributeAsInt                        | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_xmldomparser                         | SetAttributeAsLint                       | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_xmldomparser                         | SetAttributeAsUint                       | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_xmldomparser                         | SetAttributeAsUlint                      | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_xmldomparser                         | SetChild                                 | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_xmldomparser                         | SetChildAsBool                           | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_xmldomparser                         | SetChildAsDouble                         | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_xmldomparser                         | SetChildAsFloat                          | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_xmldomparser                         | SetChildAsInt                            | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_xmldomparser                         | SetChildAsLint                           | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_xmldomparser                         | SetChildAsUint                           | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | fb_xmldomparser                         | SetChildAsUlint                          | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | function_blocks                         | FB_JwtEncode                             | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | i_tcjsonsaxhandler                      | ITcJsonSaxHandler                        | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | i_tcjsonsaxhandler                      | OnBool                                   | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | i_tcjsonsaxhandler                      | OnDint                                   | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | i_tcjsonsaxhandler                      | OnEndArray                               | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | i_tcjsonsaxhandler                      | OnEndObject                              | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | i_tcjsonsaxhandler                      | OnKey                                    | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | i_tcjsonsaxhandler                      | OnLint                                   | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | i_tcjsonsaxhandler                      | OnLreal                                  | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | i_tcjsonsaxhandler                      | OnNull                                   | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | i_tcjsonsaxhandler                      | OnStartArray                             | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | i_tcjsonsaxhandler                      | OnStartObject                            | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | i_tcjsonsaxhandler                      | OnString                                 | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | i_tcjsonsaxhandler                      | OnUdint                                  | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | i_tcjsonsaxhandler                      | OnUlint                                  | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | i_tcjsonsaxvalues                       | ITcJsonSaxValues                         | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | i_tcjsonsaxvalues                       | OnBoolValue                              | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | i_tcjsonsaxvalues                       | OnDintValue                              | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | i_tcjsonsaxvalues                       | OnLintValue                              | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | i_tcjsonsaxvalues                       | OnLrealValue                             | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | i_tcjsonsaxvalues                       | OnNullValue                              | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | i_tcjsonsaxvalues                       | OnStringValue                            | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | i_tcjsonsaxvalues                       | OnUdintValue                             | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_JsonXml    | i_tcjsonsaxvalues                       | OnUlintValue                             | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc2_HVAC       | actuators                               | FB_HVAC2PointActuator                    | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | actuators                               | FB_HVAC3PointActuator                    | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | actuators                               | FB_HVACCirculationPump                   | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | actuators                               | FB_HVACCirculationPumpEx                 | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | actuators                               | FB_HVACMotor1Speed                       | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | actuators                               | FB_HVACMotor2Speed                       | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | actuators                               | FB_HVACMotor3Speed                       | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | actuators                               | FB_HVACMux8                              | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | actuators                               | FB_HVACMux8Ex                            | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | actuators                               | FB_HVACMux8_BOOL                         | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | actuators                               | FB_HVACRedundancyCtrl                    | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | actuators                               | FB_HVACRedundancyCtrlEx                  | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | analog_modules                          | FB_HVACAnalogInput                       | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | analog_modules                          | FB_HVACAnalogOutput                      | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | analog_modules                          | FB_HVACAnalogOutputEx                    | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | analog_modules                          | FB_HVACAnalogOutputEx2                   | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | analog_modules                          | FB_HVACAnalogTo3Point                    | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | analog_modules                          | FB_HVACConfigureKL32xx                   | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | analog_modules                          | FB_HVACScale                             | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | analog_modules                          | FB_HVACScaleXX                           | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | analog_modules                          | FB_HVACScale_nPoint                      | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | analog_modules                          | FB_HVACTemperatureCurve                  | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | analog_modules                          | FB_HVACTemperatureSensor                 | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | analog_modules                          | FB_HVACTemperatureSensorEx               | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | analog_modules                          | FB_HVACTemperatureSensorEx2              | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | backup_var                              | FB_HVACNOVRAM_XX                         | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | backup_var                              | FB_HVACPersistent_XX                     | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | controllers                             | FB_HVAC2PointCtrl                        | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | controllers                             | FB_HVACI_CtrlStep                        | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | controllers                             | FB_HVACI_CtrlStepEx                      | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | controllers                             | FB_HVACPIDCtrl                           | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | controllers                             | FB_HVACPIDCtrl_Ex                        | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | controllers                             | FB_HVACPowerRangeTable                   | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | functions                               | F_RoundLREAL                             | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | functions                               | F_RoundLREAL_EX                          | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | gvls                                    | HVAC_Constants                           | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | gvls                                    | HVAC_Parameter                           | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | room_air_conditioning                   | FB_BAREnergyLevel                        | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | room_air_conditioning                   | FB_BARFanCoil                            | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | room_air_conditioning                   | FB_BARFctSelection                       | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | room_air_conditioning                   | FB_BARSetpointRoom                       | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | room_controller                         | FB_BARPICtrl                             | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | room_lighting                           | FB_BARAutomaticLight                     | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | room_lighting                           | FB_BARConstantLightControl               | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | room_lighting                           | FB_BARDaylightControl                    | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | room_lighting                           | FB_BARLightActuator                      | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | room_lighting                           | FB_BARLightCircuit                       | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | room_lighting                           | FB_BARLightCircuitDim                    | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | room_lighting                           | FB_BARStairwellAutomatic                 | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | room_lighting                           | FB_BARTwilightAutomatic                  | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | room_sun_protection                     | FB_BARBlindPositionEntry                 | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | room_sun_protection                     | FB_BARDelayedHysteresis                  | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | room_sun_protection                     | FB_BARFacadeElementEntry                 | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | room_sun_protection                     | FB_BARReadFacadeElementList              | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | room_sun_protection                     | FB_BARReadShadingObjectsList             | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | room_sun_protection                     | FB_BARRollerBlind                        | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | room_sun_protection                     | FB_BARShadingCorrection                  | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | room_sun_protection                     | FB_BARShadingCorrectionSouth             | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | room_sun_protection                     | FB_BARShadingObjectsEntry                | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | room_sun_protection                     | FB_BARSunProtectionEx                    | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | room_sun_protection                     | FB_BARSunblindActuator                   | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | room_sun_protection                     | FB_BARSunblindActuatorEx                 | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | room_sun_protection                     | FB_BARSunblindEvent                      | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | room_sun_protection                     | FB_BARSunblindPrioritySwitch             | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | room_sun_protection                     | FB_BARSunblindScene                      | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | room_sun_protection                     | FB_BARSunblindSwitch                     | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | room_sun_protection                     | FB_BARSunblindThermoAutomatic            | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | room_sun_protection                     | FB_BARSunblindTwilightAutomatic          | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | room_sun_protection                     | FB_BARSunblindWeatherProtection          | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | room_sun_protection                     | FB_BARWithinRangeAzimuth                 | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | room_sun_protection                     | FB_BARWithinRangeElevation               | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | scheduler                               | FB_HVACScheduler1ch                      | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | scheduler                               | FB_HVACScheduler28TCHandling             | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | scheduler                               | FB_HVACScheduler28ch                     | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | scheduler                               | FB_HVACScheduler7TCHandling              | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | scheduler                               | FB_HVACScheduler7ch                      | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | scheduler                               | FB_HVACSchedulerPublicHolidays           | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | scheduler                               | FB_HVACSchedulerSpecialPeriods           | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | sequence_controllers                    | FB_HVAC2PointCtrlSequence                | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | sequence_controllers                    | FB_HVACBasicSequenceCtrl                 | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | sequence_controllers                    | FB_HVACMasterSequenceCtrl                | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | sequence_controllers                    | FB_HVACPIDCooling                        | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | sequence_controllers                    | FB_HVACPIDDehumidify                     | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | sequence_controllers                    | FB_HVACPIDEnergyRecovery                 | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | sequence_controllers                    | FB_HVACPIDHumidify                       | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | sequence_controllers                    | FB_HVACPIDMixedAir                       | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | sequence_controllers                    | FB_HVACPIDPreHeating                     | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | sequence_controllers                    | FB_HVACPIDReHeating                      | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | setpoint_modules                        | FB_HVACHeatingCurve                      | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | setpoint_modules                        | FB_HVACHeatingCurveEx                    | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | setpoint_modules                        | FB_HVACOutsideTempDamped                 | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | setpoint_modules                        | FB_HVACSetpointHeating                   | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | setpoint_modules                        | FB_HVACSetpointRamp                      | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | setpoint_modules                        | FB_HVACSummerCompensation                | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | special_functions                       | FB_HVACAirConditioning2Speed             | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | special_functions                       | FB_HVACAlarm                             | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | special_functions                       | FB_HVACAntiBlockingDamper                | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | special_functions                       | FB_HVACAntiBlockingPump                  | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | special_functions                       | FB_HVACBlink                             | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | special_functions                       | FB_HVACCmdCtrlSystem1Stage               | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | special_functions                       | FB_HVACCmdCtrlSystem2Stage               | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | special_functions                       | FB_HVACCmdCtrl_8                         | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | special_functions                       | FB_HVACConvertEnum                       | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | special_functions                       | FB_HVACEnthalpy                          | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | special_functions                       | FB_HVACFixedLimit                        | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | special_functions                       | FB_HVACFreezeProtectionHeater            | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | special_functions                       | FB_HVACMUX_INT_16                        | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | special_functions                       | FB_HVACMUX_INT_8                         | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | special_functions                       | FB_HVACMUX_REAL_16                       | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | special_functions                       | FB_HVACMUX_REAL_8                        | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | special_functions                       | FB_HVACOptimizedOff                      | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | special_functions                       | FB_HVACOptimizedOn                       | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | special_functions                       | FB_HVACOverwriteAnalog                   | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | special_functions                       | FB_HVACOverwriteDigital                  | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | special_functions                       | FB_HVACPWM                               | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | special_functions                       | FB_HVACPowerMeasurementKL3403            | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | special_functions                       | FB_HVACPowerMeasurementKL3403Ex          | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | special_functions                       | FB_HVACPriority_INT_16                   | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | special_functions                       | FB_HVACPriority_INT_8                    | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | special_functions                       | FB_HVACPriority_REAL_16                  | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | special_functions                       | FB_HVACPriority_REAL_8                   | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | special_functions                       | FB_HVACStartAirConditioning              | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | special_functions                       | FB_HVACSummerNightCooling                | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | special_functions                       | FB_HVACSummerNightCoolingEx              | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | special_functions                       | FB_HVACTempChangeFunction                | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | special_functions                       | FB_HVACTimeCon                           | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | special_functions                       | FB_HVACTimeConSec                        | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | special_functions                       | FB_HVACTimeConSecMs                      | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | special_functions                       | FB_HVACWork                              | verified | chapter-overview (PDF lacks END_VAR terminator)
+2026-06-03T00:00:00Z | Tc2_HVAC       | system                                  | FB_HVACGetSystemTime                     | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | system                                  | FB_HVACNOVRAMDataHandling                | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | system                                  | FB_HVACPersistentDataFileCopy            | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | system                                  | FB_HVACPersistentDataHandling            | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | system                                  | FB_HVACSetLocalTime                      | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_HVAC       | system                                  | FB_HVACSystemTaskInfo                    | verified | chapter-overview + PDF single-source
+2026-06-03T00:00:00Z | Tc2_DALI       | kl6811_base                             | FB_KL6811Communication                   | verified | PDF + InfoSys library-root (per-FB topic not on InfoSys)
+2026-06-03T00:00:00Z | Tc2_DALI       | kl6821_base                             | FB_KL6821Communication                   | verified | PDF + InfoSys library-root (per-FB topic not on InfoSys)
+2026-06-03T00:00:00Z | Tc2_DALI       | kl6821_base                             | FB_KL6821Config                          | verified | PDF + InfoSys library-root (per-FB topic not on InfoSys)
+2026-06-03T00:00:00Z | Tc2_DALI       | part102_addressing                      | FB_DALIV2AddressingRandomAddressing      | verified | PDF + InfoSys library-root (per-FB topic not on InfoSys)
+2026-06-03T00:00:00Z | Tc2_DALI       | part102_low_config                      | FB_DALIV2AddToGroup                      | verified | PDF + InfoSys library-root (per-FB topic not on InfoSys)
+2026-06-03T00:00:00Z | Tc2_DALI       | part102_low_config                      | FB_DALIV2RemoveFromGroup                 | verified | PDF + InfoSys library-root (per-FB topic not on InfoSys)
+2026-06-03T00:00:00Z | Tc2_DALI       | part102_low_config                      | FB_DALIV2RemoveFromScene                 | verified | PDF + InfoSys library-root (per-FB topic not on InfoSys)
+2026-06-03T00:00:00Z | Tc2_DALI       | part102_low_config                      | FB_DALIV2Reset                           | verified | PDF + InfoSys library-root (per-FB topic not on InfoSys)
+2026-06-03T00:00:00Z | Tc2_DALI       | part102_low_config                      | FB_DALIV2SetFadeRate                     | verified | PDF + InfoSys library-root (per-FB topic not on InfoSys)
+2026-06-03T00:00:00Z | Tc2_DALI       | part102_low_config                      | FB_DALIV2SetFadeTime                     | verified | PDF + InfoSys library-root (per-FB topic not on InfoSys)
+2026-06-03T00:00:00Z | Tc2_DALI       | part102_low_config                      | FB_DALIV2SetMaxLevel                     | verified | PDF + InfoSys library-root (per-FB topic not on InfoSys)
+2026-06-03T00:00:00Z | Tc2_DALI       | part102_low_config                      | FB_DALIV2SetMinLevel                     | verified | PDF + InfoSys library-root (per-FB topic not on InfoSys)
+2026-06-03T00:00:00Z | Tc2_DALI       | part102_low_config                      | FB_DALIV2SetPowerOnLevel                 | verified | PDF + InfoSys library-root (per-FB topic not on InfoSys)
+2026-06-03T00:00:00Z | Tc2_DALI       | part102_low_config                      | FB_DALIV2SetScene                        | verified | PDF + InfoSys library-root (per-FB topic not on InfoSys)
+2026-06-03T00:00:00Z | Tc2_DALI       | part102_low_config                      | FB_DALIV2SetShortAddress                 | verified | PDF + InfoSys library-root (per-FB topic not on InfoSys)
+2026-06-03T00:00:00Z | Tc2_DALI       | part102_low_config                      | FB_DALIV2SetSystemFailureLevel           | verified | PDF + InfoSys library-root (per-FB topic not on InfoSys)
+2026-06-03T00:00:00Z | Tc2_DALI       | part102_low_config                      | FB_DALIV2StoreActualLevelInDTR0          | verified | PDF + InfoSys library-root (per-FB topic not on InfoSys)
+2026-06-03T00:00:00Z | Tc2_DALI       | part102_low_power                       | FB_DALIV2DirectArcPowerControl           | verified | PDF + InfoSys library-root (per-FB topic not on InfoSys)
+2026-06-03T00:00:00Z | Tc2_DALI       | part102_low_power                       | FB_DALIV2Down                            | verified | PDF + InfoSys library-root (per-FB topic not on InfoSys)
+2026-06-03T00:00:00Z | Tc2_DALI       | part102_low_power                       | FB_DALIV2EnableDAPCSequence              | verified | PDF + InfoSys library-root (per-FB topic not on InfoSys)
+2026-06-03T00:00:00Z | Tc2_DALI       | part102_low_power                       | FB_DALIV2GoToScene                       | verified | PDF + InfoSys library-root (per-FB topic not on InfoSys)
+2026-06-03T00:00:00Z | Tc2_DALI       | part102_low_power                       | FB_DALIV2Off                             | verified | PDF + InfoSys library-root (per-FB topic not on InfoSys)
+2026-06-03T00:00:00Z | Tc2_DALI       | part102_low_power                       | FB_DALIV2OnAndStepUp                     | verified | PDF + InfoSys library-root (per-FB topic not on InfoSys)
+2026-06-03T00:00:00Z | Tc2_DALI       | part102_low_power                       | FB_DALIV2RecallMaxLevel                  | verified | PDF + InfoSys library-root (per-FB topic not on InfoSys)
+2026-06-03T00:00:00Z | Tc2_DALI       | part102_low_power                       | FB_DALIV2RecallMinLevel                  | verified | PDF + InfoSys library-root (per-FB topic not on InfoSys)
+2026-06-03T00:00:00Z | Tc2_DALI       | part102_low_power                       | FB_DALIV2StepDown                        | verified | PDF + InfoSys library-root (per-FB topic not on InfoSys)
+2026-06-03T00:00:00Z | Tc2_DALI       | part102_low_power                       | FB_DALIV2StepDownAndOff                  | verified | PDF + InfoSys library-root (per-FB topic not on InfoSys)
+2026-06-03T00:00:00Z | Tc2_DALI       | part102_low_power                       | FB_DALIV2StepUp                          | verified | PDF + InfoSys library-root (per-FB topic not on InfoSys)
+2026-06-03T00:00:00Z | Tc2_DALI       | part102_low_power                       | FB_DALIV2Up                              | verified | PDF + InfoSys library-root (per-FB topic not on InfoSys)
+2026-06-03T00:00:00Z | Tc2_DALI       | part102_low_queries                     | FB_DALIV2QueryActualLevel                | verified | PDF + InfoSys library-root (per-FB topic not on InfoSys)
+2026-06-03T00:00:00Z | Tc2_DALI       | part102_low_queries                     | FB_DALIV2QueryContentDTR0                | verified | PDF + InfoSys library-root (per-FB topic not on InfoSys)
+2026-06-03T00:00:00Z | Tc2_DALI       | part102_low_queries                     | FB_DALIV2QueryContentDTR1                | verified | PDF + InfoSys library-root (per-FB topic not on InfoSys)
+2026-06-03T00:00:00Z | Tc2_DALI       | part102_low_queries                     | FB_DALIV2QueryContentDTR2                | verified | PDF + InfoSys library-root (per-FB topic not on InfoSys)
+2026-06-03T00:00:00Z | Tc2_DALI       | part102_low_queries                     | FB_DALIV2QueryControlGearPresent         | verified | PDF + InfoSys library-root (per-FB topic not on InfoSys)
+2026-06-03T00:00:00Z | Tc2_DALI       | part102_low_queries                     | FB_DALIV2QueryDeviceType                 | verified | PDF + InfoSys library-root (per-FB topic not on InfoSys)
+2026-06-03T00:00:00Z | Tc2_DALI       | part102_low_queries                     | FB_DALIV2QueryFadeTimeFadeRate           | verified | PDF + InfoSys library-root (per-FB topic not on InfoSys)
+2026-06-03T00:00:00Z | Tc2_DALI       | part102_low_queries                     | FB_DALIV2QueryGroups                     | verified | PDF + InfoSys library-root (per-FB topic not on InfoSys)
+2026-06-03T00:00:00Z | Tc2_DALI       | part102_low_queries                     | FB_DALIV2QueryGroups0UpTo7               | verified | PDF + InfoSys library-root (per-FB topic not on InfoSys)
+2026-06-03T00:00:00Z | Tc2_DALI       | part102_low_queries                     | FB_DALIV2QueryGroups8UpTo15              | verified | PDF + InfoSys library-root (per-FB topic not on InfoSys)
+2026-06-03T00:00:00Z | Tc2_DALI       | part102_low_queries                     | FB_DALIV2QueryLampFailure                | verified | PDF + InfoSys library-root (per-FB topic not on InfoSys)
+2026-06-03T00:00:00Z | Tc2_DALI       | part102_low_queries                     | FB_DALIV2QueryLampPowerOn                | verified | PDF + InfoSys library-root (per-FB topic not on InfoSys)
+2026-06-03T00:00:00Z | Tc2_DALI       | part102_low_queries                     | FB_DALIV2QueryLimitError                 | verified | PDF + InfoSys library-root (per-FB topic not on InfoSys)
+2026-06-03T00:00:00Z | Tc2_DALI       | part102_low_queries                     | FB_DALIV2QueryMaxLevel                   | verified | PDF + InfoSys library-root (per-FB topic not on InfoSys)
+2026-06-03T00:00:00Z | Tc2_DALI       | part102_low_queries                     | FB_DALIV2QueryMinLevel                   | verified | PDF + InfoSys library-root (per-FB topic not on InfoSys)
+2026-06-03T00:00:00Z | Tc2_DALI       | part102_low_queries                     | FB_DALIV2QueryMissingShortAddress        | verified | PDF + InfoSys library-root (per-FB topic not on InfoSys)
+2026-06-03T00:00:00Z | Tc2_DALI       | part102_low_queries                     | FB_DALIV2QueryPhysicalMinLevel           | verified | PDF + InfoSys library-root (per-FB topic not on InfoSys)
+2026-06-03T00:00:00Z | Tc2_DALI       | part102_low_queries                     | FB_DALIV2QueryPowerFailure               | verified | PDF + InfoSys library-root (per-FB topic not on InfoSys)
+2026-06-03T00:00:00Z | Tc2_DALI       | part102_low_queries                     | FB_DALIV2QueryPowerOnLevel               | verified | PDF + InfoSys library-root (per-FB topic not on InfoSys)
+2026-06-03T00:00:00Z | Tc2_DALI       | part102_low_queries                     | FB_DALIV2QueryRandomAddress              | verified | PDF + InfoSys library-root (per-FB topic not on InfoSys)
+2026-06-03T00:00:00Z | Tc2_DALI       | part102_low_queries                     | FB_DALIV2QueryRandomAddressH             | verified | PDF + InfoSys library-root (per-FB topic not on InfoSys)
+2026-06-03T00:00:00Z | Tc2_DALI       | part102_low_queries                     | FB_DALIV2QueryRandomAddressL             | verified | PDF + InfoSys library-root (per-FB topic not on InfoSys)
+2026-06-03T00:00:00Z | Tc2_DALI       | part102_low_queries                     | FB_DALIV2QueryRandomAddressM             | verified | PDF + InfoSys library-root (per-FB topic not on InfoSys)
+2026-06-03T00:00:00Z | Tc2_DALI       | part102_low_queries                     | FB_DALIV2QueryResetState                 | verified | PDF + InfoSys library-root (per-FB topic not on InfoSys)
+2026-06-03T00:00:00Z | Tc2_DALI       | part102_low_queries                     | FB_DALIV2QuerySceneLevel                 | verified | PDF + InfoSys library-root (per-FB topic not on InfoSys)
+2026-06-03T00:00:00Z | Tc2_DALI       | part102_low_queries                     | FB_DALIV2QueryStatus                     | verified | PDF + InfoSys library-root (per-FB topic not on InfoSys)
+2026-06-03T00:00:00Z | Tc2_DALI       | part102_low_queries                     | FB_DALIV2QuerySystemFailureLevel         | verified | PDF + InfoSys library-root (per-FB topic not on InfoSys)
+2026-06-03T00:00:00Z | Tc2_DALI       | part102_low_queries                     | FB_DALIV2QueryVersionNumber              | verified | PDF + InfoSys library-root (per-FB topic not on InfoSys)
+2026-06-03T00:00:00Z | Tc2_DALI       | part102_low_special                     | FB_DALIV2Initialise                      | verified | PDF + InfoSys library-root (per-FB topic not on InfoSys)
+2026-06-03T00:00:00Z | Tc2_DALI       | part102_low_special                     | FB_DALIV2ProgramShortAddress             | verified | PDF + InfoSys library-root (per-FB topic not on InfoSys)
+2026-06-03T00:00:00Z | Tc2_DALI       | part102_low_special                     | FB_DALIV2Randomise                       | verified | PDF + InfoSys library-root (per-FB topic not on InfoSys)
+2026-06-03T00:00:00Z | Tc2_DALI       | part102_low_special                     | FB_DALIV2SetDTR0                         | verified | PDF + InfoSys library-root (per-FB topic not on InfoSys)
+2026-06-03T00:00:00Z | Tc2_DALI       | part102_low_special                     | FB_DALIV2SetDTR1                         | verified | PDF + InfoSys library-root (per-FB topic not on InfoSys)
+2026-06-03T00:00:00Z | Tc2_DALI       | part102_low_special                     | FB_DALIV2SetDTR2                         | verified | PDF + InfoSys library-root (per-FB topic not on InfoSys)
+2026-06-03T00:00:00Z | Tc2_DALI       | part102_low_special                     | FB_DALIV2Terminate                       | verified | PDF + InfoSys library-root (per-FB topic not on InfoSys)
+2026-06-03T00:00:00Z | Tc2_DALI       | part102_power_control                   | FB_DALIV2Dimmer1Switch                   | verified | PDF + InfoSys library-root (per-FB topic not on InfoSys)
+2026-06-03T00:00:00Z | Tc2_DALI       | part102_power_control                   | FB_DALIV2Dimmer2Switch                   | verified | PDF + InfoSys library-root (per-FB topic not on InfoSys)
+2026-06-03T00:00:00Z | Tc2_DALI       | part102_power_control                   | FB_DALIV2Light                           | verified | PDF + InfoSys library-root (per-FB topic not on InfoSys)
+2026-06-03T00:00:00Z | Tc2_DALI       | part102_power_control                   | FB_DALIV2Sequencer                       | verified | PDF + InfoSys library-root (per-FB topic not on InfoSys)
+2026-06-03T00:00:00Z | Tc2_DALI       | part102_power_control                   | FB_DALIV2StairwellDimmer                 | verified | PDF + InfoSys library-root (per-FB topic not on InfoSys)
+2026-06-03T00:00:00Z | Tc2_DALI       | part102_settings                        | FB_DALIV2GetSettings                     | verified | PDF + InfoSys library-root (per-FB topic not on InfoSys)
+2026-06-03T00:00:00Z | Tc2_DALI       | part202_emergency_high                  | FB_DALIV2EmergencyLightingDT             | verified | PDF + InfoSys library-root (per-FB topic not on InfoSys)

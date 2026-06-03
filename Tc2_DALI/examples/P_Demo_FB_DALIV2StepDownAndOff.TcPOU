@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_DALIV2StepDownAndOff" Id="{3acb0898-472d-5ee1-8a4c-912a4d326daf}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_DALIV2StepDownAndOff
+VAR
+    fbFB_DALIV2StepDownAndOff        : FB_DALIV2StepDownAndOff;
+    stCommandBuffer : ST_DALIV2CommandBuffer;
+
+    bTrigger        : BOOL;
+    nLampAddr        : BYTE := 0;
+
+
+    bBusy           : BOOL;
+    bErr            : BOOL;
+    nErrId          : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：智能面板：用户长按减亮按钮直到关灯——本 FB 替代『先 StepDown 到 MIN 然后再 Off』两步逻辑。...
+//
+// 价值：DALI 协议标准命令的轻量封装。
+//
+// 验证步骤：
+//   1. 通信 FB 跑起；编译；登录。
+//   2. 在线 bTrigger 一次上升沿；等 bBusy 回 FALSE。
+//   3. 观察 short addr 0 灯的物理亮度变化是否符合本命令描述。
+// =============================================================================
+fbFB_DALIV2StepDownAndOff(
+    bStart           := bTrigger,
+    nAddr            := nLampAddr,
+    eAddrType        := eDALIV2AddrTypeShort,
+    eCommandPriority := eDALIV2CommandPriorityMiddle,
+    stCommandBuffer  := stCommandBuffer
+);
+
+bBusy  := fbFB_DALIV2StepDownAndOff.bBusy;
+bErr   := fbFB_DALIV2StepDownAndOff.bError;
+nErrId := fbFB_DALIV2StepDownAndOff.nErrorId;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>
