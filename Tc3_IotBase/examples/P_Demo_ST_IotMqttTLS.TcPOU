@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_ST_IotMqttTLS" Id="{1223e411-33e5-558e-875f-dbaf9f779da0}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_ST_IotMqttTLS
+VAR
+    // TLS 设置——走 CA + 客户端证书的 mTLS 路径
+    // 证书文件提前放到 PLC 的 C:\TwinCAT\Boot\Certs\ 下
+    stTlsCfg : ST_IotMqttTls := (
+        sCA                := 'C:\TwinCAT\Boot\Certs\factory_ca.pem',     // 工厂自签 CA
+        sCert              := 'C:\TwinCAT\Boot\Certs\plc_line1.pem',      // 本 PLC 的证书
+        sKeyFile           := 'C:\TwinCAT\Boot\Certs\plc_line1.key',      // 本 PLC 的私钥
+        sKeyPwd            := '',                                          // 私钥无密码加密
+        sVersion           := 'tlsv1.2',                                   // 多数 broker 默认 1.2
+        bNoServerCertCheck := FALSE                                        // 生产严禁置 TRUE
+    );
+
+    // MQTT 客户端——端口 8883 + TLS
+    // sHostName 必须与 broker 证书 CN/SAN 一致，否则 MQTT_ERR_TLS_CN_MISMATCH(41)
+    fbMqttTls       : FB_IotMqttClient := (
+        sClientId   := 'CX-Line1-TLS',
+        sHostName   := 'mqtt.factory.local',
+        nHostPort   := 8883,
+        nKeepAlive  := 30
+    );
+    bEnableMqtt     : BOOL := TRUE;
+    bTlsConfigured  : BOOL;                            // 一次性 init 标志
+    bConnected      : BOOL;                            // monitor: 是否连上
+    eState          : ETcIotMqttClientState;           // monitor: 错误细分（TLS 类错码集中）
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：
+//   PLC 跨工厂 VLAN 连接到生产环境 MQTT broker，强制 TLS 加密 + 双向证书鉴权
+//   （mTLS）。所有 publish 数据加密、broker 用 PLC 客户端证书识别身份。
+//
+// 价值：
+//   填四行 STRING（CA / Cert / Key / Hostname）即可启用工业级 TLS。
+//   错误时 eState 给出 MQTT_ERR_TLS_* 细分原因（CA 没找到、证书过期、CN 不
+//   匹配、握手失败……），不必去翻 OpenSSL log。
+//
+// 验证步骤：
+//   1. 准备 broker（Mosquitto 配 TLS：listener 8883 + 配置证书）
+//   2. 用 OpenSSL 自签一套 CA + broker 证书 + 客户端证书，CN 填 'mqtt.factory.local'
+//        openssl ... -CN 'mqtt.factory.local' ...
+//   3. 把 factory_ca.pem / plc_line1.pem / plc_line1.key 三个文件放到
+//        \\<PLC_IP>\TwinCAT\Boot\Certs\ 下
+//   4. Windows hosts 里配 '<broker_IP>  mqtt.factory.local'（让证书 CN 与 IP 对上）
+//   5. 在 XAE 导入、登录、运行
+//   6. 在线 monitor：
+//        - 一切正常 → bConnected=TRUE，eState=MQTT_ERR_SUCCESS(0)
+//        - 路径写错 → eState=MQTT_ERR_TLS_CA_NOTFOUND(17) 或 _CERT_NOTFOUND(18)
+//        - CN 不对 → eState=MQTT_ERR_TLS_CN_MISMATCH(41)
+//        - broker 证书过期 → eState=MQTT_ERR_TLS_CERT_EXPIRED(40)
+//   7. 调试时若临时把 bNoServerCertCheck 置 TRUE 跳过校验，必须在 commit 前
+//      改回 FALSE
+// =============================================================================
+
+// 阶段 1：把 TLS 设置一次性赋给 FB——必须在 Execute(TRUE) 第一次调用前完成
+//         TLS 是 CONNECT 报文的一部分，建链后再改不会重协商
+IF NOT bTlsConfigured THEN
+    fbMqttTls.stTLS    := stTlsCfg;
+    bTlsConfigured     := TRUE;
+END_IF
+
+// 阶段 2：周期推进。TLS 握手需要 几百 ms ~ 几秒，比明文连接慢
+//         bConnected 变 TRUE 之前 eState 会经过 MQTT_ERR_NO_CONN → 握手中 → MQTT_ERR_SUCCESS
+fbMqttTls.Execute(bConnect := bEnableMqtt);
+
+// 阶段 3：把状态拉到 monitor 变量便于在线观察 TLS 失败的具体细分
+bConnected := fbMqttTls.bConnected;
+eState     := fbMqttTls.eConnectionState;
+
+// 业务：connected 后才发数据。本例只演示 TLS 鉴权 + 连接，不包含 publish
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

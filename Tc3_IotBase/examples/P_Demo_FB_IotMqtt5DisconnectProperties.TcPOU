@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_IotMqtt5DisconnectProperties" Id="{e6f9e008-92ab-5a70-906f-cc2761f831fa}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_IotMqtt5DisconnectProperties
+VAR
+    fbClient        : FB_IotMqtt5Client := (
+        sClientId   := 'CX-V5-DiscDemo',
+        sHostName   := '127.0.0.1',
+        nHostPort   := 1883,
+        nKeepAlive  := 30
+    );
+    bEnableMqtt     : BOOL := TRUE;
+    fbTrigDisc      : F_TRIG;                     // 下降沿——刚断开
+
+    // —— 从 DISCONNECT 读 broker 给的原因 ——
+    bAvail          : BOOL;
+    nReason         : BYTE;
+    sReasonStr      : STRING;
+    nNewSessExpire  : UDINT;
+    sServerRef      : STRING;
+
+    // —— 业务侧重连决策 ——
+    bShouldReconnect: BOOL := TRUE;               // 默认允许重连
+    bShouldSwitchSrv: BOOL;                       // 需要换 broker 地址
+    sNewBrokerHost  : STRING;                     // 新地址（从 sServerRef 拷）
+    bDontReconnect  : BOOL;                       // ClientId 冲突等情况——别重连
+    nReconnectDelay : DINT := 1000;               // 普通重连延迟（ms）；某些情况要 0 或更长
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：
+//   PLC 连厂区 broker 集群——broker 升级时主动 DISCONNECT 客户端并给出新
+//   节点地址；当同 ClientId 被另一台 PLC 抢用时给 Session Taken Over；
+//   PLC 据 reason code 决策"重连 / 切换地址 / 不再重连"。
+//
+// 价值：
+//   PDF §5.1.2.9.2 DISCONNECT properties 让 PLC 知道断的原因。MQTT 3 时代
+//   断连原因要查 broker 日志才知道——本 FB 让 reason code 实时可读。
+//
+// 验证步骤：
+//   1. 装 TF6701 license；起 MQTT 5 broker
+//   2. 在 XAE 导入、登录、运行
+//   3. 在线 monitor：bConnected=TRUE 期间 fbDisconnectProps 字段为 0
+//   4. 模拟"Session Taken Over" (0x8E)——简单方式：
+//        在另一个终端用同 ClientId 连：
+//          mosquitto_sub -V mqttv5 -t '#' -i 'CX-V5-DiscDemo'
+//        PLC 端 bConnected 落回 FALSE，下降沿触发：
+//          bAvail=TRUE, nReason=0x8E, bDontReconnect=TRUE
+//   5. 模拟服务器关闭 (0x8B)：mosquitto Ctrl+C 关掉
+//        nReason=0x8B（取决于 broker 实现），bShouldReconnect=TRUE +
+//        nReconnectDelay=5000 延迟重连让 broker 切到备用节点
+//   6. 正常停 PLC：bConnect:=FALSE → fbDisconnectProps 不被填（客户端主动断
+//      不算 broker DISCONNECT）
+// =============================================================================
+
+// 阶段 1：周期推进
+fbClient.Execute(bConnect := bEnableMqtt AND NOT bDontReconnect);
+
+// 阶段 2：检测断连下降沿
+fbTrigDisc(CLK := fbClient.bConnected);
+IF fbTrigDisc.Q THEN
+    bAvail := fbClient.fbDisconnectProps.bPropertiesAvailable;
+    IF bAvail THEN
+        // broker 主动断的——读 properties 决策
+        nReason        := fbClient.fbDisconnectProps.nReasonCode;
+        sReasonStr     := fbClient.fbDisconnectProps.sReasonString;
+        nNewSessExpire := fbClient.fbDisconnectProps.nSessionExpire;
+        sServerRef     := fbClient.fbDisconnectProps.sServerReference;
+
+        CASE nReason OF
+            16#00:
+                // Normal disconnection——正常，下次手动 reconnect 即可
+                bShouldReconnect := TRUE;
+                nReconnectDelay  := 1000;
+
+            16#8B:
+                // Server Shutting Down——等几秒，broker 切到备用节点
+                bShouldReconnect := TRUE;
+                nReconnectDelay  := 5000;
+
+            16#8D:
+                // Keep Alive Timeout——网络抖动，立即重连
+                bShouldReconnect := TRUE;
+                nReconnectDelay  := 0;
+
+            16#8E:
+                // Session Taken Over——别重连！ClientId 重了，重连只会和对方互踢
+                bDontReconnect   := TRUE;
+                bShouldReconnect := FALSE;
+
+            16#98:
+                // Administrative Action——运维强踢，停业务
+                bDontReconnect   := TRUE;
+                bShouldReconnect := FALSE;
+
+            16#9C, 16#9D:
+                // Use Another Server / Server Moved——切换到 sServerRef
+                bShouldSwitchSrv := TRUE;
+                sNewBrokerHost   := sServerRef;
+                bShouldReconnect := TRUE;
+                // 实际业务：把 sNewBrokerHost 写到 fbClient.sHostName，重新 init
+        END_CASE
+    ELSE
+        // bAvail=FALSE：TCP 层断了，broker 没机会发 DISCONNECT。当网络抖动处理
+        bShouldReconnect := TRUE;
+        nReconnectDelay  := 2000;
+    END_IF
+END_IF
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

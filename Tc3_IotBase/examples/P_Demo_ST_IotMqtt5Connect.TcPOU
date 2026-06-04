@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_ST_IotMqtt5Connect" Id="{0615d29d-0750-5537-8ee4-b5a68dadae17}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_ST_IotMqtt5Connect
+VAR
+    fbMqtt5         : FB_IotMqtt5Client := (
+        sClientId   := 'CX-Line1-CmdRecv',
+        sHostName   := '127.0.0.1',
+        nHostPort   := 1883,
+        nKeepAlive  := 30
+    );
+    bEnableMqtt     : BOOL := TRUE;
+    bConnInited     : BOOL;
+
+    // —— monitor ——
+    bConnected      : BOOL;
+    eState          : ETcIotMqttClientState;
+
+    // —— 从 CONNACK 读出 broker 实际给的能力限制 ——
+    nServerMaxPkt   : UDINT;        // broker 限制的最大包
+    nServerSessExp  : UDINT;        // broker 实际给的 session expire
+    nServerTopicMax : UINT;         // broker 支持的最大 topic alias
+    nServerRecvMax  : UINT;         // broker 同时处理的 QoS 1+2 消息数
+    bRetainSupp     : BOOL;         // broker 是否支持 retain
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：
+//   PLC 接收 MES 下发命令——要求 persistent session（断网期间命令不丢）+
+//   中等流控（同时处理 10 条 QoS 1+2 命令上限）+ 接受 topic alias 节带宽。
+//
+// 价值：
+//   PDF §5.1.2.6 高级连接参数让客户端声明能力，broker 自适应。
+//   - nSessionExpire := 3600: 短暂断网（< 1 小时）重连能拿回丢的命令
+//   - nMaxPacketSize := 64000: PLC 内部 payload 缓冲 64 KB，broker 不发更大
+//   - nReceiveMax := 10: QoS 1+2 流控上限，防命令洪水拖死 PLC
+//   - nTopicAliasMax := 50: 接受 topic alias 节带宽
+//
+// 验证步骤：
+//   1. 装 TF6701 license；起 mosquitto 1.6+ 或 EMQX
+//   2. 在 XAE 导入、登录、运行
+//   3. 在线 monitor：bConnected=TRUE 后从 fbConnAckProps 读 broker 实际给的：
+//        nServerMaxPkt  = min(客户端声明 64000, broker 自己上限)
+//        nServerSessExp = min(客户端声明 3600, broker 自己上限)
+//        bRetainSupp    = TRUE/FALSE（broker 自己是否支持 retain）
+//   4. 实际命令流测试（断网恢复后能拿回 QoS 1 命令）：
+//        a. mosquitto_pub -V mqttv5 -t plc/cmd -q 1 -m 'CMD1' (broker 保留)
+//        b. 让 PLC detach 一段时间（< 1 小时）
+//        c. 重连后 PLC 出队应能看到 CMD1（session 恢复了订阅 + 未投递消息）
+//   5. 如果改 nSessionExpire := 0（clean session）→ 同上测试 PLC 重连后 CMD1 收不到
+// =============================================================================
+
+// 阶段 1：首次扫描配置 stConnect 字段
+IF NOT bConnInited THEN
+    // session 持久化：3600 秒（1 小时）。断网期间 broker 保留订阅 + 未投递的 QoS 1/2 消息
+    fbMqtt5.stConnect.nSessionExpire     := 3600;
+
+    // 我们最大能接 64 KB 的 control packet——broker 不能发更大的
+    fbMqtt5.stConnect.nMaxPacketSize     := 64000;
+
+    // 同时最多 hold 10 条 QoS 1+2 消息（broker 流控参考）
+    fbMqtt5.stConnect.nReceiveMax        := 10;
+
+    // 接受最多 50 个 topic alias 映射
+    fbMqtt5.stConnect.nTopicAliasMax     := 50;
+
+    // 不请求 broker 返回 response info（典型用法仅 request-response 模式）
+    fbMqtt5.stConnect.bReqResponseInfo   := FALSE;
+
+    // FALSE = broker 可以在 publish / disconnect 附 Reason String / User Properties
+    // 利于诊断，正常带宽下选 FALSE
+    fbMqtt5.stConnect.bIgnoreProblemInfo := FALSE;
+
+    bConnInited := TRUE;
+END_IF
+
+// 阶段 2：周期推进
+fbMqtt5.Execute(bConnect := bEnableMqtt);
+bConnected := fbMqtt5.bConnected;
+eState     := fbMqtt5.eConnectionState;
+
+// 阶段 3：从 CONNACK 读 broker 实际给的能力（"协商结果"）
+// 客户端声明的可能被 broker 降低——按 broker 给的实际值算
+nServerMaxPkt   := fbMqtt5.fbConnAckProps.nMaxPackateSize;
+nServerSessExp  := fbMqtt5.fbConnAckProps.nSessionExpiryInterval;
+nServerTopicMax := fbMqtt5.fbConnAckProps.nTopicAliasMax;
+nServerRecvMax  := fbMqtt5.fbConnAckProps.nReceiveMax;
+bRetainSupp     := fbMqtt5.fbConnAckProps.bRetainAvailable;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

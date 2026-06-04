@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_IotMqtt5Message" Id="{14d47d66-cc7f-5866-b634-e6d868a8f3d5}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_IotMqtt5Message
+VAR
+    fbClient        : FB_IotMqtt5Client := (
+        sClientId   := 'CX-V5MsgDemo',
+        sHostName   := '127.0.0.1',
+        nHostPort   := 1883
+    );
+    fbMsg5          : FB_IotMqtt5Message;
+    bEnableMqtt     : BOOL := TRUE;
+    fbTrigSub       : R_TRIG;
+    sCmdTopic       : STRING := 'plc/v5/line1/cmd';
+
+    // —— monitor 区 ——
+    sLastTopic      : STRING(255);
+    sLastPayload    : STRING(255);
+    bIsUtf8         : BOOL;                        // publisher 声明 payload 是不是 UTF-8
+    nUserProps      : UINT;                        // user property 个数
+    nUserPropsLost  : UINT;                        // 接收时丢弃的 user property 数（应为 0）
+    nMsgExpiry      : UDINT;                       // 消息过期秒数
+    sContentType    : STRING(80);                  // content type (如 application/json)
+    nMsgCount       : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：
+//   PLC 订阅 MES 下发的命令 'plc/v5/line1/cmd'。MES 在每条消息里附 user
+//   property 'trace-id=<uuid>' 用于分布式追踪 + 'content-type=application/json'。
+//   PLC 出队后读这些 properties 以便：
+//   (a) 把 trace-id 写到本地日志，事后能跨 MES/SCADA/PLC 三方追踪一条命令；
+//   (b) 看 content-type 决定走 JSON 解析还是裸字符串处理；
+//   (c) 看 nMsgExpiryInterval 判断是否过期消息（可疑指令）。
+//
+// 价值：
+//   MQTT 5 把"元数据"从 payload 里抽出来放到 properties——业务代码读起来
+//   像调对象属性，不必和 payload 编码细节耦合。配 OpenTelemetry/链路追踪
+//   是必须的能力。
+//
+// 验证步骤：
+//   1. 装 TF6701 license；起 MQTT 5 broker（mosquitto 1.6+ 或 EMQX）
+//   2. 在 XAE 导入、登录、运行
+//   3. bConnected 变 TRUE 后会自动订阅 plc/v5/line1/cmd
+//   4. 在另一个终端发带 properties 的消息（mosquitto_pub 5.0 需配 -V mqttv5
+//      和 -D PUBLISH user-property k v）：
+//        mosquitto_pub -V mqttv5 -t 'plc/v5/line1/cmd' \
+//          -D PUBLISH content-type 'application/json' \
+//          -D PUBLISH user-property trace-id 'abc-123' \
+//          -D PUBLISH user-property origin 'mes' \
+//          -D PUBLISH payload-format-indicator 1 \
+//          -m '{"cmd":"START"}'
+//   5. 在线 monitor：
+//        sLastTopic = 'plc/v5/line1/cmd'
+//        sLastPayload = '{"cmd":"START"}'
+//        bIsUtf8 = TRUE
+//        nUserProps = 2（trace-id + origin）
+//        nUserPropsLost = 0
+//        sContentType = 'application/json'
+//        nMsgCount = 1
+//   6. 实际把 trace-id 取出来要用 GetUserPropertyValueByName——本骨架例
+//      程不展示（API 签名见 InfoSys 14629604107）
+// =============================================================================
+
+// 阶段 1：连 + 推进
+fbClient.Execute(bConnect := bEnableMqtt);
+
+// 阶段 2：连上后一次性订阅
+fbTrigSub(CLK := fbClient.bConnected);
+IF fbTrigSub.Q THEN
+    fbClient.Subscribe(sTopic := sCmdTopic,
+                       eQoS   := TcIotMqttQos.AtLeastOnceDelivery,
+                       pProps := 0);
+END_IF
+
+// 阶段 3：出队循环——读 properties 是本例核心
+WHILE fbClient.fbMessageQueue.nQueuedMessages > 0 DO
+    IF NOT fbClient.fbMessageQueue.Dequeue(fbMessage := fbMsg5) THEN
+        EXIT;
+    END_IF
+
+    // 基本字段
+    fbMsg5.GetTopic(pTopic := ADR(sLastTopic), nTopicSize := SIZEOF(sLastTopic));
+    fbMsg5.GetPayload(pPayload := ADR(sLastPayload),
+                      nPayloadSize := SIZEOF(sLastPayload),
+                      bSetNullTermination := TRUE);
+
+    // MQTT 5 特有 properties
+    bIsUtf8        := fbMsg5.bPayloadUtf8;            // publisher 声明
+    nUserProps     := fbMsg5.nUserPropertyCnt;        // 几个 user property
+    nUserPropsLost := fbMsg5.nUserPropertyCntLost;    // 接收时丢的
+    nMsgExpiry     := fbMsg5.nMsgExpiryInterval;      // 过期秒数
+    sContentType   := fbMsg5.sContentType;            // 内容类型
+
+    // 业务：把 trace-id 取出写日志（需要调 GetUserPropertyValueByName，
+    // 本骨架不展示参数细节——签名见 InfoSys 14629604107）
+    nMsgCount := nMsgCount + 1;
+END_WHILE
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

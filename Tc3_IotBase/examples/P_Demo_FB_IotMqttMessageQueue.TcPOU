@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_IotMqttMessageQueue" Id="{e1e1db86-e075-5c49-bcc4-af4406527cd4}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_IotMqttMessageQueue
+VAR
+    fbMqtt          : FB_IotMqttClient := (
+        sClientId   := 'CX-QueueDemo',
+        sHostName   := '127.0.0.1',
+        nHostPort   := 1883
+    );
+    fbTelemetryQ    : FB_IotMqttMessageQueue;    // FIFO 队列：装订阅消息
+    fbMsg           : FB_IotMqttMessage;          // 出队用临时载体
+
+    bEnableMqtt     : BOOL := TRUE;
+    bSubInited      : BOOL;                       // 一次性订阅标志
+
+    // —— monitor 区 ——
+    nQueued         : UDINT;                      // 当前队列深度
+    nTotalProcessed : UDINT;                      // 累计处理消息数（含丢）
+    nThisCycle      : UDINT;                      // 本周期处理消息数
+
+    // —— 业务变量 ——
+    sLastTopic      : STRING(255);
+    sLastPayload    : STRING(255);
+    cMaxPerCycle    : UDINT := 50;                // 单周期最多出队 50 条防拖慢
+    fbTrigSub       : R_TRIG;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：
+//   PLC 同时订阅工厂所有 5 条产线的遥测 'plc/+/telemetry'，每条产线 1 秒上报
+//   一次。一个 PLC 周期内可能瞬间收 5-10 条；走队列把"接收-处理"解耦。
+//
+// 价值：
+//   bOverwriteOldestEntry := TRUE 让队列满时丢老消息——最新遥测更重要。
+//   出队限速 cMaxPerCycle=50 保证 PLC 周期不会被消息洪水拖死（一周期处理
+//   1000 条相当于 ~1 ms 阻塞）。
+//
+// 验证步骤：
+//   1. 装 TF6701 license；起 Mosquitto:1883
+//   2. 在 XAE 导入、登录、运行
+//   3. 在另一个终端模拟 5 条产线 1 秒发一次：
+//        for i in 1 2 3 4 5; do
+//          (while true; do
+//            mosquitto_pub -t "plc/line$i/telemetry" -m '{"temp":42.0}';
+//            sleep 1;
+//          done) &
+//        done
+//   4. 在线 monitor：
+//        nQueued 维持在 0~5 之间（处理跟得上）
+//        nTotalProcessed 每秒增加 5
+//        sLastTopic 在 'plc/line1/telemetry' .. 'plc/line5/telemetry' 间循环
+//   5. 把 cMaxPerCycle 改成 1 → 队列开始堆积 → nQueued 持续上涨
+//        直到达到 cMaxEntriesInMqttMessageQueue=1000 上限
+//        因 bOverwriteOldestEntry=TRUE 之后开始丢老消息（在 fbMqtt 内部计数，本 FB 不暴露）
+//   6. 业务边界（如配方切换）想清空队列：调一次 fbTelemetryQ.ResetQueue()
+// =============================================================================
+
+// 阶段 1：把队列连到 client；首扫描设置 overwrite 策略
+fbMqtt.ipMessageQueue                := fbTelemetryQ;
+fbTelemetryQ.bOverwriteOldestEntry   := TRUE;          // 遥测：丢老留新
+
+// 阶段 2：周期推进
+fbMqtt.Execute(bConnect := bEnableMqtt);
+
+// 阶段 3：连上后一次性订阅 plc/+/telemetry
+fbTrigSub(CLK := fbMqtt.bConnected);
+IF fbTrigSub.Q THEN
+    fbMqtt.Subscribe(sTopic := 'plc/+/telemetry', eQoS := TcIotMqttQos.AtMostOnceDelivery);
+    bSubInited := TRUE;
+END_IF
+
+// 阶段 4：限速出队（每周期最多 cMaxPerCycle 条）
+nQueued     := fbTelemetryQ.nQueuedMessages;
+nThisCycle  := 0;
+WHILE fbTelemetryQ.nQueuedMessages > 0 AND nThisCycle < cMaxPerCycle DO
+    IF NOT fbTelemetryQ.Dequeue(fbMessage := fbMsg) THEN
+        EXIT;   // 出队失败（队列空）：跳出
+    END_IF
+    // 立刻拷出 topic / payload——不能跨周期保留 fbMsg 引用
+    fbMsg.GetTopic(pTopic := ADR(sLastTopic), nTopicSize := SIZEOF(sLastTopic));
+    fbMsg.GetPayload(pPayload := ADR(sLastPayload),
+                     nPayloadSize := SIZEOF(sLastPayload),
+                     bSetNullTermination := TRUE);
+    // 在此处做业务处理：解析 JSON、更新 OEE 看板、写入历史库 ...
+    nThisCycle      := nThisCycle + 1;
+    nTotalProcessed := nTotalProcessed + 1;
+END_WHILE
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

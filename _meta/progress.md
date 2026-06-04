@@ -1952,3 +1952,24 @@
 2026-06-03T00:00:00Z | Tc3_OPCUA      | tc3_plcopen_opcua                       | UA_Read                                  | verified | PDF + InfoSys cross-verified
 2026-06-03T00:00:00Z | Tc3_OPCUA      | tc3_plcopen_opcua                       | UA_ReadList                              | verified | PDF single-source (not-on-infosys)
 2026-06-03T00:00:00Z | Tc3_OPCUA      | tc3_plcopen_opcua                       | UA_Write                                 | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_IotBase    | enums                                   | ETcIotMqttClientState                    | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_IotBase    | gvls                                    | ParameterList                            | verified | chapter-overview (ParameterList GVL)
+2026-06-03T00:00:00Z | Tc3_IotBase    | mqtt3                                   | FB_IotMqttClient                         | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_IotBase    | mqtt3                                   | FB_IotMqttMessage                        | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_IotBase    | mqtt3                                   | FB_IotMqttMessageQueue                   | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_IotBase    | mqtt3                                   | ST_IotMqttTLS                            | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_IotBase    | mqtt3                                   | ST_IotMqttWill                           | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_IotBase    | mqtt5                                   | FB_IotMqtt5Client                        | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_IotBase    | mqtt5                                   | FB_IotMqtt5ClientBase                    | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_IotBase    | mqtt5                                   | FB_IotMqtt5Message                       | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_IotBase    | mqtt5                                   | FB_IotMqtt5MessageQueue                  | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_IotBase    | mqtt5_duts                              | ST_IotMqtt5Auth                          | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_IotBase    | mqtt5_duts                              | ST_IotMqtt5Connect                       | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_IotBase    | mqtt5_duts                              | ST_IotMqtt5Tls                           | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_IotBase    | mqtt5_duts                              | ST_IotMqtt5Will                          | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_IotBase    | mqtt5_properties                        | FB_IotMqtt5ConnAckProperties             | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_IotBase    | mqtt5_properties                        | FB_IotMqtt5DisconnectProperties          | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_IotBase    | mqtt5_properties                        | FB_IotMqtt5PublishProperties             | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_IotBase    | mqtt5_properties                        | FB_IotMqtt5SubscribeProperties           | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_IotBase    | mqtt5_properties                        | FB_IotMqtt5UnsubscribeProperties         | verified | PDF + InfoSys cross-verified
+2026-06-03T00:00:00Z | Tc3_IotBase    | mqtt5_properties                        | FB_IotMqtt5UserProperties                | verified | PDF + InfoSys cross-verified

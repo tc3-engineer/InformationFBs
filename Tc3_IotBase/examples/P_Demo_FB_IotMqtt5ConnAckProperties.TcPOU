@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_IotMqtt5ConnAckProperties" Id="{855a15f6-7aaf-516c-b235-3f195ded34b6}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_IotMqtt5ConnAckProperties
+VAR
+    fbClient        : FB_IotMqtt5Client := (
+        sClientId   := 'CX-V5-CapDemo',
+        sHostName   := '127.0.0.1',
+        nHostPort   := 1883,
+        nKeepAlive  := 30
+    );
+    bEnableMqtt     : BOOL := TRUE;
+    fbTrigCnx       : R_TRIG;
+
+    // —— 从 CONNACK 读 broker 能力 ——
+    bAvail          : BOOL;            // 是否有 properties 可用
+    bRetainSupp     : BOOL;
+    bWildcardSupp   : BOOL;
+    bSharedSubSupp  : BOOL;
+    bSubIdSupp      : BOOL;
+    nServerMaxPkt   : UDINT;
+    nServerMaxQoS   : BYTE;
+    nServerSessExp  : UDINT;
+    nServerRecvMax  : UINT;
+    nServerTopicMax : UINT;
+    bSessionExisted : BOOL;            // broker 找到上次的 session？
+    nReason         : BYTE;
+    sReasonStr      : STRING;
+    sAssignedId     : STRING;
+    sServerRef      : STRING;          // broker 推荐切换的地址
+
+    // —— 自适应业务决策位 ——
+    bCanPublishRetain    : BOOL;       // 业务允许走 retain publish
+    bCanSubscribeWildcard: BOOL;       // 业务允许 wildcard 订阅
+    nSafePublishQoS      : BYTE;       // 业务可用 QoS 上限
+
+    // —— server-switch 触发位 ——
+    bNeedServerSwitch    : BOOL;       // reason code 9C/9D 时置位
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：
+//   PLC 连 broker 集群（不同节点能力各异）。连上后立即读 CONNACK properties
+//   做能力自适应——不写死参数，由 broker 告诉客户端"我能干什么"。
+//   同时监听 reason code 0x9C / 0x9D（server-switch 信号），切换到 broker
+//   推荐的新地址。
+//
+// 价值：
+//   PDF §5.1.2.9.1 CONNACK properties 是 MQTT 5 关键自适应能力。
+//   - 不同 broker（EMQX / HiveMQ / Mosquitto / AWS IoT）能力差异通过协议
+//     声明出来，不必各写一套适配代码
+//   - 集群迁移 / 升级时 broker 用 server-switch 通知客户端切换，自动 LB
+//
+// 验证步骤：
+//   1. 装 TF6701 license；起 MQTT 5 broker
+//   2. 在 XAE 导入、登录、运行
+//   3. 在线 monitor：
+//        bAvail=TRUE 后下面所有字段被填充
+//        nServerMaxPkt: 0 表示不限制
+//        bRetainSupp / bWildcardSupp: 看 broker 配置
+//        nServerMaxQoS: 多数 broker 给 2 (支持 QoS 0/1/2)；
+//                       极简 broker 可能只给 1
+//        bSessionExisted: 首次连 FALSE；用同 ClientId + non-zero session expire
+//                         重连应为 TRUE
+//   4. 模拟 server-switch（要 broker 配置触发 reason code 0x9C）：
+//        通常生产 broker 升级时配；本地 mosquitto 不支持模拟
+// =============================================================================
+
+// 阶段 1：连
+fbClient.Execute(bConnect := bEnableMqtt);
+
+// 阶段 2：上升沿到——读 properties，定业务策略
+fbTrigCnx(CLK := fbClient.bConnected);
+IF fbTrigCnx.Q THEN
+    bAvail := fbClient.fbConnAckProps.bPropertiesAvailable;
+    IF bAvail THEN
+        // 读 broker 能力（注意 typo：API 实际名 nMaxPackateSize）
+        bRetainSupp     := fbClient.fbConnAckProps.bRetainAvailable;
+        bWildcardSupp   := fbClient.fbConnAckProps.bWildcardSubAvailable;
+        bSharedSubSupp  := fbClient.fbConnAckProps.bSharedSubAvailable;
+        bSubIdSupp      := fbClient.fbConnAckProps.bSubIdAvailable;
+        nServerMaxPkt   := fbClient.fbConnAckProps.nMaxPackateSize;
+        nServerMaxQoS   := fbClient.fbConnAckProps.nMaxQoS;
+        nServerSessExp  := fbClient.fbConnAckProps.nSessionExpiryInterval;
+        nServerRecvMax  := fbClient.fbConnAckProps.nReceiveMax;
+        nServerTopicMax := fbClient.fbConnAckProps.nTopicAliasMax;
+        bSessionExisted := fbClient.fbConnAckProps.bSessionPresent;
+        nReason         := fbClient.fbConnAckProps.nReasonCode;
+        sReasonStr      := fbClient.fbConnAckProps.sReasonString;
+        sAssignedId     := fbClient.fbConnAckProps.sAssignedClientId;
+        sServerRef      := fbClient.fbConnAckProps.sServerReference;
+
+        // —— 自适应业务策略 ——
+        bCanPublishRetain     := bRetainSupp;
+        bCanSubscribeWildcard := bWildcardSupp;
+        nSafePublishQoS       := nServerMaxQoS;
+
+        // —— server-switch 信号检测 ——
+        IF nReason = 16#9C OR nReason = 16#9D THEN
+            // 0x9C Use Another Server / 0x9D Server moved
+            bNeedServerSwitch := TRUE;
+            // 实际业务：把 sServerRef 写到运行时配置，重启或动态 DISCONNECT 后切换
+        END_IF
+    END_IF
+END_IF
+
+// 阶段 3：业务后续按 bCanPublishRetain / bCanSubscribeWildcard / nSafePublishQoS
+//         决定 publish / subscribe 的实际参数（本骨架不展开）
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_IotMqtt5PublishProperties" Id="{226c7267-a3ed-5004-84cd-5d122e4b17e6}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_IotMqtt5PublishProperties
+VAR
+    fbClient        : FB_IotMqtt5Client := (
+        sClientId   := 'CX-V5-PubPropsDemo',
+        sHostName   := '127.0.0.1',
+        nHostPort   := 1883,
+        nKeepAlive  := 30
+    );
+    fbPubProps      : FB_IotMqtt5PublishProperties;       // 用本 FB 构造 properties
+
+    bEnableMqtt     : BOOL := TRUE;
+    fbTrigCnx       : R_TRIG;
+    bPropsInited    : BOOL;
+
+    // —— 业务变量 ——
+    fbTonHeartbeat  : TON := (PT := T#5S);
+    sTelemetryTopic : STRING := 'plc/v5/L1/telemetry';
+    sPayload        : STRING(120) := '{"sensor":"L1","temp":42.0,"trace":"abc-123"}';
+    nPubCount       : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：
+//   PLC 每 5 秒上报一条 JSON 遥测——附带：
+//   - content-type='application/json'：让消费者知道 payload 格式
+//   - payload-utf8=TRUE：声明字符串编码
+//   - msg-expiry=60 秒：超时数据 broker 丢弃避免给离线后恢复的订阅者旧值
+//   - user property trace-id：用于分布式追踪 MES → PLC 链路
+//
+// 价值：
+//   PDF §5.1.2.9.3 把元数据放 properties 而不是 payload——业务代码与 payload
+//   编码细节解耦，trace-id / content-type / expiry 等成为协议级一等公民。
+//
+// 验证步骤：
+//   1. 装 TF6701 license；起 MQTT 5 broker (mosquitto 1.6+ 或 EMQX)
+//   2. 在 XAE 导入、登录、运行
+//   3. 在另一个终端订阅 + 看 properties（-V mqttv5 必填）：
+//        mosquitto_sub -V mqttv5 -t 'plc/v5/L1/telemetry' -v -F '%t %P %p'
+//      每 5 秒看到一条消息，properties 区包含：
+//        content-type = application/json
+//        payload-format-indicator = 1
+//        user-property: trace-id=abc-123
+//        message-expiry-interval = 60
+//   4. 让 PLC 发完后停止 publish，但订阅端先关掉；过 30 秒重新打开订阅：
+//      因 retain=FALSE + expiry=60 秒已超，新订阅者收不到这些过期消息
+//      （若 retain=TRUE 则 broker 保留最后一条直到 expiry 才删）
+// =============================================================================
+
+// 阶段 1：连
+fbClient.Execute(bConnect := bEnableMqtt);
+
+// 阶段 2：连上后一次性配 properties。这一段只执行一次——之后 publish 复用同一 properties
+fbTrigCnx(CLK := fbClient.bConnected);
+IF fbTrigCnx.Q THEN
+    fbPubProps.bPayloadUtf8       := TRUE;                  // payload 是 UTF-8 文本
+    fbPubProps.sContentType       := 'application/json';
+    fbPubProps.nMsgExpiryInterval := 60;                    // 60 秒过期
+
+    // 添加 user property: trace-id（继承自 FB_IotMqtt5UserProperties）
+    // 实际 AddUserProperty 签名见 InfoSys 13962881163；本骨架示意：
+    //   fbPubProps.AddUserProperty(sName := 'trace-id', sValue := 'abc-123');
+
+    // 把上面 Set 的字段固化到内部 MqttPublishProperties 结构
+    fbPubProps.SetPublishProperties();
+
+    bPropsInited := TRUE;
+END_IF
+
+// 阶段 3：连上后每 5 秒 publish 一次——pProps 用 fbPubProps.pPublishProperties（属性，不带括号）
+IF fbClient.bConnected AND bPropsInited THEN
+    fbTonHeartbeat(IN := TRUE);
+    IF fbTonHeartbeat.Q THEN
+        fbTonHeartbeat(IN := FALSE);
+        fbClient.Publish(
+            sTopic       := sTelemetryTopic,
+            pPayload     := ADR(sPayload),
+            nPayloadSize := TO_UDINT(LEN(sPayload)),
+            eQoS         := TcIotMqttQos.AtMostOnceDelivery,
+            bRetain      := FALSE,
+            bQueue       := FALSE,
+            pProps       := fbPubProps.pPublishProperties        // 关键：传 properties
+        );
+        nPubCount := nPubCount + 1;
+    END_IF
+ELSE
+    fbTonHeartbeat(IN := FALSE);
+END_IF
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

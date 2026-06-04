@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_IotMqtt5MessageQueue" Id="{d57d73b7-d404-5671-ba83-33265914cadd}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_IotMqtt5MessageQueue
+VAR
+    fbClient        : FB_IotMqtt5Client := (
+        sClientId   := 'CX-V5Q',
+        sHostName   := '127.0.0.1',
+        nHostPort   := 1883
+    );
+    fbMsg5          : FB_IotMqtt5Message;            // 出队载体
+    bEnableMqtt     : BOOL := TRUE;
+    fbTrigSub       : R_TRIG;
+
+    // monitor 区——MQTT 5 队列多暴露的两个观测属性
+    nQueued         : UDINT;
+    nLost           : UDINT;            // 累计丢消息数（溢出 / 单条过大）
+    nMaxRecvSize    : UDINT;            // 历史最大单条消息字节数
+    nProcessed      : UDINT;            // 累计处理消息数
+
+    cMaxPerCycle    : UDINT := 100;
+    nThisCycle      : UDINT;
+    sLastTopic      : STRING(255);
+    sLastPayload    : STRING(255);
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：
+//   工厂网关订阅全厂遥测 'plc/v5/+/telemetry'，每秒 ~50 条进来。业务任务
+//   每周期出队 100 条上限处理。生产中 nLostMessages 应该恒为 0；若开始
+//   增长说明业务跟不上，需要扩容或加并发。
+//
+// 价值：
+//   MQTT 5 queue 是 client 内嵌的——只需 fbClient.fbMessageQueue.Dequeue
+//   即可，不必像 v3 那样自己声明 queue 并 wire 到 ipMessageQueue。多了
+//   nLostMessages / nMaxSizeOfMessage 两个可观测属性，运维友好。
+//
+// 验证步骤：
+//   1. 装 TF6701 license；起本机 MQTT 5 broker
+//   2. 在 XAE 导入、登录、运行
+//   3. 在线 monitor：bConnected→TRUE 后 nQueued / nLost / nMaxRecvSize 都 0
+//   4. 在另一个终端模拟遥测（每秒 100 条）：
+//        for i in $(seq 1 100); do mosquitto_pub -V mqttv5 -t "plc/v5/L$i/telemetry" -m '{"t":42}'; done
+//   5. nQueued 短暂峰值后回 0（处理跟得上）；nProcessed 应等于发的条数
+//   6. 把 cMaxPerCycle 改成 1 → 队列积压 → nQueued 上涨到 1000 → 之后
+//      因 bOverwriteOldestEntry=TRUE（本例置 TRUE）开始覆盖老消息
+//      → nLost 开始增长
+//   7. 业务边界要清空队列时调一次：fbClient.fbMessageQueue.ResetQueue();
+// =============================================================================
+
+// 阶段 1：连 + 推进。MQTT 5 client 自带 fbMessageQueue 输出
+fbClient.Execute(bConnect := bEnableMqtt);
+fbClient.fbMessageQueue.bOverwriteOldestEntry := TRUE;        // 遥测：满了丢老
+
+// 阶段 2：连上后一次性订阅 wildcard
+fbTrigSub(CLK := fbClient.bConnected);
+IF fbTrigSub.Q THEN
+    fbClient.Subscribe(sTopic := 'plc/v5/+/telemetry',
+                       eQoS   := TcIotMqttQos.AtMostOnceDelivery,
+                       pProps := 0);
+END_IF
+
+// 阶段 3：把队列状态读出来给在线 monitor 看
+nQueued      := fbClient.fbMessageQueue.nQueuedMessages;
+nLost        := fbClient.fbMessageQueue.nLostMessages;
+nMaxRecvSize := fbClient.fbMessageQueue.nMaxSizeOfMessage;
+
+// 阶段 4：限速出队
+nThisCycle := 0;
+WHILE fbClient.fbMessageQueue.nQueuedMessages > 0 AND nThisCycle < cMaxPerCycle DO
+    IF NOT fbClient.fbMessageQueue.Dequeue(fbMessage := fbMsg5) THEN
+        EXIT;
+    END_IF
+    fbMsg5.GetTopic(pTopic := ADR(sLastTopic), nTopicSize := SIZEOF(sLastTopic));
+    fbMsg5.GetPayload(pPayload := ADR(sLastPayload),
+                      nPayloadSize := SIZEOF(sLastPayload),
+                      bSetNullTermination := TRUE);
+    nThisCycle := nThisCycle + 1;
+    nProcessed := nProcessed + 1;
+END_WHILE
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

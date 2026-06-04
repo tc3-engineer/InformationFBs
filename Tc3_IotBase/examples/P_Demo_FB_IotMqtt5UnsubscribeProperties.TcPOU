@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_IotMqtt5UnsubscribeProperties" Id="{64bdc592-4af1-568f-b63d-36907a697b45}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_IotMqtt5UnsubscribeProperties
+VAR
+    fbClient        : FB_IotMqtt5Client := (
+        sClientId   := 'CX-V5-UnsubDemo',
+        sHostName   := '127.0.0.1',
+        nHostPort   := 1883,
+        nKeepAlive  := 30
+    );
+    fbUnsubProps    : FB_IotMqtt5UnsubscribeProperties;
+
+    bEnableMqtt     : BOOL := TRUE;
+    fbTrigCnx       : R_TRIG;
+    bSubInited      : BOOL;
+    bRequestUnsub   : BOOL := FALSE;            // 在线置 TRUE 触发取消订阅
+    fbTrigUnsubReq  : R_TRIG;
+    sCmdTopic       : STRING := 'plc/v5/L1/cmd';
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：
+//   PLC 进入维护模式前主动取消对命令 topic 的订阅——给 unsubscribe 附 user
+//   property 'reason=maintenance' / 'duration=PT30M'，broker 端记录到日志
+//   或触发 plugin，运维监控系统能感知"这台 PLC 进入维护"。
+//
+//   多数业务场景 unsubscribe 不需要这些 properties——本例展示带 properties
+//   的较少见用法（运维审计场景）。
+//
+// 价值：
+//   PDF §5.1.2.9.5 给 unsubscribe 加 user properties 让运维链路与业务链路
+//   完全分离——运维通过 broker 日志直接看 reason；业务代码不动。
+//
+// 验证步骤：
+//   1. 装 TF6701 license；起 MQTT 5 broker (建议 EMQX/HiveMQ 这种带审计日志的)
+//   2. 在 XAE 导入、登录、运行
+//   3. 自动订阅 'plc/v5/L1/cmd' 成功（bSubInited=TRUE）
+//   4. 在线把 bRequestUnsub 置 TRUE → unsubscribe 发出
+//   5. broker 端日志应看到 UNSUBSCRIBE 报文 + user properties 'reason' = 'maintenance'
+//   6. 99% 业务场景下不用本 FB——直接 fbClient.Unsubscribe(sTopic := ..., pProps := 0)
+// =============================================================================
+
+// 阶段 1：连
+fbClient.Execute(bConnect := bEnableMqtt);
+
+// 阶段 2：连上后一次性订阅
+fbTrigCnx(CLK := fbClient.bConnected);
+IF fbTrigCnx.Q THEN
+    fbClient.Subscribe(sTopic := sCmdTopic,
+                       eQoS   := TcIotMqttQos.AtLeastOnceDelivery,
+                       pProps := 0);                  // 订阅不需要 properties
+    bSubInited := TRUE;
+END_IF
+
+// 阶段 3：上升沿触发 unsubscribe + 带 properties
+fbTrigUnsubReq(CLK := bRequestUnsub);
+IF fbTrigUnsubReq.Q AND bSubInited THEN
+    // 添加 user property——实际签名见 InfoSys 13962881163：
+    //   fbUnsubProps.AddUserProperty(sName := 'reason',   sValue := 'maintenance');
+    //   fbUnsubProps.AddUserProperty(sName := 'duration', sValue := 'PT30M');
+
+    // 固化 properties
+    fbUnsubProps.SetUnsubscribeProperties();
+
+    // 调 Unsubscribe，把 pUnsubscribeProperties（属性，不带括号）传过去
+    fbClient.Unsubscribe(sTopic := sCmdTopic,
+                         pProps := fbUnsubProps.pUnsubscribeProperties);
+END_IF
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

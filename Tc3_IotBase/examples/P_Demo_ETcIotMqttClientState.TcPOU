@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_ETcIotMqttClientState" Id="{bb037102-66b1-595a-983f-77c39613ff06}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_ETcIotMqttClientState
+VAR
+    fbClient        : FB_IotMqttClient := (
+        sClientId   := 'CX-StateDemo',
+        sHostName   := '127.0.0.1',
+        nHostPort   := 1883,
+        nKeepAlive  := 30
+    );
+
+    bEnableMqtt     : BOOL := TRUE;
+
+    // —— 在线 monitor 用 —— 把 eConnectionState 翻译成 HMI 友好的中文 ——
+    eState          : ETcIotMqttClientState;
+    sStateText      : STRING(120);
+    eHmiColor       : INT;                          // 0=灰 1=绿 2=黄 3=红
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：
+//   HMI 面板上要显示 PLC 与 MQTT broker 的连接健康度——绿黄红三色 + 文字
+//   描述。业务侧据 ETcIotMqttClientState 细分映射：
+//     绿 = 已连上
+//     黄 = 临时网络 / TLS 握手问题（等待自动恢复）
+//     红 = 配置错（用户名密码 / ACL / 证书）必须运维介入
+//
+// 价值：
+//   PDF §5.1.3 把 MQTT 客户端错误细分到 42 个值。比 bError + bConnected 只能
+//   "绿 / 红"丰富得多——运维能 1 秒看出"是网络问题还是配置错"。
+//
+// 验证步骤：
+//   1. 装 TF6701 license
+//   2. 在 XAE 导入、登录、运行
+//   3. 不起 broker（127.0.0.1:1883 无人监听）：
+//        eState = MQTT_ERR_NO_CONN (4), eHmiColor=2 黄
+//   4. 起 broker：
+//        eState = MQTT_ERR_SUCCESS (0), eHmiColor=1 绿
+//   5. 停 broker：
+//        eState = MQTT_ERR_CONN_LOST (7), eHmiColor=2 黄
+//   6. 把 sHostName 改成 'not.exist.example.com'：
+//        eState = MQTT_ERR_EAI (15), eHmiColor=3 红
+//   7. 起 broker 但配错的用户名密码：
+//        eState = MQTT_ERR_AUTH (11) 或 MQTT_ERR_CONN_REFUSED (5), 红
+// =============================================================================
+
+// 阶段 1：周期推进
+fbClient.Execute(bConnect := bEnableMqtt);
+eState := fbClient.eConnectionState;
+
+// 阶段 2：把 eState 翻译成 HMI 友好的"颜色 + 文字"
+CASE eState OF
+    ETcIotMqttClientState.MQTT_ERR_SUCCESS:
+        sStateText := '已连上 broker';
+        eHmiColor  := 1;       // 绿
+
+    // —— 临时问题（等待自动恢复） ——
+    ETcIotMqttClientState.MQTT_ERR_CONN_PENDING:
+        sStateText := '正在连接 broker...';
+        eHmiColor  := 2;       // 黄
+
+    ETcIotMqttClientState.MQTT_ERR_NO_CONN:
+        sStateText := '尚未连接 broker，检查网络 / 端口';
+        eHmiColor  := 2;
+
+    ETcIotMqttClientState.MQTT_ERR_CONN_LOST:
+        sStateText := '连接已断（网络抖动？等待自动重连）';
+        eHmiColor  := 2;
+
+    ETcIotMqttClientState.MQTT_ERR_CONN_TIMEDOUT,
+    ETcIotMqttClientState.MQTT_ERR_CONN_HOSTUNREACH,
+    ETcIotMqttClientState.MQTT_ERR_TLS_HANDSHAKE_FAIL:
+        sStateText := '网络问题——超时 / 不可达 / 握手失败';
+        eHmiColor  := 2;
+
+    // —— 配置错（运维介入） ——
+    ETcIotMqttClientState.MQTT_ERR_AUTH,
+    ETcIotMqttClientState.MQTT_ERR_CONN_REFUSED:
+        sStateText := '鉴权失败——检查用户名密码 / ClientId / token';
+        eHmiColor  := 3;       // 红
+
+    ETcIotMqttClientState.MQTT_ERR_ACL_DENIED:
+        sStateText := 'broker ACL 拒绝——该 PLC 无权 publish/subscribe 该 topic';
+        eHmiColor  := 3;
+
+    ETcIotMqttClientState.MQTT_ERR_TLS_VERIFY_FAIL,
+    ETcIotMqttClientState.MQTT_ERR_TLS_CA_INVALID,
+    ETcIotMqttClientState.MQTT_ERR_TLS_CERT_INVALID:
+        sStateText := 'TLS 证书校验失败——检查 sCA / sCert 配置';
+        eHmiColor  := 3;
+
+    ETcIotMqttClientState.MQTT_ERR_TLS_CN_MISMATCH:
+        sStateText := 'TLS 证书 CN 不匹配 sHostName——证书签发错或主机名错';
+        eHmiColor  := 3;
+
+    ETcIotMqttClientState.MQTT_ERR_TLS_CERT_EXPIRED:
+        sStateText := 'TLS 证书已过期——续签';
+        eHmiColor  := 3;
+
+    ETcIotMqttClientState.MQTT_ERR_EAI:
+        sStateText := 'DNS 解析失败——检查 sHostName 拼写 / DNS 服务';
+        eHmiColor  := 3;
+
+    ETcIotMqttClientState.MQTT_ERR_PAYLOAD_SIZE:
+        sStateText := 'payload 太大——减小消息或调大 cMaxSizeOfMqttMessage';
+        eHmiColor  := 3;
+
+ELSE
+    sStateText := '其他错——查 PDF §5.1.3 + §7.2 错误码表';
+    eHmiColor  := 3;
+END_CASE
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

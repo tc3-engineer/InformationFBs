@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_IotMqttClient" Id="{e4cce6c4-7357-5707-b744-5922e5799aba}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_IotMqttClient
+VAR
+    // 主 FB：MQTT 3.1.1 客户端。指向本机 Mosquitto，明文 1883
+    fbMqttClient        : FB_IotMqttClient := (
+        sClientId   := 'CX-Line1-Plc',     // 工厂多 PLC 时务必带机器号防重连互踢
+        sHostName   := '127.0.0.1',
+        nHostPort   := 1883,
+        nKeepAlive  := 30                  // 30 秒心跳—— broker 等 45 秒判掉线
+    );
+    fbQueueRecv         : FB_IotMqttMessageQueue;   // 接收队列：订阅消息进 FIFO
+    fbMsg               : FB_IotMqttMessage;        // 出队用的临时消息载体
+    fbHeartbeatTrigger  : TON := (PT := T#5S);      // 每 5 秒触发一次心跳 publish
+    fbCmdTopicSubscribed: R_TRIG;                   // 只在第一次连上时订阅一次
+
+    // —— 在线 monitor / 控制变量 ——
+    bEnableMqtt         : BOOL := TRUE;             // 在线置 FALSE 即可主动断开
+    bConnected          : BOOL;                     // monitor: 是否已连上
+    eState              : ETcIotMqttClientState;    // monitor: 细分连接状态
+    nLastBrokerMsgMs    : UDINT;                    // monitor: 距上次 broker 消息毫秒数
+    nMsgRecvCount       : UDINT;                    // monitor: 已收的消息总数
+    sLastRecvTopic      : STRING(255);              // monitor: 最近一条收到消息的 topic
+    sLastRecvPayload    : STRING(255);              // monitor: 最近一条 payload (UTF-8)
+
+    // —— 业务用临时变量 ——
+    sHeartbeatTopic     : STRING := 'plc/line1/heartbeat';
+    sCmdTopic           : STRING := 'plc/line1/cmd';
+    sHeartbeatPayload   : STRING(80) := '{"ts":0,"state":"run"}';
+    bPubOk              : BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：
+//   CX 工控机做产线 1 的边缘网关。每 5 秒向 MQTT broker（本机 Mosquitto 1883）
+//   publish 一条心跳遥测到 plc/line1/heartbeat，同时订阅 plc/line1/cmd 接收
+//   MES 下发的启停命令。是 Tc3_IotBase 库最典型的"上报 + 订阅"双向用法。
+//
+// 价值：
+//   把"建 TCP → MQTT CONNECT → 维持心跳 → publish/subscribe 编码 → 异常重连"
+//   全收进一个 FB 实例 + 几个方法调用。业务代码只关心 topic 和 payload，不必
+//   手写任何 MQTT 协议帧。与 ADS / 自建 TCP / FTP 上传相比，发布订阅模型天然
+//   支持云端 broker 上千 PLC 聚合、跨 MES/SCADA 多对多。
+//
+// 验证步骤（必须按此顺序，否则演示走不通错误路径）：
+//   1. 装 TF6701 license（无 license → bError 立即为 TRUE，eState=MQTT_ERR_AUTH 之类）
+//   2. 本机起一个 Mosquitto，无认证、监听 1883：
+//        mosquitto -p 1883 -v
+//   3. 在 XAE 导入本 .TcPOU，编译登录后运行
+//   4. 在线 monitor：bConnected 应在数百毫秒内变 TRUE，eState=MQTT_ERR_SUCCESS(0)
+//   5. 在另一个终端订阅心跳：
+//        mosquitto_sub -t plc/line1/heartbeat -v
+//      每 5 秒应看到一条 '{"ts":0,"state":"run"}'（ts 字段无业务意义，仅示例）
+//   6. 在另一个终端 publish 一条命令测试订阅：
+//        mosquitto_pub -t plc/line1/cmd -m 'STOP'
+//      在线 monitor sLastRecvTopic = 'plc/line1/cmd'，sLastRecvPayload = 'STOP'，
+//      nMsgRecvCount 自增
+//   7. 在线把 bEnableMqtt 置 FALSE → 几百毫秒后 bConnected 落回 FALSE，
+//      eState 变 MQTT_ERR_NO_CONN
+//   8. 把 sHostName 改成不可达 IP（如 192.0.2.99）并重连 → 看 eState 走到
+//      MQTT_ERR_CONN_LOST 或 MQTT_ERR_NO_CONN，验证错误路径
+// =============================================================================
+
+// 阶段 1：把接收队列挂到 FB 输入。InfoSys 明确说不重写回调时用队列。
+//         必须放在 Execute 之前；运行期间不可换队列实例。
+fbMqttClient.ipMessageQueue := fbQueueRecv;
+
+// 阶段 2：周期推进——这一行是整个 FB 的发动机。bEnableMqtt 拉低即触发 DISCONNECT。
+fbMqttClient.Execute(bConnect := bEnableMqtt);
+
+// 收一份状态到 monitor 变量，便于在线观察
+bConnected       := fbMqttClient.bConnected;
+eState           := fbMqttClient.eConnectionState;
+nLastBrokerMsgMs := fbMqttClient.GetTimeSinceLastBrokerMessage();
+
+// 阶段 3：第一次连上时 Subscribe 一次，避免每周期重复 SUBSCRIBE 浪费报文
+fbCmdTopicSubscribed(CLK := fbMqttClient.bConnected);
+IF fbCmdTopicSubscribed.Q THEN
+    fbMqttClient.Subscribe(sTopic := sCmdTopic, eQoS := TcIotMqttQos.AtLeastOnceDelivery);
+END_IF
+
+// 阶段 4：连上后每 5 秒 publish 一次心跳；未连上时跳过避免无效调用
+IF fbMqttClient.bConnected THEN
+    fbHeartbeatTrigger(IN := TRUE);
+    IF fbHeartbeatTrigger.Q THEN
+        fbHeartbeatTrigger(IN := FALSE);            // 立即重置以便下一周期再计
+        bPubOk := fbMqttClient.Publish(
+            sTopic       := sHeartbeatTopic,
+            pPayload     := ADR(sHeartbeatPayload),
+            nPayloadSize := TO_UDINT(LEN(sHeartbeatPayload)),
+            eQoS         := TcIotMqttQos.AtMostOnceDelivery,
+            bRetain      := FALSE,                  // 心跳无需保留——只想给当下在线订阅者
+            bQueue       := FALSE                   // 保留参数，永远 FALSE
+        );
+    END_IF
+ELSE
+    fbHeartbeatTrigger(IN := FALSE);                // 断开时停计时，避免重连后立即误发
+END_IF
+
+// 阶段 5：从队列出队订阅到的消息——队列里有多少就处理多少
+WHILE fbQueueRecv.nQueuedMessages > 0 DO
+    IF fbQueueRecv.Dequeue(fbMessage := fbMsg) THEN
+        // 出队成功——把 topic / payload 拷出来给在线 monitor 看
+        fbMsg.GetTopic(pTopic := ADR(sLastRecvTopic), nTopicSize := SIZEOF(sLastRecvTopic));
+        fbMsg.GetPayload(pPayload := ADR(sLastRecvPayload),
+                         nPayloadSize := SIZEOF(sLastRecvPayload),
+                         bSetNullTermination := TRUE);
+        nMsgRecvCount := nMsgRecvCount + 1;
+        // 业务层可在此处对 sLastRecvPayload 做命令解析（"STOP" / "RESET" / 配方 JSON 等）
+    ELSE
+        EXIT;                                       // 出队失败——保留剩余消息下次处理
+    END_IF
+END_WHILE
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_IotMqtt5ClientBase" Id="{1930960a-75c1-5489-94f1-93b2285c871a}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_IotMqtt5ClientBase
+VAR
+    // 注意：本例直接实例化基类——这是个"快速骨架"，仅用于验证 connect / Execute
+    //       行为。基类 OnMqtt5Message 默认实现是空，订阅到的消息会被丢弃。
+    //
+    // 生产代码必须：
+    //   FUNCTION_BLOCK FB_MyMqttHandler EXTENDS FB_IotMqtt5ClientBase
+    //   METHOD OnMqtt5Message : HRESULT
+    //   VAR_IN_OUT CONSTANT topic : STRING; END_VAR
+    //   VAR_INPUT payload : PVOID; length : UDINT; qos : TcIotMqttQos;
+    //             pProps : POINTER TO MqttPublishProperties;
+    //             pReq   : POINTER TO MqttRequestProperties;
+    //             repeated : BOOL; END_VAR
+    //   // —— 在此处处理消息（必须短小不阻塞）——
+    //   OnMqtt5Message := S_OK;
+    fbBase          : FB_IotMqtt5ClientBase := (
+        sClientId   := 'CX-BaseDemo',
+        sHostName   := '127.0.0.1',
+        nHostPort   := 1883,
+        nKeepAlive  := 30
+    );
+    bEnableMqtt     : BOOL := TRUE;
+    bConnected      : BOOL;
+    eState          : ETcIotMqttClientState;
+    nMsLastBroker   : UDINT;
+
+    // 订阅请求脉冲——演示用，基类直接实例化时消息会被默认空回调丢弃
+    fbTrigSub       : R_TRIG;
+    sCmdTopic       : STRING := 'plc/v5/base/cmd';
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：
+//   这是 FB_IotMqtt5ClientBase（基类）的"骨架演示"——验证连接、订阅、保活
+//   都能跑起来。真正的业务必须派生本基类并重写 OnMqtt5Message 回调，否则
+//   订阅到的消息会被默认空实现丢弃（这正是基类的设计意图：不带队列，强制
+//   用户写回调）。
+//
+//   生产代码示例（写在 PLC 工程的 POUs 里）：
+//     FUNCTION_BLOCK FB_MyMqttHandler EXTENDS FB_IotMqtt5ClientBase
+//     METHOD OnMqtt5Message : HRESULT
+//     VAR_IN_OUT CONSTANT topic : STRING; END_VAR
+//     VAR_INPUT payload : PVOID; length : UDINT; ... END_VAR
+//     // 短小业务代码（解析 payload、置位标志、写共享变量）
+//     // 不要写文件 / ADS 远程 / 长循环
+//     OnMqtt5Message := S_OK;
+//
+// 价值：
+//   基类相比 FB_IotMqtt5Client 主类省一次入队-出队拷贝（约几十 μs），
+//   且可以在 connect / disconnect 时跑自定义初始化 / 清理逻辑。代价是
+//   回调代码必须可重入、短小不阻塞。
+//
+// 验证步骤：
+//   1. 装 TF6701 license；起本机 MQTT 5 broker
+//   2. 在 XAE 导入、登录、运行
+//   3. 在线 monitor：bConnected 变 TRUE，nMsLastBroker 在 keepalive 周期内
+//      规律性归零（broker 的 PINGRESP）
+//   4. mosquitto_pub -V mqttv5 -t 'plc/v5/base/cmd' -m 'X'
+//      → 因为默认空实现，nMsLastBroker 会被重置但业务侧观察不到（消息被丢弃）
+//   5. 在 PLC 工程里新建 FB_MyMqttHandler EXTENDS FB_IotMqtt5ClientBase
+//      并重写 OnMqtt5Message：会看到该回调被命中
+// =============================================================================
+
+// 阶段 1：周期推进。基类没有内嵌 fbMessageQueue 输出
+fbBase.Execute(bConnect := bEnableMqtt);
+bConnected    := fbBase.bConnected;
+eState        := fbBase.eConnectionState;
+nMsLastBroker := fbBase.GetTimeSinceLastBrokerMessage();
+
+// 阶段 2：连上后一次性订阅。订阅成功——但因为没重写 OnMqtt5Message，
+//         所有进来的消息都会被默认空回调丢弃。生产代码必须派生重写。
+fbTrigSub(CLK := fbBase.bConnected);
+IF fbTrigSub.Q THEN
+    fbBase.Subscribe(sTopic := sCmdTopic,
+                     eQoS   := TcIotMqttQos.AtLeastOnceDelivery,
+                     pProps := 0);
+END_IF
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

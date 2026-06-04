@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_ST_IotMqttWill" Id="{251e75b3-faa7-5895-afe0-deb4c8ce77a5}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_ST_IotMqttWill
+VAR
+    // 全局 payload——要让 broker 在 PLC 已掉电后还能 valid，必须不是栈变量
+    sOfflinePayload  : STRING(80) := 'OFFLINE@CX-Line1';
+    sStatusTopic     : STRING := 'plc/line1/status';
+
+    // 遗嘱结构体：PLC 异常掉线时 broker 替它向 plc/line1/status 发一次 'OFFLINE@CX-Line1'
+    stWillCfg        : ST_IotMqttWill := (
+        sTopic       := 'plc/line1/status',
+        // pPayload / nPayloadSize 不在初始化器里——ADR 要等运行时再算
+        eQoS         := TcIotMqttQos.AtLeastOnceDelivery,
+        bRetain      := TRUE                              // 让新加入订阅者也能查到最后状态
+    );
+
+    fbMqtt           : FB_IotMqttClient := (
+        sClientId    := 'CX-Line1-Will-Demo',
+        sHostName    := '127.0.0.1',
+        nHostPort    := 1883,
+        nKeepAlive   := 10                                // 10 秒心跳——异常断后约 15 秒触发 will
+    );
+    bEnableMqtt      : BOOL := TRUE;
+    bConnected       : BOOL;
+    bWillConfigured  : BOOL;                              // 一次性标志位
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：
+//   CX 工控机用 will 实现"掉电 SCADA 立刻变红"。
+//   正常上线时 PLC 自己 publish 'ONLINE'；异常掉电由 broker 替它发 'OFFLINE'。
+//
+// 价值：
+//   PDF §5.1.1.2 will 是 MQTT 协议层支持的"消息遗嘱"。比 SCADA 端写心跳超时
+//   监控简洁——broker 实现的 keepalive 判定通常 1-2 个心跳周期内即触发；
+//   SCADA 只需订阅 plc/+/status 一个 topic 就能监控全厂 PLC 在线状态。
+//
+// 验证步骤：
+//   1. 装 TF6701 license；起本机 Mosquitto:1883 无认证
+//   2. 在另一个终端订阅状态：
+//        mosquitto_sub -t 'plc/+/status' -v
+//   3. 在 XAE 导入本 .TcPOU、登录、运行
+//   4. 等 bConnected = TRUE 后，订阅端应能在 retain 机制下看到任意时刻订阅都
+//      能立即查到（除首次外，会立刻收到上次保留的 retain）
+//   5. 模拟 PLC 异常掉线：
+//        (a) 拔网线 / 防火墙 drop / docker rm broker / kill -9 不行；
+//        (b) 测试机直接 ifconfig 关网卡 OR 把 nKeepAlive 改成 10、强 detach XAE
+//      → 等 keepalive×1.5 ≈ 15 秒，订阅端会看到一条 'OFFLINE@CX-Line1' 自动发出
+//   6. 注意：在 XAE 正常 Stop PLC 走的是 DISCONNECT，不触发 will。这是正确行为。
+// =============================================================================
+
+// 阶段 1：首次扫描周期把 ADR 计算出来填回结构体——FB_init 已完成后再做才稳妥
+IF NOT bWillConfigured THEN
+    stWillCfg.pPayload     := ADR(sOfflinePayload);
+    stWillCfg.nPayloadSize := TO_UDINT(LEN(sOfflinePayload));
+    fbMqtt.stWill          := stWillCfg;       // 必须在 Execute(TRUE) 第一次调用前完成
+    bWillConfigured        := TRUE;
+END_IF
+
+// 阶段 2：周期推进。bEnableMqtt 拉低是 DISCONNECT（不发 will，正确语义）；
+//         真正想模拟 will，要让 PLC 异常断开（拔网线 / 防火墙）。
+fbMqtt.Execute(bConnect := bEnableMqtt);
+bConnected := fbMqtt.bConnected;
+
+// 注意：这里没必要每周期 publish 'ONLINE'。正常做法是在 bConnected 上升沿
+//       publish 一次 'ONLINE' 把 retain 覆盖掉。把这一步留给 SCADA 集成时实现。
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>
