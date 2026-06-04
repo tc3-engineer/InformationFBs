@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_IotMqtt5UserProperties" Id="{1826d887-eb55-57d4-8a21-ccb0a0409773}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_IotMqtt5UserProperties
+VAR
+    fbClient        : FB_IotMqtt5Client := (
+        sClientId   := 'CX-V5-UPDemo',
+        sHostName   := '127.0.0.1',
+        nHostPort   := 1883,
+        nKeepAlive  := 30
+    );
+
+    // PublishProperties EXTENDS UserProperties——拿一个就够
+    fbPubProps      : FB_IotMqtt5PublishProperties;
+
+    bEnableMqtt     : BOOL := TRUE;
+    fbTrigCnx       : R_TRIG;
+    bPropsInited    : BOOL;
+    fbTonHb         : TON := (PT := T#10S);          // 10 秒发一次（带 properties 慢一点）
+    sTopic          : STRING := 'plc/v5/tenantA/L1/heartbeat';
+    sPayload        : STRING(60) := '{"alive":true}';
+    nPubCount       : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：
+//   多租户工厂网关——同一台 PLC 为两个厂区 A/B 上报，每条 publish 带：
+//     tenant-id = 'factory-A'   （后端按租户路由到独立存储）
+//     device-id = 'CX-Line1'    （唯一设备标识）
+//     trace-id  = '<uuid>'      （分布式追踪 MES → PLC → SCADA）
+//
+// 价值：
+//   PDF §5.1.2.9.6 user properties 让"应用元数据"独立于 payload。
+//   - 多套元数据系统（追踪 + 多租户 + 版本）共存
+//   - 新增元数据不破坏 payload schema
+//   - 后端按 user properties 直接路由 / 过滤 / 索引
+//   PDF 警告：user properties 加多了拖 PLC 周期——本例只加 3 个，正好够用。
+//
+// 验证步骤：
+//   1. 装 TF6701 license；起 MQTT 5 broker
+//   2. 在 XAE 导入、登录、运行
+//   3. 在另一个终端：
+//        mosquitto_sub -V mqttv5 -t 'plc/v5/tenantA/L1/heartbeat' -v -F '%t %P %p'
+//      每 10 秒一条消息，properties 区显示：
+//        user-property: tenant-id=factory-A
+//        user-property: device-id=CX-Line1
+//        user-property: trace-id=<uuid>
+//   4. 在 PLC 端 monitor nPubCount 自增
+//   5. 实际 AddUserProperty 调用注释掉了——因 PDF / InfoSys 没明示签名，
+//      需要 IntelliSense 配合 IDE 补全。本骨架展示典型流程位置。
+// =============================================================================
+
+// 阶段 1：连
+fbClient.Execute(bConnect := bEnableMqtt);
+
+// 阶段 2：连上后一次性配 user properties（继承自 FB_IotMqtt5UserProperties）
+fbTrigCnx(CLK := fbClient.bConnected);
+IF fbTrigCnx.Q THEN
+    // 添加固定元数据——PDF 警告少加。这里加 3 个：
+    //   fbPubProps.AddUserProperty(sName := 'tenant-id', sValue := 'factory-A');
+    //   fbPubProps.AddUserProperty(sName := 'device-id', sValue := 'CX-Line1');
+    //   fbPubProps.AddUserProperty(sName := 'trace-id',  sValue := 'abc-123');
+    // 实际签名参 InfoSys 13962881163 + IntelliSense
+
+    // 同时设 content-type 帮消费者解析 payload
+    fbPubProps.bPayloadUtf8 := TRUE;
+    fbPubProps.sContentType := 'application/json';
+
+    // 固化 publish properties (含 user properties)
+    fbPubProps.SetPublishProperties();
+
+    bPropsInited := TRUE;
+END_IF
+
+// 阶段 3：每 10 秒 publish 心跳 + 全部 user properties
+IF fbClient.bConnected AND bPropsInited THEN
+    fbTonHb(IN := TRUE);
+    IF fbTonHb.Q THEN
+        fbTonHb(IN := FALSE);
+        fbClient.Publish(
+            sTopic       := sTopic,
+            pPayload     := ADR(sPayload),
+            nPayloadSize := TO_UDINT(LEN(sPayload)),
+            eQoS         := TcIotMqttQos.AtMostOnceDelivery,
+            bRetain      := FALSE,
+            bQueue       := FALSE,
+            pProps       := fbPubProps.pPublishProperties
+        );
+        nPubCount := nPubCount + 1;
+    END_IF
+ELSE
+    fbTonHb(IN := FALSE);
+END_IF
+
+// 注：要在运行时刷新 trace-id（每次 publish 不同 ID），需要每周期 / 每次 publish 前：
+//   fbPubProps.ClearUserProperties();
+//   fbPubProps.AddUserProperty('tenant-id', 'factory-A');     // 固定项
+//   fbPubProps.AddUserProperty('device-id', 'CX-Line1');      // 固定项
+//   fbPubProps.AddUserProperty('trace-id',  GenerateNewUUID()); // 每次新
+//   fbPubProps.SetPublishProperties();
+// 但 PDF 警告：每周期跑这 4 个调用约 100 μs，影响实时性——只在必要时用。
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

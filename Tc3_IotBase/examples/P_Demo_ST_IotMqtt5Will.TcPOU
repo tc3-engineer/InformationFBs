@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_ST_IotMqtt5Will" Id="{a2ff4604-0bbb-5a16-9e34-faf61ba07be1}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_ST_IotMqtt5Will
+VAR
+    fbMqtt5      : FB_IotMqtt5Client := (
+        sClientId  := 'CX-Line1-Will-V5',
+        sHostName  := '127.0.0.1',
+        nHostPort  := 1883,
+        nKeepAlive := 10
+    );
+    bEnableMqtt  : BOOL := TRUE;
+    bWillInited  : BOOL;                    // 一次性配置标志
+    bConnected   : BOOL;
+    eState       : ETcIotMqttClientState;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：
+//   跨广域网 PLC 客户端。设 nDelay=5 秒抗短暂断网抖动——SCADA 只在真正掉
+//   电 5 秒后才收到 will，避免短网络抖动引起的误告警。
+//
+// 价值：
+//   PDF §5.1.2.3 MQTT 5 will 比 v3 多了 nDelay/contentType/userProperties。
+//   nDelay 是抗抖动核心字段——MQTT 3 没有这个能力，断网瞬间就发 will。
+//
+// 验证步骤：
+//   1. 装 TF6701 license；起 mosquitto 1.6+ broker（必须 MQTT 5）
+//   2. 在 XAE 导入、登录、运行——bConnected→TRUE 后说明 will 已注册到 broker
+//   3. 在另一个终端订阅：
+//        mosquitto_sub -V mqttv5 -t 'plc/v5/line1/status' -v
+//      （retain=TRUE，订阅时可能立即收到上次 retain 的 will）
+//   4. 模拟"短网络抖动"（不应触发 will）：
+//        - 短暂 detach XAE / 短暂禁用网卡 < 3 秒后恢复
+//        - 订阅端应该看不到新 will 消息
+//   5. 模拟"真异常断线"（应触发 will）：
+//        - 让 PLC 维持 > nDelay + keepalive×1.5 秒不可达
+//        - 订阅端约 15 秒后看到一条 will（带 content-type/user properties 元数据）
+//   6. 正常 STOP PLC——broker 走 DISCONNECT，will 不发（这是正确语义）
+//
+// 注意：FB_IotDataBuffer 的具体 API（如 SetData 等）参考 InfoSys 主页搜索；
+//       本骨架只演示字段写法，payload 通过 fbPayload 设置可以单独学习。
+// =============================================================================
+
+// 阶段 1：首次扫描配置 will 字段。**绝不**写 fbMqtt5.stWill := stLocal
+//         一定要逐字段直写到 client 实例上。
+IF NOT bWillInited THEN
+    fbMqtt5.stWill.sTopic             := 'plc/v5/line1/status';
+    fbMqtt5.stWill.eQoS               := TcIotMqttQos.AtLeastOnceDelivery;
+    fbMqtt5.stWill.bRetain            := TRUE;             // 让新订阅者立即查到
+    fbMqtt5.stWill.bPayloadUtf8       := TRUE;             // payload 是 UTF-8 文本
+    fbMqtt5.stWill.sContentType       := 'application/json';
+    fbMqtt5.stWill.nDelay             := 5;                // 关键：5 秒抗抖动
+    fbMqtt5.stWill.nMsgExpiryInterval := 300;              // will 5 分钟内有效
+
+    // 业务的 user properties: 携带"楼层 / 产线"等定位元数据，SCADA 拿到 will
+    // 可直接显示而无需查数据库：
+    //   fbMqtt5.stWill.fbUserProperties.AddUserProperty(sName := 'floor', sValue := 'B7');
+    //   fbMqtt5.stWill.fbUserProperties.AddUserProperty(sName := 'line',  sValue := 'L3');
+    // payload 设值: fbMqtt5.stWill.fbPayload.SetData(...) 等 FB_IotDataBuffer API
+    // 本骨架仅演示 will 字段写法。
+
+    bWillInited := TRUE;
+END_IF
+
+// 阶段 2：周期推进。bConnected 变 TRUE 表示 will 已随 CONNECT 报文注册到 broker
+fbMqtt5.Execute(bConnect := bEnableMqtt);
+bConnected := fbMqtt5.bConnected;
+eState     := fbMqtt5.eConnectionState;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

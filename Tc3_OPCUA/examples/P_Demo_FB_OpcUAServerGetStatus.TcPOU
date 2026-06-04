@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_OpcUAServerGetStatus" Id="{0d92f63b-3304-5c6b-b722-d728cec251c1}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_OpcUAServerGetStatus
+VAR
+    fbServerHeartbeat   : FB_OpcUAServerGetStatus;  // legacy Tc2_OpcUa 库的 ADS 探活 FB
+    fbTrigPulse         : TON;                       // 周期触发器：每 2 秒发一次脉冲
+    bTriggerPulseOut    : BOOL;                      // TON 输出
+    bGetStatusEdge      : BOOL;                      // 给 FB 的电平脉冲（上升沿触发）
+    sServerAmsNetId     : T_AmsNetId := '';          // 本机 OPC UA Server 用空串
+    tAdsTimeout         : TIME := T#3S;              // 探活用 3 秒 timeout 足够
+
+    eLastServerStatus   : E_OpcUAServerStatus;       // 上次查询结果（保留到下次刷新）
+    bQueryDone          : BOOL;                      // 单周期脉冲
+    bQueryBusy          : BOOL;                      // 查询中
+    bQueryError         : BOOL;                      // ADS 调用本身失败
+    nLastAdsErrorId     : UDINT;                     // ADS 错误码（路由不通等）
+
+    bHeartbeatGreen     : BOOL;                      // HMI 心跳绿灯（锁存版结果）
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：HMI 面板上有一个「OPC UA 心跳灯」反映 CX 控制器上 TcOpcUaServer 进程
+//       是否还在响应 ADS。本 demo 每 2 秒触发一次本 FB 查询、把结果锁存到
+//       bHeartbeatGreen 给 HMI 用。这是 SCADA / MES 场景里最常用的 OPC UA
+//       服务可用性预警手段——比 OPC UA 协议层探活轻，秒级响应。
+//
+// 价值：单 FB + 一个 TON 即可做出秒级粒度的服务监控；不消耗 OPC UA 会话资源，
+//       可常驻 PLC 周期任务里。一旦红灯亮即触发声光报警，运维比客户端报警早
+//       几十秒发现问题。
+//
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU
+//   2. 引用 Tc2_OpcUa（References → Add library）+ 确保已装 TF6100 Runtime
+//   3. 编译 → 登录 → 运行
+//   4. 在线监视 eLastServerStatus 应每 2 秒刷新一次为 eOPCUAServerStatus_Alive
+//      （前提：TcOpcUaServer.exe 正在跑）。bHeartbeatGreen 应稳定为 TRUE
+//   5. 在 Windows 任务管理器把 TcOpcUaServer.exe 进程结束掉：约 1-2 个周期后
+//      eLastServerStatus 应变为 eOPCUAServerStatus_NotResponding，
+//      bHeartbeatGreen → FALSE
+//   6. 重启 TwinCAT 系统服务后约 5 秒，bHeartbeatGreen 应自动恢复为 TRUE
+// =============================================================================
+
+// 周期触发器：fbTrigPulse 输出 bTriggerPulseOut 每 2 秒为 TRUE 一个周期
+fbTrigPulse(IN := NOT bTriggerPulseOut, PT := T#2S, Q => bTriggerPulseOut);
+
+// 用边沿信号驱动 FB 的 bGetStatus：bTriggerPulseOut 上升沿 → 一次查询
+// （单周期脉冲在 PLC 里就是「上升沿 + 下降沿」连击，FB 内部抓上升沿即可）
+bGetStatusEdge := bTriggerPulseOut;
+
+// 单次调用：所有 VAR_INPUT 显式赋值
+fbServerHeartbeat(
+    sNetId             := sServerAmsNetId,
+    bGetStatus         := bGetStatusEdge,
+    tTimeout           := tAdsTimeout,
+    eOPCUAServerStatus => eLastServerStatus,
+    bDone              => bQueryDone,
+    bBusy              => bQueryBusy,
+    bError             => bQueryError,
+    nErrorId           => nLastAdsErrorId
+);
+
+// 锁存策略：把单周期 bDone 时的状态写到长寿命变量给 HMI 用
+// - bDone 这一周期可信：FB 刚拿到应答
+// - 仅当 ADS 调用本身成功（bError = FALSE）才认结果，否则保持上次值不刷新
+IF bQueryDone AND NOT bQueryError THEN
+    bHeartbeatGreen := (eLastServerStatus = eOPCUAServerStatus_Alive);
+END_IF;
+
+// 工程化提醒：生产代码里还应加一条「连续 N 次 bError 视为通信彻底失联，
+// 强制 bHeartbeatGreen := FALSE 并触发分级报警」；本 demo 略去保持简洁。
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

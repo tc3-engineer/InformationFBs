@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_IotMqtt5Client" Id="{5c17dbfb-6642-5fa7-8b5d-859daa2a528e}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_IotMqtt5Client
+VAR
+    fbMqtt5         : FB_IotMqtt5Client := (
+        sClientId   := 'CX-Line1-V5',
+        sHostName   := '127.0.0.1',
+        nHostPort   := 1883,
+        nKeepAlive  := 30
+    );
+    fbMsg           : FB_IotMqtt5Message;            // 出队载体
+
+    bEnableMqtt     : BOOL := TRUE;
+    fbTrigConnected : R_TRIG;                        // 一次性订阅 + 读 CONNACK
+    bConnected      : BOOL;
+    eState          : ETcIotMqttClientState;
+
+    // —— 自适应字段（从 CONNACK 读取 broker 能力） ——
+    nBrokerMaxPacket: UDINT;
+    bRetainAvail    : BOOL;
+    bWildcardAvail  : BOOL;
+    sAssignedId     : STRING;
+
+    // —— 业务变量 ——
+    fbTonHeartbeat  : TON := (PT := T#5S);
+    sHeartbeatTopic : STRING := 'plc/line1/v5/heartbeat';
+    sHeartbeatPay   : STRING(80) := '{"v":5,"state":"run"}';
+
+    // —— 消息处理 monitor ——
+    sLastTopic      : STRING(255);
+    sLastPayload    : STRING(255);
+    nMsgRecvCount   : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：
+//   CX 工控机做新一代 MQTT 5 边缘节点。订阅命令 topic、定时 publish 心跳。
+//   连上后立刻读 CONNACK properties 自适应 broker 限制——不必写死参数。
+//   断连时从 DISCONNECT properties 读 reason code 做诊断。
+//
+// 价值：
+//   PDF §5.1.2.1 MQTT 5 引入的关键能力直接体现：
+//   - fbConnAckProps.nMaxPackateSize 自适应：发包前检查不超限
+//   - fbConnAckProps.bRetainAvailable / bWildcardSubAvailable 自适应
+//   - 内嵌 fbMessageQueue 收消息——比 v3 模型更简洁
+//   相比 MQTT3 客户端：少声明一个外置队列；多了 broker 能力探测；多了
+//   request/response 高级模式可用（本例不演示，见 ST_IotMqtt5Connect demo）。
+//
+// 验证步骤：
+//   1. 装 TF6701 license；起本机 MQTT 5 兼容 broker：
+//        mosquitto -p 1883 -v          # 1.6+ 支持 MQTT 5
+//        或 docker run -p 1883:1883 emqx/emqx
+//   2. 在 XAE 导入、登录、运行
+//   3. 在线 monitor：
+//        bConnected 在数百毫秒内变 TRUE
+//        nBrokerMaxPacket / bRetainAvail / bWildcardAvail 立刻被 CONNACK 填充
+//        sAssignedId 多数 broker 留空；AWS IoT Core 会替换成 ARN
+//   4. 在另一个终端 subscribe heartbeat：
+//        mosquitto_sub -V mqttv5 -t 'plc/line1/v5/heartbeat' -v
+//        每 5 秒看到一条 '{"v":5,"state":"run"}'
+//   5. 在另一个终端 publish 一条到任意订阅 topic（本例未订阅）→ nMsgRecvCount 不变
+//   6. 把 bEnableMqtt 置 FALSE → bConnected 落回，eState=MQTT_ERR_NO_CONN
+// =============================================================================
+
+// 阶段 1：周期推进。FB 内部已有 fbMessageQueue 输出，不必额外声明
+fbMqtt5.Execute(bConnect := bEnableMqtt);
+bConnected := fbMqtt5.bConnected;
+eState     := fbMqtt5.eConnectionState;
+
+// 阶段 2：连上时一次性读 CONNACK properties + 订阅（用 R_TRIG 只做一次）
+fbTrigConnected(CLK := fbMqtt5.bConnected);
+IF fbTrigConnected.Q THEN
+    // 读 broker 能力——后续业务按这些限制做自适应
+    nBrokerMaxPacket := fbMqtt5.fbConnAckProps.nMaxPackateSize;
+    bRetainAvail     := fbMqtt5.fbConnAckProps.bRetainAvailable;
+    bWildcardAvail   := fbMqtt5.fbConnAckProps.bWildcardSubAvailable;
+    sAssignedId      := fbMqtt5.fbConnAckProps.sAssignedClientId;
+
+    // 订阅任意命令 topic 演示订阅链路（本例不发命令）
+    fbMqtt5.Subscribe(sTopic := 'plc/line1/v5/cmd',
+                      eQoS   := TcIotMqttQos.AtLeastOnceDelivery,
+                      pProps := 0);    // 不带 Subscribe Properties
+END_IF
+
+// 阶段 3：每 5 秒 publish 一次心跳。先按 broker max packet size 做自适应检查
+IF fbMqtt5.bConnected THEN
+    fbTonHeartbeat(IN := TRUE);
+    IF fbTonHeartbeat.Q THEN
+        fbTonHeartbeat(IN := FALSE);
+        // 自适应：payload 不能超 broker 限制（0 = 无限制）
+        IF nBrokerMaxPacket = 0 OR TO_UDINT(LEN(sHeartbeatPay)) <= nBrokerMaxPacket THEN
+            fbMqtt5.Publish(
+                sTopic       := sHeartbeatTopic,
+                pPayload     := ADR(sHeartbeatPay),
+                nPayloadSize := TO_UDINT(LEN(sHeartbeatPay)),
+                eQoS         := TcIotMqttQos.AtMostOnceDelivery,
+                bRetain      := FALSE,
+                bQueue       := FALSE,
+                pProps       := 0     // 不带 Publish Properties
+            );
+        END_IF
+    END_IF
+ELSE
+    fbTonHeartbeat(IN := FALSE);
+END_IF
+
+// 阶段 4：从内嵌 fbMessageQueue 出队订阅到的消息
+WHILE fbMqtt5.fbMessageQueue.nQueuedMessages > 0 DO
+    IF NOT fbMqtt5.fbMessageQueue.Dequeue(fbMessage := fbMsg) THEN EXIT; END_IF
+    fbMsg.GetTopic(pTopic := ADR(sLastTopic), nTopicSize := SIZEOF(sLastTopic));
+    fbMsg.GetPayload(pPayload := ADR(sLastPayload),
+                     nPayloadSize := SIZEOF(sLastPayload),
+                     bSetNullTermination := TRUE);
+    nMsgRecvCount := nMsgRecvCount + 1;
+END_WHILE
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

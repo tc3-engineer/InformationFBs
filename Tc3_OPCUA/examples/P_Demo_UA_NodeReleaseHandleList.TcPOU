@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_UA_NodeReleaseHandleList" Id="{06bfa4f1-871a-59e1-a297-1c5a266ec679}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_UA_NodeReleaseHandleList
+VAR
+    fbReleaseMesNodes  : UA_NodeReleaseHandleList;
+
+    bRequestRelease    : BOOL := FALSE;             // 在线置 TRUE 触发批量释放
+    hMesConnection     : DWORD;                      // 由 UA_Connect 设置
+    aNodeHdlsToRelease : ARRAY[1..nMaxNodeIDsInList] OF DWORD;  // 业务侧填入要释放的句柄
+    nHdlsCount         : UINT := 5;                  // 实际有效句柄数
+    tReleaseTimeout    : TIME := T#5S;
+
+    // —— 输出 ——
+    aReleaseErrs       : ARRAY[1..nMaxNodeIDsInList] OF DWORD;
+    bReleaseDone       : BOOL;
+    bReleaseBusy       : BOOL;
+    bReleaseError      : BOOL;
+    nReleaseErrorId    : DWORD;
+
+    // 业务侧统计
+    nReleased          : UDINT;
+    nReleaseFailed     : UDINT;
+    bAllReleased       : BOOL;
+    i                  : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：业务停机流程中批量释放上电时取得的 5 个 MES 数据节点句柄。和单节点
+//       版本相比，本 FB 把 5 次往返压缩到 1 次。生产代码典型用法是连接状态机
+//       的 Disconnect 流程：业务停 → 调本 FB → UA_MethodReleaseHandle 循环 →
+//       UA_Disconnect。
+//
+// 价值：演示「批量取 + 批量释放」对称使用范式；演示「部分失败」识别（单句柄
+//       失效视作已清理，不阻塞 Disconnect 流程）。
+//
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU
+//   2. 引用 Tc3_PLCopen_OpcUa
+//   3. 先用 P_Demo_UA_Connect + P_Demo_UA_NodeGetHandleList 跑通到拿到 5 个
+//      句柄；把 ConnectionHdl 抄到 hMesConnection、5 个句柄抄到
+//      aNodeHdlsToRelease[1..5]
+//   4. 编译 → 登录 → 运行
+//   5. 在线脉冲 bRequestRelease := TRUE：300-500 ms 后 bReleaseDone = TRUE；
+//      aReleaseErrs[1..5] 应全为 0；nReleased = 5，bAllReleased = TRUE；
+//      业务侧把句柄数组清零
+//   6. 再次脉冲（句柄已清零）：bReleaseError = TRUE，aReleaseErrs[1..5] 应得
+//      0xE4DD0116（UAC_E_INVAL_NODE_HDL）；业务忽略此错误继续 Disconnect
+// =============================================================================
+
+// —— 单次调用：所有 VAR_INPUT 显式赋值 ——
+fbReleaseMesNodes(
+    Execute       := bRequestRelease,
+    ConnectionHdl := hMesConnection,
+    NodeHdlCount  := nHdlsCount,
+    NodeHdls      := aNodeHdlsToRelease,
+    Timeout       := tReleaseTimeout,
+    NodeErrorIDs  => aReleaseErrs,
+    Done          => bReleaseDone,
+    Busy          => bReleaseBusy,
+    Error         => bReleaseError,
+    ErrorID       => nReleaseErrorId
+);
+
+// —— 部分成功 / 部分失败统计 + 清零句柄数组 ——
+IF bReleaseDone THEN
+    nReleased      := 0;
+    nReleaseFailed := 0;
+    FOR i := 1 TO nHdlsCount DO
+        IF aReleaseErrs[i] = 0 THEN
+            nReleased := nReleased + 1;
+        ELSE
+            // 失败视作已清理（句柄可能已经无效）；不重试
+            nReleaseFailed := nReleaseFailed + 1;
+        END_IF;
+        // 无论成功失败都把 PLC 端句柄变量清 0，避免误用
+        aNodeHdlsToRelease[i] := 0;
+    END_FOR;
+    bAllReleased := (nReleaseFailed = 0);
+END_IF;
+
+// 工程化提醒：生产停机流程 = 业务 Stop → 本 FB 释放节点句柄 →
+// UA_MethodReleaseHandle 循环释放方法句柄 → UA_Disconnect → 清零所有句柄
+// 存储。一气呵成最清晰。
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

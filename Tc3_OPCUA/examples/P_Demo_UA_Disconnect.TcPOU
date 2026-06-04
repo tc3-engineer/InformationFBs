@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_UA_Disconnect" Id="{693b5402-4e77-5bb6-8fec-874f526859d2}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_UA_Disconnect
+VAR
+    fbBroadcastDisconnect : UA_Disconnect;     // 启动期清理：ConnectionHdl := 0
+    fbCloseMesSession     : UA_Disconnect;     // 业务停机：关闭具体 ConnectionHdl
+
+    bDoStartupCleanup     : BOOL := FALSE;     // 在线脉冲触发广播清理
+    bDoBusinessShutdown   : BOOL := FALSE;     // 在线脉冲触发具体会话关闭
+    hMesConnection        : DWORD;             // 业务会话句柄（外部由 UA_Connect 设置）
+
+    // —— 广播清理 FB 输出 ——
+    bBroadcastDone        : BOOL;
+    bBroadcastBusy        : BOOL;
+    bBroadcastError       : BOOL;
+    nBroadcastErrorId     : DWORD;
+
+    // —— 业务会话关闭 FB 输出 ——
+    bShutdownDone         : BOOL;
+    bShutdownBusy         : BOOL;
+    bShutdownError        : BOOL;
+    nShutdownErrorId      : DWORD;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：PLC 控制器既要在启动期清理上一轮残留的 OPC UA 幽灵会话（避免 Server
+//       端资源积压），又要在业务停机时优雅关闭当前的 MES 会话。本 demo 演示
+//       UA_Disconnect 的两种典型用法：
+//         ① ConnectionHdl := 0  →  广播清理（PDF §5.2.3.4 推荐的启动期做法）
+//         ② ConnectionHdl := hMesConnection  →  指定会话关闭（业务停机）
+//
+// 价值：避免「PLC 重启 → Server 端遗留会话 → 累积资源耗尽」的运维痛点；同时
+//       保证业务正常停机时给 Server 端及时释放资源。生产代码常常把广播清理
+//       放在 PROG_Init / FB_Init 阶段固定执行一次。
+//
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU
+//   2. 引用 Tc3_PLCopen_OpcUa；I/O 区配置 OPC UA Virtual Device
+//   3. 准备一个 OPC UA Server 并先用 P_Demo_UA_Connect.TcPOU 建立一条会话，
+//      把 hMesConnection 抄到本程序的同名变量（在线写值）；或者直接在线脉冲
+//      bDoStartupCleanup（不依赖具体句柄）
+//   4. 编译 → 登录 → 运行
+//   5. 在线脉冲 bDoStartupCleanup := TRUE：1-2 秒后 bBroadcastDone = TRUE，
+//      Server 端用 UaExpert 等连过去看「Active Sessions」应清零（含 I/O Client）
+//   6. 重新 UA_Connect 建一条会话；在线脉冲 bDoBusinessShutdown := TRUE：
+//      bShutdownDone = TRUE，Server 端那条会话消失
+//   7. 重复脉冲 bDoBusinessShutdown（hMesConnection 已无效）：可能报
+//      0xE4DD0112（UAC_E_INVALIDHDL），符合预期，业务可忽略此码继续
+// =============================================================================
+
+// —— 广播清理：ConnectionHdl 固定 0 ——
+// PDF §5.2.3.4 「Disconnect all connections」：传 0 句柄会断开所有连接，
+// 包括 I/O Client 配置建立的连接。启动期专用。
+fbBroadcastDisconnect(
+    Execute       := bDoStartupCleanup,
+    ConnectionHdl := 0,
+    Timeout       := T#5S,
+    Done          => bBroadcastDone,
+    Busy          => bBroadcastBusy,
+    Error         => bBroadcastError,
+    ErrorID       => nBroadcastErrorId
+);
+
+// —— 业务停机：关闭具体会话 ——
+// 生产代码里通常前面还有一连串 UA_NodeReleaseHandleList / UA_MethodReleaseHandle，
+// 全 Done 后才走到这步。本 demo 简化为只演示 Disconnect 本身。
+fbCloseMesSession(
+    Execute       := bDoBusinessShutdown,
+    ConnectionHdl := hMesConnection,
+    Timeout       := T#5S,
+    Done          => bShutdownDone,
+    Busy          => bShutdownBusy,
+    Error         => bShutdownError,
+    ErrorID       => nShutdownErrorId
+);
+
+// 工程化提醒：业务侧检测到 bShutdownDone = TRUE 后应把 hMesConnection 清零
+// 避免后续 FB 拿陈旧句柄。本 demo 留给在线手工复位以便观察 Error 行为。
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

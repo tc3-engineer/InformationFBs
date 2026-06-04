@@ -60,6 +60,15 @@ URL_ALIASES: dict[str, str] = {
     "Tc2_HVAC": "https://download.beckhoff.com/download/document/automation/twincat3/TF8000_TC3_HVAC_EN.pdf",
     "Tc2_Lighting": "https://download.beckhoff.com/download/document/automation/twincat3/TF8050_LS_EN.pdf",
     # Tc2_KNXLib — no public PDF found (TF8030 returns 404). Leave unaliased.
+    # OPC UA: Beckhoff ships three TF6100 products (Server / Client / Gateway).
+    # The Tc3_OPCUA PLC library corresponds to the Client manual (PLC calls an
+    # external OPC UA server). Server is configurator + ADS only (no FB), Gateway
+    # is a translation service (no PLC FB).
+    "Tc3_OPCUA": "https://download.beckhoff.com/download/document/automation/twincat3/TF6100_TC3_OPC_UA_Client_EN.pdf",
+    # IoT base: Tc3_IotBase is the lowest layer of Beckhoff's IoT stack and is
+    # documented as part of the TF6701 IoT Communication (MQTT) manual; MQTT FBs
+    # extend the base classes.
+    "Tc3_IotBase": "https://download.beckhoff.com/download/document/automation/twincat3/TF6701_TC3_IoT_Communication_MQTT_EN.pdf",
 }
 
 

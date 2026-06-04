@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_ST_IotMqtt5Auth" Id="{e936ef31-ae65-50f9-a847-0141d0b16ab3}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_ST_IotMqtt5Auth
+VAR
+    fbMqtt5         : FB_IotMqtt5Client := (
+        sClientId   := 'CX-Line1-OAuth',
+        sHostName   := 'mqtt.factory.local',
+        nHostPort   := 8883,
+        nKeepAlive  := 30
+    );
+
+    // OAuth2 Bearer Token——通常由 Token Provider 异步刷新写到这个变量
+    // 本骨架直接写死一个示例值便于演示数据填写过程
+    sOAuth2Token    : STRING(255) := 'eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.example-payload.signature';
+
+    bEnableMqtt     : BOOL := TRUE;
+    bAuthInited     : BOOL;
+    i               : UINT;
+    bConnected      : BOOL;
+    eState          : ETcIotMqttClientState;
+    nConnAckReason  : BYTE;
+    sReasonString   : STRING;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：
+//   PLC 用 OAuth2 Bearer Token 单步鉴权连厂区 broker——broker 由企业 SSO
+//   (Keycloak / Azure AD) 后台支撑，PLC 用 client_credentials flow 拿短期
+//   token，到期前 DISCONNECT 拿新 token 再 CONNECT。
+//
+//   token 通常需 TLS 保护——本例假设同时配了 fbMqtt5.stTLS。
+//
+// 价值：
+//   PDF §5.1.2.5 enhanced auth 让 MQTT 5 PLC 接入企业 SSO 体系。
+//   - 用 OAuth2 短期 token 替代长期 password
+//   - 通过 token 的 scope 授权细粒度（哪些 topic 能 publish / subscribe）
+//   - token 撤销立即生效（比改密码快）
+//
+// 验证步骤：
+//   1. 装 TF6701 license；准备 MQTT 5 broker 配 OAuth2 plugin (EMQX / HiveMQ
+//      Enterprise / 自建 Mosquitto + auth plugin 都支持)
+//   2. 从 SSO 拿一个 Bearer Token，写到 sOAuth2Token
+//   3. 在 XAE 导入、登录、运行
+//   4. 在线 monitor：
+//        bConnected=TRUE, eState=MQTT_ERR_SUCCESS, nConnAckReason=0 → 成功
+//        eState=MQTT_ERR_AUTH(11), nConnAckReason=0x86/0x87/0x8C → 鉴权失败
+//        nConnAckReason=0x86 (Bad UserName/Password) → token 无效
+//        nConnAckReason=0x8C (Bad Authentication Method) → broker 不支持 'OAUTH2'
+//        nConnAckReason=0x87 (Not Authorized) → token 有效但没访问权限
+//   5. 把 token 改成乱码 → eState 变 MQTT_ERR_AUTH，sReasonString 含具体错误
+// =============================================================================
+
+// 阶段 1：首次扫描配置 enhanced auth 字段
+IF NOT bAuthInited THEN
+    // 鉴权方法名——必须与 broker 配置完全一致（大小写敏感）
+    fbMqtt5.stAuth.sAuthMethod := 'OAUTH2';
+
+    // 把 token 字符串字节拷到 aAuthData 数组
+    // 注意：MQTT 5 协议层 aAuthData 是二进制，但 OAuth2 token 是 ASCII，所以
+    //       直接字节拷贝即可。若 method 是 SCRAM 等要求 base64 编码，需先编码。
+    FOR i := 0 TO TO_UINT(LEN(sOAuth2Token)) - 1 DO
+        fbMqtt5.stAuth.aAuthData[i] := sOAuth2Token[i + 1];
+    END_FOR
+    fbMqtt5.stAuth.nAuthDataSize := TO_UINT(LEN(sOAuth2Token));
+
+    bAuthInited := TRUE;
+END_IF
+
+// 阶段 2：周期推进
+fbMqtt5.Execute(bConnect := bEnableMqtt);
+
+// 阶段 3：把状态拉到 monitor
+bConnected     := fbMqtt5.bConnected;
+eState         := fbMqtt5.eConnectionState;
+nConnAckReason := fbMqtt5.fbConnAckProps.nReasonCode;  // broker 鉴权结果细分
+sReasonString  := fbMqtt5.fbConnAckProps.sReasonString;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_UA_MethodGetHandle" Id="{159c7c9e-d159-5e04-af0b-ce90048802f4}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_UA_MethodGetHandle
+VAR
+    fbGetStartOrderHdl  : UA_MethodGetHandle;
+
+    bRequestGetMthHdl   : BOOL := FALSE;            // 在线置 TRUE 触发一次取句柄
+    hMesConnection      : DWORD;                     // 由 UA_Connect 设置
+    nMesPlc1NsIndex     : UINT;                      // 由 UA_GetNamespaceIndex 设置
+
+    stOrderMgrObjId     : ST_UANodeID;                // 方法宿主 Object NodeID
+    stStartOrderMethId  : ST_UANodeID;                // 方法本身 NodeID
+    tGetMthTimeout      : TIME := T#3S;
+
+    // —— 输出 ——
+    hStartOrderMethod   : DWORD;                     // 方法句柄（供后续 UA_MethodCall 用）
+    bGetMthDone         : BOOL;
+    bGetMthBusy         : BOOL;
+    bGetMthError        : BOOL;
+    nGetMthErrorId      : UDINT;
+
+    bMethodHandleReady  : BOOL;                      // 业务锁存：可放心调用方法
+    bInitDone           : BOOL := FALSE;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：远端 MES OPC UA Server 暴露业务方法
+//       'GVL.fbOrderMgr.StartOrder(nOrderId : DINT; sRecipe : STRING)'
+//       PLC 客户端检测到「生产开始」业务事件时调用该方法启动 MES 端订单流转。
+//       调用前必须先取方法句柄。本 demo 演示「Object NodeID + Method NodeID」
+//       的正确构造和句柄获取。
+//
+// 价值：把 OPC UA 协议里「Object + Method 关联到不透明句柄」的步骤封装成一次
+//       FB 调用；客户端模块缓存方法元信息（参数列表、类型），后续 UA_MethodCall
+//       不必重新协商。
+//
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU
+//   2. 引用 Tc3_PLCopen_OpcUa；目标 Server 端 PLC 有
+//      FB_OrderMgr 含 METHOD StartOrder(...) 且 GVL 里有实例 fbOrderMgr
+//   3. 先跑通 UA_Connect + UA_GetNamespaceIndex，把 ConnectionHdl /
+//      NamespaceIndex 抄到本程序
+//   4. 编译 → 登录 → 运行
+//   5. 在线脉冲 bRequestGetMthHdl := TRUE：100-300 ms 后 bGetMthDone = TRUE，
+//      hStartOrderMethod 应填入一个非 0 值；bMethodHandleReady → TRUE
+//   6. 把 stStartOrderMethId.sIdentifier 改成 'GVL.fbOrderMgr.NotExist'：
+//      bGetMthError = TRUE，nGetMthErrorId 应为 0xE4DD0113 (UAC_E_INVALIDNODEID)
+//      或 0xE4DD011E (UAC_E_METHODIDINVALID)
+// =============================================================================
+
+// —— 一次性构造 Object NodeID + Method NodeID ——
+// TwinCAT OPC UA Server 把 PLC FB 实例当 Object、把 METHOD 当 Method
+IF NOT bInitDone THEN
+    stOrderMgrObjId.nNamespaceIndex := nMesPlc1NsIndex;
+    stOrderMgrObjId.sIdentifier     := 'GVL.fbOrderMgr';
+    stOrderMgrObjId.eIdentifierType := eUAIdentifierType_String;
+
+    stStartOrderMethId.nNamespaceIndex := nMesPlc1NsIndex;
+    stStartOrderMethId.sIdentifier     := 'GVL.fbOrderMgr.StartOrder';
+    stStartOrderMethId.eIdentifierType := eUAIdentifierType_String;
+
+    bInitDone := TRUE;
+END_IF;
+
+// —— 单次调用：所有 VAR_INPUT 显式赋值 ——
+fbGetStartOrderHdl(
+    Execute       := bRequestGetMthHdl,
+    ConnectionHdl := hMesConnection,
+    ObjectNodeID  := stOrderMgrObjId,
+    MethodNodeID  := stStartOrderMethId,
+    Timeout       := tGetMthTimeout,
+    MethodHdl     => hStartOrderMethod,
+    Done          => bGetMthDone,
+    Busy          => bGetMthBusy,
+    Error         => bGetMthError,
+    ErrorID       => nGetMthErrorId
+);
+
+// 锁存：业务侧据此决定是否可以调用 UA_MethodCall
+IF bGetMthDone AND NOT bGetMthError THEN
+    bMethodHandleReady := TRUE;
+END_IF;
+
+// 工程化提醒：生产代码会同时取多个方法句柄（StartOrder、StopOrder、PauseOrder
+// 等），统一存到 GVL.gMethodHdls 全局结构。本 demo 仅演示单方法取句柄；多
+// 方法情况直接串行调本 FB（无 List 版本）。
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

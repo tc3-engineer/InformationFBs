@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_UA_NodeGetHandle" Id="{67f0c7f7-5a12-5b5b-9326-aeecef9e9700}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_UA_NodeGetHandle
+VAR
+    fbGetTankLevelHdl  : UA_NodeGetHandle;     // 取「MAIN.fTankLevel」节点句柄
+
+    bRequestGetHandle  : BOOL := FALSE;        // 在线置 TRUE 触发一次取句柄
+    hMesConnection     : DWORD;                // 由 UA_Connect 设置
+    nMesPlc1NsIndex    : UINT;                 // 由 UA_GetNamespaceIndex 设置
+
+    stTargetNodeId     : ST_UANodeID;          // 构造的目标 NodeID（运行前在头部填充）
+    tGetHandleTimeout  : TIME := T#3S;
+
+    // —— 输出 ——
+    hTankLevelNode     : DWORD;                 // 目标节点句柄（供后续 UA_Read 用）
+    bGetHandleDone     : BOOL;
+    bGetHandleBusy     : BOOL;
+    bGetHandleError    : BOOL;
+    nGetHandleErrorId  : DWORD;
+
+    bNodeHandleReady   : BOOL;                  // 业务侧锁存：句柄可放心使用
+    bInitDone          : BOOL := FALSE;         // 一次性初始化标志
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：CX 控制器从远端 TwinCAT OPC UA Server 周期采集水箱液位
+//       （PLC 端变量 'MAIN.fTankLevel'）。会话已建立、PLC1 namespace 已解析
+//       好的前提下，本 demo 演示用 ST_UANodeID（namespace index + identifier
+//       字符串）取一个节点句柄，供后续 UA_Read 长期复用。
+//
+// 价值：把 OPC UA 协议里的「NodeID → NodeHdl」一步封装成一次 FB 调用；客户端
+//       缓存节点类型/长度信息，后续周期 Read 不必重复协商。生产代码会一次取齐
+//       所有要用的节点句柄。
+//
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU
+//   2. 引用 Tc3_PLCopen_OpcUa；目标 Server 端有 MAIN 程序定义 fTankLevel:LREAL
+//   3. 先用 P_Demo_UA_Connect + P_Demo_UA_GetNamespaceIndex 跑通会话建立和
+//      namespace 解析；把 ConnectionHdl 抄到 hMesConnection、NamespaceIndex 抄
+//      到 nMesPlc1NsIndex（在线写值）
+//   4. 编译 → 登录 → 运行
+//   5. 在线脉冲 bRequestGetHandle := TRUE：100-300 ms 后 bGetHandleDone = TRUE，
+//      hTankLevelNode 应填入一个非 0 值；bNodeHandleReady → TRUE
+//   6. 把 stTargetNodeId.sIdentifier 改成 'MAIN.fNotExist' 重试：
+//      bGetHandleError = TRUE，nGetHandleErrorId 应为 0xE4DD0113 (UAC_E_INVALIDNODEID)
+//   7. 把 stTargetNodeId.eIdentifierType 改成 eUAIdentifierType_Numeric（错配）：
+//      报 0xE4DD0114 (UAC_E_INVAL_IDENTIFIER_TYPE)
+// =============================================================================
+
+// —— 一次性 NodeID 构造 ——
+// PLC 程序变量在 TwinCAT OPC UA Server 上 identifier 是字符串形式
+IF NOT bInitDone THEN
+    stTargetNodeId.nNamespaceIndex  := nMesPlc1NsIndex;            // 由前置 FB 提供
+    stTargetNodeId.sIdentifier      := 'MAIN.fTankLevel';           // 大小写敏感
+    stTargetNodeId.eIdentifierType  := eUAIdentifierType_String;
+    bInitDone := TRUE;
+END_IF;
+
+// 单次调用：所有 VAR_INPUT 显式赋值
+fbGetTankLevelHdl(
+    Execute       := bRequestGetHandle,
+    ConnectionHdl := hMesConnection,
+    NodeID        := stTargetNodeId,
+    Timeout       := tGetHandleTimeout,
+    NodeHdl       => hTankLevelNode,
+    Done          => bGetHandleDone,
+    Busy          => bGetHandleBusy,
+    Error         => bGetHandleError,
+    ErrorID       => nGetHandleErrorId
+);
+
+// 锁存：成功一次后业务永久持有 hTankLevelNode，直到会话结束或主动 Release
+IF bGetHandleDone AND NOT bGetHandleError THEN
+    bNodeHandleReady := TRUE;
+END_IF;
+
+// 工程化提醒：生产代码会同时维护多个节点句柄（每个业务变量一个 NodeHdl）。
+// 节点多时直接换 UA_NodeGetHandleList 一次取齐。停机前用 UA_NodeReleaseHandle
+// 释放，否则 Server 端句柄表会长期累积。
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

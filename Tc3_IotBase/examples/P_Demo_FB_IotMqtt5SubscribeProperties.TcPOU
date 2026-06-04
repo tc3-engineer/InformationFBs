@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_IotMqtt5SubscribeProperties" Id="{c1b81cbc-075f-5444-a1ec-96885b0a9840}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_IotMqtt5SubscribeProperties
+VAR
+    fbClient        : FB_IotMqtt5Client := (
+        sClientId   := 'CX-V5-SubPropsDemo',
+        sHostName   := '127.0.0.1',
+        nHostPort   := 1883,
+        nKeepAlive  := 30
+    );
+    fbSubPropsCmd   : FB_IotMqtt5SubscribeProperties;   // 命令 topic 的 properties
+    fbSubPropsRcp   : FB_IotMqtt5SubscribeProperties;   // 配方 topic 的 properties
+
+    bEnableMqtt     : BOOL := TRUE;
+    fbTrigCnx       : R_TRIG;
+    bSubInited      : BOOL;
+
+    sCmdTopic       : STRING := 'plc/v5/L1/cmd';
+    sRecipeTopic    : STRING := 'plc/v5/L1/recipe';
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：
+//   PLC 订阅两个 topic：命令 (SubId=42) 和配方 (SubId=43)。消息到达后用
+//   nSubId 做 O(1) 路由分发，而不是 CompareTopic 字符串比较。
+//   配 noLocal 避免同 client 自 publish-self-subscribe 回环；
+//   配 retainHandling=1 让 persistent session 重连不重复收 retain。
+//
+// 价值：
+//   PDF §5.1.2.9.4 SubId 是 MQTT 5 的"业务路由 ID"——比 topic 字符串快，
+//   抗 topic 改名。SCADA / 网关侧的 N×O(N) 路由表降到 O(N)。
+//
+// 验证步骤：
+//   1. 装 TF6701 license；起 MQTT 5 broker
+//   2. 在 XAE 导入、登录、运行
+//   3. 在线 monitor：bConnected 变 TRUE 后两个 Subscribe 都发出
+//   4. 在另一个终端 publish 两条不同 topic：
+//        mosquitto_pub -V mqttv5 -t plc/v5/L1/cmd -m 'START'
+//        mosquitto_pub -V mqttv5 -t plc/v5/L1/recipe -m '{"temp":180}'
+//   5. PLC 业务侧出队消息时调 fbMsg5.GetSubIds(...) 取 SubId——
+//        '...cmd' 消息：SubId=[42]
+//        '...recipe' 消息：SubId=[43]
+//      可用 SubId switch-case 路由。本骨架不展开 GetSubIds 调用（签名见
+//      InfoSys 14629604107）。
+//   6. broker 必须支持 SubId（fbConnAckProps.bSubIdAvailable=TRUE）。
+//      mosquitto 1.6+ / EMQX 都支持。
+// =============================================================================
+
+// 阶段 1：连
+fbClient.Execute(bConnect := bEnableMqtt);
+
+// 阶段 2：连上后一次性配两组 properties 并发两次 Subscribe
+fbTrigCnx(CLK := fbClient.bConnected);
+IF fbTrigCnx.Q THEN
+    // —— 命令 topic：SubId 42，noLocal=TRUE 避免回环 ——
+    fbSubPropsCmd.bNoLocal           := TRUE;
+    fbSubPropsCmd.bRetainAsPublished := TRUE;
+    fbSubPropsCmd.nRetainHandling    := 1;          // 仅新订阅时发 retain
+    fbSubPropsCmd.nSubId             := 42;
+    fbSubPropsCmd.SetSubscribeProperties();
+
+    fbClient.Subscribe(sTopic := sCmdTopic,
+                       eQoS   := TcIotMqttQos.AtLeastOnceDelivery,
+                       pProps := fbSubPropsCmd.pSubscribeProperties);
+
+    // —— 配方 topic：SubId 43，要求 broker 始终发 retain（首次拿到最近配方）——
+    fbSubPropsRcp.bNoLocal           := FALSE;       // 允许接 broker 转发的"自发自收"
+    fbSubPropsRcp.bRetainAsPublished := TRUE;
+    fbSubPropsRcp.nRetainHandling    := 0;          // 总发 retain——重连每次拉一次最新配方
+    fbSubPropsRcp.nSubId             := 43;
+    fbSubPropsRcp.SetSubscribeProperties();
+
+    fbClient.Subscribe(sTopic := sRecipeTopic,
+                       eQoS   := TcIotMqttQos.ExactlyOnceDelivery,    // QoS 2 保证配方不丢
+                       pProps := fbSubPropsRcp.pSubscribeProperties);
+
+    bSubInited := TRUE;
+END_IF
+
+// 阶段 3：业务侧出队消息时按 SubId 路由（本骨架不展开 GetSubIds 调用）
+//   WHILE fbClient.fbMessageQueue.nQueuedMessages > 0 DO
+//       fbClient.fbMessageQueue.Dequeue(fbMessage := fbMsg5);
+//       fbMsg5.GetSubIds(REF=> aSubIds, REF=> nSubIdsCnt);
+//       CASE aSubIds[0] OF
+//           42: ProcessCmd(fbMsg5);
+//           43: ProcessRecipe(fbMsg5);
+//       END_CASE
+//   END_WHILE
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

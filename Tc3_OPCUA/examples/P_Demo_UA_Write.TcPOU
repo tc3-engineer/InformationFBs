@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_UA_Write" Id="{ba65600d-affe-52a6-99bc-e5a398bde9a1}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_UA_Write
+VAR
+    fbWriteSetpoint    : UA_Write;                   // 写 LREAL 设定值
+    rtSetpointChange   : R_TRIG;                      // 设定值变化沿检测
+
+    hMesConnection     : DWORD;                      // 由 UA_Connect 设置
+    hSetpointNode      : DWORD;                      // 由 UA_NodeGetHandle 设置（目标节点 'GVL.fSetpointFlow'）
+
+    stWriteAttrInfo    : ST_UANodeAdditionalInfo;    // 写属性配置（PROGRAM 初始化）
+    fLocalSetpointHmi  : LREAL := 50.0;              // HMI 操作员输入的新设定值（在线写入观察）
+    fLastSetpointSent  : LREAL;                       // 上次发送过的值（用于沿检测）
+    tWriteTimeout      : TIME := T#3S;
+    bRequestWrite      : BOOL;                        // 给 FB 的 Execute（沿触发）
+
+    // —— 输出 ——
+    bWriteDone         : BOOL;
+    bWriteBusy         : BOOL;
+    bWriteError        : BOOL;
+    nWriteErrorId      : DWORD;
+
+    bInitDone          : BOOL := FALSE;
+    nSuccessfulWrites  : UDINT;                       // 累计成功写次数
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：HMI 操作员调整产线的「目标流量」设定值；本地 PLC 检测到 fLocalSetpointHmi
+//       变化后通过 OPC UA 把新值写到 MES Server 的 'GVL.fSetpointFlow' 节点；
+//       远端 PLC / SCADA 据此调整电磁阀开度。本 demo 演示「变化驱动」的 Write
+//       策略（避免每周期空写浪费带宽）。
+//
+// 价值：替代 I/O Client 静态写映射 + 编译期绑定，运行期可写任意节点；同时演示
+//       工业场景下正确的「变化沿驱动写」模式——只在本地变量真实变化时才发起
+//       一次 OPC UA Write。
+//
+// 验证步骤：
+//   1. 右键 PLC 项目下 POUs 文件夹 → Add → Existing Item → 选本 .TcPOU
+//   2. 引用 Tc3_PLCopen_OpcUa；目标 Server 端 GVL.fSetpointFlow:LREAL 且具
+//      AccessLevel.CurrentWrite（在 PLC 端不带 'OPC.UA.DA.Access' 只读限制）
+//   3. 先跑通 P_Demo_UA_Connect + UA_GetNamespaceIndex + UA_NodeGetHandle，
+//      把 ConnectionHdl / NodeHdl 抄到本程序
+//   4. 编译 → 登录 → 运行
+//   5. 在线修改 fLocalSetpointHmi := 75.5：下个周期 bRequestWrite 自动脉冲一次，
+//      300 ms 后 bWriteDone = TRUE；Server 端 GVL.fSetpointFlow 应变为 75.5；
+//      nSuccessfulWrites 累计 +1
+//   6. 不动 fLocalSetpointHmi 等 10 秒：bRequestWrite 不再触发（沿检测过滤），
+//      OPC UA 链路无空写流量——这是工业 Write 的正确节俭模式
+//   7. 把 hSetpointNode 改成 0：bWriteError = TRUE，nWriteErrorId 应为
+//      0xE4DD0116 (UAC_E_INVAL_NODE_HDL)；把 Server 端节点 AccessLevel 改成只读
+//      触发写：应得 0xE4DD0118 (UAC_E_UAWRITEFAILED) 或 0x706 (DEVICE_INVALIDDATA)
+// =============================================================================
+
+// —— 一次性初始化：写 Value 属性 ——
+IF NOT bInitDone THEN
+    stWriteAttrInfo.eAttributeID     := eUAAI_Value;
+    stWriteAttrInfo.nIndexRangeCount := 0;
+    bInitDone := TRUE;
+END_IF;
+
+// —— 变化沿检测：本地 HMI 设定值变了才触发 ——
+rtSetpointChange(CLK := (fLocalSetpointHmi <> fLastSetpointSent));
+bRequestWrite := rtSetpointChange.Q;
+
+// —— 单次调用：所有 VAR_INPUT 显式赋值 ——
+// pVariable 用 ADR(fLocalSetpointHmi) 指向 PROGRAM 级变量
+fbWriteSetpoint(
+    Execute       := bRequestWrite,
+    ConnectionHdl := hMesConnection,
+    NodeHdl       := hSetpointNode,
+    stNodeAddInfo := stWriteAttrInfo,
+    pVariable     := ADR(fLocalSetpointHmi),
+    cbData        := SIZEOF(fLocalSetpointHmi),     // 8 字节（LREAL）
+    Timeout       := tWriteTimeout,
+    Done          => bWriteDone,
+    Busy          => bWriteBusy,
+    Error         => bWriteError,
+    ErrorID       => nWriteErrorId
+);
+
+// —— 成功后记录已发送的值（避免重复触发）+ 计数 ——
+IF bWriteDone AND NOT bWriteError THEN
+    fLastSetpointSent := fLocalSetpointHmi;
+    nSuccessfulWrites := nSuccessfulWrites + 1;
+END_IF;
+
+// 工程化提醒：若需保证「关键设定值即使写失败也要保留请求」，业务侧应实现
+// 「重试 + 超时报警」状态机；本 demo 简化为成功才更新 fLastSetpointSent，
+// 失败时下个周期会自动重试。
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

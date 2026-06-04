@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_FB_IotMqttMessage" Id="{39fd1c8d-238c-5b15-8db1-3135e86457cb}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_FB_IotMqttMessage
+VAR
+    fbMqtt         : FB_IotMqttClient := (
+        sClientId  := 'CX-MsgDemo',
+        sHostName  := '127.0.0.1',
+        nHostPort  := 1883
+    );
+    fbQueue        : FB_IotMqttMessageQueue;
+    fbMsg          : FB_IotMqttMessage;
+
+    bEnableMqtt    : BOOL := TRUE;
+    fbTrigSub      : R_TRIG;
+    sCmdTopic      : STRING := 'plc/line1/cmd';
+    sRecipeTopic   : STRING := 'plc/line1/recipe';
+
+    // —— 业务输出 ——
+    sLastCmd       : STRING(40);                       // 最近一条命令字串
+    sLastRecipe    : STRING(255);                      // 最近一条配方 JSON
+    nMatchCount    : UDINT;                            // 命中 sCmdTopic 的次数
+    nRecipeCount   : UDINT;                            // 命中 sRecipeTopic 的次数
+    nIgnoredCount  : UDINT;                            // 不认识的 topic 计数
+
+    // —— 临时 ——
+    sUnknownTopic  : STRING(255);
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：
+//   PLC 同时订阅 'plc/line1/cmd'（短命令字串）和 'plc/line1/recipe'（配方 JSON）
+//   两个 topic。用 CompareTopic 做路由分发：命中命令 topic 走命令解析，命中
+//   配方 topic 走 JSON 解析；其他 topic 不响应只计数。
+//
+// 价值：
+//   CompareTopic 是 O(1) 内存比较，比 GetTopic+STRING= 快得多。
+//   GetPayload 一次拷字符串—— bSetNullTermination:=TRUE 自动加 \0，业务侧
+//   可以直接当 C 字符串用。
+//
+// 验证步骤：
+//   1. 装 TF6701 license；起本机 Mosquitto:1883
+//   2. 在 XAE 导入、登录、运行
+//   3. 在另一个终端发命令：
+//        mosquitto_pub -t plc/line1/cmd -m 'START'
+//        在线 monitor → sLastCmd='START'，nMatchCount=1
+//        mosquitto_pub -t plc/line1/cmd -m 'STOP'
+//        sLastCmd='STOP'，nMatchCount=2
+//   4. 发一条配方：
+//        mosquitto_pub -t plc/line1/recipe -m '{"baking_temp":180,"time_s":300}'
+//        sLastRecipe='{"baking_temp":180,"time_s":300}'，nRecipeCount=1
+//   5. 发一条其他 topic 测试忽略路径：
+//        mosquitto_pub -t plc/line1/other -m 'ignored'
+//        nIgnoredCount=1，sLastCmd 和 sLastRecipe 不变
+// =============================================================================
+
+// 阶段 1：挂队列、推进 Execute
+fbMqtt.ipMessageQueue := fbQueue;
+fbMqtt.Execute(bConnect := bEnableMqtt);
+
+// 阶段 2：连上后一次性订阅两条 topic（用 wildcard '+' 一并订也行，本例显式分两次）
+fbTrigSub(CLK := fbMqtt.bConnected);
+IF fbTrigSub.Q THEN
+    fbMqtt.Subscribe(sTopic := sCmdTopic,    eQoS := TcIotMqttQos.AtLeastOnceDelivery);
+    fbMqtt.Subscribe(sTopic := sRecipeTopic, eQoS := TcIotMqttQos.AtLeastOnceDelivery);
+END_IF
+
+// 阶段 3：每周期出空队列；不限速因为命令 / 配方 是低频
+WHILE fbQueue.nQueuedMessages > 0 DO
+    IF NOT fbQueue.Dequeue(fbMessage := fbMsg) THEN
+        EXIT;
+    END_IF
+
+    // 用 CompareTopic 做 O(1) 路由——最常用的两条 topic 直接命中
+    IF fbMsg.CompareTopic(sTopic := sCmdTopic) THEN
+        // 命中命令 topic：拷字符串、加 \0 让 IEC STRING 用
+        fbMsg.GetPayload(pPayload := ADR(sLastCmd),
+                         nPayloadSize := SIZEOF(sLastCmd) - 1,    // 留 1 字节给 \0
+                         bSetNullTermination := TRUE);
+        nMatchCount := nMatchCount + 1;
+        // 在此处做命令解析：'START' / 'STOP' / 'RESET' ...
+    ELSIF fbMsg.CompareTopic(sTopic := sRecipeTopic) THEN
+        // 命中配方 topic：拷 JSON 串后交给 FB_JsonDomParser 解析
+        fbMsg.GetPayload(pPayload := ADR(sLastRecipe),
+                         nPayloadSize := SIZEOF(sLastRecipe) - 1,
+                         bSetNullTermination := TRUE);
+        nRecipeCount := nRecipeCount + 1;
+        // 在此处可调 Tc3_JsonXml.FB_JsonDomParser.ParseDocument 处理 JSON
+    ELSE
+        // 不认识的 topic：仅计数。用 GetTopic 拷出来仅供调试
+        fbMsg.GetTopic(pTopic := ADR(sUnknownTopic), nTopicSize := SIZEOF(sUnknownTopic));
+        nIgnoredCount := nIgnoredCount + 1;
+    END_IF
+END_WHILE
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

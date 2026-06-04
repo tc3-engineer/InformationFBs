@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_ParameterList" Id="{293f4f4e-5b44-500c-b003-5f5de63d617a}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_ParameterList
+VAR
+    // 业务侧读 GVL 参数做自适应——本程序仅 monitor 这些值
+    // 实际改值要去 XAE GUI: PLC 项目 → References → Tc3_IotBase → Parameter list
+
+    nMaxMsgSize        : UDINT;        // cMaxSizeOfMqttMessage
+    nMaxQueueSize      : UDINT;        // cMaxSizeOfMqttMessageQueue
+    nMaxQueueEntries   : UDINT;        // cMaxEntriesInMqttMessageQueue
+    nClientIdSize      : UDINT;        // cSizeOfMqttClientClientId
+    nHostNameSize      : UDINT;        // cSizeOfMqttClientHostName
+    nUserNameSize      : UDINT;        // cSizeOfMqttClientUserName
+    nMqtt5AuthDataSize : UDINT;        // cSizeOfMqtt5AuthData
+    nMqtt5MaxUserProps : UINT;         // cMaxMqtt5UserProps
+
+    // —— 业务侧自适应：发 publish 前检查 payload 大小 ——
+    sPayload           : STRING(120) := '{"alive":true}';
+    bPayloadOk         : BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：
+//   PLC 上线初期 monitor Tc3_IotBase 库的参数表实际值——确认部署时调过参数
+//   生效。业务侧 publish / subscribe 前按这些参数做自适应限制（不发超大
+//   payload、不构造超 cMaxMqtt5UserProps 的 user properties）。
+//
+// 价值：
+//   PDF §5.1.4 把所有"上限/长度"集中到一个 GVL——业务代码直接读 + 自适应，
+//   不必硬编码默认值。运维改了 GVL 后业务自动跟着调整。
+//
+// 验证步骤：
+//   1. 装 TF6701 license
+//   2. 在 XAE 导入、登录、运行
+//   3. 在线 monitor 应看到默认值：
+//        nMaxMsgSize        = 102400  (100 KB)
+//        nMaxQueueSize      = 1024000 (1 MB)
+//        nMaxQueueEntries   = 1000
+//        nClientIdSize      = 256
+//        nHostNameSize      = 256
+//        nUserNameSize      = 256
+//        nMqtt5AuthDataSize = 4096    (4 KB)
+//        nMqtt5MaxUserProps = 20
+//        bPayloadOk         = TRUE    (15 byte JSON < 100 KB 上限)
+//   4. 在 XAE GUI 把 cMaxSizeOfMqttMessage 改成 4096 + 重 download：
+//        nMaxMsgSize 应变 4096
+//   5. 把 sPayload 改成超 4096 字节（用 RIGHT/CONCAT 拼），bPayloadOk 变 FALSE
+//   6. 改完记得改回 102400——其他 demo 依赖默认值
+// =============================================================================
+
+// 阶段 1：读 GVL 参数到 monitor 变量
+nMaxMsgSize        := ParameterList.cMaxSizeOfMqttMessage;
+nMaxQueueSize      := ParameterList.cMaxSizeOfMqttMessageQueue;
+nMaxQueueEntries   := ParameterList.cMaxEntriesInMqttMessageQueue;
+nClientIdSize      := ParameterList.cSizeOfMqttClientClientId;
+nHostNameSize      := ParameterList.cSizeOfMqttClientHostName;
+nUserNameSize      := ParameterList.cSizeOfMqttClientUserName;
+nMqtt5AuthDataSize := ParameterList.cSizeOfMqtt5AuthData;
+nMqtt5MaxUserProps := ParameterList.cMaxMqtt5UserProps;
+
+// 阶段 2：业务侧自适应——publish 前检查 payload 大小
+bPayloadOk := TO_UDINT(LEN(sPayload)) <= nMaxMsgSize;
+
+// 实际业务用法：
+//   IF bPayloadOk THEN
+//       fbClient.Publish(sTopic := ..., pPayload := ADR(sPayload),
+//                        nPayloadSize := TO_UDINT(LEN(sPayload)),
+//                        eQoS := ..., bRetain := ..., bQueue := FALSE);
+//   ELSE
+//       // payload 超限——分片或换 topic 或扩 cMaxSizeOfMqttMessage
+//   END_IF
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

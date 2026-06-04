@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.5">
+  <POU Name="P_Demo_ST_IotMqtt5Tls" Id="{2c5921f6-501d-55c2-b465-7f8d35f3adc8}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_Demo_ST_IotMqtt5Tls
+VAR
+    fbMqtt5      : FB_IotMqtt5Client := (
+        sClientId  := 'CX-Line1-V5-TLS',
+        sHostName  := 'mqtt.factory.local',        // 必须与 broker 证书 CN/SAN 一致
+        nHostPort  := 8883,
+        nKeepAlive := 30
+    );
+    bEnableMqtt  : BOOL := TRUE;
+    bTlsInited   : BOOL;
+    bConnected   : BOOL;
+    eState       : ETcIotMqttClientState;          // monitor: TLS 错误细分
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// =============================================================================
+// 场景：
+//   MQTT 5 客户端走 TLS 1.2 + mTLS 连厂区生产环境 broker，
+//   走标准 X.509 路径（CA + 客户端证书 + 私钥）。
+//
+// 价值：
+//   与 MQTT 3 ST_IotMqttTLS 等效，但少了 MQTT 3 版的 sCAPath 字段
+//   （那字段本来就是 "for future use"——没影响）。MQTT 5 加 TLS 是新建项目
+//   的推荐组合：更细错误诊断 + 自适应 broker 能力。
+//
+// 验证步骤：
+//   1. 装 TF6701 license；起 MQTT 5 broker 配 TLS（mosquitto 1.6+ 加 listener 8883）
+//   2. 用 openssl 自签 CA + broker 证书（CN='mqtt.factory.local'）+ 客户端证书
+//   3. 把三个文件拷到 PLC 的 C:\TwinCAT\Boot\Certs\
+//   4. Windows hosts 配 '<broker_IP>  mqtt.factory.local'
+//   5. 在 XAE 导入、登录、运行
+//   6. 在线 monitor：
+//        - bConnected=TRUE, eState=MQTT_ERR_SUCCESS(0) → 配置正确
+//        - eState=MQTT_ERR_TLS_CA_NOTFOUND(17) → sCA 文件路径错
+//        - eState=MQTT_ERR_TLS_CN_MISMATCH(41) → broker 证书 CN/SAN 与 sHostName 不一致
+//        - eState=MQTT_ERR_TLS_CERT_EXPIRED(40) → broker 证书过期，续签
+//   7. 调试时若临时把 bNoServerCertCheck 置 TRUE 跳过校验，必须在 commit 前
+//      改回 FALSE！（中间人攻击风险）
+// =============================================================================
+
+// 阶段 1：首次扫描直写 TLS 字段——禁止 `stLocal : ST_IotMqtt5Tls; fbMqtt5.stTLS := stLocal;`
+IF NOT bTlsInited THEN
+    fbMqtt5.stTLS.sCA                := 'C:\TwinCAT\Boot\Certs\factory_ca.pem';
+    fbMqtt5.stTLS.sCert              := 'C:\TwinCAT\Boot\Certs\plc_line1.pem';
+    fbMqtt5.stTLS.sKeyFile           := 'C:\TwinCAT\Boot\Certs\plc_line1.key';
+    fbMqtt5.stTLS.sKeyPwd            := '';                    // 私钥未加密
+    fbMqtt5.stTLS.sVersion           := 'tlsv1.2';
+    fbMqtt5.stTLS.bNoServerCertCheck := FALSE;                  // 生产必须 FALSE
+    bTlsInited := TRUE;
+END_IF
+
+// 阶段 2：周期推进。TLS 握手要几百 ms ~ 几秒
+fbMqtt5.Execute(bConnect := bEnableMqtt);
+bConnected := fbMqtt5.bConnected;
+eState     := fbMqtt5.eConnectionState;          // 排查 TLS 失败看这个细分码
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>
